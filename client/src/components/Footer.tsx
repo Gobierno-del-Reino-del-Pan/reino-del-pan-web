@@ -40,7 +40,6 @@ export default function Footer() {
 
   return (<footer className="bg-black text-white"> <div className="container section-spacious">
 
-    ```
     {/* Logo */}
     <div className="flex items-center gap-4 mb-12">
       <img
