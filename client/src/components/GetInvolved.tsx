@@ -1,78 +1,127 @@
-/**
- * GetInvolved Component - Elegancia Minimalista Moderna
- * 
- * Diseño:
- * - Grid de 3 columnas (responsive)
- * - Cards minimalistas con borde oro
- * - Espaciado generoso entre elementos
- */
 import { motion } from 'framer-motion';
 import { Link } from 'wouter';
+import { UserCheck, HeartHandshake, CalendarDays, ArrowRight } from 'lucide-react';
 
+/**
+ * GetInvolved Component - Elegancia Minimalista Premium
+ * 
+ * Grid de 3 columnas para invitar a la participación ciudadana.
+ * Con tarjetas refinadas, bordes sutiles y micro-interacciones.
+ */
 export default function GetInvolved() {
   const options = [
     {
-      title: 'Ciudadanía',
-      description: 'Obtén ciudadanía del Reino del Pan a través del programa de Obtener DPI. Una forma fácil de contribuir al desarrollo de nuestra nación.',
-      cta: 'Sobre Ciudadanía',
+      icon: <UserCheck className="w-6 h-6 text-accent" />,
+      title: 'Ciudadanía y DPI',
+      description: 'Obtén tu Documento Personal de Identidad (DPI) del Reino del Pan. Únete como ciudadano digital y participa en las decisiones democráticas.',
+      cta: 'Solicitar Ciudadanía',
       link: '/dpi',
     },
     {
-      title: 'Donaciones',
-      description: 'Como estado soberano independiente, el Reino del Pan requiere financiamiento para mantener sistemas y gobernanza de calidad.',
-      cta: 'Donar Ahora',
+      icon: <HeartHandshake className="w-6 h-6 text-accent" />,
+      title: 'Donaciones Oficiales',
+      description: 'Como estado en desarrollo, dependemos de donaciones voluntarias para financiar servicios, infraestructura digital y proyectos ecológicos.',
+      cta: 'Donar al Reino',
       link: '#donate',
     },
     {
-      title: 'Eventos',
-      description: 'Únete a eventos públicos y manifestaciones de apoyo. Demuestra tu solidaridad con el Reino del Pan en todo el mundo.',
-      cta: 'Ver Eventos',
+      icon: <CalendarDays className="w-6 h-6 text-accent" />,
+      title: 'Eventos y Apoyo',
+      description: 'Asiste a las reuniones diplomáticas y apoya las iniciativas globales. Conéctate con otros partidarios del Reino del Pan en tu región.',
+      cta: 'Ver Calendario',
       link: '#events',
     },
   ];
 
+  const containerVariants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.12,
+      },
+    },
+  } as const;
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.7, ease: "easeOut" },
+    },
+  } as const;
+
   return (
-    <section className="bg-secondary section-spacious">
+    <section className="bg-secondary/40 py-16 lg:py-28 border-b border-border/50">
       <div className="container">
-        {/* Encabezado */}
-        <div className="mb-16">
-          <h2 className="display-font text-5xl sm:text-6xl text-foreground mb-8 font-bold">
-            ¿Cómo puedo involucrarse?
-          </h2>
-          <p className="text-foreground/70 text-lg max-w-2xl leading-relaxed">
-            Existen muchas formas de contribuir al desarrollo del Reino del Pan. Aquí te presentamos algunas de las más impactantes.
-          </p>
+        {/* Header */}
+        <div className="max-w-3xl mb-16 md:mb-20">
+          <motion.p 
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-xs font-semibold text-accent tracking-widest uppercase mb-3"
+          >
+            Participación Activa
+          </motion.p>
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="display-font text-4xl sm:text-5xl text-foreground font-extrabold tracking-tight mb-6"
+          >
+            ¿Cómo puedes involucrarte?
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="text-lg text-foreground/70 leading-relaxed font-light"
+          >
+            El Reino del Pan crece gracias a su comunidad global. Explora los diferentes canales a través de los cuales puedes dejar tu huella y apoyar nuestra soberanía.
+          </motion.p>
         </div>
 
         {/* Grid de opciones */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-50px' }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8"
+        >
           {options.map((option, index) => (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              variants={cardVariants}
               key={option.title}
-              className="bg-background border-l-4 border-accent p-8 hover:shadow-lg transition-shadow duration-300"
+              className="bg-background border border-border/40 p-8 flex flex-col justify-between hover:shadow-xl hover:border-accent/30 transition-all duration-300 relative group"
             >
-              <h3 className="display-font text-2xl text-foreground mb-4">
-                {option.title}
-              </h3>
-              <p className="text-foreground/70 mb-6 leading-relaxed">
-                {option.description}
-              </p>
+              {/* Golden line accent at the top */}
+              <div className="absolute top-0 left-0 w-0 h-1 bg-accent group-hover:w-full transition-all duration-300" />
+              
+              <div>
+                <div className="mb-6 p-3 bg-secondary/80 border border-border/20 w-fit rounded-lg">
+                  {option.icon}
+                </div>
+                <h3 className="display-font text-2xl text-foreground font-bold tracking-tight mb-4">
+                  {option.title}
+                </h3>
+                <p className="text-foreground/70 text-sm leading-relaxed mb-8 font-light">
+                  {option.description}
+                </p>
+              </div>
+
               <Link href={option.link}>
-                <a className="text-accent font-medium hover:text-accent/80 transition-colors duration-200 inline-flex items-center gap-2">
+                <a className="text-accent font-semibold hover:text-accent/80 transition-all duration-200 inline-flex items-center gap-2 text-sm group/btn mt-auto">
                   {option.cta}
-                  <span>→</span>
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
                 </a>
               </Link>
             </motion.div>
           ))}
-        </div>
-
-        {/* Línea divisora */}
-        <div className="divider-gold mt-16" />
+        </motion.div>
       </div>
     </section>
   );
