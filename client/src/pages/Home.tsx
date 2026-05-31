@@ -3,7 +3,6 @@ import Hero from '@/components/Hero';
 import Stats from '@/components/Stats';
 import GetInvolved from '@/components/GetInvolved';
 import WhyGetInvolved from '@/components/WhyGetInvolved';
-import Territory from '@/components/Territory';
 import News from '@/components/News';
 import Newsletter from '@/components/Newsletter';
 import Footer from '@/components/Footer';
@@ -27,7 +26,6 @@ export default function Home() {
         <Stats />
         <GetInvolved />
         <WhyGetInvolved />
-        <Territory />
         <News />
         <Newsletter />
       </main>
