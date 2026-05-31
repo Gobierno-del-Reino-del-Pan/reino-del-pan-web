@@ -34,6 +34,7 @@ export default function News() {
 
   return (
     <section className="bg-secondary section-spacious">
+      <a className="-translate-y-32 absolute" id="news"></a>
       <div className="container">
         {/* Encabezado */}
         <div className="flex items-center justify-between mb-12">

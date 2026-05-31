@@ -18,12 +18,12 @@ export default function Header() {
   const { theme, toggleTheme } = useTheme();
 
   const navItems = [
-    { label: 'Inicio', href: '/' },
+    { label: 'Inicio', href: '/#' },
     { label: 'Acerca de', href: '/about' },
-    { label: 'Gobierno', href: '#government' },
-    { label: 'Noticias', href: '#news' },
-    { label: 'Servicios', href: '#services' },
-    { label: 'Donaciones', href: '#donate' },
+    { label: 'Gobierno', href: '/#government' },
+    { label: 'Noticias', href: '/#news' },
+    { label: 'Servicios', href: '/#services' },
+    { label: 'Donaciones', href: '/#donate' },
   ];
 
   return (
