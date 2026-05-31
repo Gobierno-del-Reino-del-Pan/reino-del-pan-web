@@ -1,19 +1,27 @@
 import { motion } from 'framer-motion';
-import { Mail, Send, Facebook, Youtube, Instagram, Linkedin, MessageCircle } from 'lucide-react';
+import { Mail, Send } from 'lucide-react';
+import { FaXTwitter, FaTiktok } from 'react-icons/fa6';
 
 /**
  * Newsletter Component - Elegancia Minimalista Premium
- * 
+ *
  * Sección de suscripción y redes sociales.
  * Presenta un formulario centrado con bordes dorados e iconos sociales interactivos.
  */
 export default function Newsletter() {
   const socialItems = [
-    { id: 'telegram', icon: <MessageCircle className="w-4 h-4" />, label: 'Telegram', href: '#telegram' },
-    { id: 'facebook', icon: <Facebook className="w-4 h-4" />, label: 'Facebook', href: '#facebook' },
-    { id: 'youtube', icon: <Youtube className="w-4 h-4" />, label: 'YouTube', href: '#youtube' },
-    { id: 'instagram', icon: <Instagram className="w-4 h-4" />, label: 'Instagram', href: '#instagram' },
-    { id: 'linkedin', icon: <Linkedin className="w-4 h-4" />, label: 'LinkedIn', href: '#linkedin' },
+    {
+      id: 'x',
+      icon: <FaXTwitter className="w-4 h-4" />,
+      label: 'X',
+      href: 'https://x.com/gov_pan',
+    },
+    {
+      id: 'tiktok',
+      icon: <FaTiktok className="w-4 h-4" />,
+      label: 'TikTok',
+      href: 'https://www.tiktok.com/@gov_pan',
+    },
   ];
 
   return (
@@ -22,10 +30,10 @@ export default function Newsletter() {
         <div className="bg-background border border-accent/20 rounded-2xl shadow-xl p-8 sm:p-12 md:p-16 relative overflow-hidden text-center">
           {/* Subtle back decoration */}
           <div className="absolute top-0 right-0 w-48 h-48 bg-accent/2 rounded-full blur-2xl pointer-events-none" />
-          
+
           <div className="max-w-2xl mx-auto flex flex-col items-center">
             {/* Header Icon */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
@@ -35,7 +43,7 @@ export default function Newsletter() {
             </motion.div>
 
             {/* Heading */}
-            <motion.h2 
+            <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -46,7 +54,7 @@ export default function Newsletter() {
             </motion.h2>
 
             {/* Paragraph */}
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -57,7 +65,7 @@ export default function Newsletter() {
             </motion.p>
 
             {/* Form */}
-            <motion.form 
+            <motion.form
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -71,7 +79,7 @@ export default function Newsletter() {
                 placeholder="Tu correo electrónico oficial"
                 className="flex-1 px-5 py-3 border border-border bg-background text-foreground rounded-lg placeholder:text-foreground/40 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all duration-300 text-sm font-light shadow-sm"
               />
-              <motion.button 
+              <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className="btn-minimal whitespace-nowrap text-xs tracking-wider uppercase py-3 px-6 rounded-lg flex items-center justify-center gap-2"
@@ -82,7 +90,7 @@ export default function Newsletter() {
             </motion.form>
 
             {/* Socials */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
@@ -93,9 +101,11 @@ export default function Newsletter() {
                 <a
                   key={social.id}
                   href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center gap-1.5 text-xs text-foreground/60 hover:text-accent font-semibold tracking-wider uppercase transition-colors duration-200"
                 >
-                  <span className="p-1.5 bg-secondary border border-border/20 rounded-md group-hover:text-accent">
+                  <span className="p-1.5 bg-secondary border border-border/20 rounded-md">
                     {social.icon}
                   </span>
                   <span className="hidden sm:inline">{social.label}</span>
