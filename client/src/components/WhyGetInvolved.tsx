@@ -6,15 +6,29 @@
  * - Texto alineado a la izquierda
  * - Espaciado generoso
  */
+import { motion } from 'framer-motion';
+
 export default function WhyGetInvolved() {
   return (
     <section className="bg-background section-spacious">
       <div className="container max-w-4xl">
-        <h2 className="display-font text-5xl sm:text-6xl text-foreground mb-10 font-bold">
+        <motion.h2 
+          initial={{ opacity: 0, x: -30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="display-font text-5xl sm:text-6xl text-foreground mb-10 font-bold"
+        >
           ¿Por qué involucrarse?
-        </h2>
+        </motion.h2>
 
-        <div className="space-y-6 text-lg text-foreground/80 leading-relaxed">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="space-y-6 text-lg text-foreground/80 leading-relaxed"
+        >
           <p>
             Desarrollar un país recientemente formado no es fácil, y el Reino del Pan necesita tanto apoyo y contribución como sea posible para lograr nuestros objetivos en la construcción de nación.
           </p>
@@ -34,10 +48,16 @@ export default function WhyGetInvolved() {
             <li>✓ Protección del ambiente</li>
             <li>✓ Desarrollo sostenible</li>
           </ul>
-        </div>
+        </motion.div>
 
         {/* Línea divisora */}
-        <div className="divider-gold mt-16" />
+        <motion.div 
+          initial={{ scaleX: 0 }}
+          whileInView={{ scaleX: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, delay: 0.5 }}
+          className="divider-gold mt-16 origin-left" 
+        />
       </div>
     </section>
   );

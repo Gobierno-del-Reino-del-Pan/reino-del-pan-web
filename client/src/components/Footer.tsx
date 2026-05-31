@@ -39,7 +39,7 @@ export default function Footer() {
         { label: 'Presidente', href: '#' },
         { label: 'Ministerio de Asuntos Externos', href: '#' },
         { label: 'Portal myGov', href: '#' },
-        { label: 'Portal e-Residente', href: '#' },
+        { label: 'Portal DPI', href: '#' },
       ],
     },
   ];
@@ -47,6 +47,13 @@ export default function Footer() {
   return (
     <footer className="bg-foreground text-background">
       <div className="container section-spacious">
+        {/* Logo en Footer */}
+        <div className="flex items-center mb-12">
+          <img src="/src/assets/logo.png" alt="Artis Panis Logo" className="w-12 h-12 object-contain brightness-0 invert" />
+          <span className="ml-3 display-font text-xl text-background">
+            Reino del Pan
+          </span>
+        </div>
         {/* Contenido principal */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
           {footerSections.map((section) => (

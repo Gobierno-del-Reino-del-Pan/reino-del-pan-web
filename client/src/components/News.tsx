@@ -6,6 +6,8 @@
  * - Grid de 2 columnas (responsive)
  * - Cards minimalistas con fecha
  */
+import { motion } from 'framer-motion';
+
 export default function News() {
   const newsItems = [
     {
@@ -49,8 +51,12 @@ export default function News() {
 
         {/* Grid de noticias */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {newsItems.map((item) => (
-            <article
+          {newsItems.map((item, index) => (
+            <motion.article
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
               key={item.title}
               className="bg-background p-8 border-t-2 border-accent hover:shadow-md transition-shadow duration-300 cursor-pointer"
             >
@@ -70,7 +76,7 @@ export default function News() {
                 Leer más
                 <span>→</span>
               </a>
-            </article>
+            </motion.article>
           ))}
         </div>
 
