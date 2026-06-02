@@ -232,6 +232,10 @@ app.get("/api/dpi/verify/:code", async (req, res) => {
   res.send(verifyHtml(data));
 });
 
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK' });
+});
+
 // ── HTML verificación QR ──────────────────────────────────────────────────────
 function verifyHtml(d) {
   if (!d) return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>DPI no encontrado</title>
