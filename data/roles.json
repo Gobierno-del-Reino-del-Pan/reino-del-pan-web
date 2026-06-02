@@ -1,0 +1,81 @@
+{
+  "roles": [
+    {
+      "id": "rol_policia",
+      "nombre": "Policía Panacional",
+      "descripcion": "Podrás asegurarte que los usuarios cumplan la Constitución del Reino y capturar a sinvergüenzas",
+      "emoji": "👮",
+      "discord_role_id": ""
+    },
+    {
+      "id": "rol_guardia",
+      "nombre": "Guardia Panadera",
+      "descripcion": "Podrás asegurarte que los usuarios cumplan la Constitución del Reino y podrás poner multas a diestro",
+      "emoji": "🍞",
+      "discord_role_id": ""
+    },
+    {
+      "id": "rol_militar",
+      "nombre": "Militar",
+      "descripcion": "Tu función será proteger a los ciudadanos en periodos de guerra o de incidencias climáticas graves.",
+      "emoji": "🪖",
+      "discord_role_id": ""
+    },
+    {
+      "id": "rol_medico",
+      "nombre": "Médico",
+      "descripcion": "Tu trabajo es asegurar que se mantenga el buen estado de salud de los ciudadanos.",
+      "emoji": "🩺",
+      "discord_role_id": ""
+    },
+    {
+      "id": "rol_profesor",
+      "nombre": "Profesor",
+      "descripcion": "Tu labor será enseñar a los niños, adolescentes y adultos todo lo que sea necesario.",
+      "emoji": "📚",
+      "discord_role_id": ""
+    },
+    {
+      "id": "rol_informatico",
+      "nombre": "Informático",
+      "descripcion": "Tu labor será la de programar, vigilar posibles vulnerabilidades y todo lo necesario para proteger.",
+      "emoji": "💻",
+      "discord_role_id": ""
+    },
+    {
+      "id": "rol_futbolista",
+      "nombre": "Futbolista",
+      "descripcion": "Tu función es clara, ganar y ganar partidos. Pero para poder ganar necesitarás un equipo ¿No?",
+      "emoji": "⚽",
+      "discord_role_id": "1511436597139079271"
+    },
+    {
+      "id": "rol_politico",
+      "nombre": "Político",
+      "descripcion": "Buscarás el bienestar de los ciudadanos (y seguro que a poder ser el tuyo). Funda, construye, haz.",
+      "emoji": "🏛️",
+      "discord_role_id": ""
+    },
+    {
+      "id": "rol_reportero",
+      "nombre": "Reportero de la Televisión Paniense",
+      "descripcion": "Tu labor será la de informar con RIGOR y IMPARCIALIDAD. Tienes de presidente al Sr. Alegre, niénsalo.",
+      "emoji": "📺",
+      "discord_role_id": ""
+    },
+    {
+      "id": "rol_veterinario",
+      "nombre": "Veterinario",
+      "descripcion": "Tu labor es la de curar a los pobres animalitos que sufren tras enfermedades o abandonos.",
+      "emoji": "🐾",
+      "discord_role_id": ""
+    },
+    {
+      "id": "rol_entrenador",
+      "nombre": "Entrenador Pokémon",
+      "descripcion": "Son personas que se encargan de capturar, criar, entrenar y cuidar de dichas criaturas. Lucha.",
+      "emoji": "🐉",
+      "discord_role_id": ""
+    }
+  ]
+}
