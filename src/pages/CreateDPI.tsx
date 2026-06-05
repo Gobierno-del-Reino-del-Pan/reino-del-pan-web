@@ -1,13 +1,12 @@
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { motion } from "framer-motion";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Link } from "wouter";
 import QRCode from "qrcode";
 import jsPDF from "jspdf";
 
 // Como toqueis estas posiciones os rajo, atentamente: Rexy
-
 const CFG = {
   color: "#5a1a1a",
   front: {
@@ -30,7 +29,6 @@ const CFG = {
 const LIMITS = { nombre: 20, apellidos: 30 };
 const ONLY_LETTERS = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
 
-
 function formatDate(dateStr: string): string {
   if (!dateStr) return "";
   const [y, m, d] = dateStr.split("-");
@@ -47,11 +45,7 @@ function loadImg(src: string): Promise<HTMLImageElement> {
   });
 }
 
-function drawCover(
-  ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement,
-  x: number, y: number, w: number, h: number
-) {
+function drawCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number) {
   const ratio = Math.max(w / img.width, h / img.height);
   const sw = w / ratio, sh = h / ratio;
   const sx = (img.width - sw) / 2, sy = (img.height - sh) / 2;
@@ -68,47 +62,33 @@ function applyFont(ctx: CanvasRenderingContext2D, cfg: FontCfg) {
   ctx.font = `${cfg.weight} ${cfg.size}px ${cfg.family}`;
 }
 
-
 async function makeQRWithLogo(text: string, qrSize: number): Promise<string> {
-  // 1. Genera el QR como dataURL
   const qrDataUrl = await QRCode.toDataURL(text, {
     width:  qrSize,
     margin: 1,
     color:  { dark: "#5a1a1a", light: "#fffbf0" },
-    errorCorrectionLevel: "H", 
+    errorCorrectionLevel: "H",
   });
-
-
   const canvas = document.createElement("canvas");
   canvas.width  = qrSize;
   canvas.height = qrSize;
   const ctx = canvas.getContext("2d")!;
-
   const qrImg = await loadImg(qrDataUrl);
   ctx.drawImage(qrImg, 0, 0, qrSize, qrSize);
-
-
   try {
     const logo     = await loadImg("/logo.png");
-    const logoSize = Math.round(qrSize * 0.22); 
+    const logoSize = Math.round(qrSize * 0.22);
     const lx       = Math.round((qrSize - logoSize) / 2);
     const ly       = Math.round((qrSize - logoSize) / 2);
-
-
     const pad = Math.round(logoSize * 0.12);
     ctx.fillStyle = "#fffbf0";
     ctx.beginPath();
     ctx.roundRect(lx - pad, ly - pad, logoSize + pad * 2, logoSize + pad * 2, pad);
     ctx.fill();
-
     ctx.drawImage(logo, lx, ly, logoSize, logoSize);
-  } catch {
-    
-  }
-
+  } catch { /* sin logo */ }
   return canvas.toDataURL("image/png");
 }
-
 
 async function renderFront(data: {
   nombre: string; apellidos: string; genero: string;
@@ -120,39 +100,25 @@ async function renderFront(data: {
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext("2d")!;
   const f = CFG.front;
-
   ctx.drawImage(await loadImg("/templates/delante.jpg"), 0, 0, W, H);
-
   if (data.photoSrc) {
     const photoImg = await loadImg(data.photoSrc);
-    drawCover(ctx, photoImg,
-      f.photo.cx - f.photo.w / 2,
-      f.photo.cy - f.photo.h / 2,
-      f.photo.w, f.photo.h
-    );
+    drawCover(ctx, photoImg, f.photo.cx - f.photo.w / 2, f.photo.cy - f.photo.h / 2, f.photo.w, f.photo.h);
   }
-
   ctx.fillStyle    = CFG.color;
   ctx.textBaseline = "middle";
-
   applyFont(ctx, f.apellidos);
   ctx.fillText(data.apellidos.toUpperCase(), f.apellidos.x, f.apellidos.y);
-
   applyFont(ctx, f.nombre);
   ctx.fillText(data.nombre.toUpperCase(), f.nombre.x, f.nombre.y);
-
   applyFont(ctx, f.genero);
   ctx.fillText(data.genero === "Hombre" ? "M" : "F", f.genero.x, f.genero.y);
-
   applyFont(ctx, f.fecha);
   ctx.fillText(formatDate(data.fecha), f.fecha.x, f.fecha.y);
-
   applyFont(ctx, f.dpiNum);
   ctx.fillText(data.dpiNumber, f.dpiNum.x, f.dpiNum.y);
-
   return canvas.toDataURL("image/jpeg", 0.95);
 }
-
 
 async function renderBack(data: {
   region: string; dpiNumber: string; signatureDataUrl: string;
@@ -163,36 +129,25 @@ async function renderBack(data: {
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext("2d")!;
   const b = CFG.back;
-
   ctx.drawImage(await loadImg("/templates/detras.jpg"), 0, 0, W, H);
-
   ctx.fillStyle    = CFG.color;
   ctx.textBaseline = "middle";
-
   applyFont(ctx, b.expFecha);
   ctx.fillText(data.issuedAt, b.expFecha.x, b.expFecha.y);
-
   applyFont(ctx, b.valFecha);
   ctx.fillText(data.validUntil, b.valFecha.x, b.valFecha.y);
-
   applyFont(ctx, b.region);
   ctx.fillText(data.region.toUpperCase(), b.region.x, b.region.y);
-
-
   const qrWithLogo = await makeQRWithLogo(data.qrUrl, b.qr.size);
   const qrImg      = await loadImg(qrWithLogo);
   const qs         = b.qr.size;
   ctx.drawImage(qrImg, b.qr.cx - qs / 2, b.qr.cy - qs / 2, qs, qs);
-
-
   if (data.signatureDataUrl) {
     const sigImg = await loadImg(data.signatureDataUrl);
     ctx.drawImage(sigImg, b.sig.x, b.sig.y, b.sig.w, b.sig.h);
   }
-
   return canvas.toDataURL("image/jpeg", 0.95);
 }
-
 
 function generatePDF(frontDataUrl: string, backDataUrl: string, dpiNumber: string): void {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
@@ -206,7 +161,6 @@ function generatePDF(frontDataUrl: string, backDataUrl: string, dpiNumber: strin
   doc.save(`dpi-${dpiNumber.replace("DPI - ", "")}.pdf`);
 }
 
-// Lokuraaa las validaciones pero weno xd
 function textError(value: string, field: "nombre" | "apellidos"): string {
   if (!value) return "";
   const t = value.trim();
@@ -245,7 +199,6 @@ function CharCounter({ value, max }: { value: string; max: number }) {
   );
 }
 
-
 export default function CreateDPI() {
   const canvasRef  = useRef<HTMLCanvasElement | null>(null);
   const fileRef    = useRef<HTMLInputElement | null>(null);
@@ -265,8 +218,8 @@ export default function CreateDPI() {
 
   const [submitErrors, setSubmitErrors] = useState<Record<string, string>>({});
 
-
-  const pos = (e: React.MouseEvent, c: HTMLCanvasElement) => {
+  // ─── Helpers de posición ────────────────────────────────────────────────────
+  const mousePos = (e: React.MouseEvent, c: HTMLCanvasElement) => {
     const r = c.getBoundingClientRect();
     return {
       x: (e.clientX - r.left) * (c.width  / r.width),
@@ -274,17 +227,27 @@ export default function CreateDPI() {
     };
   };
 
+  const touchPos = (e: React.TouchEvent, c: HTMLCanvasElement) => {
+    const r = c.getBoundingClientRect();
+    const t = e.touches[0];
+    return {
+      x: (t.clientX - r.left) * (c.width  / r.width),
+      y: (t.clientY - r.top)  * (c.height / r.height),
+    };
+  };
+
+  // ─── Mouse events ────────────────────────────────────────────────────────────
   const startDraw = (e: React.MouseEvent) => {
     if (!canvasRef.current) return;
     setDrawing(true);
-    const { x, y } = pos(e, canvasRef.current);
+    const { x, y } = mousePos(e, canvasRef.current);
     const ctx = canvasRef.current.getContext("2d")!;
     ctx.beginPath(); ctx.moveTo(x, y);
   };
 
   const draw = (e: React.MouseEvent) => {
     if (!drawing || !canvasRef.current) return;
-    const { x, y } = pos(e, canvasRef.current);
+    const { x, y } = mousePos(e, canvasRef.current);
     const ctx = canvasRef.current.getContext("2d")!;
     ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.strokeStyle = "#111";
     ctx.lineTo(x, y); ctx.stroke();
@@ -294,6 +257,56 @@ export default function CreateDPI() {
     setDrawing(false);
     canvasRef.current?.getContext("2d")?.beginPath();
   };
+
+  // ─── Touch events ────────────────────────────────────────────────────────────
+  // Registramos con addEventListener para poder usar { passive: false }
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    let isDrawing = false;
+
+    const onTouchStart = (e: TouchEvent) => {
+      e.preventDefault();
+      isDrawing = true;
+      const r = canvas.getBoundingClientRect();
+      const t = e.touches[0];
+      const x = (t.clientX - r.left) * (canvas.width / r.width);
+      const y = (t.clientY - r.top)  * (canvas.height / r.height);
+      const ctx = canvas.getContext("2d")!;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      if (!isDrawing) return;
+      const r = canvas.getBoundingClientRect();
+      const t = e.touches[0];
+      const x = (t.clientX - r.left) * (canvas.width / r.width);
+      const y = (t.clientY - r.top)  * (canvas.height / r.height);
+      const ctx = canvas.getContext("2d")!;
+      ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.strokeStyle = "#111";
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      e.preventDefault();
+      isDrawing = false;
+      canvas.getContext("2d")?.beginPath();
+    };
+
+    canvas.addEventListener("touchstart", onTouchStart, { passive: false });
+    canvas.addEventListener("touchmove",  onTouchMove,  { passive: false });
+    canvas.addEventListener("touchend",   onTouchEnd,   { passive: false });
+
+    return () => {
+      canvas.removeEventListener("touchstart", onTouchStart);
+      canvas.removeEventListener("touchmove",  onTouchMove);
+      canvas.removeEventListener("touchend",   onTouchEnd);
+    };
+  }, []);
 
   const clearSignature = () =>
     canvasRef.current?.getContext("2d")?.clearRect(
@@ -311,7 +324,6 @@ export default function CreateDPI() {
     return c.getContext("2d")!.getImageData(0, 0, c.width, c.height).data.some(v => v !== 0);
   };
 
-
   const validate = () => {
     const err: Record<string, string> = {};
     const ne = textError(form.nombre, "nombre");
@@ -328,7 +340,6 @@ export default function CreateDPI() {
     return Object.keys(err).length === 0;
   };
 
-
   const submit = async () => {
     if (!validate()) return;
     setGenerating(true);
@@ -336,7 +347,6 @@ export default function CreateDPI() {
     setPreview(null);
 
     try {
-
       const apiRes = await fetch("/api/dpi/create", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
@@ -365,7 +375,6 @@ export default function CreateDPI() {
       const { dpiNumber, issuedAt, validUntil, qrUrl } = await apiRes.json();
       const signatureDataUrl = canvasRef.current!.toDataURL("image/png");
 
-
       const [frontImg, backImg] = await Promise.all([
         renderFront({
           nombre: form.nombre, apellidos: form.apellidos,
@@ -389,7 +398,6 @@ export default function CreateDPI() {
     }
   };
 
-// Ea ahora función pa descargar todo 
   const dlImg = (dataUrl: string, side: "delante" | "detras") => {
     if (!preview) return;
     const code = preview.dpiNumber.replace("DPI - ", "");
@@ -405,7 +413,7 @@ export default function CreateDPI() {
 
   const inputCls = (key: string, inlineErr?: string) => {
     const hasErr = inlineErr || submitErrors[key];
-    return `w-full rounded-xl border px-4 py-3 bg-background outline-none transition ${
+    return `w-full rounded-xl border px-4 py-3 bg-background outline-none transition text-sm ${
       hasErr ? "border-red-500 focus:border-red-500" : "border-border focus:border-accent"
     }`;
   };
@@ -417,10 +425,10 @@ export default function CreateDPI() {
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Header />
 
-      <main className="flex-1 py-12">
+      <main className="flex-1 py-10 px-4 md:px-0">
         <div className="container mx-auto max-w-2xl space-y-4">
 
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-2xl sm:text-3xl font-bold">
             Crear <span className="text-accent">DPI</span>
           </h1>
 
@@ -473,6 +481,7 @@ export default function CreateDPI() {
 
           {/* Fecha nacimiento */}
           <div>
+            <span className="text-xs text-foreground/50 block mb-1">Fecha de nacimiento</span>
             <input type="date" className={inputCls("fecha")} value={form.fecha}
               onChange={e => setForm({ ...form, fecha: e.target.value })} />
             {submitErrors.fecha && <p className="text-red-500 text-xs mt-1">{submitErrors.fecha}</p>}
@@ -494,15 +503,18 @@ export default function CreateDPI() {
 
           {/* Foto */}
           <div>
+            <span className="text-xs text-foreground/50 block mb-1">Foto de perfil</span>
             <div
-              className="border-2 border-dashed rounded-xl p-4 cursor-pointer flex items-center gap-4"
+              className={`border-2 border-dashed rounded-xl p-4 cursor-pointer flex items-center gap-4 transition ${
+                submitErrors.photo ? "border-red-500" : "border-border hover:border-accent/50"
+              }`}
               onClick={() => fileRef.current?.click()}
             >
               <input ref={fileRef} type="file" accept="image/*" hidden onChange={handlePhoto} />
               {!photo
-                ? <p className="text-sm text-foreground/60">Sube tu foto</p>
+                ? <p className="text-sm text-foreground/60">Toca para subir tu foto</p>
                 : <>
-                    <img src={photo} className="w-16 h-20 object-cover rounded-lg" alt="foto" />
+                    <img src={photo} className="w-16 h-20 object-cover rounded-lg flex-shrink-0" alt="foto" />
                     <span className="text-sm text-foreground/60">Cambiar foto</span>
                   </>
               }
@@ -510,22 +522,28 @@ export default function CreateDPI() {
             {submitErrors.photo && <p className="text-red-500 text-xs mt-1">{submitErrors.photo}</p>}
           </div>
 
-          {/* Firma */}
+          {/* Firma — con soporte touch */}
           <div>
-            <div className="border rounded-xl overflow-hidden">
+            <span className="text-xs text-foreground/50 block mb-1">Firma</span>
+            <div className={`border rounded-xl overflow-hidden transition ${
+              submitErrors.signature ? "border-red-500" : "border-border"
+            }`}>
               <div className="flex items-center justify-between px-3 pt-2 pb-1">
-                <p className="text-xs text-foreground/50">Firma aquí</p>
+                <p className="text-xs text-foreground/50">Firma aquí con el dedo o el ratón</p>
                 <button
+                  type="button"
                   onClick={clearSignature}
-                  className="text-xs text-foreground/40 hover:text-foreground/70 transition"
+                  className="text-xs text-foreground/40 hover:text-foreground/70 transition px-2 py-1"
                 >
                   Borrar
                 </button>
               </div>
               <canvas
                 ref={canvasRef}
-                width={600} height={160}
-                className="w-full h-[160px] cursor-crosshair"
+                width={600}
+                height={160}
+                className="w-full touch-none"
+                style={{ height: "160px", cursor: "crosshair", display: "block" }}
                 onMouseDown={startDraw}
                 onMouseMove={draw}
                 onMouseUp={stopDraw}
@@ -535,18 +553,18 @@ export default function CreateDPI() {
             {submitErrors.signature && <p className="text-red-500 text-xs mt-1">{submitErrors.signature}</p>}
           </div>
 
-          {/* Botón generar  DPI*/}
+          {/* Botón */}
           <button
             onClick={submit}
             disabled={generating}
-            className="w-full py-4 rounded-xl bg-accent text-black font-bold cursor-pointer disabled:opacity-60 transition"
+            className="w-full py-4 rounded-xl bg-accent text-black font-bold cursor-pointer disabled:opacity-60 transition text-sm sm:text-base"
           >
             {generating ? "Generando DPI…" : "Crear DPI"}
           </button>
 
           {genError && <p className="text-red-500 text-sm text-center">{genError}</p>}
 
-          {/* La verdad me duelen los dedos y aun me queda un buen trecho de esta merda */}
+          {/* Preview */}
           {preview && (
             <motion.div
               ref={previewRef}
@@ -576,13 +594,13 @@ export default function CreateDPI() {
                 </button>
                 <button onClick={() => generatePDF(preview.front, preview.back, preview.dpiNumber)}
                   className="w-full py-4 rounded-xl border-2 border-accent text-accent font-bold cursor-pointer hover:bg-accent/10 transition">
-                   Descargar DPI en PDF
+                  Descargar DPI en PDF
                 </button>
               </div>
             </motion.div>
           )}
 
-          <p className="text-center text-xs text-foreground/60">
+          <p className="text-center text-xs text-foreground/60 pb-4">
             Al crear tu DPI aceptas nuestros{" "}
             <a href="/terms" style={{
               color: "#f5a623",
@@ -593,8 +611,6 @@ export default function CreateDPI() {
               Términos y Condiciones
             </a>
           </p>
-
-
 
         </div>
       </main>
