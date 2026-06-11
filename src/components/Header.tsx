@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 
 const navItems = [
   { href: "/", label: "Inicio" },
@@ -7,7 +7,7 @@ const navItems = [
   { href: "/gobierno", label: "Gobierno" },
   { href: "/Politics", label: "Política" },
   { href: "/dpi", label: "DPI" },
-  { href: "/pkmn", label: "PKMN" }, // Corregido a minúsculas para mantener consistencia con rutas estándar
+  { href: "/pkmn", label: "PKMN" },
   { href: "/donations", label: "Donaciones" },
 ];
 
@@ -30,11 +30,21 @@ export default function Header() {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let isMounted = true;
     fetch("/api/me")
-      .then(r => r.json())
-      .then(d => setUser(d.user ?? null))
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
+      .then((r) => r.json())
+      .then((d) => {
+        if (isMounted) setUser(d.user ?? null);
+      })
+      .catch(() => {
+        if (isMounted) setUser(null);
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -51,73 +61,96 @@ export default function Header() {
     setMobileOpen(false);
   }, [location]);
 
-  const allNavItems = [
-    ...navItems,
-    ...(user ? [{ href: "/carpeta", label: "Mi Carpeta" }] : []),
-  ];
+  const allNavItems = useMemo(() => {
+    return [
+      ...navItems,
+      ...(user ? [{ href: "/carpeta", label: "Mi Carpeta" }] : []),
+    ];
+  }, [user]);
 
   return (
     <>
-      <header className="border-b border-border bg-background/90 backdrop-blur-xl sticky top-0 z-50">
-        <div className="container mx-auto flex items-center justify-between gap-4 py-3 px-4 md:px-0">
+      <header className="border-b border-white/5 bg-background/70 backdrop-blur-md sticky top-0 z-50 transition-all duration-300 shadow-sm">
+        <div className="container mx-auto flex items-center justify-between gap-4 py-3.5 px-4 sm:px-6">
 
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <img src="/logo.png" alt="Reino del Pan" className="h-10 w-10 rounded-full logo-glow" />
+          {/* Logo y Marca Nacional */}
+          <Link href="/" className="flex items-center gap-3 shrink-0 group">
+            <div className="relative">
+              <img
+                src="/logo.png"
+                alt="Reino del Pan"
+                className="h-10 w-10 rounded-full border border-white/10"
+              />
+              <div className="absolute inset-0 rounded-full bg-accent/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </div>
             <div className="hidden sm:block">
-              <p className="text-xs uppercase tracking-[0.28em] text-foreground/60 leading-tight">Artis Panis</p>
-              <p className="text-xs uppercase tracking-[0.3em] text-foreground/70 leading-tight">Reino del Pan</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-accent/80 leading-tight">Artis Panis</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-accent leading-tight mt-0.5">Reino del Pan</p>
             </div>
           </Link>
 
-          {/* Nav DESKTOP */}
-          <nav className="hidden lg:flex items-center gap-5 text-xs">
+          {/* Navegación de Escritorio */}
+          <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
             {allNavItems.map((item) => {
-              // Verifica si es la página exacta o si la ubicación actual empieza por el href (ej. /pkmn/gyms)
-              const isActive = location === item.href || (item.href !== "/" && location.toLowerCase().startsWith(item.href.toLowerCase()));
+              const isActive = item.href === "/"
+                ? location === "/"
+                : location.toLowerCase().startsWith(item.href.toLowerCase());
+
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`nav-link uppercase tracking-[0.16em] text-xs transition-all pb-1 border-b-2 whitespace-nowrap ${isActive ? "text-accent border-accent font-semibold" : "text-foreground/70 border-transparent hover:text-accent"
+                  className={`relative px-3 py-1.5 uppercase tracking-[0.18em] text-[11px] font-bold transition-all duration-300 whitespace-nowrap rounded-md ${isActive
+                      ? "text-accent bg-accent/5 font-extrabold"
+                      : "text-white/70 hover:text-white hover:bg-white/5"
                     }`}
                 >
                   {item.label}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-accent rounded-full shadow-[0_0_8px_#d4af37]" />
+                  )}
                 </Link>
               );
             })}
           </nav>
 
-          {/* Derecha */}
+          {/* Bloque de Autenticación / Acciones */}
           <div className="flex items-center gap-3">
             {loading ? (
-              <div className="w-8 h-8 rounded-full bg-border/30 animate-pulse" />
+              <div className="w-8 h-8 rounded-full border border-white/10 bg-white/5 animate-pulse" />
             ) : user ? (
+              /* Menú de Usuario Logueado */
               <div className="relative" ref={menuRef}>
                 <button
                   onClick={() => setMenuOpen(v => !v)}
-                  className="flex items-center focus:outline-none"
+                  className="flex items-center focus:outline-none group cursor-pointer"
                 >
                   <img
                     src={user.avatar}
                     alt={user.username}
-                    className={`w-8 h-8 rounded-full border-2 transition ${menuOpen ? "border-accent" : "border-accent/40 hover:border-accent"}`}
+                    className={`w-8 h-8 rounded-full border-2 transition-all duration-300 shadow-md ${menuOpen ? "border-accent scale-105 shadow-accent/20" : "border-white/20 group-hover:border-accent/70"
+                      }`}
                   />
                 </button>
+
                 {menuOpen && (
-                  <div className="absolute right-0 mt-2 w-44 rounded-xl border border-border bg-background shadow-lg overflow-hidden z-50">
+                  <div className="absolute right-0 mt-3 w-48 rounded-xl border border-white/10 bg-neutral-950/95 backdrop-blur-lg shadow-xl overflow-hidden z-50">
+                    <div className="px-4 py-2.5 border-b border-white/5 bg-white/[0.02]">
+                      <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">Ciudadano</p>
+                      <p className="text-xs font-bold text-white truncate mt-0.5">{user.username}</p>
+                    </div>
                     <Link
                       href="/carpeta"
-                      className="w-full flex items-center gap-2 px-4 py-3 text-xs uppercase tracking-[0.18em] text-foreground/60 hover:text-accent hover:bg-accent/5 transition"
+                      className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-white/70 hover:text-accent hover:bg-accent/5 transition duration-200"
                     >
-                      Mi Carpeta
+                      📁 Mi Carpeta
                     </Link>
                     <button
                       onClick={() => { window.location.href = "/auth/logout"; }}
-                      className="w-full flex items-center gap-2 px-4 py-3 text-xs uppercase tracking-[0.18em] text-foreground/50 hover:text-red-400 hover:bg-red-500/5 transition border-t border-border"
+                      className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-red-400 hover:bg-red-500/10 transition duration-200 border-t border-white/5 cursor-pointer"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                       </svg>
                       Cerrar sesión
                     </button>
@@ -125,60 +158,74 @@ export default function Header() {
                 )}
               </div>
             ) : (
+              /* Botón de Entrada Institucional */
               <button
                 onClick={() => { window.location.href = "/auth/discord"; }}
-                className="hidden sm:inline-flex items-center gap-2 shrink-0 whitespace-nowrap cursor-pointer px-4 py-2 rounded-md text-xs font-semibold uppercase tracking-[0.18em]
-                  border border-accent/60 text-accent/90
-                  transition-all duration-300 hover:bg-accent hover:text-background hover:border-accent hover:shadow-[0_2px_20px_#d4af3730]"
+                className="hidden sm:inline-flex items-center gap-2 shrink-0 whitespace-nowrap cursor-pointer px-5 py-2 rounded-full text-[11px] font-bold uppercase tracking-[0.18em]
+                  border border-accent text-accent bg-accent/5
+                  transition-all duration-300 hover:bg-accent hover:text-background hover:shadow-[0_0_25px_rgba(212,175,55,0.35)] active:scale-[0.98]"
               >
-                <img src="/clave.png" alt="" className="w-4 h-4 object-contain" />
+                <img src="/clave.png" alt="" className="w-3.5 h-3.5 object-contain opacity-90 group-hover:brightness-0" />
                 Mi Carpeta
               </button>
             )}
 
-            {/* Hamburguesa MOBILE */}
+            {/* Hamburguesa Móvil - LINEAS EN COLOR NEGRO (Cambian a blanco al abrirse por contraste) */}
             <button
               onClick={() => setMobileOpen(v => !v)}
-              className="lg:hidden flex flex-col justify-center items-center w-9 h-9 gap-1.5 rounded-lg border border-border/60 bg-background/80 hover:border-accent/40 transition"
+              className="lg:hidden flex flex-col justify-center items-center w-10 h-10 rounded-full border border-black/10 bg-white hover:bg-neutral-200 transition relative z-50 cursor-pointer shadow-sm"
               aria-label="Menú"
             >
-              <span className={`block w-5 h-0.5 bg-foreground/70 transition-all duration-200 ${mobileOpen ? "rotate-45 translate-y-2" : ""}`} />
-              <span className={`block w-5 h-0.5 bg-foreground/70 transition-all duration-200 ${mobileOpen ? "opacity-0" : ""}`} />
-              <span className={`block w-5 h-0.5 bg-foreground/70 transition-all duration-200 ${mobileOpen ? "-rotate-45 -translate-y-2" : ""}`} />
+              <div className="w-5 h-3.5 flex flex-col justify-between relative">
+                <span className={`block w-5 h-0.5 rounded-full transition-all duration-300 ${mobileOpen ? "bg-black rotate-45 translate-y-1.5" : "bg-black"}`} />
+                <span className={`block w-5 h-0.5 rounded-full transition-all duration-300 ${mobileOpen ? "opacity-0 scale-0" : "bg-black"}`} />
+                <span className={`block w-5 h-0.5 rounded-full transition-all duration-300 ${mobileOpen ? "bg-black -rotate-45 -translate-y-1.5" : "bg-black"}`} />
+              </div>
             </button>
           </div>
         </div>
       </header>
 
-      {/* Menú móvil desplegable */}
+      {/* Menú móvil */}
       {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-40 pt-[65px]">
+        <div className="lg:hidden fixed inset-0 z-40 pt-[69px]">
+          {/* Fondo oscuro traslúcido */}
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="relative bg-background border-b border-border shadow-xl">
-            <nav className="container mx-auto px-4 py-4 flex flex-col gap-1">
+          {/* Panel de Navegación */}
+          <div className="relative bg-neutral-100 border-b border-neutral-300 shadow-2xl animate-in slide-in-from-top duration-200">
+            <nav className="container mx-auto px-5 py-6 flex flex-col gap-2">
               {allNavItems.map((item) => {
-                const isActive = location === item.href || (item.href !== "/" && location.toLowerCase().startsWith(item.href.toLowerCase()));
+                const isActive = item.href === "/"
+                  ? location === "/"
+                  : location.toLowerCase().startsWith(item.href.toLowerCase());
+
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center px-4 py-3 rounded-xl text-sm font-medium uppercase tracking-[0.16em] transition ${isActive ? "bg-accent/10 text-accent" : "text-foreground/70 hover:bg-secondary hover:text-foreground"
+                    className={`relative flex items-center px-4 py-3 rounded-md text-[11px] font-bold uppercase tracking-[0.18em] transition-all duration-200 ${isActive
+                        ? "text-neutral-900 bg-accent/20 font-black"
+                        : "text-neutral-700 hover:text-neutral-950 hover:bg-neutral-200"
                       }`}
                   >
-                    {item.label}
+                    <span className="flex-1">{item.label}</span>
+                    {isActive && (
+                      <span className="absolute left-0 top-3 bottom-3 w-1 bg-accent rounded-full" />
+                    )}
                   </Link>
                 );
               })}
 
+              {/* Botón de autenticación móvil */}
               {!user && !loading && (
                 <button
                   onClick={() => { window.location.href = "/auth/discord"; }}
-                  className="mt-2 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold uppercase tracking-[0.16em] border-2 border-accent bg-accent/10 text-accent hover:bg-accent hover:text-background transition"
+                  className="mt-4 flex items-center justify-center gap-2 px-4 py-3.5 rounded-full text-[11px] font-bold uppercase tracking-[0.18em] border border-neutral-400 bg-neutral-950 text-white hover:bg-neutral-800 transition-all duration-300 cursor-pointer shadow-md"
                 >
-                  <img src="/clave.png" alt="" className="w-4 h-4 object-contain" />
+                  <img src="/clave.png" alt="" className="w-3.5 h-3.5 object-contain brightness-0 invert" />
                   Mi Carpeta
                 </button>
               )}
