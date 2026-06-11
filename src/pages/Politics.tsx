@@ -9,7 +9,7 @@ const supabase = createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3ZWpnaGdzbmliamJxa3Voa2x2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NDAyMjUsImV4cCI6MjA5NDAxNjIyNX0.nC06Dj8SMmcR-W4T-7E9Fs1DAT0h4UEUtDxz2maQiHQ"
 );
 
-const GUILD_ID = "TU_GUILD_ID"; // ← Cambia esto por tu guild_id real
+const GUILD_ID = "TU_GUILD_ID"; // El del server 
 
 const FALLBACK_COLORS = [
   "from-rose-500/20 to-orange-500/20",
@@ -27,8 +27,7 @@ const FALLBACK_COLORS = [
 ];
 
 function hexToTailwindGradient(hex, idx) {
-  // Si tiene color_hex, genera un estilo inline; si no, usa fallback Tailwind
-  if (hex) return null; // señal para usar style inline
+  if (hex) return null; 
   return FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
 }
 
