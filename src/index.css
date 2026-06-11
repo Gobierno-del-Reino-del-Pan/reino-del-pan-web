@@ -3,6 +3,22 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@font-face {
+  font-family: 'Chillvornia';
+  src: url('/Chillvornia_Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'RMNeue';
+  src: url('/RMNeueTRIAL-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -26,7 +42,7 @@
 }
 
 :root {
-  --primary: #d4af37;
+  --primary: #0F326A;
   --primary-foreground: #1a1410;
   --background: #faf9f5;
   --foreground: #1a1410;
@@ -38,11 +54,17 @@
   --muted-foreground: #52525b;
   --border: #e0dcd3;
   --input: #fefdfb;
-  --ring: #d4af37;
+  --ring: #0F326A;
   --radius: 0.75rem;
-  --display-font: 'Playfair Display', serif;
-  --body-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-  --accent: #d4af37;
+  --display-font: 'Chillvornia', 'Playfair Display', serif;
+  --body-font: 'RMNeue', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  --accent: #234882;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
@@ -51,6 +73,8 @@ body {
   background: linear-gradient(135deg, #faf9f5 0%, #f5f2eb 100%);
   color: var(--foreground);
   letter-spacing: 0.3px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
@@ -59,38 +83,69 @@ body {
   min-height: 100vh;
 }
 
-.display {
+/* Typography */
+
+.display,
+.display-font,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--display-font);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  font-size-adjust: 1;
 }
 
-/* Logo glow and micro-animations */
+/* Logo */
+
 .logo-glow {
-  box-shadow: 0 6px 18px rgba(204,140,38,0.18), inset 0 1px 0 rgba(255,255,255,0.04);
-  transition: transform 220ms cubic-bezier(.2,.9,.3,1), box-shadow 220ms;
+  box-shadow: 0 6px 18px rgba(219, 149, 36, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: transform 220ms cubic-bezier(.2, .9, .3, 1), box-shadow 220ms, filter 0.25s ease;
 }
-.logo-glow:hover { transform: translateY(-3px) rotate(-2deg); }
 
-/* Navigation link underline animation */
+.logo-glow:hover {
+  transform: translateY(-3px) rotate(-2deg);
+  filter: drop-shadow(0 0 18px rgba(212, 175, 55, 0.45));
+}
+
+/* Navigation */
+
 .nav-link {
   position: relative;
   color: var(--foreground);
-  transition: all 240ms cubic-bezier(0.2, 0.9, 0.3, 1);
+  transition: color 240ms cubic-bezier(0.2, 0.9, 0.3, 1);
 }
+
 .nav-link:hover {
   color: var(--accent);
 }
-* {
-  box-sizing: border-box;
-}
+
+/* Elements */
 
 img {
   display: block;
   max-width: 100%;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  -webkit-user-drag: none !important;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+  cursor: pointer;
+  -webkit-user-drag: none !important;
+}
+
+button,
+select {
+  cursor: pointer;
+  -webkit-user-drag: none !important;
 }
 
 button,
@@ -99,35 +154,12 @@ textarea {
   font: inherit;
 }
 
-.display-font {
-  font-family: 'GaleySemiBold', sans-serif;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+input,
+textarea {
+  cursor: text;
 }
 
-.btn-minimal {
-  @apply inline-flex items-center justify-center rounded-full border-2 border-accent bg-transparent px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-accent transition hover:bg-accent hover:text-accent-foreground active:scale-95;
-}
-
-.section-spacious {
-  @apply py-20 lg:py-28;
-}
-
-.card-surface {
-  @apply rounded-[28px] border border-border bg-card p-8 shadow-[0_8px_30px_rgba(15,23,42,0.08)];
-}
-
-.divider-gold {
-  @apply h-px bg-accent my-14;
-}
-
-.logo-glow {
-  transition: filter 0.25s ease;
-}
-
-.logo-glow:hover {
-  filter: drop-shadow(0 0 18px rgba(212, 175, 55, 0.45));
-}
+/* Layout */
 
 .container {
   width: 100%;
@@ -145,28 +177,26 @@ textarea {
   }
 }
 
+/* Components */
+
+.btn-minimal {
+  @apply inline-flex items-center justify-center rounded-full border-2 border-accent bg-transparent px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-accent transition hover:bg-accent hover:text-accent-foreground active:scale-95;
+}
+
+.section-spacious {
+  @apply py-20 lg:py-28;
+}
+
+.divider-gold {
+  @apply h-px bg-accent my-14;
+}
+
+/* Selection */
+
 *:not(.can-select) * {
   user-select: none;
   -webkit-user-select: none !important;
   -moz-user-select: none !important;
   -ms-user-select: none !important;
   -o-user-select: none !important;
-}
-
-img {
-    user-select: none !important;
-    -webkit-user-select: none !important;
-    -moz-user-select: none !important;
-    -ms-user-select: none !important;
-    -o-user-select: none !important;
-    -webkit-user-drag: none !important;
-}
-
-a, button, select {
-    cursor: pointer;
-    -webkit-user-drag: none !important;
-}
-
-input, textarea {
-  cursor: text;
 }

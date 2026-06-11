@@ -2,11 +2,11 @@ import { Link, useLocation } from "wouter";
 import { useEffect, useState, useRef } from "react";
 
 const navItems = [
-  { href: "/",          label: "Inicio" },
-  { href: "/about",     label: "Acerca de" },
-  { href: "/gobierno",  label: "Gobierno" },
-  { href: "/Politics",  label: "Política" },
-  { href: "/dpi",       label: "DPI" },
+  { href: "/", label: "Inicio" },
+  { href: "/about", label: "Acerca de" },
+  { href: "/gobierno", label: "Gobierno" },
+  { href: "/Politics", label: "Política" },
+  { href: "/dpi", label: "DPI" },
   { href: "/donations", label: "Donaciones" },
 ];
 
@@ -36,7 +36,6 @@ export default function Header() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Cerrar menú avatar al click fuera
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -47,7 +46,6 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Cerrar menú móvil al cambiar de ruta
   useEffect(() => {
     setMobileOpen(false);
   }, [location]);
@@ -79,9 +77,8 @@ export default function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`nav-link uppercase tracking-[0.16em] text-xs transition-all pb-1 border-b-2 whitespace-nowrap ${
-                    isActive ? "text-accent border-accent font-semibold" : "text-foreground/70 border-transparent hover:text-accent"
-                  }`}
+                  className={`nav-link uppercase tracking-[0.16em] text-xs transition-all pb-1 border-b-2 whitespace-nowrap ${isActive ? "text-accent border-accent font-semibold" : "text-foreground/70 border-transparent hover:text-accent"
+                    }`}
                 >
                   {item.label}
                 </Link>
@@ -91,7 +88,6 @@ export default function Header() {
 
           {/* Derecha */}
           <div className="flex items-center gap-3">
-            {/* Avatar / Login */}
             {loading ? (
               <div className="w-8 h-8 rounded-full bg-border/30 animate-pulse" />
             ) : user ? (
@@ -129,10 +125,11 @@ export default function Header() {
             ) : (
               <button
                 onClick={() => { window.location.href = "/auth/discord"; }}
-                className="hidden sm:inline-flex shrink-0 whitespace-nowrap cursor-pointer px-4 py-2 rounded-md text-xs font-semibold uppercase tracking-[0.18em]
+                className="hidden sm:inline-flex items-center gap-2 shrink-0 whitespace-nowrap cursor-pointer px-4 py-2 rounded-md text-xs font-semibold uppercase tracking-[0.18em]
                   border border-accent/60 text-accent/90
                   transition-all duration-300 hover:bg-accent hover:text-background hover:border-accent hover:shadow-[0_2px_20px_#d4af3730]"
               >
+                <img src="/clave.png" alt="" className="w-4 h-4 object-contain" />
                 Mi Carpeta
               </button>
             )}
@@ -154,12 +151,10 @@ export default function Header() {
       {/* Menú móvil desplegable */}
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-40 pt-[65px]">
-          {/* Overlay */}
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
-          {/* Panel */}
           <div className="relative bg-background border-b border-border shadow-xl">
             <nav className="container mx-auto px-4 py-4 flex flex-col gap-1">
               {allNavItems.map((item) => {
@@ -168,11 +163,10 @@ export default function Header() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center px-4 py-3 rounded-xl text-sm font-medium uppercase tracking-[0.16em] transition ${
-                      isActive
+                    className={`flex items-center px-4 py-3 rounded-xl text-sm font-medium uppercase tracking-[0.16em] transition ${isActive
                         ? "bg-accent/10 text-accent"
                         : "text-foreground/70 hover:bg-secondary hover:text-foreground"
-                    }`}
+                      }`}
                   >
                     {item.label}
                   </Link>
@@ -182,8 +176,9 @@ export default function Header() {
               {!user && !loading && (
                 <button
                   onClick={() => { window.location.href = "/auth/discord"; }}
-                  className="mt-2 flex items-center justify-center px-4 py-3 rounded-xl text-sm font-semibold uppercase tracking-[0.16em] border-2 border-accent bg-accent/10 text-accent hover:bg-accent hover:text-background transition"
+                  className="mt-2 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold uppercase tracking-[0.16em] border-2 border-accent bg-accent/10 text-accent hover:bg-accent hover:text-background transition"
                 >
+                  <img src="/clave.png" alt="" className="w-4 h-4 object-contain" />
                   Mi Carpeta
                 </button>
               )}

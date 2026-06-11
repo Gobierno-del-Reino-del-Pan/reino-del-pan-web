@@ -9,7 +9,7 @@ const supabase = createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3ZWpnaGdzbmliamJxa3Voa2x2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NDAyMjUsImV4cCI6MjA5NDAxNjIyNX0.nC06Dj8SMmcR-W4T-7E9Fs1DAT0h4UEUtDxz2maQiHQ"
 );
 
-const GUILD_ID = "TU_GUILD_ID"; // El del server
+const GUILD_ID = "1381359904731693056"; // El del server
 
 interface Party {
   id: string;
@@ -19,6 +19,8 @@ interface Party {
   ideologia?: string;
   descripcion?: string;
   lider_id?: string;
+  lider_username?: string;      // ← nuevo
+  lider_avatar_url?: string;    // ← nuevo
   miembros?: string[];
   logo_url?: string;
   color_hex?: string;
@@ -114,13 +116,35 @@ export default function PoliticsPage() {
             transition={{ duration: 0.5 }}
             className="text-center mb-12"
           >
-            <div className="inline-block p-3 rounded-full bg-accent/10 mb-4">
-              <img src="/electa/electa.png" alt="Electa" className="w-12 h-12 object-contain" />
+            <div className="flex flex-col items-center gap-3 mb-4">
+              <div className="relative">
+                <div className="absolute inset-0 rounded-full bg-accent/20 blur-xl scale-150" />
+                <div className="relative p-3 rounded-full border border-accent/20 bg-accent/10 backdrop-blur-sm">
+                  <img src="/electa/electa.png" alt="Electa" className="w-14 h-14 object-contain drop-shadow-lg" />
+                </div>
+              </div>
+
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-xs font-mono tracking-[0.3em] uppercase text-foreground/40">
+                  Sistema
+                </span>
+                <h1
+                  className="text-5xl md:text-6xl font-black tracking-tight"
+                  style={{
+                    background: "linear-gradient(to right, #f59e0b, #fbbf24, #f97316)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                    lineHeight: "1.2",
+                    paddingBottom: "4px",
+                  }}
+                >
+                  eLECTA
+                </h1>
+              </div>
             </div>
-            <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-accent to-amber-400 bg-clip-text text-transparent">
-              Sistema eLECTA
-            </h1>
-            <p className="text-foreground/60 mt-3 max-w-2xl mx-auto">
+
+            &nbsp; <p className="text-foreground/60 mt-3 max-w-2xl mx-auto">
               Partidos políticos activos en la comunidad. Datos oficiales del censo paniense.
             </p>
           </motion.div>
@@ -236,15 +260,19 @@ export default function PoliticsPage() {
 
                       <div className="space-y-2 text-sm text-foreground/80">
                         <div className="flex items-center gap-2">
-                          <span className="text-base">👤</span>
-                          <span className="truncate font-mono text-xs">
-                            {party.lider_id}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-base">👥</span>
-                          <span className="font-mono">
-                            {miembros.length} afiliado{miembros.length !== 1 ? "s" : ""}
+                          {party.lider_avatar_url ? (
+                            <img
+                              src={party.lider_avatar_url}
+                              alt={party.lider_username || "Líder"}
+                              className="w-7 h-7 rounded-full object-cover border border-border/50 flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center text-xs text-accent font-bold flex-shrink-0">
+                              👤
+                            </div>
+                          )}
+                          <span className="font-mono text-xs truncate">
+                            {party.lider_username || party.lider_id}
                           </span>
                         </div>
                       </div>
