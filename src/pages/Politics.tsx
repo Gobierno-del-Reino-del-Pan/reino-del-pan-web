@@ -9,7 +9,22 @@ const supabase = createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3ZWpnaGdzbmliamJxa3Voa2x2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NDAyMjUsImV4cCI6MjA5NDAxNjIyNX0.nC06Dj8SMmcR-W4T-7E9Fs1DAT0h4UEUtDxz2maQiHQ"
 );
 
-const GUILD_ID = "TU_GUILD_ID"; // El del server 
+const GUILD_ID = "TU_GUILD_ID"; // El del server
+
+interface Party {
+  id: string;
+  guild_id: string;
+  nombre: string;
+  siglas: string;
+  ideologia?: string;
+  descripcion?: string;
+  lider_id?: string;
+  miembros?: string[];
+  logo_url?: string;
+  color_hex?: string;
+  activo?: boolean;
+  creado_at?: string;
+}
 
 const FALLBACK_COLORS = [
   "from-rose-500/20 to-orange-500/20",
@@ -26,15 +41,15 @@ const FALLBACK_COLORS = [
   "from-fuchsia-500/20 to-pink-400/20",
 ];
 
-function hexToTailwindGradient(hex, idx) {
-  if (hex) return null; 
+function hexToTailwindGradient(hex: string | undefined, idx: number) {
+  if (hex) return null;
   return FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
 }
 
 export default function PoliticsPage() {
-  const [parties, setParties] = useState([]);
+  const [parties, setParties] = useState<Party[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchParties() {
@@ -71,10 +86,10 @@ export default function PoliticsPage() {
 
   const cardVariants = {
     hidden: { y: 30, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { duration: 0.4, ease: "easeOut" } },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.4, ease: "easeOut" as const } },
   };
 
-  const AnimatedNumber = ({ value }) => (
+  const AnimatedNumber = ({ value }: { value: number }) => (
     <motion.span
       key={value}
       initial={{ scale: 1.2, opacity: 0 }}
@@ -160,8 +175,8 @@ export default function PoliticsPage() {
                 const tailwindGradient = hexToTailwindGradient(party.color_hex, idx);
                 const gradientStyle = party.color_hex
                   ? {
-                      background: `linear-gradient(135deg, ${party.color_hex}33, ${party.color_hex}11)`,
-                    }
+                    background: `linear-gradient(135deg, ${party.color_hex}33, ${party.color_hex}11)`,
+                  }
                   : {};
 
                 return (
@@ -252,5 +267,9 @@ export default function PoliticsPage() {
 
       <Footer />
     </div>
+  );
+}
+
+
   );
 }
