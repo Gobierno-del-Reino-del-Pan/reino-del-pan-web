@@ -7,6 +7,7 @@ const navItems = [
   { href: "/gobierno", label: "Gobierno" },
   { href: "/Politics", label: "Política" },
   { href: "/dpi", label: "DPI" },
+  { href: "/pkmn", label: "PKMN" }, // Corregido a minúsculas para mantener consistencia con rutas estándar
   { href: "/donations", label: "Donaciones" },
 ];
 
@@ -72,7 +73,8 @@ export default function Header() {
           {/* Nav DESKTOP */}
           <nav className="hidden lg:flex items-center gap-5 text-xs">
             {allNavItems.map((item) => {
-              const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
+              // Verifica si es la página exacta o si la ubicación actual empieza por el href (ej. /pkmn/gyms)
+              const isActive = location === item.href || (item.href !== "/" && location.toLowerCase().startsWith(item.href.toLowerCase()));
               return (
                 <Link
                   key={item.href}
@@ -158,14 +160,12 @@ export default function Header() {
           <div className="relative bg-background border-b border-border shadow-xl">
             <nav className="container mx-auto px-4 py-4 flex flex-col gap-1">
               {allNavItems.map((item) => {
-                const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
+                const isActive = location === item.href || (item.href !== "/" && location.toLowerCase().startsWith(item.href.toLowerCase()));
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center px-4 py-3 rounded-xl text-sm font-medium uppercase tracking-[0.16em] transition ${isActive
-                        ? "bg-accent/10 text-accent"
-                        : "text-foreground/70 hover:bg-secondary hover:text-foreground"
+                    className={`flex items-center px-4 py-3 rounded-xl text-sm font-medium uppercase tracking-[0.16em] transition ${isActive ? "bg-accent/10 text-accent" : "text-foreground/70 hover:bg-secondary hover:text-foreground"
                       }`}
                   >
                     {item.label}
