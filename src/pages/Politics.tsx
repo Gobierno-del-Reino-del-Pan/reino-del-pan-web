@@ -126,25 +126,12 @@ export default function PoliticsPage() {
 
               <div className="flex flex-col items-center gap-1">
                 <span className="text-xs font-mono tracking-[0.3em] uppercase text-foreground/40">
-                  Sistema
+                  Sistema Electa
                 </span>
-                <h1
-                  className="text-5xl md:text-6xl font-black tracking-tight"
-                  style={{
-                    background: "linear-gradient(to right, #f59e0b, #fbbf24, #f97316)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                    lineHeight: "1.2",
-                    paddingBottom: "4px",
-                  }}
-                >
-                  eLECTA
-                </h1>
               </div>
             </div>
 
-            &nbsp; <p className="text-foreground/60 mt-3 max-w-2xl mx-auto">
+            <p className="text-foreground/60 mt-3 max-w-2xl mx-auto">
               Partidos políticos activos en la comunidad. Datos oficiales del censo paniense.
             </p>
           </motion.div>
