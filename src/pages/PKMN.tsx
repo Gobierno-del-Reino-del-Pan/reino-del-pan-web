@@ -177,7 +177,7 @@ export default function PKMN() {
               <motion.div {...fadeUp(0.4)} className="rounded-2xl border border-accent/20 bg-gradient-to-b from-card/30 to-accent/[0.02] overflow-hidden flex flex-col justify-between">
                 <div className="p-6 sm:p-8 flex flex-col sm:flex-row gap-6 items-center sm:items-start">
                   <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-background border border-border/80 p-2 flex-shrink-0 shadow-sm flex items-center justify-center">
-                    <img src="/quastelar.png" alt="Quastelar S.A. Logo" className="w-full h-full object-contain" onError={(e) => { (e.target as HTMLImageElement).src = "https://via.placeholder.com/150" }} />
+                    <img src="/pkmn/Quastelar.png" alt="Quastelar S.A. Logo" className="w-full h-full object-contain" onError={(e) => { (e.target as HTMLImageElement).src = "https://via.placeholder.com/150" }} />
                   </div>
                   <div className="space-y-2 text-center sm:text-left">
                     <span className="inline-block text-[10px] font-mono tracking-widest text-accent uppercase font-bold bg-accent/10 px-2 py-0.5 rounded">Pacto Bilateral Estatal</span>
