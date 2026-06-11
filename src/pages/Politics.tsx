@@ -19,8 +19,8 @@ interface Party {
   ideologia?: string;
   descripcion?: string;
   lider_id?: string;
-  lider_username?: string;      // ← nuevo
-  lider_avatar_url?: string;    // ← nuevo
+  lider_username?: string;
+  lider_avatar_url?: string;
   miembros?: string[];
   logo_url?: string;
   color_hex?: string;
@@ -216,7 +216,7 @@ export default function PoliticsPage() {
                             <img
                               src={party.logo_url}
                               alt={`Logo ${party.siglas}`}
-                              className="w-8 h-8 rounded-full object-cover border border-border/50"
+                              className="w-8 h-8 rounded-lg object-cover border border-border/50"  // ← rounded-lg
                             />
                           )}
                           <div>
@@ -246,6 +246,7 @@ export default function PoliticsPage() {
                       )}
 
                       <div className="space-y-2 text-sm text-foreground/80">
+                        {/* Líder */}
                         <div className="flex items-center gap-2">
                           {party.lider_avatar_url ? (
                             <img
@@ -260,6 +261,15 @@ export default function PoliticsPage() {
                           )}
                           <span className="font-mono text-xs truncate">
                             {party.lider_username || party.lider_id}
+                          </span>
+                        </div>
+
+                        {/* Afiliados */}
+                        <div className="flex items-center gap-2 text-xs text-foreground/50">
+                          <span>👥</span>
+                          <span>
+                            <span className="font-semibold text-foreground/70">{miembros.length}</span>{" "}
+                            {miembros.length === 1 ? "afiliado" : "afiliados"}
                           </span>
                         </div>
                       </div>
