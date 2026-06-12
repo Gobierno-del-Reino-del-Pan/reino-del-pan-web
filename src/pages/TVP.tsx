@@ -213,7 +213,6 @@ export default function TVPPortal() {
                     </button>
                 </nav>
 
-                {/* Se eliminó el bloque de Emisión en Vivo manteniendo un espaciador estético */}
                 <div className="flex items-center w-10 h-2"></div>
             </header>
 
@@ -376,14 +375,33 @@ export default function TVPPortal() {
                 </main>
             )}
 
+            {/* FOOTER ACTUALIZADO */}
             <footer className="w-full py-10 border-t border-white/5 bg-[#050609] text-xs text-neutral-600 px-6 md:px-12 mt-12 font-tvp-text">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex items-center gap-5">
-                        <img src="/TVP/TVP.png" alt="TVP" className="h-6 object-contain opacity-35" />
-                        <div className="h-4 w-[1px] bg-white/10"></div>
-                        <img src="/TVP/2Pan.png" alt="2Pan" className="h-5 object-contain opacity-25" />
+                <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 sm:gap-6">
+                        {/* Logo enlazado a la web inicial */}
+                        <Link to="/">
+                            <a className="transition-opacity hover:opacity-80 block">
+                                <img src="/logo.png" alt="Reino del Pan" className="h-8 object-contain" />
+                            </a>
+                        </Link>
+
+                        <div className="h-4 w-[1px] bg-white/10 hidden sm:block"></div>
+
+                        {/* Botón de Discord integrado estéticamente */}
+                        <a
+                            href="https://discord.com/invite/reino-del-pan-1381359904731693056"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 bg-[#5865F2]/10 hover:bg-[#5865F2] text-[#5865F2] hover:text-white px-4 py-2 rounded-full border border-[#5865F2]/20 transition-all duration-300 font-tvp-head font-bold uppercase tracking-wider text-[10px]"
+                        >
+                            <svg className="w-4 h-4 fill-current" viewBox="0 0 127.14 96.36" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a74.37,74.37,0,0,0,6.71-11,68.6,68.6,0,0,1-10.64-5.12c.91-.66,1.8-1.34,2.65-2a75.58,75.58,0,0,0,72.94,0c.85.71,1.74,1.39,2.65,2a68.6,68.6,0,0,1-10.64,5.12,74.37,74.37,0,0,0,6.71,11,105.73,105.73,0,0,0,31.54-18.83C130.1,49.22,123.39,26.47,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.83,46,53.83,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.07,46,96.07,53,91,65.69,84.69,65.69Z" />
+                            </svg>
+                            Discord
+                        </a>
                     </div>
-                    <p className="tracking-wide font-light text-center md:text-left">
+                    <p className="tracking-wide font-light text-center sm:text-right text-neutral-500 max-w-md sm:max-w-none">
                         © 2026 Corporación de Radio y Televisión del Reino del Pan (TVP). Todos los derechos reservados.
                     </p>
                 </div>
