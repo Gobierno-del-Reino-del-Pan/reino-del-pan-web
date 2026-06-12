@@ -15,10 +15,9 @@ export default function Home() {
       {/* ── HEADER ────────────────────────────────────────────────────────── */}
       <Header />
 
-      {/* ── BANNER DE NOTICIAS (Estilo White House Marquee) ────────────────── */}
+      {/* ── BANNER DE NOTICIAS ────────────────── */}
       <div className="w-full bg-accent text-accent-foreground border-y border-accent/20 py-2.5 overflow-hidden select-none z-20 shadow-sm">
-        <div className="flex whitespace-nowrap min-w-full justify-around gap-12 animate-[marquee_30s_linear_infinite] hover:[animation-play-state:paused] cursor-pointer">
-          {/* Duplicamos el set de noticias para que el bucle sea infinito y no deje huecos */}
+        <div className="flex whitespace-nowrap gap-12 animate-[marquee_15s_linear_infinite] hover:[animation-play-state:paused] cursor-pointer">
           {[...news, ...news].map((item, index) => (
             <div key={index} className="flex items-center gap-4 text-xs font-mono uppercase tracking-[0.2em]">
               <span className="text-[9px] bg-accent-foreground/20 px-2 py-0.5 rounded-full">★</span>
