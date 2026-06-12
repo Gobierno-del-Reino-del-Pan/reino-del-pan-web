@@ -275,6 +275,142 @@ export default function PKMN() {
                 </div>
               </motion.div>
             </div>
+            {/* Tarjeta 4: Sprigatito */}
+            <motion.div {...fadeUp(0.42)} className="col-span-1 md:col-span-2 rounded-2xl border border-green-500/20 bg-gradient-to-r from-card/40 via-green-950/[0.02] to-card/40 overflow-hidden flex flex-col justify-between shadow-md">
+              <div className="p-6 sm:p-8 flex flex-col md:flex-row gap-6 md:items-center">
+                <div className="w-full md:w-44 flex flex-col items-center justify-center bg-background/50 border border-border/80 rounded-xl p-4 shadow-sm shrink-0 gap-3">
+                  <div className="w-24 h-24 flex items-center justify-center">
+                    <img
+                      src="/pkmn/sprigatito.png"
+                      alt="Especie Sprigatito"
+                      className="w-full h-full object-contain drop-shadow-[0_4px_12px_rgba(134,239,172,0.3)] hover:scale-105 transition-transform"
+                      onError={(e) => { (e.target as HTMLImageElement).src = "https://via.placeholder.com/150" }}
+                    />
+                  </div>
+                  <img src="/pkmn/tipos/planta.png" alt="Tipo Planta" className="h-6 w-auto object-contain" />
+                </div>
+
+                <div className="space-y-3 flex-1 text-center md:text-left">
+                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                    <span className="text-[10px] font-mono tracking-widest text-green-400 uppercase font-bold bg-green-500/10 px-2 py-0.5 rounded">Segundo Inicial Anunciado</span>
+                    <span className="text-[10px] font-mono text-foreground/40 bg-muted/60 px-2 py-0.5 rounded border border-border/40">Pokédex Internacional: #0906</span>
+                  </div>
+                  <h3 className="text-2xl font-black display-font text-foreground tracking-tight">Informe Biológico: Sprigatito</h3>
+                  <p className="text-sm text-foreground/80 leading-relaxed max-w-3xl">
+                    Su sedoso pelaje se asemeja en composición a las plantas. Se lava la cara con diligencia para que no se le seque. Su cuerpo desprende una dulce fragancia que embriaga a quien tiene a su alrededor.
+                  </p>
+                </div>
+              </div>
+              <div className="px-6 py-3 bg-green-500/[0.02] border-t border-green-500/10 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-green-400/80 font-mono">
+                <span>Registro: Bosque Paniense</span>
+                <span className="text-[10px] text-foreground/40">Especie Verificada por el Laboratorio Central ★</span>
+              </div>
+            </motion.div>
+
+            {/* Tarjeta 4: Cyndaquil */}
+            <motion.div {...fadeUp(0.42)} className="col-span-1 md:col-span-2 rounded-2xl border border-orange-500/20 bg-gradient-to-r from-card/40 via-orange-950/[0.02] to-card/40 overflow-hidden flex flex-col justify-between shadow-md">
+              <div className="p-6 sm:p-8 flex flex-col md:flex-row gap-6 md:items-center">
+                <div className="w-full md:w-44 flex flex-col items-center justify-center bg-background/50 border border-border/80 rounded-xl p-4 shadow-sm shrink-0 gap-3">
+                  <div className="w-24 h-24 flex items-center justify-center">
+                    <img
+                      src="/pkmn/cyndaquil.png"
+                      alt="Especie Cyndaquil"
+                      className="w-full h-full object-contain drop-shadow-[0_4px_12px_rgba(249,115,22,0.3)] hover:scale-105 transition-transform"
+                      onError={(e) => { (e.target as HTMLImageElement).src = "https://via.placeholder.com/150" }}
+                    />
+                  </div>
+                  <img src="/pkmn/tipos/fuego.png" alt="Tipo Fuego" className="h-6 w-auto object-contain" />
+                </div>
+
+                <div className="space-y-3 flex-1 text-center md:text-left">
+                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                    <span className="text-[10px] font-mono tracking-widest text-orange-400 uppercase font-bold bg-orange-500/10 px-2 py-0.5 rounded">Tercer Inicial Descubierto</span>
+                    <span className="text-[10px] font-mono text-foreground/40 bg-muted/60 px-2 py-0.5 rounded border border-border/40">Pokédex Internacional: #0155</span>
+                  </div>
+                  <h3 className="text-2xl font-black display-font text-foreground tracking-tight">Informe Biológico: Cyndaquil</h3>
+                  <p className="text-sm text-foreground/80 leading-relaxed max-w-3xl">
+                    Es tímido y suele estar acurrucado. Se protege soltando llamas por el lomo; cuando está enfadado, estas son fieras e infernales para intimidar a sus rivales, pero si está cansado sólo consigue echar algunas chispas. Los Cyndaquil del Reino del Pan han podido mantener su ADN de Hisui.
+                  </p>
+                </div>
+              </div>
+              <div className="px-6 py-3 bg-orange-500/[0.02] border-t border-orange-500/10 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-orange-400/80 font-mono">
+                <span>Registro: Área Volcánica Paniense</span>
+                <span className="text-[10px] text-foreground/40">Especie Verificada por el Laboratorio Central ★</span>
+              </div>
+            </motion.div>
+
+            &nbsp;&nbsp;
+
+            {/* Tarjeta: HACKED BY LA MAFIA DEL PAN ♠️ */}
+            <motion.div
+              {...fadeUp(0.42)}
+              className="col-span-1 md:col-span-2 rounded-2xl border border-amber-600/30 bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 overflow-hidden flex flex-col justify-between shadow-lg relative"
+            >
+              {/* Código de terminal sutil en el fondo */}
+              <div className="absolute top-2 right-4 text-[9px] text-amber-500/20 font-mono hidden sm:block select-none pointer-events-none tracking-wider">
+                STATUS: INTRUSION_DETECTED // OVR_044
+              </div>
+
+              <div className="p-6 sm:p-8 flex flex-col md:flex-row gap-6 md:items-center">
+
+                {/* Contenedor del Espécimen Izquierda */}
+                <div className="w-full md:w-44 flex flex-col items-center justify-center shrink-0 gap-3">
+
+                  {/* Celda de contención de la silueta */}
+                  <div className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 shadow-md relative overflow-hidden flex flex-col items-center justify-center">
+                    {/* Rejilla de escaneo minimalista */}
+                    <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(217,119,6,0.02)_50%,transparent_50%)] bg-[length:100%_4px] pointer-events-none"></div>
+
+                    {/* Silueta con destello Ámbar industrial */}
+                    <div className="w-24 h-24 flex items-center justify-center bg-zinc-950 border border-amber-500/10 rounded-lg relative group">
+                      <img
+                        src="/pkmn/zercorr.png"
+                        alt="PROYECTO: ZREL_M-02"
+                        className="w-full h-full object-contain brightness-0 drop-shadow-[0_0_12px_rgba(217,119,6,0.25)] scale-105 transition-transform duration-300 group-hover:scale-110"
+                        onError={(e) => { (e.target as HTMLImageElement).src = "https://via.placeholder.com/150/09090b/ffffff?text=SILUETA" }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Doble Tipo (Ahora FUERA del contenedor de la silueta y uno encima del otro) */}
+                  <div className="flex flex-col gap-1 w-full items-center justify-center mt-1">
+                    <img src="/pkmn/tipos/electrico.png" alt="Tipo Eléctrico" className="h-5 w-auto object-contain grayscale opacity-80" />
+                    <img src="/pkmn/tipos/acero.png" alt="Tipo Acero" className="h-5 w-auto object-contain grayscale opacity-80" />
+                  </div>
+                </div>
+
+                {/* Textos de la Terminal de Hackeo */}
+                <div className="space-y-3 flex-1 text-center md:text-left">
+                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                    <span className="text-[10px] font-mono tracking-widest text-amber-500 uppercase font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                      ⚠️ ARCHIVO INFILTRADO
+                    </span>
+                    <span className="text-[10px] font-mono text-zinc-400 bg-zinc-800/50 px-2 py-0.5 rounded border border-zinc-700/30">
+                      SEC_LEVEL: BLACK
+                    </span>
+                  </div>
+
+                  <h3 className="text-2xl font-black display-font text-zinc-100 tracking-tight flex items-center justify-center md:justify-start gap-2">
+                    <span className="text-amber-500 font-normal">♠️</span> REPORTE: <span className="text-amber-500 font-mono tracking-tight">[SUJETO_02-X]</span>
+                  </h3>
+
+                  <p className="text-sm text-zinc-400 leading-relaxed max-w-3xl font-mono">
+                    <span className="text-amber-500/90 font-bold">[EXTRACCIÓN]</span> Información sustraída de los servidores del Laboratorio Central. Archivos clasificados detallan la alteración genética de un espécimen base felino-humanoide. Financiación conjunta entre <span className="text-amber-400/90 underline underline-offset-4 decoration-dashed">La Mafia del Pan</span> y la división científica del <span className="text-zinc-300 font-bold">Team Rocket</span>. Estructura celular reescrita para asimilar energía cinética destructiva. Estado actual: En fase de incubación biomecánica.
+                  </p>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 py-3 bg-zinc-900/40 border-t border-zinc-900 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] font-mono">
+                <span className="flex items-center gap-1.5 text-amber-500/80">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                  MAFIA_NET // LINK_ESTABLISHED ♠️
+                </span>
+                <span className="text-[10px] text-zinc-600 line-through decoration-zinc-700">
+                  Especie Verificada por el Laboratorio Central ★
+                </span>
+              </div>
+            </motion.div>
 
             {/* Próximamente */}
             <motion.div {...fadeUp(0.44)} className="mt-12 rounded-2xl border border-dashed border-border p-6 bg-background/50 flex flex-col sm:flex-row items-center justify-between gap-4">

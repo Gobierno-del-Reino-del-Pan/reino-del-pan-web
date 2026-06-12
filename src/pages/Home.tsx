@@ -174,10 +174,10 @@ export default function Home() {
                   Descubrimiento PKMN
                 </span>
                 <h3 className="mt-6 text-2xl sm:text-3xl font-black tracking-tight text-neutral-950">
-                  Primer Inicial Revelado
+                  Tercer Inicial Revelado
                 </h3>
                 <p className="mt-4 text-[14px] sm:text-base text-neutral-700 leading-relaxed font-normal">
-                  Popplio es oficialmente el primer inicial anunciado para el ecosistema del Reino. Su naturaleza y capacidades marcarán el inicio de una nueva era de exploración.
+                  Cyndaquil es oficialmente el tercer inicial anunciado para el ecosistema del Reino. Su naturaleza y capacidades marcarán el inicio de una nueva era de exploración.
                 </p>
               </div>
               <div className="mt-8 sm:mt-0">
@@ -186,8 +186,8 @@ export default function Home() {
             </div>
             <div className="flex justify-center items-center h-full max-h-[220px] sm:max-h-full">
               <img
-                src="/pkmn/Popplio.png"
-                alt="Popplio inicial"
+                src="/pkmn/cyndaquil.png"
+                alt="cyndaquil inicial"
                 className="max-h-[180px] sm:max-h-[220px] w-auto object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.06)] group-hover:scale-105 transition-transform duration-300"
               />
             </div>
