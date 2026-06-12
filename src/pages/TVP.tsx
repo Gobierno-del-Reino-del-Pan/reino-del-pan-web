@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
-// Importa tu cliente configurado de Supabase. Ejemplo:
-// import { supabase } from "../lib/supabaseClient";
+// 1. Importamos el cliente configurado con tus variables de entorno .env
+import { supabase } from "../lib/supabaseClient";
 
 // Interfaces para tipar estrictamente el contenido y evitar errores de compilación
 interface PlayItem {
@@ -91,9 +91,8 @@ export default function TVPPortal() {
     useEffect(() => {
         async function loadNewsFromSupabase() {
             try {
-                // @ts-ignore
-                if (typeof supabase !== 'undefined') {
-                    // @ts-ignore
+                // 2. Evaluamos directamente el cliente de Supabase importado
+                if (supabase) {
                     const { data, error } = await supabase
                         .from('tvp_news')
                         .select('*')
@@ -126,7 +125,7 @@ export default function TVPPortal() {
                     }
                 }
             } catch (err) {
-                console.warn("Usando noticias locales de fallback:", err);
+                console.warn("Usando noticias locales de fallback debido a un error:", err);
             }
         }
 
@@ -375,11 +374,10 @@ export default function TVPPortal() {
                 </main>
             )}
 
-            {/* FOOTER ACTUALIZADO */}
+            {/* FOOTER */}
             <footer className="w-full py-10 border-t border-white/5 bg-[#050609] text-xs text-neutral-600 px-6 md:px-12 mt-12 font-tvp-text">
                 <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
                     <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 sm:gap-6">
-                        {/* Logo enlazado a la web inicial */}
                         <Link to="/">
                             <a className="transition-opacity hover:opacity-80 block">
                                 <img src="/logo.png" alt="Reino del Pan" className="h-8 object-contain" />
@@ -388,7 +386,6 @@ export default function TVPPortal() {
 
                         <div className="h-4 w-[1px] bg-white/10 hidden sm:block"></div>
 
-                        {/* Botón de Discord integrado estéticamente */}
                         <a
                             href="https://discord.com/invite/reino-del-pan-1381359904731693056"
                             target="_blank"
@@ -407,6 +404,7 @@ export default function TVPPortal() {
                 </div>
             </footer>
 
+            {/* BARRA MÓVIL */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#0a0b10]/95 backdrop-blur-xl border-t border-white/5 flex items-center justify-around z-50 px-6 shadow-2xl">
                 <button onClick={() => setActiveTab('play')} className={`flex flex-col items-center justify-center gap-1.5 ${activeTab === 'play' ? 'text-[#ff4d00]' : 'text-white/45'}`}>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5.5 h-5.5">

@@ -2,12 +2,8 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  "https://vwejghgsnibjbqkuhklv.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3ZWpnaGdzbmliamJxa3Voa2x2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NDAyMjUsImV4cCI6MjA5NDAxNjIyNX0.nC06Dj8SMmcR-W4T-7E9Fs1DAT0h4UEUtDxz2maQiHQ"
-);
+// 1. Importamos el cliente centralizado que lee del .env de Vite
+import { supabase } from "../lib/supabaseClient";
 
 const GUILD_ID = "1381359904731693056"; // El del server
 
@@ -55,6 +51,7 @@ export default function PoliticsPage() {
 
   useEffect(() => {
     async function fetchParties() {
+      // 2. Aquí ya usa automáticamente el cliente global con tus variables VITE_
       const { data, error } = await supabase
         .from("electa_partidos")
         .select("*")
@@ -216,7 +213,7 @@ export default function PoliticsPage() {
                             <img
                               src={party.logo_url}
                               alt={`Logo ${party.siglas}`}
-                              className="w-8 h-8 rounded-lg object-cover border border-border/50"  // ← rounded-lg
+                              className="w-8 h-8 rounded-lg object-cover border border-border/50"
                             />
                           )}
                           <div>
