@@ -29,9 +29,27 @@ const PLAY_CONTENT: { hero: any; categories: PlayCategory[] } = {
         {
             title: "Seguir viendo en TVP Play",
             items: [
-                { id: "sv1", title: "Telediario 2", progress: 75, subtitle: "Informativo nocturno paniense", img: "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?q=80&w=400&auto=format&fit=crop" },
-                { id: "sv2", title: "MasterChef Paniense", progress: 40, subtitle: "T12 - Programa 6", img: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=400&auto=format&fit=crop" },
-                { id: "sv3", title: "El Conquistador", progress: 90, subtitle: "La gran final", img: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=400&auto=format&fit=crop" }
+                {
+                    id: "sv1",
+                    title: "Telediario 2",
+                    progress: 75,
+                    subtitle: "Informativo nocturno paniense con Angels Barceló y María José Sáez",
+                    img: "TVP/Telediario2.png"
+                },
+                {
+                    id: "sv2",
+                    title: "NO ME DIGAS",
+                    progress: 40,
+                    subtitle: "Programa vespertino de los viernes donde se habla de toda la actualidad del Corazón con Yurena de presentadora",
+                    img: "https://imagenes.atresplayer.com/atp/clipping/cmsimages01/2025/09/11/E8170CEA-0E08-4A61-B7EB-269C9973142D//386x217.jpg?optimize=low&format=webply"
+                },
+                {
+                    id: "sv3",
+                    title: "Y Ahora Santaolalla",
+                    progress: 90,
+                    subtitle: "Magacín que aborda la crónica social y toda la actualidad del día con un grupo de colaboradores de diversos ámbitos. El espacio se divide en diferentes secciones y cuenta con un equipo de reporteros a pie de calle",
+                    img: "TVP/SANTAOLALLA.png"
+                }
             ]
         },
         {
@@ -185,7 +203,6 @@ export default function TVPPortal() {
                         onClick={() => setActiveTab('play')}
                         className={`transition-all duration-300 flex items-center gap-3.5 pb-2 border-b-2 uppercase font-tvp-head ${activeTab === 'play' ? 'text-[#ff4d00]' : 'text-white/60 hover:text-white border-transparent'}`}
                     >
-                        <img src="/TVP/TVPPlay.png" alt="TVP Play" className="h-4.5 object-contain inline" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                         TVP Play
                     </button>
                     <button
