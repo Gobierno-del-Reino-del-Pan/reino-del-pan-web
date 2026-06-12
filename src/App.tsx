@@ -13,6 +13,11 @@ import RestoreDPI from "./pages/RestoreDPI";
 import CreateDPI from "./pages/CreateDPI";
 import Carpeta from "./pages/Carpeta";
 import PKMN from "./pages/PKMN";
+import LaLiga from "./pages/LaLiga";
+import TVP from "./pages/TVP";
+import CSD from "./pages/LALIGA/CSD";
+import JuegoLimpio from "./pages/LALIGA/juego-limpio";
+import Reglamento from "./pages/LALIGA/reglamento";
 
 function App() {
   return (
@@ -24,6 +29,14 @@ function App() {
         <Route path="/Politics" component={Politics} />
         <Route path="/donations" component={Donations} />
         <Route path="/pkmn" component={PKMN} />
+
+        {/* Sección LALIGA */}
+        <Route path="/laliga" component={LaLiga} />
+        <Route path="/LALIGA/CSD" component={CSD} />
+        <Route path="/LALIGA/juego-limpio" component={JuegoLimpio} />
+        <Route path="/LALIGA/reglamento" component={Reglamento} />
+
+        <Route path="/tvp" component={TVP} />
         <Route path="/dpi" component={DPI} />
         <Route path="/dpi/create" component={CreateDPI} />
         <Route path="/dpi/restore" component={RestoreDPI} />

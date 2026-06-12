@@ -33,15 +33,12 @@ export default function PKMN() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Llamada combinada para obtener los miembros de cada rol desde tu API backend
-    // Nota: Ajusta las URLs si tu backend usa rutas distintas (ej: /api/discord/role/[id])
     Promise.all([
       fetch(`/api/roles/${ROLES.GIMNASIO}`).then(r => r.json()).catch(() => []),
       fetch(`/api/roles/${ROLES.ALTO_MANDO}`).then(r => r.json()).catch(() => []),
       fetch(`/api/roles/count?roles=${ROLES.ENTRENADORES_REGISTRADOS},${ROLES.ALTO_MANDO}`).then(r => r.json()).catch(() => ({ count: 0 }))
     ])
       .then(([leadersData, eliteData, trainersCountData]) => {
-        // Si tu API devuelve un array directo o envuelto en un objeto (ej: leadersData.members) adaptarlo aquí
         setLeaders(Array.isArray(leadersData) ? leadersData : (leadersData.members || []));
         setElite4(Array.isArray(eliteData) ? eliteData : (eliteData.members || []));
         setTotalTrainersCount(trainersCountData.count ?? (leaders.length + elite4.length));
@@ -156,8 +153,9 @@ export default function PKMN() {
               </motion.div>
             </div>
 
-            {/* Comunicados de Prensa */}
+            {/* ── SECCIÓN DE COMUNICADOS DE PRENSA Y REVELACIONES ── */}
             <div className="grid gap-6 md:grid-cols-2 mt-6">
+
               {/* Tarjeta 1: Corelia */}
               <motion.div {...fadeUp(0.36)} className="rounded-2xl border border-border/60 bg-card/30 overflow-hidden flex flex-col justify-between">
                 <div className="p-6 sm:p-8 flex flex-col sm:flex-row gap-6 items-center sm:items-start">
@@ -189,6 +187,50 @@ export default function PKMN() {
                 </div>
                 <div className="px-6 py-3 bg-accent/5 border-t border-accent/10 text-[11px] text-accent/70 font-mono">Asignación: Infraestructuras de Combate Gubernamentales</div>
               </motion.div>
+
+              {/* Tarjeta 3: Revelación de Inicial Popplio (Corregida y Reparada) */}
+              <motion.div {...fadeUp(0.42)} className="col-span-1 md:col-span-2 rounded-2xl border border-blue-500/20 bg-gradient-to-r from-card/40 via-blue-950/[0.02] to-card/40 overflow-hidden flex flex-col justify-between shadow-md">
+                <div className="p-6 sm:p-8 flex flex-col md:flex-row gap-6 md:items-center">
+
+                  {/* Contenedor Visual de la Ficha Técnica */}
+                  <div className="w-full md:w-44 flex flex-col items-center justify-center bg-background/50 border border-border/80 rounded-xl p-4 shadow-sm shrink-0 gap-3">
+                    <div className="w-24 h-24 flex items-center justify-center">
+                      <img
+                        src="/pkmn/Popplio.png"
+                        alt="Especie Popplio"
+                        className="w-full h-full object-contain drop-shadow-[0_4px_12px_rgba(147,197,253,0.3)] hover:scale-105 transition-transform"
+                        onError={(e) => { (e.target as HTMLImageElement).src = "https://via.placeholder.com/150" }}
+                      />
+                    </div>
+                    {/* Logo de Tipo Agua Directo (Sin envoltorios extras) */}
+                    <img src="/pkmn/tipos/agua.png" alt="Tipo Agua" className="h-6 w-auto object-contain" />
+                  </div>
+
+                  {/* Datos del Registro e Informe */}
+                  <div className="space-y-3 flex-1 text-center md:text-left">
+                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                      <span className="text-[10px] font-mono tracking-widest text-blue-400 uppercase font-bold bg-blue-500/10 px-2 py-0.5 rounded">
+                        Primer Inicial Anunciado
+                      </span>
+                      <span className="text-[10px] font-mono text-foreground/40 bg-muted/60 px-2 py-0.5 rounded border border-border/40">
+                        Pokédex Internacional: #728
+                      </span>
+                    </div>
+                    <h3 className="text-2xl font-black display-font text-foreground tracking-tight">
+                      Informe Biológico: Popplio
+                    </h3>
+                    <p className="text-sm text-foreground/80 leading-relaxed max-w-3xl">
+                      Maneja con soltura los globos de agua que crea. Para poder hacer globos más grandes, necesita practicar sin descanso. Gracias al entrenamiento diario al que se somete, es capaz de inflar globos cada vez más grandes a través de la nariz.
+                    </p>
+                  </div>
+
+                </div>
+                <div className="px-6 py-3 bg-blue-500/[0.02] border-t border-blue-500/10 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-blue-400/80 font-mono">
+                  <span>Registro: Bioma Costero Paniense</span>
+                  <span className="text-[10px] text-foreground/40">Especie Verificada por el Laboratorio Central ★</span>
+                </div>
+              </motion.div>
+
             </div>
 
             {/* Próximamente */}
@@ -197,7 +239,7 @@ export default function PKMN() {
                 <div className="text-3xl animate-pulse select-none">🧬</div>
                 <div>
                   <h4 className="text-sm font-bold text-foreground uppercase tracking-wider font-mono">Archivos Encriptados del Laboratorio</h4>
-                  <p className="text-xs text-foreground/50 leading-relaxed mt-0.5">Muy pronto se anunciará de manera oficial el Profesor Pokémon gubernamental y los especímenes iniciales asignados a la región.</p>
+                  <p className="text-xs text-foreground/50 leading-relaxed mt-0.5">Muy pronto se anunciará de manera oficial el Profesor Pokémon gubernamental y los especímenes iniciales restantes asignados a la región.</p>
                 </div>
               </div>
               <div className="w-full sm:w-auto text-center font-mono text-[10px] uppercase bg-border/40 text-foreground/60 px-3 py-1.5 rounded-lg border border-border/50">Clasificado por el Estado</div>
