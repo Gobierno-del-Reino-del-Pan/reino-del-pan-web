@@ -10,7 +10,10 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"),
     },
   },
-  // Eliminamos o corregimos el bloque build
+  server: {
+    port: 5174,
+    strictPort: true,
+  },
   build: {
     outDir: "dist",
     emptyOutDir: true,

@@ -3,12 +3,36 @@ import Footer from "../components/Footer";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
+// Estructura nativa que devuelve la API de Discord para cada miembro
+interface DiscordGuildMember {
+  user: {
+    id: string;
+    username: string;
+    global_name?: string;
+    avatar: string | null;
+  };
+  roles: string[];
+}
+
 interface DiscordMember {
   id: string;
   username: string;
   globalName?: string;
   avatar: string;
 }
+
+// --- CONFIGURACIÓN DE VARIABLES DE ENTORNO (FUERA DEL COMPONENTE) ---
+// Al estar aquí fuera, no causan que el useEffect se vuelva loco en cada renderizado.
+const SERVER_ID = String(import.meta.env.VITE_GUILD_ID || "1381359904731693056");
+
+const ROLES = {
+  GIMNASIO: String(import.meta.env.VITE_ROLE_GIMNASIO || "1508080870303596604"),
+  ALTO_MANDO: String(import.meta.env.VITE_ROLE_ALTO_MANDO || "1508080141501333576"),
+  ENTRENADORES_REGISTRADOS: String(import.meta.env.VITE_ROLE_ENTRENADORES || "1508081112230920402")
+};
+
+console.log("¿Vite lee el .env?", import.meta.env.VITE_ROLE_GIMNASIO);
+console.log("Objeto ROLES cargado:", ROLES);
 
 export default function PKMN() {
   const fadeUp = (delay = 0) => ({
@@ -17,35 +41,63 @@ export default function PKMN() {
     transition: { duration: 0.6, ease: "easeOut" as const, delay },
   });
 
-  // ── CONTROL DE VARIABLES DE ENTORNO EN VITE ──
-  // Si no detecta la variable de entorno, recurre al ID de respaldo para evitar crasheos.
-  const SERVER_ID = import.meta.env.VITE_GUILD_ID || "1381359904731693056";
-
-  const ROLES = {
-    GIMNASIO: import.meta.env.VITE_ROLE_GIMNASIO || "1508080870303596604",
-    ALTO_MANDO: import.meta.env.VITE_ROLE_ALTO_MANDO || "1508080141501333576",
-    ENTRENADORES_REGISTRADOS: import.meta.env.VITE_ROLE_ENTRENADORES || "1508081112230920402"
-  };
-
   const [leaders, setLeaders] = useState<DiscordMember[]>([]);
   const [elite4, setElite4] = useState<DiscordMember[]>([]);
   const [totalTrainersCount, setTotalTrainersCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Helper para transformar el formato nativo de Discord a tu interfaz limpia
+  const mapDiscordMember = (member: DiscordGuildMember): DiscordMember => {
+    const { id, username, global_name, avatar } = member.user;
+    const avatarUrl = avatar
+      ? `https://cdn.discordapp.com/avatars/${id}/${avatar}.png`
+      : "https://via.placeholder.com/150";
+
+    return {
+      id,
+      username,
+      globalName: global_name || undefined,
+      avatar: avatarUrl
+    };
+  };
+
   useEffect(() => {
-    Promise.all([
-      fetch(`/api/roles/${ROLES.GIMNASIO}`).then(r => r.json()).catch(() => []),
-      fetch(`/api/roles/${ROLES.ALTO_MANDO}`).then(r => r.json()).catch(() => []),
-      fetch(`/api/roles/count?roles=${ROLES.ENTRENADORES_REGISTRADOS},${ROLES.ALTO_MANDO}`).then(r => r.json()).catch(() => ({ count: 0 }))
-    ])
-      .then(([leadersData, eliteData, trainersCountData]) => {
-        setLeaders(Array.isArray(leadersData) ? leadersData : (leadersData.members || []));
-        setElite4(Array.isArray(eliteData) ? eliteData : (eliteData.members || []));
-        setTotalTrainersCount(trainersCountData.count ?? (leaders.length + elite4.length));
+    // Al no depender de variables internas replicadas, se ejecuta una sola vez de forma segura
+    fetch(`/api/roles`)
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+        return r.json();
       })
-      .catch((err) => console.error("Error cargando datos de La Liga:", err))
+      .then((allMembers: DiscordGuildMember[]) => {
+        if (!Array.isArray(allMembers)) {
+          console.error("La estructura devuelta no es un array válido:", allMembers);
+          return;
+        }
+
+        // 1. Filtrar Líderes de Gimnasio
+        const gymLeaders = allMembers
+          .filter(m => m.roles.includes(ROLES.GIMNASIO))
+          .map(mapDiscordMember);
+
+        // 2. Filtrar Alto Mando
+        const elite4Members = allMembers
+          .filter(m => m.roles.includes(ROLES.ALTO_MANDO))
+          .map(mapDiscordMember);
+
+        // 3. Contar entrenadores totales unificados
+        const totalTrainers = allMembers.filter(m =>
+          m.roles.includes(ROLES.ENTRENADORES_REGISTRADOS) || m.roles.includes(ROLES.ALTO_MANDO)
+        ).length;
+
+        setLeaders(gymLeaders);
+        setElite4(elite4Members);
+        setTotalTrainersCount(totalTrainers);
+      })
+      .catch((err) => {
+        console.error("Error crítico conectando con el Proxy de Discord:", err);
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, []); // Array de dependencias vacío para evitar bucles infinitos
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground overflow-hidden">
@@ -75,8 +127,7 @@ export default function PKMN() {
                 <span className="text-3xl sm:text-4xl font-bold display-font text-accent block mt-1">
                   {loading ? "..." : leaders.length} <span className="text-sm font-normal text-foreground/40">/ 8</span>
                 </span>
-                {/* Uso seguro de slice mediante fallback string */}
-                <span className="text-[11px] text-foreground/50 font-mono block mt-2">ID: ...{(ROLES.GIMNASIO || "").slice(-6)}</span>
+                <span className="text-[11px] text-foreground/50 font-mono block mt-2">ID: ...{ROLES.GIMNASIO.slice(-6)}</span>
               </motion.div>
 
               <motion.div {...fadeUp(0.18)} className="p-5 rounded-2xl border border-border/60 bg-card/40 backdrop-blur-sm">
@@ -84,8 +135,7 @@ export default function PKMN() {
                 <span className="text-3xl sm:text-4xl font-bold display-font text-foreground block mt-1">
                   {loading ? "..." : elite4.length} <span className="text-sm font-normal text-foreground/40">Elite</span>
                 </span>
-                {/* Uso seguro de slice mediante fallback string */}
-                <span className="text-[11px] text-foreground/50 font-mono block mt-2">ID: ...{(ROLES.ALTO_MANDO || "").slice(-6)}</span>
+                <span className="text-[11px] text-foreground/50 font-mono block mt-2">ID: ...{ROLES.ALTO_MANDO.slice(-6)}</span>
               </motion.div>
 
               <motion.div {...fadeUp(0.24)} className="col-span-2 sm:col-span-1 p-5 rounded-2xl border border-accent/20 bg-accent/5 backdrop-blur-sm">
@@ -118,7 +168,12 @@ export default function PKMN() {
                   <div className="grid gap-2">
                     {elite4.map((member) => (
                       <div key={member.id} className="flex items-center gap-3 p-2 rounded-xl bg-background/40 border border-border/40">
-                        <img src={member.avatar || "https://via.placeholder.com/150"} alt={member.username} className="w-8 h-8 rounded-full border border-accent/20" />
+                        <img
+                          src={member.avatar}
+                          alt={member.username}
+                          className="w-8 h-8 rounded-full border border-accent/20 object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).src = "https://via.placeholder.com/150" }}
+                        />
                         <div>
                           <p className="text-sm font-medium leading-none text-foreground">{member.globalName || member.username}</p>
                           <p className="text-[10px] font-mono text-foreground/40 mt-0.5">@{member.username}</p>
@@ -145,7 +200,12 @@ export default function PKMN() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {leaders.map((member) => (
                       <div key={member.id} className="flex items-center gap-2 p-2 rounded-xl bg-background/40 border border-border/40">
-                        <img src={member.avatar || "https://via.placeholder.com/150"} alt={member.username} className="w-7 h-7 rounded-full object-cover" />
+                        <img
+                          src={member.avatar}
+                          alt={member.username}
+                          className="w-7 h-7 rounded-full object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).src = "https://via.placeholder.com/150" }}
+                        />
                         <span className="text-xs font-medium text-foreground truncate">{member.globalName || member.username}</span>
                       </div>
                     ))}
@@ -154,7 +214,7 @@ export default function PKMN() {
               </motion.div>
             </div>
 
-            {/* ── SECCIÓN DE COMUNICADOS DE PRENSA Y REVELACIONES ── */}
+            {/* Secciones de Comunicados */}
             <div className="grid gap-6 md:grid-cols-2 mt-6">
               {/* Tarjeta 1: Corelia */}
               <motion.div {...fadeUp(0.36)} className="rounded-2xl border border-border/60 bg-card/30 overflow-hidden flex flex-col justify-between">
@@ -188,7 +248,7 @@ export default function PKMN() {
                 <div className="px-6 py-3 bg-accent/5 border-t border-accent/10 text-[11px] text-accent/70 font-mono">Asignación: Infraestructuras de Combate Gubernamentales</div>
               </motion.div>
 
-              {/* Tarjeta 3: Revelación de Inicial Popplio */}
+              {/* Tarjeta 3: Popplio */}
               <motion.div {...fadeUp(0.42)} className="col-span-1 md:col-span-2 rounded-2xl border border-blue-500/20 bg-gradient-to-r from-card/40 via-blue-950/[0.02] to-card/40 overflow-hidden flex flex-col justify-between shadow-md">
                 <div className="p-6 sm:p-8 flex flex-col md:flex-row gap-6 md:items-center">
                   <div className="w-full md:w-44 flex flex-col items-center justify-center bg-background/50 border border-border/80 rounded-xl p-4 shadow-sm shrink-0 gap-3">

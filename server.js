@@ -28,6 +28,7 @@ try {
 // ── Discord OAuth2 config ─────────────────────────────────────────────────────
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
+const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const GUILD_ID = process.env.GUILD_ID;
 const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:5174";
 const DISCORD_REDIRECT_URI = `${PUBLIC_URL}/auth/discord/callback`;
@@ -421,3 +422,37 @@ if (!(process.env.NODE_ENV === "production" && !process.env.LOCAL_RUN)) {
     console.log(`  Server furula en http://localhost:${port}`);
   });
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROXY DE DISCORD (Para la lista de miembros usando el Bot)
+// ─────────────────────────────────────────────────────────────────────────────
+
+app.get("/api/roles", async (req, res) => {
+  try {
+    if (!DISCORD_TOKEN) {
+      console.error("❌ Error: Falta la variable DISCORD_TOKEN en el archivo .env");
+      return res.status(500).json({ error: "Configuración incompleta en el servidor." });
+    }
+
+    // Hacemos la petición a Discord firmando como BOT con tu token 'MTUwNT...'
+    const response = await fetch(`${DISCORD_API}/guilds/${GUILD_ID}/members?limit=1000`, {
+      headers: {
+        Authorization: `Bot ${DISCORD_TOKEN.trim()}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(`❌ Discord API respondió con código ${response.status}:`, data);
+      return res.status(response.status).json(data);
+    }
+
+    // Si todo va bien, le devolvemos la lista completa de miembros a tu Frontend
+    return res.json(data);
+
+  } catch (error) {
+    console.error("❌ Error en el proxy /api/roles:", error);
+    return res.status(500).json({ error: "Error interno al conectar con Discord." });
+  }
+});
