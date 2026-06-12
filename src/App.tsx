@@ -30,7 +30,7 @@ function App() {
         <Route path="/donations" component={Donations} />
         <Route path="/pkmn" component={PKMN} />
 
-        {/* Sección LALIGA */}
+
         <Route path="/laliga" component={LaLiga} />
         <Route path="/LALIGA/CSD" component={CSD} />
         <Route path="/LALIGA/juego-limpio" component={JuegoLimpio} />

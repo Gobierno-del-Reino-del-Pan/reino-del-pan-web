@@ -8,7 +8,7 @@ import session from "express-session";
 import { readFileSync } from "node:fs";
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname  = path.dirname(__filename);
+const __dirname = path.dirname(__filename);
 
 // ── Supabase ──────────────────────────────────────────────────────────────────
 const supabase = createClient(
@@ -26,19 +26,19 @@ try {
 }
 
 // ── Discord OAuth2 config ─────────────────────────────────────────────────────
-const DISCORD_CLIENT_ID     = process.env.DISCORD_CLIENT_ID;
+const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
-const GUILD_ID              = process.env.GUILD_ID;
-const PUBLIC_URL            = process.env.PUBLIC_URL || "http://localhost:3344";
-const DISCORD_REDIRECT_URI  = `${PUBLIC_URL}/auth/discord/callback`;
-const DISCORD_API           = "https://discord.com/api/v10";
+const GUILD_ID = process.env.GUILD_ID;
+const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:5174";
+const DISCORD_REDIRECT_URI = `${PUBLIC_URL}/auth/discord/callback`;
+const DISCORD_API = "https://discord.com/api/v10";
 
 // ── Rate-limit en RAM ─────────────────────────────────────────────────────────
 const ipStore = new Map();
-const IDLE_TTL_MS      = 60 * 60 * 1000;
-const SOFT_LIMIT       = 5;
+const IDLE_TTL_MS = 60 * 60 * 1000;
+const SOFT_LIMIT = 5;
 const SOFT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
-const HARD_COOLDOWN_MS = 7  * 24 * 60 * 60 * 1000;
+const HARD_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 
 function getIpEntry(ip) {
   return ipStore.get(ip) ?? { count: 0, firstAt: null, blockedUntil: null, cleanTimer: null };
@@ -53,7 +53,7 @@ function scheduleClean(ip) {
   }, IDLE_TTL_MS);
 }
 function checkRateLimit(ip) {
-  const now   = Date.now();
+  const now = Date.now();
   const entry = getIpEntry(ip);
   if (entry.blockedUntil && now < entry.blockedUntil)
     return { allowed: false, retryAfterMs: entry.blockedUntil - now };
@@ -78,14 +78,14 @@ const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 async function getNextDPINumber() {
   const { data, error } = await supabase.rpc("increment_dpi_counter");
   if (error) throw new Error("Error al obtener número DPI: " + error.message);
-  const seq    = data;
-  const num    = String(seq).padStart(6, "0");
+  const seq = data;
+  const num = String(seq).padStart(6, "0");
   const letter = LETTERS[seq % LETTERS.length];
   return `DPI - ${num}${letter}`;
 }
 
 // ── Express ───────────────────────────────────────────────────────────────────
-const app  = express();
+const app = express();
 const port = process.env.PORT || 3344;
 const staticFolder = path.resolve(__dirname, "dist", "public");
 
@@ -96,13 +96,13 @@ app.use(express.json({ limit: "1mb" }));
 
 // ── Sesiones con configuración mejorada ────────────────────────────────────────
 app.use(session({
-  secret:            process.env.SESSION_SECRET || "fallback-secret",
-  resave:            false,
+  secret: process.env.SESSION_SECRET || "fallback-secret",
+  resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure:   'auto',        // 'auto' detecta si la conexión es HTTPS
-    maxAge:   7 * 24 * 60 * 60 * 1000,
+    secure: 'auto',        // 'auto' detecta si la conexión es HTTPS
+    maxAge: 7 * 24 * 60 * 60 * 1000,
     sameSite: "lax",
   },
 }));
@@ -130,10 +130,10 @@ function requireAuth(req, res, next) {
 // GET /auth/discord → redirige a Discord
 app.get("/auth/discord", (req, res) => {
   const params = new URLSearchParams({
-    client_id:     DISCORD_CLIENT_ID,
-    redirect_uri:  DISCORD_REDIRECT_URI,
+    client_id: DISCORD_CLIENT_ID,
+    redirect_uri: DISCORD_REDIRECT_URI,
     response_type: "code",
-    scope:         "identify guilds.members.read",
+    scope: "identify guilds.members.read",
   });
   res.redirect(`https://discord.com/oauth2/authorize?${params}`);
 });
@@ -146,14 +146,14 @@ app.get("/auth/discord/callback", async (req, res) => {
   try {
     // 1. Obtener token de acceso
     const tokenRes = await fetch(`${DISCORD_API}/oauth2/token`, {
-      method:  "POST",
+      method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        client_id:     DISCORD_CLIENT_ID,
+        client_id: DISCORD_CLIENT_ID,
         client_secret: DISCORD_CLIENT_SECRET,
-        grant_type:    "authorization_code",
+        grant_type: "authorization_code",
         code,
-        redirect_uri:  DISCORD_REDIRECT_URI,
+        redirect_uri: DISCORD_REDIRECT_URI,
       }),
     });
     const tokenData = await tokenRes.json();
@@ -208,14 +208,14 @@ app.get("/auth/discord/callback", async (req, res) => {
 
     // 7. Guardar en sesión los datos del usuario
     req.session.user = {
-      id:         profile.id,
-      username:   profile.username,
-      avatar:     profile.avatar
+      id: profile.id,
+      username: profile.username,
+      avatar: profile.avatar
         ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png?size=128`
         : `https://cdn.discordapp.com/embed/avatars/${parseInt(profile.id) % 5}.png`,
       inGuild,
-      roles:      rolesDelUsuario,
-      dpi:        dpiData,
+      roles: rolesDelUsuario,
+      dpi: dpiData,
       verificado: !!verificado,
     };
 
@@ -269,7 +269,7 @@ app.get("/api/me/refresh", requireAuth, async (req, res) => {
       dpiData = dpi;
     }
 
-    req.session.user.dpi        = dpiData;
+    req.session.user.dpi = dpiData;
     req.session.user.verificado = !!verificado;
 
     return res.json({ user: req.session.user });
@@ -295,10 +295,10 @@ app.post("/api/dpi/create", async (req, res) => {
     return res.status(400).json({ error: "Faltan campos obligatorios." });
   try {
     const dpiNumber = await getNextDPINumber();
-    const today     = new Date();
-    const expDate   = formatDate(today);
-    const valDate   = addMonths(today, 14);
-    const qrUrl     = buildQrUrl(dpiNumber);
+    const today = new Date();
+    const expDate = formatDate(today);
+    const valDate = addMonths(today, 14);
+    const qrUrl = buildQrUrl(dpiNumber);
     const { error: dbErr } = await supabase.from("dpis").insert({
       dpi_number: dpiNumber, nombre: nombre.trim().toUpperCase(),
       apellidos: apellidos.trim().toUpperCase(), genero, fecha_nac: fecha,
@@ -316,11 +316,11 @@ app.post("/api/dpi/create", async (req, res) => {
 
 app.post("/api/dpi/restore", async (req, res) => {
   const { dpi, discord } = req.body ?? {};
-  const DPI_REGEX    = /^DPI - \d{1,6}[A-Z]$/;
+  const DPI_REGEX = /^DPI - \d{1,6}[A-Z]$/;
   const SAFE_DISCORD = /^[a-zA-Z0-9_.#\-]{2,32}$|^\d{17,20}$/;
-  const cleanDPI     = (dpi     ?? "").replace(/[\x00-\x1F\x7F<>"'`;]/g, "").trim().toUpperCase().replace(/\s*-\s*/g, " - ");
+  const cleanDPI = (dpi ?? "").replace(/[\x00-\x1F\x7F<>"'`;]/g, "").trim().toUpperCase().replace(/\s*-\s*/g, " - ");
   const cleanDiscord = (discord ?? "").replace(/[\x00-\x1F\x7F<>"'`;]/g, "").trim();
-  if (!DPI_REGEX.test(cleanDPI))        return res.status(400).json({ error: "Formato de DPI inválido." });
+  if (!DPI_REGEX.test(cleanDPI)) return res.status(400).json({ error: "Formato de DPI inválido." });
   if (!SAFE_DISCORD.test(cleanDiscord)) return res.status(400).json({ error: "Usuario de Discord no válido." });
   try {
     const isId = /^\d{17,20}$/.test(cleanDiscord);
@@ -343,7 +343,7 @@ app.post("/api/dpi/restore", async (req, res) => {
 });
 
 app.get("/api/dpi/verify/:code", async (req, res) => {
-  const raw  = decodeURIComponent(req.params.code);
+  const raw = decodeURIComponent(req.params.code);
   const full = raw.startsWith("DPI - ") ? raw : `DPI - ${raw}`;
   const { data, error } = await supabase
     .from("dpis").select("dpi_number,nombre,apellidos,genero,fecha_nac,region,issued_at,valid_until")
@@ -368,7 +368,7 @@ function verifyHtml(d) {
     *{box-sizing:border-box;margin:0;padding:0}
     body{background:#12080a;color:#e8d5a0;font-family:'Georgia',serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem}
     .card{background:#1e0f10;border:1px solid #5a1a1a;border-radius:1rem;max-width:380px;width:100%;padding:2rem;box-shadow:0 0 40px #5a1a1a44}
-    .badge{display:inline-block;background:#5a1a1a;color:#f5c842;font-size:.7rem;letter-spacing:.12em;padding:.25rem .7rem;border-radius:999px;margin-bottom:1.2rem;text-transform:uppercase;font-family:monospace}
+    .badge{display:inline-block;background:#5a1a1a;color:#f5c842;font-size:.7rem;letter-spacing:.12em;padding:.25rem .7rem;border-radius999px;margin-bottom:1.2rem;text-transform:uppercase;font-family:monospace}
     .dpi-num{font-size:1.25rem;font-family:'Courier New',monospace;color:#f5c842;background:#2a0d0e;padding:.5rem 1rem;border-radius:.5rem;text-align:center;margin-bottom:1.5rem}
     .row{display:flex;justify-content:space-between;padding:.55rem 0;border-bottom:1px solid #2e1010;font-size:.92rem;gap:.5rem}
     .row:last-child{border-bottom:none}
@@ -396,7 +396,7 @@ function verifyHtml(d) {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function formatDate(d) {
-  return [String(d.getDate()).padStart(2,"0"), String(d.getMonth()+1).padStart(2,"0"), d.getFullYear()].join("/");
+  return [String(d.getDate()).padStart(2, "0"), String(d.getMonth() + 1).padStart(2, "0"), d.getFullYear()].join("/");
 }
 function addMonths(base, months) {
   const d = new Date(base); d.setMonth(d.getMonth() + months); return formatDate(d);
@@ -411,6 +411,13 @@ app.get("*", (_req, res) => {
   res.sendFile(path.join(staticFolder, "index.html"));
 });
 
-app.listen(port, () => {
-  console.log(`  Server furula en http://localhost:${port}`);
-});
+// export default siempre al top-level (requerido por ESM)
+// En Vercel Serverless la plataforma usa este export; en local se ignora
+export default app;
+
+// Solo levantamos el servidor HTTP cuando NO estamos en Vercel Serverless
+if (!(process.env.NODE_ENV === "production" && !process.env.LOCAL_RUN)) {
+  app.listen(port, () => {
+    console.log(`  Server furula en http://localhost:${port}`);
+  });
+}
