@@ -3,7 +3,6 @@ import Footer from "../components/Footer";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
-// Estructura de un miembro de Discord que viene de la API
 interface DiscordMember {
   id: string;
   username: string;
@@ -18,15 +17,16 @@ export default function PKMN() {
     transition: { duration: 0.6, ease: "easeOut" as const, delay },
   });
 
-  // Configuración de IDs de Discord obligatorios
-  const SERVER_ID = "1381359904731693056";
+  // ── CONTROL DE VARIABLES DE ENTORNO EN VITE ──
+  // Si no detecta la variable de entorno, recurre al ID de respaldo para evitar crasheos.
+  const SERVER_ID = import.meta.env.VITE_GUILD_ID || "1381359904731693056";
+
   const ROLES = {
-    GIMNASIO: "1508080870303596604",
-    ALTO_MANDO: "1508080141501333576",
-    ENTRENADORES_REGISTRADOS: "1508081112230920402"
+    GIMNASIO: import.meta.env.VITE_ROLE_GIMNASIO || "1508080870303596604",
+    ALTO_MANDO: import.meta.env.VITE_ROLE_ALTO_MANDO || "1508080141501333576",
+    ENTRENADORES_REGISTRADOS: import.meta.env.VITE_ROLE_ENTRENADORES || "1508081112230920402"
   };
 
-  // Estados para almacenar los datos reales del servidor
   const [leaders, setLeaders] = useState<DiscordMember[]>([]);
   const [elite4, setElite4] = useState<DiscordMember[]>([]);
   const [totalTrainersCount, setTotalTrainersCount] = useState<number | null>(null);
@@ -53,7 +53,6 @@ export default function PKMN() {
 
       <main className="flex-1">
         <section className="section-spacious relative">
-          {/* Fondo geométrico */}
           <div className="absolute right-[-10%] top-[10%] w-96 h-96 rounded-full border-8 border-accent/5 pointer-events-none after:content-[''] after:absolute after:top-1/2 after:w-full after:h-2 after:bg-accent/5 before:content-[''] before:absolute before:top-[38%] before:left-[38%] before:w-24 before:h-24 before:rounded-full before:border-8 before:border-accent/5" />
 
           <div className="container mx-auto max-w-5xl px-4 sm:px-6">
@@ -76,7 +75,8 @@ export default function PKMN() {
                 <span className="text-3xl sm:text-4xl font-bold display-font text-accent block mt-1">
                   {loading ? "..." : leaders.length} <span className="text-sm font-normal text-foreground/40">/ 8</span>
                 </span>
-                <span className="text-[11px] text-foreground/50 font-mono block mt-2">ID: ...{ROLES.GIMNASIO.slice(-6)}</span>
+                {/* Uso seguro de slice mediante fallback string */}
+                <span className="text-[11px] text-foreground/50 font-mono block mt-2">ID: ...{(ROLES.GIMNASIO || "").slice(-6)}</span>
               </motion.div>
 
               <motion.div {...fadeUp(0.18)} className="p-5 rounded-2xl border border-border/60 bg-card/40 backdrop-blur-sm">
@@ -84,7 +84,8 @@ export default function PKMN() {
                 <span className="text-3xl sm:text-4xl font-bold display-font text-foreground block mt-1">
                   {loading ? "..." : elite4.length} <span className="text-sm font-normal text-foreground/40">Elite</span>
                 </span>
-                <span className="text-[11px] text-foreground/50 font-mono block mt-2">ID: ...{ROLES.ALTO_MANDO.slice(-6)}</span>
+                {/* Uso seguro de slice mediante fallback string */}
+                <span className="text-[11px] text-foreground/50 font-mono block mt-2">ID: ...{(ROLES.ALTO_MANDO || "").slice(-6)}</span>
               </motion.div>
 
               <motion.div {...fadeUp(0.24)} className="col-span-2 sm:col-span-1 p-5 rounded-2xl border border-accent/20 bg-accent/5 backdrop-blur-sm">
@@ -155,7 +156,6 @@ export default function PKMN() {
 
             {/* ── SECCIÓN DE COMUNICADOS DE PRENSA Y REVELACIONES ── */}
             <div className="grid gap-6 md:grid-cols-2 mt-6">
-
               {/* Tarjeta 1: Corelia */}
               <motion.div {...fadeUp(0.36)} className="rounded-2xl border border-border/60 bg-card/30 overflow-hidden flex flex-col justify-between">
                 <div className="p-6 sm:p-8 flex flex-col sm:flex-row gap-6 items-center sm:items-start">
@@ -188,49 +188,32 @@ export default function PKMN() {
                 <div className="px-6 py-3 bg-accent/5 border-t border-accent/10 text-[11px] text-accent/70 font-mono">Asignación: Infraestructuras de Combate Gubernamentales</div>
               </motion.div>
 
-              {/* Tarjeta 3: Revelación de Inicial Popplio (Corregida y Reparada) */}
+              {/* Tarjeta 3: Revelación de Inicial Popplio */}
               <motion.div {...fadeUp(0.42)} className="col-span-1 md:col-span-2 rounded-2xl border border-blue-500/20 bg-gradient-to-r from-card/40 via-blue-950/[0.02] to-card/40 overflow-hidden flex flex-col justify-between shadow-md">
                 <div className="p-6 sm:p-8 flex flex-col md:flex-row gap-6 md:items-center">
-
-                  {/* Contenedor Visual de la Ficha Técnica */}
                   <div className="w-full md:w-44 flex flex-col items-center justify-center bg-background/50 border border-border/80 rounded-xl p-4 shadow-sm shrink-0 gap-3">
                     <div className="w-24 h-24 flex items-center justify-center">
-                      <img
-                        src="/pkmn/Popplio.png"
-                        alt="Especie Popplio"
-                        className="w-full h-full object-contain drop-shadow-[0_4px_12px_rgba(147,197,253,0.3)] hover:scale-105 transition-transform"
-                        onError={(e) => { (e.target as HTMLImageElement).src = "https://via.placeholder.com/150" }}
-                      />
+                      <img src="/pkmn/Popplio.png" alt="Especie Popplio" className="w-full h-full object-contain drop-shadow-[0_4px_12px_rgba(147,197,253,0.3)] hover:scale-105 transition-transform" onError={(e) => { (e.target as HTMLImageElement).src = "https://via.placeholder.com/150" }} />
                     </div>
-                    {/* Logo de Tipo Agua Directo (Sin envoltorios extras) */}
                     <img src="/pkmn/tipos/agua.png" alt="Tipo Agua" className="h-6 w-auto object-contain" />
                   </div>
 
-                  {/* Datos del Registro e Informe */}
                   <div className="space-y-3 flex-1 text-center md:text-left">
                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
-                      <span className="text-[10px] font-mono tracking-widest text-blue-400 uppercase font-bold bg-blue-500/10 px-2 py-0.5 rounded">
-                        Primer Inicial Anunciado
-                      </span>
-                      <span className="text-[10px] font-mono text-foreground/40 bg-muted/60 px-2 py-0.5 rounded border border-border/40">
-                        Pokédex Internacional: #728
-                      </span>
+                      <span className="text-[10px] font-mono tracking-widest text-blue-400 uppercase font-bold bg-blue-500/10 px-2 py-0.5 rounded">Primer Inicial Anunciado</span>
+                      <span className="text-[10px] font-mono text-foreground/40 bg-muted/60 px-2 py-0.5 rounded border border-border/40">Pokédex Internacional: #728</span>
                     </div>
-                    <h3 className="text-2xl font-black display-font text-foreground tracking-tight">
-                      Informe Biológico: Popplio
-                    </h3>
+                    <h3 className="text-2xl font-black display-font text-foreground tracking-tight">Informe Biológico: Popplio</h3>
                     <p className="text-sm text-foreground/80 leading-relaxed max-w-3xl">
                       Maneja con soltura los globos de agua que crea. Para poder hacer globos más grandes, necesita practicar sin descanso. Gracias al entrenamiento diario al que se somete, es capaz de inflar globos cada vez más grandes a través de la nariz.
                     </p>
                   </div>
-
                 </div>
                 <div className="px-6 py-3 bg-blue-500/[0.02] border-t border-blue-500/10 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-blue-400/80 font-mono">
                   <span>Registro: Bioma Costero Paniense</span>
                   <span className="text-[10px] text-foreground/40">Especie Verificada por el Laboratorio Central ★</span>
                 </div>
               </motion.div>
-
             </div>
 
             {/* Próximamente */}

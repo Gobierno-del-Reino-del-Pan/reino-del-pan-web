@@ -10,17 +10,9 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"),
     },
   },
+  // Eliminamos o corregimos el bloque build
   build: {
     outDir: "dist",
     emptyOutDir: true,
-  },
-  server: {
-    proxy: {
-      "/auth": {
-        target: "http://localhost:5174",
-        changeOrigin: true,
-        secure: false,
-      },
-    },
   },
 });
