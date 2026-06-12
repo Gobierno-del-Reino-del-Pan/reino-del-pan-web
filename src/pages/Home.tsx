@@ -63,12 +63,13 @@ export default function Home() {
           >
             <source src="/videos/hero.mp4" type="video/mp4" />
           </video>
-          <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background/90 lg:bg-gradient-to-r lg:from-background lg:via-background/85 lg:to-transparent" />
+          {/* Se eliminó el gradiente que usaba "background" (que causaba la capa blanca) y se cambió por un degradado negro limpio */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black/80 lg:bg-gradient-to-r lg:from-black/90 lg:via-black/50 lg:to-transparent" />
           <div className="absolute inset-0 bg-black/30 backdrop-blur-[0.5px]" />
         </div>
 
         <div className="container mx-auto grid gap-12 lg:grid-cols-[1.1fr_0.9fr] items-center z-10 relative">
-          <div className="p-6 sm:p-8 lg:p-0 rounded-3xl bg-background/50 lg:bg-transparent backdrop-blur-md lg:backdrop-blur-none border border-white/5 lg:border-none shadow-2xl lg:shadow-none">
+          <div className="p-6 sm:p-8 lg:p-0 rounded-3xl bg-black/20 lg:bg-transparent backdrop-blur-md lg:backdrop-blur-none border border-white/5 lg:border-none shadow-2xl lg:shadow-none">
             <span className="text-xs uppercase tracking-[0.35em] text-accent font-bold bg-black/40 backdrop-blur-md border border-white/10 px-4 py-1.5 rounded-full inline-block shadow-sm">
               Gobierno Oficial
             </span>
@@ -76,7 +77,7 @@ export default function Home() {
             <h1 className="mt-4 text-4xl sm:text-5xl lg:text-[3.5rem] font-black leading-[1.1] tracking-tight text-white drop-shadow-md">
               Nuestra tierra.<br />
               Nuestra gente.<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-600 filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent via-blue-600 to-blue-950 filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
                 Reino del Pan
               </span>
             </h1>
@@ -91,7 +92,7 @@ export default function Home() {
             <div className="mt-8 flex gap-4 flex-wrap">
               <Link
                 href="/about"
-                className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3.5 text-xs font-bold uppercase tracking-[0.18em] text-neutral-900 transition-all duration-300 hover:bg-neutral-200 hover:shadow-lg hover:shadow-white/10 active:scale-95"
+                className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3.5 text-xs font-bold uppercase tracking-[0.18em] text-neutral-900 transition-all duration-300 hover:bg-neutral-200 hover:shadow-lg hover:shadow-black/20 active:scale-95"
               >
                 Conocer más
               </Link>
