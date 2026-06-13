@@ -368,7 +368,7 @@ function verifyHtml(d) {
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{background:#12080a;color:#e8d5a0;font-family:'Georgia',serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem}
-    .card{background:#1e0f10;border:1px solid #5a1a1a;border-radius:1rem;max-width:380px;width:100%;padding:2rem;box-shadow:0 0 40px #5a1a1a44}
+    .card{background:#1e0f10;border:1px solid #91B1E2;border-radius:1rem;max-width:380px;width:100%;padding:2rem;box-shadow:0 0 40px #6181b0ff}
     .badge{display:inline-block;background:#5a1a1a;color:#f5c842;font-size:.7rem;letter-spacing:.12em;padding:.25rem .7rem;border-radius999px;margin-bottom:1.2rem;text-transform:uppercase;font-family:monospace}
     .dpi-num{font-size:1.25rem;font-family:'Courier New',monospace;color:#f5c842;background:#2a0d0e;padding:.5rem 1rem;border-radius:.5rem;text-align:center;margin-bottom:1.5rem}
     .row{display:flex;justify-content:space-between;padding:.55rem 0;border-bottom:1px solid #2e1010;font-size:.92rem;gap:.5rem}
