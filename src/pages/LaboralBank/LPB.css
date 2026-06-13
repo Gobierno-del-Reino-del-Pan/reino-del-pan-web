@@ -73,6 +73,10 @@
     --color-border: var(--border);
     --color-input: var(--input);
     --color-ring: var(--ring);
+
+    /* Vinculamos las tipografías al motor de clases de Tailwind v4 */
+    --font-sans: var(--body-font);
+    --font-display: var(--display-font);
 }
 
 :root {
@@ -244,7 +248,7 @@ textarea {
     cursor: text;
 }
 
-/*Inputs de formulario seguros y legibles */
+/* Inputs de formulario seguros y legibles */
 input[type="text"],
 input[type="password"],
 input[type="number"] {
@@ -321,7 +325,7 @@ input[type="number"]:focus {
 }
 
 /* ==========================================================================
-   SEGURIDAD VISUAL (Protección contra Data-Scraping / Capturas accidentales)
+   SEGURIDAD VISUAL (Protección contra Data-Scraping)
    ========================================================================== */
 *:not(.can-select) * {
     user-select: none;
