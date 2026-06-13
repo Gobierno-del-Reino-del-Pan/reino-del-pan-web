@@ -181,20 +181,20 @@ export default function Header() {
                 </button>
 
                 {menuOpen && (
-                  <div className="absolute right-0 mt-3 w-48 rounded-xl border border-white/10 bg-neutral-950/95 backdrop-blur-lg shadow-xl overflow-hidden z-50">
-                    <div className="px-4 py-2.5 border-b border-white/5 bg-white/[0.02]">
-                      <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">Ciudadano</p>
-                      <p className="text-xs font-bold text-white truncate mt-0.5">{user.username}</p>
+                  <div className="absolute right-0 mt-3 w-48 rounded-xl border border-black/10 bg-white/95 backdrop-blur-lg shadow-xl overflow-hidden z-50">
+                    <div className="px-4 py-2.5 border-b border-black/5 bg-black/[0.02]">
+                      <p className="text-[10px] text-black/40 uppercase tracking-wider font-semibold">Ciudadano</p>
+                      <p className="text-xs font-bold text-black truncate mt-0.5">{user.username}</p>
                     </div>
                     <Link
                       href="/carpeta"
-                      className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-white/70 hover:text-accent hover:bg-accent/5 transition duration-200"
+                      className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-black/70 hover:text-accent hover:bg-accent/5 transition duration-200"
                     >
                       📁 Mi Carpeta
                     </Link>
                     <button
                       onClick={() => { window.location.href = "/auth/logout"; }}
-                      className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-red-400 hover:bg-red-500/10 transition duration-200 border-t border-white/5 cursor-pointer"
+                      className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-red-500 hover:bg-red-500/10 transition duration-200 border-t border-black/5 cursor-pointer"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

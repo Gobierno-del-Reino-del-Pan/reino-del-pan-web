@@ -292,7 +292,7 @@ export default function Carpeta() {
               <div>
                 <p className="text-xs uppercase tracking-[0.4em] text-accent">Ciudadano Registrado</p>
                 <h1 className="mt-1 text-2xl font-semibold display-font text-foreground">{nombreCompleto}</h1>
-                <p className="text-xs text-foreground/40 font-mono">@{user.username}</p>
+                <p className="text-xs text-foreground/40 font-mono mt-1.5">@{user.username}</p>
               </div>
             </div>
           </motion.div>
