@@ -5,25 +5,26 @@ import { useRef, useState } from "react";
 import { Link } from "wouter";
 import QRCode from "qrcode";
 import jsPDF from "jspdf";
+import { supabase } from "../lib/supabaseClient";
 
 //ESTO NO SE TOCA
 
 const CFG = {
   color: "#5a1a1a",
   front: {
-    apellidos: { x: 1000, y: 520,  size: 54, weight: "bold", family: "'Times New Roman', serif" },
-    nombre:    { x: 1000, y: 728,  size: 54, weight: "bold", family: "'Times New Roman', serif" },
-    genero:    { x: 1000, y: 940,  size: 60, weight: "bold", family: "'Times New Roman', serif" },
-    fecha:     { x: 1000, y: 1200, size: 54, weight: "bold", family: "'Times New Roman', serif" },
-    dpiNum:    { x: 80,   y: 1100, size: 70, weight: "bold", family: "'Courier New', monospace" },
-    photo:     { cx: 310, cy: 670, w: 500, h: 520 },
+    apellidos: { x: 1000, y: 520, size: 54, weight: "bold", family: "'Times New Roman', serif" },
+    nombre: { x: 1000, y: 728, size: 54, weight: "bold", family: "'Times New Roman', serif" },
+    genero: { x: 1000, y: 940, size: 60, weight: "bold", family: "'Times New Roman', serif" },
+    fecha: { x: 1000, y: 1200, size: 54, weight: "bold", family: "'Times New Roman', serif" },
+    dpiNum: { x: 80, y: 1100, size: 70, weight: "bold", family: "'Courier New', monospace" },
+    photo: { cx: 310, cy: 670, w: 500, h: 520 },
   },
   back: {
-    expFecha: { x: 280,  y: 390, size: 60, weight: "bold", family: "'Times New Roman', serif" },
+    expFecha: { x: 280, y: 390, size: 60, weight: "bold", family: "'Times New Roman', serif" },
     valFecha: { x: 1300, y: 410, size: 60, weight: "bold", family: "'Times New Roman', serif" },
-    region:   { x: 360,  y: 570, size: 60, weight: "bold", family: "'Times New Roman', serif" },
-    qr:       { cx: 1490, cy: 870, size: 370 },
-    sig:      { x: 270,  y: 910, w: 590, h: 238 },
+    region: { x: 360, y: 570, size: 60, weight: "bold", family: "'Times New Roman', serif" },
+    qr: { cx: 1490, cy: 870, size: 370 },
+    sig: { x: 270, y: 910, w: 590, h: 238 },
   },
 };
 
@@ -40,7 +41,7 @@ function loadImg(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     if (!src.startsWith("blob:") && !src.startsWith("data:")) img.crossOrigin = "anonymous";
-    img.onload  = () => resolve(img);
+    img.onload = () => resolve(img);
     img.onerror = (e) => reject(e);
     img.src = src;
   });
@@ -63,7 +64,7 @@ async function makeQRWithLogo(text: string, qrSize: number): Promise<string> {
   const ctx = canvas.getContext("2d")!;
   ctx.drawImage(await loadImg(qrDataUrl), 0, 0, qrSize, qrSize);
   try {
-    const logo     = await loadImg("/logo.png");
+    const logo = await loadImg("/logo.png");
     const logoSize = Math.round(qrSize * 0.22);
     const lx = Math.round((qrSize - logoSize) / 2);
     const ly = Math.round((qrSize - logoSize) / 2);
@@ -101,7 +102,7 @@ async function renderFront(d: {
   ctx.fillText("Sin foto", f.photo.cx, f.photo.cy);
   ctx.textAlign = "left";
 
-  ctx.fillStyle    = CFG.color;
+  ctx.fillStyle = CFG.color;
   ctx.textBaseline = "middle";
 
   applyFont(ctx, f.apellidos);
@@ -135,7 +136,7 @@ async function renderBack(d: {
 
   ctx.drawImage(await loadImg("/templates/detras.jpg"), 0, 0, W, H);
 
-  ctx.fillStyle    = CFG.color;
+  ctx.fillStyle = CFG.color;
   ctx.textBaseline = "middle";
 
   applyFont(ctx, b.expFecha);
@@ -168,7 +169,7 @@ function generatePDF(frontDataUrl: string, backDataUrl: string, dpiNumber: strin
 }
 
 // Esto pa q a neplod no le de una embolia
-const DPI_REGEX    = /^DPI - \d{1,6}[A-Z]$/;
+const DPI_REGEX = /^DPI - \d{1,6}[A-Z]$/;
 const SAFE_DISCORD = /^[a-zA-Z0-9_.#\-]{2,32}$|^\d{17,20}$/;
 
 function sanitizeInput(v: string): string {
@@ -181,22 +182,22 @@ export default function RestoreDPI() {
   const [showModal, setShowModal] = useState(false);
 
   const [form, setForm] = useState({ dpi: "", discord: "" });
-  const [fieldErrors, setFieldErrors]  = useState<Record<string, string>>({});
-  const [loading,   setLoading]   = useState(false);
-  const [genError,  setGenError]  = useState("");
-  const [preview,   setPreview]   = useState<{
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+  const [genError, setGenError] = useState("");
+  const [preview, setPreview] = useState<{
     front: string; back: string; dpiNumber: string;
   } | null>(null);
 
   const validate = (): boolean => {
     const err: Record<string, string> = {};
-    const dpi     = sanitizeInput(form.dpi).toUpperCase().replace(/\s*-\s*/g, " - ");
+    const dpi = sanitizeInput(form.dpi).toUpperCase().replace(/\s*-\s*/g, " - ");
     const discord = sanitizeInput(form.discord);
 
-    if (!dpi)                   err.dpi = "Introduce tu número de DPI.";
+    if (!dpi) err.dpi = "Introduce tu número de DPI.";
     else if (!DPI_REGEX.test(dpi)) err.dpi = "Formato inválido. Ejemplo: DPI - 000001A";
 
-    if (!discord)                    err.discord = "Introduce tu usuario o ID de Discord.";
+    if (!discord) err.discord = "Introduce tu usuario o ID de Discord.";
     else if (!SAFE_DISCORD.test(discord)) err.discord = "Usuario o ID de Discord no válido.";
 
     setFieldErrors(err);
@@ -209,12 +210,12 @@ export default function RestoreDPI() {
     setGenError("");
     setPreview(null);
 
-    const dpi     = sanitizeInput(form.dpi).toUpperCase().replace(/\s*-\s*/g, " - ");
+    const dpi = sanitizeInput(form.dpi).toUpperCase().replace(/\s*-\s*/g, " - ");
     const discord = sanitizeInput(form.discord);
 
     try {
       const res = await fetch("/api/dpi/restore", {
-        method:  "POST",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ dpi, discord }),
       });
@@ -234,22 +235,22 @@ export default function RestoreDPI() {
       }
 
       const { nombre, apellidos, genero, fecha_nac, region,
-              dpi_number, issued_at, valid_until, qr_url } = await res.json();
+        dpi_number, issued_at, valid_until, qr_url } = await res.json();
 
       const [frontImg, backImg] = await Promise.all([
         renderFront({
           nombre, apellidos, genero,
-          fecha:     fecha_nac,
+          fecha: fecha_nac,
           dpiNumber: dpi_number,
-          issuedAt:  issued_at,
+          issuedAt: issued_at,
           validUntil: valid_until,
         }),
         renderBack({
           region,
-          dpiNumber:  dpi_number,
-          issuedAt:   issued_at,
+          dpiNumber: dpi_number,
+          issuedAt: issued_at,
           validUntil: valid_until,
-          qrUrl:      qr_url,
+          qrUrl: qr_url,
         }),
       ]);
 
@@ -278,10 +279,9 @@ export default function RestoreDPI() {
   };
 
   const inputCls = (key: string) =>
-    `w-full rounded-xl border px-4 py-3 bg-background outline-none transition ${
-      fieldErrors[key]
-        ? "border-red-500 focus:border-red-500"
-        : "border-border focus:border-accent"
+    `w-full rounded-xl border px-4 py-3 bg-background outline-none transition ${fieldErrors[key]
+      ? "border-red-500 focus:border-red-500"
+      : "border-border focus:border-accent"
     }`;
 
   return (
@@ -420,7 +420,7 @@ export default function RestoreDPI() {
               className="inline-flex items-center gap-2 bg-[#5865F2] text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-[#4752c4] transition mb-3 w-full justify-center"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+                <path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
               </svg>
               Abrir Discord
             </a>
