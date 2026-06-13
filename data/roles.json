@@ -167,6 +167,12 @@
         "nombre": "Perra del Estado",
         "imagen": "/roles/perradelestado.png",
         "discord_role_id": "1510772727433138297"
+      },
+      {
+        "id": "rol_EPG",
+        "nombre": "EPG",
+        "imagen": "/roles/EPG.png",
+        "discord_role_id": "1510764607936008393"
       }
     ]
   }
