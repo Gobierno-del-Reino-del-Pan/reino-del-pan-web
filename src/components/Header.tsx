@@ -198,12 +198,13 @@ export default function Header() {
                     </Link>
 
                     {/* Enlace: Tarjeta DPI */}
-                    <Link
+                    {/* Cambiamos <Link> por <a> */}
+                    <a
                       href={`/api/dpi/verify/${(user as any).dpiNumber || "000002C"}`}
                       className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-black/70 hover:text-accent hover:bg-accent/5 transition duration-200 border-t border-black/5"
                     >
                       🆔 Tarjeta DPI
-                    </Link>
+                    </a>
 
                     {/* Botón: Cerrar Sesión */}
                     <button
