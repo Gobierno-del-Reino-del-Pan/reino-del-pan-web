@@ -530,22 +530,6 @@ function buildQrUrl(dpiNumber) {
   return `${PUBLIC_URL}/api/dpi/verify/${code}`;
 }
 
-// ── Fallback SPA ──────────────────────────────────────────────────────────────
-app.get("*", (_req, res) => {
-  res.sendFile(path.join(staticFolder, "index.html"));
-});
-
-// export default siempre al top-level (requerido por ESM)
-// En Vercel Serverless la plataforma usa este export; en local se ignora
-export default app;
-
-// Solo levantamos el servidor HTTP cuando NO estamos en Vercel Serverless
-if (!(process.env.NODE_ENV === "production" && !process.env.LOCAL_RUN)) {
-  app.listen(port, () => {
-    console.log(`  Server furula en http://localhost:${port}`);
-  });
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // PROXY DE DISCORD (Para la lista de miembros usando el Bot)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -579,3 +563,19 @@ app.get("/api/roles", async (req, res) => {
     return res.status(500).json({ error: "Error interno al conectar con Discord." });
   }
 });
+
+// ── Fallback SPA ──────────────────────────────────────────────────────────────
+app.get("*", (_req, res) => {
+  res.sendFile(path.join(staticFolder, "index.html"));
+});
+
+// export default siempre al top-level (requerido por ESM)
+// En Vercel Serverless la plataforma usa este export; en local se ignora
+export default app;
+
+// Solo levantamos el servidor HTTP cuando NO estamos en Vercel Serverless
+if (!(process.env.NODE_ENV === "production" && !process.env.LOCAL_RUN)) {
+  app.listen(port, () => {
+    console.log(`  Server furula en http://localhost:${port}`);
+  });
+}
