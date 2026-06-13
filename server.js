@@ -417,17 +417,66 @@ app.get("/api/dpi/verify/:code", async (req, res) => {
     .from("dpis").select("dpi_number,nombre,apellidos,genero,fecha_nac,region,issued_at,valid_until")
     .eq("dpi_number", full).single();
   if (error || !data) return res.status(404).send(verifyHtml(null));
-  res.send(verifyHtml(data));
+
+  // Buscar los roles del titular del DPI (si está verificado en Discord)
+  let rolesDelUsuario = [];
+  try {
+    const { data: verificado } = await supabase
+      .from("verificados")
+      .select("discord_id")
+      .eq("dpi", full)
+      .maybeSingle();
+
+    if (verificado?.discord_id && DISCORD_TOKEN) {
+      const memberRes = await fetch(
+        `${DISCORD_API}/guilds/${GUILD_ID}/members/${verificado.discord_id}`,
+        { headers: { Authorization: `Bot ${DISCORD_TOKEN.trim()}` } }
+      );
+      if (memberRes.ok) {
+        const memberData = await memberRes.json();
+        const memberRoleIds = memberData.roles ?? [];
+        rolesDelUsuario = rolesData.roles.filter(r =>
+          r.discord_role_id && memberRoleIds.includes(r.discord_role_id)
+        );
+      }
+    }
+  } catch (err) {
+    console.error("[/api/dpi/verify] Error obteniendo roles:", err);
+  }
+
+  res.send(verifyHtml(data, rolesDelUsuario));
 });
 
 app.get("/health", (_req, res) => res.json({ status: "OK" }));
 
+// ── Helper de escape básico para atributos/texto en HTML ───────────────────────
+function escHtml(str) {
+  return String(str ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
+}
+
 // ── HTML verificación QR ──────────────────────────────────────────────────────
-function verifyHtml(d) {
+function verifyHtml(d, roles = []) {
   if (!d) return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>DPI no encontrado</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;background:#1a0a0a;color:#c0a060;text-align:center}</style>
     </head><body><h2>DPI no encontrado</h2></body></html>`;
+
+  const rolesHtml = roles.length > 0 ? `
+    <div class="roles-row">
+      ${roles.map(r => {
+    const titulo = escHtml(r.nombre);
+    if (r.emoji) {
+      return `<span class="role-icon" title="${titulo}">${r.emoji}</span>`;
+    }
+    if (r.imagen) {
+      return `<img class="role-icon" src="${escHtml(r.imagen)}" alt="${titulo}" title="${titulo}"/>`;
+    }
+    return "";
+  }).join("")}
+    </div>` : "";
+
   return `<!DOCTYPE html>
 <html lang="es"><head>
   <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -444,7 +493,9 @@ function verifyHtml(d) {
     .row:last-child{border-bottom:none}
     .label{color:#52525b;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;flex-shrink:0;font-weight:500}
     .val{color:#1a1410;text-align:right;font-weight:600}
-    .valid-stamp{margin-top:1.6rem;text-align:center;font-size:.8rem;color:#166534;font-weight:600;letter-spacing:.15em;text-transform:uppercase;background:#f0fdf4;padding:.4rem;border-radius:.375rem}
+    .roles-row{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:.6rem;margin-top:1.4rem}
+    .role-icon{width:1.7rem;height:1.7rem;font-size:1.7rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;object-fit:contain}
+    .valid-stamp{margin-top:1.4rem;text-align:center;font-size:.8rem;color:#166534;font-weight:600;letter-spacing:.15em;text-transform:uppercase;background:#f0fdf4;padding:.4rem;border-radius:.375rem}
     .logo{display:block;margin:0 auto 1.2rem;width:56px;box-shadow:0 6px 18px rgba(15,50,106,0.08);border-radius:50%;transition:transform 220ms ease,filter 0.25s ease}
     .logo:hover{transform:translateY(-2px) rotate(-2deg);filter:drop-shadow(0 0 12px rgba(151,180,224,0.45))}
   </style>
@@ -454,13 +505,14 @@ function verifyHtml(d) {
     <img src="/logo.png" class="logo" alt="Logo" onerror="this.style.display='none'"/>
     <div style="text-align:center"><span class="badge">✓ DPI Verificado</span></div>
     <div class="dpi-num">${d.dpi_number}</div>
-    <div class="row"><span class="label">Nombre</span><span class="val">${d.nombre}</span></div>
-    <div class="row"><span class="label">Apellidos</span><span class="val">${d.apellidos}</span></div>
-    <div class="row"><span class="label">Género</span><span class="val">${d.genero}</span></div>
-    <div class="row"><span class="label">Nacimiento</span><span class="val">${d.fecha_nac}</span></div>
-    <div class="row"><span class="label">Región</span><span class="val">${d.region}</span></div>
-    <div class="row"><span class="label">Expedición</span><span class="val">${d.issued_at}</span></div>
-    <div class="row"><span class="label">Válido hasta</span><span class="val">${d.valid_until}</span></div>
+    <div class="row"><span class="label">Nombre</span><span class="val">${escHtml(d.nombre)}</span></div>
+    <div class="row"><span class="label">Apellidos</span><span class="val">${escHtml(d.apellidos)}</span></div>
+    <div class="row"><span class="label">Género</span><span class="val">${escHtml(d.genero)}</span></div>
+    <div class="row"><span class="label">Nacimiento</span><span class="val">${escHtml(d.fecha_nac)}</span></div>
+    <div class="row"><span class="label">Región</span><span class="val">${escHtml(d.region)}</span></div>
+    <div class="row"><span class="label">Expedición</span><span class="val">${escHtml(d.issued_at)}</span></div>
+    <div class="row"><span class="label">Válido hasta</span><span class="val">${escHtml(d.valid_until)}</span></div>
+    ${rolesHtml}
     <p class="valid-stamp">Documento válido</p>
   </div>
 </body></html>`;
