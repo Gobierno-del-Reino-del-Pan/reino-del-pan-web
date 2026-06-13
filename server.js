@@ -30,7 +30,7 @@ const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const GUILD_ID = process.env.GUILD_ID;
-const PUBLIC_URL = process.env.PUBLIC_URL || "https://reino-del-pan-web.vercel.app";
+const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:5174";
 const DISCORD_REDIRECT_URI = `${PUBLIC_URL}/auth/discord/callback`;
 const DISCORD_API = "https://discord.com/api/v10";
 
@@ -117,25 +117,6 @@ function getIP(req) {
     "unknown"
   );
 }
-
-// ── Sesiones con configuración mejorada para Vercel (HTTPS) ───────────────────
-app.use(session({
-  secret: process.env.SESSION_SECRET || "fallback-secret",
-  resave: false,
-  saveUninitialized: false,
-  name: "__reino_session", // Añadir un nombre explícito ayuda a evitar colisiones en Vercel
-  cookie: {
-    httpOnly: true,
-    // EXPLICACIÓN: Vercel requiere obligatoriamente 'true' para entornos HTTPS estables
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-    // EXPLICACIÓN: Cambiado a 'lax' controlado bajo proxy seguro para permitir callbacks de OAuth2
-    sameSite: process.env.NODE_ENV === "production" ? "lax" : "lax",
-  },
-}));
-
-// 🔧 CRÍTICO PARA VERCEL: Obliga a Express a confiar en los headers de HTTPS que le inyecta Vercel
-app.set('trust proxy', 1);
 
 // ── Middleware: require auth ──────────────────────────────────────────────────
 function requireAuth(req, res, next) {
@@ -391,7 +372,7 @@ function verifyHtml(d) {
     body{background:linear-gradient(135deg, #faf9f5 0%, #f5f2eb 100%);color:#1a1410;font-family:'RMNeue','Playfair Display',serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem;letter-spacing:0.3px;-webkit-font-smoothing:antialiased}
     .card{background:#ffffff;border:1px solid #e0dcd3;border-radius:0.75rem;max-width:380px;width:100%;padding:2rem;box-shadow:0 10px 30px rgba(15,50,106,0.08), 0 1px 3px rgba(0,0,0,0.02)}
     .badge{display:inline-block;background:#f0ede7;color:#0F326A;font-size:.75rem;font-weight:600;letter-spacing:.12em;padding:.35rem .8rem;border-radius:9999px;margin-bottom:1.5rem;text-transform:uppercase}
-    .dpi-num{font-size:2.7rem;font-family:'Chillvornia',sans-serif;color:#0F326A;background:#f5f2eb;border:1px solid #e0dcd3;padding:.6rem 1rem;border-radius:.5rem;text-align:center;margin-bottom:1.5rem;line-height:1.1}
+    .dpi-num{font-size:1.35rem;font-family:'Chillvornia',sans-serif;color:#0F326A;background:#f5f2eb;border:1px solid #e0dcd3;padding:.6rem 1rem;border-radius:.5rem;text-align:center;margin-bottom:1.5rem}
     .row{display:flex;justify-content:space-between;padding:.65rem 0;border-bottom:1px solid #e0dcd3;font-size:.92rem;gap:.5rem}
     .row:last-child{border-bottom:none}
     .label{color:#52525b;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;flex-shrink:0;font-weight:500}
@@ -401,7 +382,7 @@ function verifyHtml(d) {
     .logo:hover{transform:translateY(-2px) rotate(-2deg);filter:drop-shadow(0 0 12px rgba(151,180,224,0.45))}
   </style>
 
-
+  
   <div class="card">
     <img src="/logo.png" class="logo" alt="Logo" onerror="this.style.display='none'"/>
     <div style="text-align:center"><span class="badge">✓ DPI Verificado</span></div>
