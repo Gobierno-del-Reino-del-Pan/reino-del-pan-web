@@ -15,13 +15,15 @@ interface DPIData {
   valid_until: string;
 }
 
-// Interfaz actualizada para ser compatible con roles.json
+// Interfaz actualizada para ser compatible con roles.json (incluye categoría e imagen)
 interface Rol {
   id: string;
   nombre: string;
-  descripcion?: string; // Opcional, ya que las regiones y estados no la tienen
-  emoji?: string;       // Opcional, solo lo tienen las profesiones
-  discord_role_id: string; // Mapeado directamente del JSON
+  descripcion?: string;     // Solo lo tienen las profesiones
+  emoji?: string;            // Profesiones y regiones
+  imagen?: string | null;    // estado_ciudadano y especiales
+  categoria?: string;        // "profesiones" | "regiones" | "estado_ciudadano" | "especiales"
+  discord_role_id: string;
 }
 
 interface DiscordUser {
@@ -33,6 +35,78 @@ interface DiscordUser {
   dpi: DPIData | null;
   roles: Rol[];
 }
+
+// ── Icono de un rol: emoji, imagen o fallback ──────────────────────────────────
+function RolIcono({ rol }: { rol: Rol }) {
+  if (rol.emoji) {
+    return <div className="text-4xl drop-shadow-sm leading-none">{rol.emoji}</div>;
+  }
+  if (rol.imagen) {
+    return (
+      <img
+        src={rol.imagen}
+        alt={rol.nombre}
+        className="w-10 h-10 object-contain drop-shadow-sm"
+      />
+    );
+  }
+  return <div className="text-4xl drop-shadow-sm leading-none">💼</div>;
+}
+
+// ── Tarjeta individual de rol ──────────────────────────────────────────────────
+function RolCard({ rol }: { rol: Rol }) {
+  return (
+    <div
+      key={rol.discord_role_id}
+      className="group flex items-start gap-4 p-4 rounded-xl border border-border bg-background/40 hover:border-accent/40 hover:bg-accent/5 transition-all duration-200"
+    >
+      <RolIcono rol={rol} />
+      <div className="flex-1">
+        <h3 className="font-semibold text-foreground flex items-center gap-2">
+          {rol.nombre}
+        </h3>
+        {rol.descripcion && (
+          <p className="text-xs text-foreground/60 mt-1 leading-relaxed">
+            {rol.descripcion}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Sección de roles agrupada por categoría ─────────────────────────────────────
+function RolSeccion({ titulo, roles }: { titulo: string; roles: Rol[] }) {
+  if (roles.length === 0) return null;
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1 }}
+      className="rounded-2xl border border-border bg-card overflow-hidden"
+    >
+      <div className="px-6 py-4 border-b border-border">
+        <p className="text-xs uppercase tracking-[0.3em] text-accent font-medium">
+          {titulo}
+        </p>
+      </div>
+      <div className="px-6 py-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {roles.map(rol => (
+            <RolCard key={rol.discord_role_id} rol={rol} />
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+const CATEGORIAS: { key: string; titulo: string }[] = [
+  { key: "profesiones", titulo: "Mi profesión" },
+  { key: "regiones", titulo: "Mi región" },
+  { key: "estado_ciudadano", titulo: "Estado ciudadano" },
+  { key: "especiales", titulo: "Roles especiales" },
+];
 
 export default function Carpeta() {
   const [, navigate] = useLocation();
@@ -170,6 +244,15 @@ export default function Carpeta() {
   const dpi = user.dpi;
   const nombre = dpi.nombre.charAt(0) + dpi.nombre.slice(1).toLowerCase();
 
+  // Agrupar los roles del usuario por categoría (los que no tengan categoria van a "otros")
+  const rolesPorCategoria: Record<string, Rol[]> = {};
+  for (const rol of user.roles) {
+    const cat = rol.categoria || "otros";
+    if (!rolesPorCategoria[cat]) rolesPorCategoria[cat] = [];
+    rolesPorCategoria[cat].push(rol);
+  }
+  const otros = rolesPorCategoria["otros"] || [];
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Header />
@@ -193,42 +276,27 @@ export default function Carpeta() {
             </div>
           </motion.div>
 
-          {/* Mi profesión / Roles */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="rounded-2xl border border-border bg-card overflow-hidden"
-          >
-            <div className="px-6 py-4 border-b border-border">
-              <p className="text-xs uppercase tracking-[0.3em] text-accent font-medium">
-                Mi profesión
-              </p>
-            </div>
-            <div className="px-6 py-5">
-              {user.roles.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {user.roles.map(rol => (
-                    <div
-                      key={rol.discord_role_id} // Actualizado con el ID único de Discord del JSON
-                      className="group flex items-start gap-4 p-4 rounded-xl border border-border bg-background/40 hover:border-accent/40 hover:bg-accent/5 transition-all duration-200"
-                    >
-                      {/* Controlamos que muestre el emoji si existe, sino un fallback discreto */}
-                      <div className="text-4xl drop-shadow-sm">{rol.emoji || "💼"}</div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-foreground flex items-center gap-2">
-                          {rol.nombre}
-                        </h3>
-                        {rol.descripcion && (
-                          <p className="text-xs text-foreground/60 mt-1 leading-relaxed">
-                            {rol.descripcion}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
+          {/* Roles agrupados por categoría */}
+          {user.roles.length > 0 ? (
+            <>
+              {CATEGORIAS.map(({ key, titulo }) => (
+                <RolSeccion key={key} titulo={titulo} roles={rolesPorCategoria[key] || []} />
+              ))}
+              <RolSeccion titulo="Otros roles" roles={otros} />
+            </>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="rounded-2xl border border-border bg-card overflow-hidden"
+            >
+              <div className="px-6 py-4 border-b border-border">
+                <p className="text-xs uppercase tracking-[0.3em] text-accent font-medium">
+                  Mi profesión
+                </p>
+              </div>
+              <div className="px-6 py-5">
                 <div className="text-center py-6">
                   <p className="text-foreground/40 text-sm">
                     Aún no tienes una profesión asignada.
@@ -237,9 +305,9 @@ export default function Carpeta() {
                     Contacta con las autoridades del Reino para ejercer un oficio.
                   </p>
                 </div>
-              )}
-            </div>
-          </motion.div>
+              </div>
+            </motion.div>
+          )}
 
           {/* Cerrar sesión */}
           <motion.div
@@ -275,4 +343,3 @@ export default function Carpeta() {
     </div>
   );
 }
-

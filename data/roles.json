@@ -75,39 +75,45 @@
         "id": "rol_entrenador",
         "nombre": "Entrenador Pokémon",
         "descripcion": "Son personas que se encargan de capturar, criar, entrenar y cuidar de dichas criaturas. Lucha.",
-        "emoji": "🐉",
+        "imagen": "/roles/pokeball.png",
         "discord_role_id": "1508081112230920402"
       }
     ],
     "regiones": [
       {
         "id": "rol_region_baguette",
-        "nombre": "🥖 Baguette",
+        "nombre": "Baguette",
+        "emoji": "🥖",
         "discord_role_id": "1505999177728004256"
       },
       {
         "id": "rol_region_pimbo",
-        "nombre": "🍞Pimbo",
+        "nombre": "Pimbo",
+        "emoji": "🍞",
         "discord_role_id": "1505999483346096178"
       },
       {
         "id": "rol_region_pretzel",
-        "nombre": "🥨Pretzel",
+        "nombre": "Pretzel",
+        "emoji": "🥨",
         "discord_role_id": "1505999600920559866"
       },
       {
         "id": "rol_region_croissant",
-        "nombre": "🥐Croissant",
+        "nombre": "Croissant",
+        "emoji": "🥐",
         "discord_role_id": "1505999687713427476"
       },
       {
         "id": "rol_region_singluten",
-        "nombre": "🌾Sin Gluten",
+        "nombre": "Sin Gluten",
+        "emoji": "🌾",
         "discord_role_id": "1505999895486533722"
       },
       {
         "id": "rol_region_panplano",
-        "nombre": "🫓Pan Plano/Arepa",
+        "nombre": "Pan Plano/Arepa",
+        "emoji": "🫓",
         "discord_role_id": "1505999993335451720"
       }
     ],
@@ -115,11 +121,13 @@
       {
         "id": "rol_ciudadano",
         "nombre": "Ciudadano",
+        "imagen": "/roles/logo.png",
         "discord_role_id": "1381611108812460034"
       },
       {
         "id": "rol_regularizacion",
         "nombre": "Proceso de Regularización",
+        "imagen": "/roles/regularizacion.png",
         "discord_role_id": "1506046752740999178"
       }
     ],
@@ -127,31 +135,37 @@
       {
         "id": "rol_alto_mando",
         "nombre": "Alto Mando",
+        "imagen": "/roles/masterball.png",
         "discord_role_id": "1508080141501333576"
       },
       {
         "id": "rol_entrenadores_gimnasio",
         "nombre": "Entrenadores de Gimnasio Pokémon",
+        "imagen": "/roles/ultraball.png",
         "discord_role_id": "1508080870303596604"
       },
       {
         "id": "rol_mafioso",
         "nombre": "Mafiosos",
+        "emoji": "♠️",
         "discord_role_id": "1506394893201707068"
       },
       {
         "id": "rol_jefe_mafia",
         "nombre": "Jefe de la Mafia",
+        "emoji": "♠️",
         "discord_role_id": "1506395165290401843"
       },
       {
         "id": "rol_administrador",
         "nombre": "Administrador",
+        "emoji": "👑",
         "discord_role_id": "1398358560295096341"
       },
       {
         "id": "rol_perra_del_estado",
         "nombre": "Perra del Estado",
+        "imagen": "/roles/perradelestado.png",
         "discord_role_id": "1510772727433138297"
       }
     ]

@@ -31,9 +31,11 @@ try {
     // Formato por categorías:
     // { "roles": { "profesiones": [...], "regiones": [...], "especiales": [...], ... } }
     const flattened = [];
-    for (const categoria of Object.values(rawRoles)) {
-      if (Array.isArray(categoria)) {
-        flattened.push(...categoria);
+    for (const [categoria, lista] of Object.entries(rawRoles)) {
+      if (Array.isArray(lista)) {
+        for (const rol of lista) {
+          flattened.push({ ...rol, categoria });
+        }
       }
     }
     rolesData = { roles: flattened };
