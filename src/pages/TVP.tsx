@@ -190,10 +190,21 @@ export default function TVPPortal() {
 
             <header className="w-full bg-[#0a0b10]/95 backdrop-blur-xl border-b border-white/5 px-6 md:px-12 py-5 flex items-center justify-between sticky top-0 z-50 shadow-2xl">
                 <div className="flex items-center gap-6 md:gap-8">
-                    <img src="/TVP/TVP.png" alt="TVP" className="h-8 md:h-9 object-contain select-none" />
+                    {/* Botón con el logo que redirige al inicio */}
+                    <Link to="/">
+                        <a className="transition-opacity hover:opacity-80 flex items-center">
+                            <img src="/logo.png" alt="Inicio" className="h-8 object-contain select-none" />
+                        </a>
+                    </Link>
+
                     <div className="h-5 w-[1px] bg-white/20 hidden sm:block"></div>
-                    <div className="hidden sm:flex items-center gap-3">
-                        <img src="/TVP/2Pan.png" alt="2Pan" className="h-6 md:h-7 object-contain opacity-75" />
+
+                    <div className="flex items-center gap-6 md:gap-8">
+                        <img src="/TVP/TVP.png" alt="TVP" className="h-8 md:h-9 object-contain select-none" />
+                        <div className="h-5 w-[1px] bg-white/20 hidden sm:block"></div>
+                        <div className="hidden sm:flex items-center gap-3">
+                            <img src="/TVP/2Pan.png" alt="2Pan" className="h-6 md:h-7 object-contain opacity-75" />
+                        </div>
                     </div>
                 </div>
 
