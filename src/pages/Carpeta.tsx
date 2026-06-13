@@ -15,13 +15,11 @@ interface DPIData {
   valid_until: string;
 }
 
-// Interfaz base actualizada según el nuevo esquema del JSON
-interface RolBase {
+interface Rol {
   id: string;
   nombre: string;
-  discord_role_id: string;
-  emoji?: string;       // Opcional, ya que regiones y otros no siempre lo llevan separado en el JSON
-  descripcion?: string; // Opcional, exclusivo de algunas profesiones/roles
+  emoji: string;
+  descripcion: string;
 }
 
 interface DiscordUser {
@@ -31,14 +29,7 @@ interface DiscordUser {
   inGuild: boolean;
   verificado: boolean;
   dpi: DPIData | null;
-  // El backend ahora debería devolver los roles separados por categorías o un array mixto.
-  // Asumiremos que el backend te los entrega clasificados para facilitar la renderización.
-  roles: {
-    profesiones: RolBase[];
-    regiones: RolBase[];
-    estado_ciudadano: RolBase[];
-    especiales: RolBase[];
-  };
+  roles: Rol[];
 }
 
 export default function Carpeta() {
@@ -177,13 +168,6 @@ export default function Carpeta() {
   const dpi = user.dpi;
   const nombre = dpi.nombre.charAt(0) + dpi.nombre.slice(1).toLowerCase();
 
-  // Helper para verificar si el usuario tiene algún rol en absoluto
-  const hasAnyRole =
-    user.roles.profesiones?.length > 0 ||
-    user.roles.regiones?.length > 0 ||
-    user.roles.estado_ciudadano?.length > 0 ||
-    user.roles.especiales?.length > 0;
-
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Header />
@@ -204,72 +188,52 @@ export default function Carpeta() {
             <div>
               <p className="text-xs uppercase tracking-[0.4em] text-accent">Bienvenido</p>
               <h1 className="mt-1 text-3xl font-semibold display-font">{nombre}</h1>
-              {/* Badge de Estado Ciudadano rápido */}
-              <div className="flex gap-2 mt-1">
-                {user.roles.estado_ciudadano?.map(estado => (
-                  <span key={estado.id} className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full font-medium uppercase tracking-wider">
-                    {estado.nombre}
-                  </span>
-                ))}
-                {user.roles.regiones?.map(reg => (
-                  <span key={reg.id} className="text-[10px] bg-border text-foreground/70 px-2 py-0.5 rounded-full font-medium">
-                    {reg.nombre}
-                  </span>
-                ))}
-              </div>
             </div>
           </motion.div>
 
-          {/* Secciones de Roles del Ciudadano */}
+          {/* Mi profesión / Roles - Versión mejorada */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="rounded-2xl border border-border bg-card overflow-hidden p-6 space-y-6"
+            className="rounded-2xl border border-border bg-card overflow-hidden"
           >
-            {hasAnyRole ? (
-              <>
-                {/* 1. PROFESIONES */}
-                {user.roles.profesiones?.length > 0 && (
-                  <div className="space-y-3">
-                    <p className="text-xs uppercase tracking-[0.3em] text-accent font-medium">Mi profesión</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {user.roles.profesiones.map(rol => (
-                        <div key={rol.id} className="group flex items-start gap-4 p-4 rounded-xl border border-border bg-background/40 hover:border-accent/40 hover:bg-accent/5 transition-all duration-200">
-                          <div className="text-4xl drop-shadow-sm">{rol.emoji || "💼"}</div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-foreground">{rol.nombre}</h3>
-                            {rol.descripcion && <p className="text-xs text-foreground/60 mt-1 leading-relaxed">{rol.descripcion}</p>}
-                          </div>
-                        </div>
-                      ))}
+            <div className="px-6 py-4 border-b border-border">
+              <p className="text-xs uppercase tracking-[0.3em] text-accent font-medium">
+                Mi profesión
+              </p>
+            </div>
+            <div className="px-6 py-5">
+              {user.roles.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {user.roles.map(rol => (
+                    <div
+                      key={rol.id}
+                      className="group flex items-start gap-4 p-4 rounded-xl border border-border bg-background/40 hover:border-accent/40 hover:bg-accent/5 transition-all duration-200"
+                    >
+                      <div className="text-4xl drop-shadow-sm">{rol.emoji}</div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground flex items-center gap-2">
+                          {rol.nombre}
+                        </h3>
+                        <p className="text-xs text-foreground/60 mt-1 leading-relaxed">
+                          {rol.descripcion}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                )}
-
-                {/* 2. ROLES ESPECIALES / RANGOS */}
-                {user.roles.especiales?.length > 0 && (
-                  <div className="space-y-3 pt-2">
-                    <p className="text-xs uppercase tracking-[0.3em] text-red-400 font-medium">Cargos Especiales</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {user.roles.especiales.map(rol => (
-                        <div key={rol.id} className="flex items-center gap-3 p-3 rounded-xl border border-red-500/20 bg-red-500/5">
-                          <div className="text-2xl">✨</div>
-                          <div>
-                            <h4 className="text-sm font-semibold text-foreground">{rol.nombre}</h4>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center py-6">
-                <p className="text-foreground/40 text-sm">Aún no tienes un rol o profesión asignada.</p>
-                <p className="text-foreground/30 text-xs mt-1">Contacta con las autoridades del Reino para ejercer un oficio o registrarte.</p>
-              </div>
-            )}
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-foreground/40 text-sm">
+                    Aún no tienes una profesión asignada.
+                  </p>
+                  <p className="text-foreground/30 text-xs mt-1">
+                    Contacta con las autoridades del Reino para ejercer un oficio.
+                  </p>
+                </div>
+              )}
+            </div>
           </motion.div>
 
           {/* Cerrar sesión — al fondo, discreto */}
