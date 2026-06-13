@@ -397,6 +397,35 @@ app.get("/api/me/refresh", requireAuth, async (req, res) => {
 // DPI ENDPOINTS 
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── NUEVA RUTA PUENTE: Obtener y verificar DPI dinámicamente mediante el ID de Discord ──
+app.get("/api/dpi/verify-discord/:discordId", async (req, res) => {
+  const { discordId } = req.params;
+
+  try {
+    const { data: verificado, error } = await supabase
+      .from("verificados")
+      .select("dpi")
+      .eq("discord_id", discordId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error de Supabase al buscar verificado:", error);
+      return res.status(500).send("Error interno en la base de datos.");
+    }
+
+    if (!verificado || !verificado.dpi) {
+      return res.redirect("/dpi/no-verificado");
+    }
+
+    const code = encodeURIComponent(verificado.dpi.replace("DPI - ", ""));
+    return res.redirect(`/api/dpi/verify/${code}`);
+
+  } catch (err) {
+    console.error("[/api/dpi/verify-discord] Error catastrófico:", err);
+    return res.status(500).send("Error interno del servidor.");
+  }
+});
+
 app.post("/api/dpi/create", async (req, res) => {
   const ip = getIP(req);
   const { allowed, retryAfterMs } = checkRateLimit(ip);
@@ -534,7 +563,7 @@ function verifyHtml(d, roles = []) {
     .valid-stamp{margin-top:1.4rem;text-align:center;font-size:.8rem;color:#166534;font-weight:600;letter-spacing:.15em;text-transform:uppercase;background:#f0fdf4;padding:.4rem;border-radius:.375rem}
     .logo{display:block;margin:0 auto 1.2rem;width:56px;box-shadow:0 6px 18px rgba(15,50,106,0.08);border-radius:50%;transition:transform 220ms ease,filter 0.25s ease}
     .logo:hover{transform:translateY(-2px) rotate(-2deg);filter:drop-shadow(0 0 12px rgba(151,180,224,0.45))}
-  </style>
+</style>
   <div class="card">
     <img src="/logo.png" class="logo" alt="Logo" onerror="this.style.display='none'"/>
     <div style="text-align:center"><span class="badge">✓ DPI Verificado</span></div>
@@ -563,9 +592,7 @@ function buildQrUrl(dpiNumber) {
   return `${PUBLIC_URL}/api/dpi/verify/${code}`;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PROXY DE DISCORD
-// ─────────────────────────────────────────────────────────────────────────────
+// ── PROXY DE DISCORD ─────────────────────────────────────────────────────────────
 
 app.get("/api/roles", async (req, res) => {
   try {
