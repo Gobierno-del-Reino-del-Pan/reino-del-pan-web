@@ -541,22 +541,37 @@ app.get("/api/roles", async (req, res) => {
       return res.status(500).json({ error: "Configuración incompleta en el servidor." });
     }
 
-    // Hacemos la petición a Discord firmando como BOT con tu token 'MTUwNT...'
-    const response = await fetch(`${DISCORD_API}/guilds/${GUILD_ID}/members?limit=1000`, {
-      headers: {
-        Authorization: `Bot ${DISCORD_TOKEN.trim()}`,
-      },
-    });
+    // Discord devuelve como máximo 1000 miembros por petición.
+    // Paginamos con "after" hasta traer la lista completa del servidor.
+    const allMembers = [];
+    let after = "0";
 
-    const data = await response.json();
+    while (true) {
+      const response = await fetch(`${DISCORD_API}/guilds/${GUILD_ID}/members?limit=1000&after=${after}`, {
+        headers: {
+          Authorization: `Bot ${DISCORD_TOKEN.trim()}`,
+        },
+      });
 
-    if (!response.ok) {
-      console.error(`❌ Discord API respondió con código ${response.status}:`, data);
-      return res.status(response.status).json(data);
+      const page = await response.json();
+
+      if (!response.ok) {
+        console.error(`❌ Discord API respondió con código ${response.status}:`, page);
+        return res.status(response.status).json(page);
+      }
+
+      if (!Array.isArray(page) || page.length === 0) break;
+
+      allMembers.push(...page);
+
+      if (page.length < 1000) break;
+      after = page[page.length - 1].user.id;
     }
 
+    console.log(`[/api/roles] Miembros totales obtenidos: ${allMembers.length}`);
+
     // Si todo va bien, le devolvemos la lista completa de miembros a tu Frontend
-    return res.json(data);
+    return res.json(allMembers);
 
   } catch (error) {
     console.error("❌ Error en el proxy /api/roles:", error);
