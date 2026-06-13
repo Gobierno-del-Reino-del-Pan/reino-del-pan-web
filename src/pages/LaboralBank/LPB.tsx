@@ -1,31 +1,35 @@
 import React from 'react';
-import './LPB.css'; // Ruta del CSS solicitada
+import './LPB.css';
 
 export default function LaboralPanianBank() {
     return (
-        <div id="root" className="min-h-screen bg-background text-foreground font-sans">
+        <div id="root">
 
             {/* HEADER / NAVEGACIÓN */}
-            <header className="border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-50 transition-colors">
-                <div className="container h-20 flex items-center justify-between">
-                    {/* Logo con la clase animada del CSS */}
-                    <div className="flex items-center gap-3">
+            <header style={{ borderBottom: '1px solid var(--border)', backgroundColor: 'var(--card)', padding: '0 1.5rem' }}>
+                <div className="container" style={{ height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+
+                    {/* Bloque del Logo: Contenido y protegido para no deformarse */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <img
                             src="/LaboralBank/LPB.png"
-                            alt="Laboral Panian Bank Logo"
-                            className="h-10 w-auto logo-glow rounded-md"
+                            alt="Laboral Panian Bank"
+                            className="logo-glow"
+                            style={{ height: '40px', width: 'auto', display: 'block', objectFit: 'contain' }}
                         />
-                        <span className="font-display font-bold text-lg tracking-tight text-primary uppercase">
+                        <span className="display-font" style={{ fontSize: '1.25rem', color: 'var(--primary)', textTransform: 'uppercase' }}>
                             Laboral Panian Bank
                         </span>
                     </div>
 
-                    <nav className="hidden md:flex items-center gap-8">
-                        <a href="#alianza" className="nav-link active text-sm font-semibold tracking-wide">La Alianza</a>
-                        <a href="#institucional" className="nav-link text-sm font-semibold tracking-wide">Institucional</a>
-                        <a href="#proximamente" className="nav-link text-sm font-semibold tracking-wide">Banca Online</a>
+                    {/* Enlaces de Navegación usando las clases de tu CSS */}
+                    <nav className="can-select" style={{ display: 'flex', gap: '2rem' }}>
+                        <a href="#alianza" className="nav-link active">La Alianza</a>
+                        <a href="#institucional" className="nav-link">Institucional</a>
+                        <a href="#proximamente" className="nav-link">Banca Online</a>
                     </nav>
 
+                    {/* Botón de Acceso usando tu clase CSS */}
                     <div>
                         <a href="#proximamente" className="btn-minimal">
                             Acceso Clientes
@@ -34,120 +38,115 @@ export default function LaboralPanianBank() {
                 </div>
             </header>
 
-            {/* SECCIÓN HERO / ALIANZA FINANCIERA */}
-            <main className="flex-grow">
-                <section id="alianza" className="section-spacious bg-gradient-to-b from-secondary/50 to-transparent">
-                    <div className="container grid md:grid-cols-12 gap-12 items-center">
+            {/* CUERPO PRINCIPAL */}
+            <main style={{ flexGrow: 1 }}>
 
-                        {/* Texto Principal */}
-                        <div className="md:col-span-7 space-y-6">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest">
-                                Alianza Financiera Internacional
-                            </div>
+                {/* Sección Hero: Alianza Financiera */}
+                <section id="alianza" className="section-spacious" style={{ backgroundColor: 'var(--secondary)' }}>
+                    <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '3rem', alignItems: 'center' }}>
 
-                            <h1 className="text-4xl md:text-5xl lg:text-6xl text-foreground leading-tight font-bold">
-                                El futuro de la banca paniense comienza hoy
+                        {/* Bloque Informativo Institucional */}
+                        <div className="can-select" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--primary)' }}>
+                                Alianza Financiera
+                            </span>
+
+                            <h1 className="display-font" style={{ fontSize: '2.5rem', lineHeight: '1.2', margin: 0 }}>
+                                Laboral Panian Bank
                             </h1>
 
-                            <p className="text-muted-foreground text-lg leading-relaxed max-w-xl">
-                                El Gobierno del Reino del Pan y Laboral Kutxa han alcanzado un acuerdo para la creación de
-                                <strong className="text-primary font-semibold"> Laboral Panian Bank</strong>. Una nueva entidad financiera
-                                que impulsará el ahorro, la inversión y el crecimiento económico del país.
+                            <p style={{ color: 'var(--muted-foreground)', fontSize: '1.125rem', lineHeight: '1.6', margin: 0 }}>
+                                El Gobierno del Reino del Pan y Laboral Kutxa han alcanzado un acuerdo para la creación de <strong>Laboral Panian Bank</strong>. Una nueva entidad financiera que impulsará el ahorro, la inversión y el crecimiento económico del país. El futuro de la banca paniense comienza hoy.
                             </p>
 
-                            <div className="pt-4">
-                                <p className="text-sm font-bold uppercase tracking-wider text-foreground mb-3">
+                            <div style={{ marginTop: '1rem' }}>
+                                <p style={{ fontSize: '0.875rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--foreground)', margin: '0 0 0.75rem 0' }}>
                                     Se une a nosotros para crear la primera entidad financiera del Reino del Pan
                                 </p>
-                                <div className="h-1 w-20 bg-accent rounded-full"></div>
                             </div>
                         </div>
 
-                        {/* Panel Lateral: Aviso de Banca Online */}
-                        <div id="proximamente" className="md:col-span-5">
-                            <div className="bank-card border-2 border-primary/20 bg-card p-8 relative overflow-hidden shadow-xl">
-                                {/* Indicador de estado */}
-                                <div className="absolute top-0 right-0 bg-primary text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1 rounded-bl-md">
-                                    Próximamente
-                                </div>
-
-                                <h3 className="text-xl font-display font-bold text-primary mb-4">
+                        {/* Bloque de Contingencia: Estado de la Sede Electrónica */}
+                        <div id="proximamente">
+                            <div className="bank-card">
+                                <h3 className="display-font" style={{ fontSize: '1.5rem', color: 'var(--primary)', margin: '0 0 1rem 0' }}>
                                     Sede Electrónica
                                 </h3>
 
-                                <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-                                    Nuestros ingenieros y equipos reguladores están ultimando los sistemas de alta seguridad para ofrecerte la experiencia digital más robusta del Reino del Pan.
+                                <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', lineHeight: '1.5', margin: '0 0 1.5rem 0' }}>
+                                    Nuestros equipos técnicos y de regulación están terminando los sistemas para garantizar una operativa segura.
                                 </p>
 
-                                {/* Caja de Estado Informativo */}
-                                <div className="bg-secondary p-4 rounded-md border border-border mb-6">
-                                    <div className="flex items-start gap-3">
-                                        <span className="text-xl mt-0.5">⚠️</span>
-                                        <div>
-                                            <h4 className="text-sm font-bold text-foreground">Banca Online No Operativa</h4>
-                                            <p className="text-xs text-muted-foreground mt-1">
-                                                Las consultas de saldo, transferencias y contratación de productos digitales se habilitarán tras el despliegue de la fase institucional.
-                                            </p>
-                                        </div>
-                                    </div>
+                                {/* Mensaje de Alerta */}
+                                <div style={{ backgroundColor: 'var(--muted)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', margin: '0 0 1.5rem 0' }}>
+                                    <h4 className="display-font" style={{ fontSize: '0.875rem', color: 'var(--foreground)', margin: '0 0 0.25rem 0' }}>
+                                        ⚠️ Banca Online No Operativa
+                                    </h4>
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', margin: 0 }}>
+                                        Las consultas de saldo, transferencias y contratación de productos digitales se habilitarán próximamente.
+                                    </p>
                                 </div>
 
-                                {/* Formulario Simulado de Registro de Interés */}
-                                <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+                                {/* Formulario de Notificación */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                     <div>
-                                        <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
-                                            Introduce tu correo para recibir el alta prioritaria
+                                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--muted-foreground)', marginBottom: '0.5rem', textTransform: 'uppercase' }}>
+                                            Registro de interés
                                         </label>
                                         <input
                                             type="text"
                                             placeholder="ejemplo@reinodelpan.gov"
-                                            className="w-full px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/50"
+                                            style={{ width: '100%', padding: '0.75rem', fontSize: '0.875rem' }}
                                         />
                                     </div>
-                                    <button type="button" className="w-full bg-primary text-white text-sm font-semibold py-3 rounded-md hover:bg-primary/90 transition active:scale-[0.99]">
+                                    <button
+                                        type="button"
+                                        style={{ width: '100%', padding: '0.75rem', backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)', border: 'none', borderRadius: 'var(--radius-sm)', fontWeight: 600, cursor: 'pointer' }}
+                                    >
                                         Notificarme en el lanzamiento
                                     </button>
-                                </form>
+                                </div>
                             </div>
                         </div>
 
                     </div>
                 </section>
 
+                {/* Separador nativo de tu CSS */}
                 <div className="container">
-                    <hr className="divider-brand" />
+                    <div className="divider-brand" />
                 </div>
 
-                {/* SECCIÓN DATOS INSTITUCIONALES / SEGURIDAD */}
-                <section id="institucional" className="py-12 bg-card">
-                    <div className="container">
-                        <div className="grid sm:grid-cols-3 gap-8 text-center md:text-left">
-                            <div className="space-y-2">
-                                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Respaldo Gubernamental</h4>
-                                <p className="text-sm text-foreground">Garantizado por el tesoro y los fondos soberanos del Reino del Pan.</p>
-                            </div>
-                            <div className="space-y-2">
-                                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Experiencia Europea</h4>
-                                <p className="text-sm text-foreground">Desarrollado bajo la solvencia, tecnología y buenas prácticas de Laboral Kutxa.</p>
-                            </div>
-                            <div className="space-y-2">
-                                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Datos Financieros Seguros</h4>
-                                <p className="text-sm text-foreground font-sans">Sistemas adaptados con cifrado asimétrico y tecnología <span className="financial-data font-medium">2026</span>.</p>
-                            </div>
+                {/* Detalles institucionales */}
+                <section id="institucional" style={{ padding: '3rem 0', backgroundColor: 'var(--card)' }}>
+                    <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
+                        <div>
+                            <h4 className="display-font" style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', textTransform: 'uppercase', margin: '0 0 0.5rem 0' }}>Respaldo Institucional</h4>
+                            <p style={{ fontSize: '0.875rem', margin: 0 }}>Garantizado por el Gobierno del Reino del Pan.</p>
+                        </div>
+                        <div>
+                            <h4 className="display-font" style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', textTransform: 'uppercase', margin: '0 0 0.5rem 0' }}>Garantía y Solvencia</h4>
+                            <p style={{ fontSize: '0.875rem', margin: 0 }}>Desarrollado en alianza estratégica junto a Laboral Kutxa.</p>
+                        </div>
+                        <div>
+                            <h4 className="display-font" style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', textTransform: 'uppercase', margin: '0 0 0.5rem 0' }}>Infraestructura Segura</h4>
+                            <p style={{ fontSize: '0.875rem', margin: 0 }}>
+                                Cifrado financiero desplegado en el año <span className="financial-data">2026</span>.
+                            </p>
                         </div>
                     </div>
                 </section>
             </main>
 
             {/* FOOTER */}
-            <footer className="bg-secondary border-t border-border mt-auto py-8">
-                <div className="container flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                        <span className="font-display font-bold uppercase tracking-wider text-foreground">Laboral Panian Bank</span>
-                        <span>© 2026. Todos los derechos reservados.</span>
+            <footer style={{ backgroundColor: 'var(--secondary)', borderTop: '1px solid var(--border)', padding: '2rem 1.5rem' }}>
+                <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <span className="display-font" style={{ fontWeight: 700, color: 'var(--foreground)' }}>LABORAL PANIAN BANK</span>
+                        <span>© <span className="financial-data">2026</span>. Todos los derechos reservados.</span>
                     </div>
-                    <div className="flex gap-6">
-                        <span className="can-select cursor-help">Soporte: info@laboralpanian.com</span>
+                    <div className="can-select" style={{ display: 'flex', gap: '1.5rem' }}>
+                        <span>Contacto: info@laboralpanian.com</span>
                         <span className="financial-data">v0.1.0-alpha</span>
                     </div>
                 </div>

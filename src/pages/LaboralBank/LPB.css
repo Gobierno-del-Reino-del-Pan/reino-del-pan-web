@@ -292,7 +292,7 @@ input[type="number"]:focus {
 
 /* Botón Minimalista e Institucional */
 .btn-minimal {
-    @apply inline-flex items-center justify-center rounded-md border-2 border-primary bg-transparent px-6 py-2.5 text-sm font-semibold uppercase tracking-wider text-primary transition-all duration-200 hover:bg-primary hover:text-white active:scale-98 focus:outline-none focus:ring-2 focus:ring-primary/50;
+    @apply inline-flex items-center justify-center rounded-md border-2 border-primary bg-transparent px-6 py-2.5 text-sm font-semibold uppercase tracking-wider text-primary transition-all duration-200 hover:bg-primary hover:text-white active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/50;
 }
 
 .dark .btn-minimal {
@@ -327,7 +327,7 @@ input[type="number"]:focus {
 /* ==========================================================================
    SEGURIDAD VISUAL (Protección contra Data-Scraping)
    ========================================================================== */
-*:not(.can-select) * {
+*:not(.can-select):not(input):not(textarea):not(select) * {
     user-select: none;
     -webkit-user-select: none !important;
     -moz-user-select: none !important;
