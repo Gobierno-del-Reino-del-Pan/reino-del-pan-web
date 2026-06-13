@@ -365,20 +365,21 @@ function verifyHtml(d) {
 <html lang="es"><head>
   <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Verificación DPI · ${d.dpi_number}</title>
-  <style>
+ <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{background:#12080a;color:#e8d5a0;font-family:'Georgia',serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem}
-    .card{background:#1e0f10;border:1px solid #91B1E2;border-radius:1rem;max-width:380px;width:100%;padding:2rem;box-shadow:0 0 40px #6181b0ff}
-    .badge{display:inline-block;background:#5a1a1a;color:#f5c842;font-size:.7rem;letter-spacing:.12em;padding:.25rem .7rem;border-radius999px;margin-bottom:1.2rem;text-transform:uppercase;font-family:monospace}
-    .dpi-num{font-size:1.25rem;font-family:'Courier New',monospace;color:#f5c842;background:#2a0d0e;padding:.5rem 1rem;border-radius:.5rem;text-align:center;margin-bottom:1.5rem}
-    .row{display:flex;justify-content:space-between;padding:.55rem 0;border-bottom:1px solid #2e1010;font-size:.92rem;gap:.5rem}
+    body{background:linear-gradient(135deg, #faf9f5 0%, #f5f2eb 100%);color:#1a1410;font-family:'RMNeue','Inter',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem;letter-spacing:0.3px;-webkit-font-smoothing:antialiased}
+    .card{background:#ffffff;border:1px solid #e0dcd3;border-radius:0.75rem;max-width:380px;width:100%;padding:2rem;box-shadow:0 10px 30px rgba(15,50,106,0.08), 0 1px 3px rgba(0,0,0,0.02)}
+    .badge{display:inline-block;background:#f0ede7;color:#0F326A;font-size:.75rem;font-weight:600;letter-spacing:.12em;padding:.35rem .8rem;border-radius:9999px;margin-bottom:1.5rem;text-transform:uppercase}
+    .dpi-num{font-size:1.35rem;font-family:'Chillvornia','Playfair Display',serif;color:#0F326A;background:#f5f2eb;border:1px solid #e0dcd3;padding:.6rem 1rem;border-radius:.5rem;text-align:center;margin-bottom:1.5rem}
+    .row{display:flex;justify-content:space-between;padding:.65rem 0;border-bottom:1px solid #e0dcd3;font-size:.92rem;gap:.5rem}
     .row:last-child{border-bottom:none}
-    .label{color:#a08060;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;flex-shrink:0}
-    .val{color:#f0e0b0;text-align:right;font-weight:600}
-    .valid-stamp{margin-top:1.4rem;text-align:center;font-size:.8rem;color:#70b870;letter-spacing:.1em;text-transform:uppercase}
-    .logo{display:block;margin:0 auto 1.2rem;width:52px;opacity:.85}
+    .label{color:#52525b;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;flex-shrink:0;font-weight:500}
+    .val{color:#1a1410;text-align:right;font-weight:600}
+    .valid-stamp{margin-top:1.6rem;text-align:center;font-size:.8rem;color:#166534;font-weight:600;letter-spacing:.15em;text-transform:uppercase;background:#f0fdf4;padding:.4rem;border-radius:.375rem}
+    .logo{display:block;margin:0 auto 1.2rem;width:56px;box-shadow:0 6px 18px rgba(15,50,106,0.08);border-radius:50%;transition:transform 220ms ease,filter 0.25s ease}
+    .logo:hover{transform:translateY(-2px) rotate(-2deg);filter:drop-shadow(0 0 12px rgba(151,180,224,0.45))}
   </style>
-</head><body>
+  
   <div class="card">
     <img src="/logo.png" class="logo" alt="Logo" onerror="this.style.display='none'"/>
     <div style="text-align:center"><span class="badge">✓ DPI Verificado</span></div>
