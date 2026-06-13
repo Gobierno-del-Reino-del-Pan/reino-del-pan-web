@@ -182,16 +182,30 @@ export default function Header() {
 
                 {menuOpen && (
                   <div className="absolute right-0 mt-3 w-48 rounded-xl border border-black/10 bg-white/95 backdrop-blur-lg shadow-xl overflow-hidden z-50">
+
+                    {/* Encabezado */}
                     <div className="px-4 py-2.5 border-b border-black/5 bg-black/[0.02]">
                       <p className="text-[10px] text-black/40 uppercase tracking-wider font-semibold">Ciudadano</p>
                       <p className="text-xs font-bold text-black truncate mt-0.5">{user.username}</p>
                     </div>
+
+                    {/* Enlace: Mi Carpeta */}
                     <Link
                       href="/carpeta"
                       className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-black/70 hover:text-accent hover:bg-accent/5 transition duration-200"
                     >
                       📁 Mi Carpeta
                     </Link>
+
+                    {/* Enlace: Tarjeta DPI */}
+                    <Link
+                      href={`/api/dpi/verify/${(user as any).dpiNumber || "000002C"}`}
+                      className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-black/70 hover:text-accent hover:bg-accent/5 transition duration-200 border-t border-black/5"
+                    >
+                      🆔 Tarjeta DPI
+                    </Link>
+
+                    {/* Botón: Cerrar Sesión */}
                     <button
                       onClick={() => { window.location.href = "/auth/logout"; }}
                       className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-red-500 hover:bg-red-500/10 transition duration-200 border-t border-black/5 cursor-pointer"
