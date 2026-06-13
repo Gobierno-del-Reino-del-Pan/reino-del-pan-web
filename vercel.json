@@ -27,9 +27,8 @@
             "dest": "server.js"
         },
         {
-            "src": "/(.*)",
-            "dest": "/$1",
-            "continue": true
+            "src": "/assets/(.*)",
+            "dest": "/assets/$1"
         },
         {
             "handle": "filesystem"

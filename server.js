@@ -30,7 +30,7 @@ const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const GUILD_ID = process.env.GUILD_ID;
-const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:5174";
+const PUBLIC_URL = process.env.PUBLIC_URL || "https://reino-del-pan-web.vercel.app";
 const DISCORD_REDIRECT_URI = `${PUBLIC_URL}/auth/discord/callback`;
 const DISCORD_API = "https://discord.com/api/v10";
 
@@ -117,6 +117,25 @@ function getIP(req) {
     "unknown"
   );
 }
+
+// ── Sesiones con configuración mejorada para Vercel (HTTPS) ───────────────────
+app.use(session({
+  secret: process.env.SESSION_SECRET || "fallback-secret",
+  resave: false,
+  saveUninitialized: false,
+  name: "__reino_session", // Añadir un nombre explícito ayuda a evitar colisiones en Vercel
+  cookie: {
+    httpOnly: true,
+    // EXPLICACIÓN: Vercel requiere obligatoriamente 'true' para entornos HTTPS estables
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    // EXPLICACIÓN: Cambiado a 'lax' controlado bajo proxy seguro para permitir callbacks de OAuth2
+    sameSite: process.env.NODE_ENV === "production" ? "lax" : "lax",
+  },
+}));
+
+// 🔧 CRÍTICO PARA VERCEL: Obliga a Express a confiar en los headers de HTTPS que le inyecta Vercel
+app.set('trust proxy', 1);
 
 // ── Middleware: require auth ──────────────────────────────────────────────────
 function requireAuth(req, res, next) {
