@@ -1,0 +1,339 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ==========================================================================
+   TIPOGRAFÍAS (Optimización Bancaria)
+   ========================================================================== */
+
+/* Plus Jakarta Sans - Para títulos modernos y corporativos */
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    src: url('/fonts/PlusJakartaSans-Bold.woff2') format('woff2'),
+        url('/fonts/PlusJakartaSans-Bold.woff') format('woff');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    src: url('/fonts/PlusJakartaSans-SemiBold.woff2') format('woff2'),
+        url('/fonts/PlusJakartaSans-SemiBold.woff') format('woff');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Inter - Para la interfaz general y lectura de datos densos */
+@font-face {
+    font-family: 'Inter';
+    src: url('/fonts/Inter-Regular.woff2') format('woff2'),
+        url('/fonts/Inter-Regular.woff') format('woff');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url('/fonts/Inter-Medium.woff2') format('woff2'),
+        url('/fonts/Inter-Medium.woff') format('woff');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ==========================================================================
+   CONFIGURACIÓN DEL TEMA (Tailwind CSS v4.0 Inline Theme)
+   ========================================================================== */
+@theme inline {
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+}
+
+:root {
+    /* Paleta Laboral Panian Bank */
+    --primary: #550252;
+    /* Morado Corporativo (Logo) */
+    --primary-foreground: #ffffff;
+    --foreground: #471D26;
+    /* Vino Oscuro para textos principales (Logo) */
+    --muted-foreground: #61465D;
+    /* Gris Purpúreo para textos secundarios (Logo) */
+    --accent: #7cd697;
+    /* Verde Financiero / Éxito (Acento) */
+    --accent-foreground: #471D26;
+
+    /* Estructura UI */
+    --background: #fdfcfd;
+    /* Fondo limpio con un ligerísimo matiz cálido */
+    --card: #ffffff;
+    --card-foreground: #471D26;
+    --secondary: #f6f0f4;
+    /* Fondo secundario basado en el tono purpúreo suavizado */
+    --secondary-foreground: #550252;
+    --muted: #f0e6ed;
+    --border: #e4dae2;
+    --input: #ffffff;
+    --ring: #550252;
+    --radius: 0.625rem;
+    /* Bordes ligeramente más técnicos y corporativos */
+
+    /* Sistema de Fuentes */
+    --display-font: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+    --body-font: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+/* Modo Oscuro (Dark Mode) adaptado a la identidad del banco */
+.dark {
+    --background: #1a0f14;
+    --foreground: #f6f0f4;
+    --card: #25161d;
+    --card-foreground: #f6f0f4;
+    --primary: #7d1279;
+    --primary-foreground: #ffffff;
+    --secondary: #331e28;
+    --secondary-foreground: #7cd697;
+    --muted: #3a2530;
+    --muted-foreground: #a38fa0;
+    --border: #442d39;
+    --input: #1e1218;
+    --ring: #7cd697;
+}
+
+/* ==========================================================================
+   ESTILOS GENERALES Y RESETeo
+   ========================================================================== */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: var(--body-font);
+    background-color: var(--background);
+    color: var(--foreground);
+    letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* ==========================================================================
+   TIPOGRAFÍA Y JERARQUÍA
+   ========================================================================== */
+.display,
+.display-font,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--display-font);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+/* Propiedad Clave: Números tabulares para evitar el baile visual de cifras */
+.financial-data,
+.balance-amount,
+.iban-display,
+table {
+    font-variant-numeric: tabular-nums lining-nums;
+    letter-spacing: 0em;
+}
+
+/* ==========================================================================
+   COMPONENTES DE LA SEDE ELECTRÓNICA
+   ========================================================================== */
+
+/* Logo e Identidad Visual */
+.logo-glow {
+    box-shadow: 0 4px 12px rgba(85, 2, 82, 0.08);
+    transition: transform 220ms cubic-bezier(.2, .9, .3, 1), box-shadow 220ms, filter 0.25s ease;
+}
+
+.logo-glow:hover {
+    transform: translateY(-2px);
+    filter: drop-shadow(0 0 12px rgba(124, 214, 151, 0.35));
+}
+
+/* Navegación Bancaria */
+.nav-link {
+    position: relative;
+    color: var(--muted-foreground);
+    font-weight: 500;
+    transition: color 200ms ease;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: var(--primary);
+}
+
+.dark .nav-link:hover,
+.dark .nav-link.active {
+    color: var(--accent);
+}
+
+/* Elementos Multimedia e Interactivos */
+img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -webkit-user-drag: none !important;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-user-drag: none !important;
+}
+
+button,
+select {
+    cursor: pointer;
+    -webkit-user-drag: none !important;
+}
+
+button,
+input,
+textarea,
+select {
+    font: inherit;
+}
+
+input,
+textarea {
+    cursor: text;
+}
+
+/*Inputs de formulario seguros y legibles */
+input[type="text"],
+input[type="password"],
+input[type="number"] {
+    background-color: var(--input);
+    border: 1px solid var(--border);
+    color: var(--foreground);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(85, 2, 82, 0.15);
+}
+
+/* ==========================================================================
+   LAYOUT Y CONTENEDORES
+   ========================================================================== */
+.container {
+    width: 100%;
+    max-width: 1280px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .container {
+        padding-left: 2.5rem;
+        padding-right: 2.5rem;
+    }
+}
+
+/* ==========================================================================
+   CLASES DE UTILIDAD / ACCESIBILIDAD (Tailwind Apply)
+   ========================================================================== */
+
+/* Botón Minimalista e Institucional */
+.btn-minimal {
+    @apply inline-flex items-center justify-center rounded-md border-2 border-primary bg-transparent px-6 py-2.5 text-sm font-semibold uppercase tracking-wider text-primary transition-all duration-200 hover:bg-primary hover:text-white active:scale-98 focus:outline-none focus:ring-2 focus:ring-primary/50;
+}
+
+.dark .btn-minimal {
+    @apply border-accent text-accent hover:bg-accent hover:text-background focus:ring-accent/50;
+}
+
+/* Espaciados limpios para banca online */
+.section-spacious {
+    @apply py-16 lg:py-24;
+}
+
+/* Línea divisoria elegante con el color secundario */
+.divider-brand {
+    @apply h-px bg-border my-12;
+}
+
+/* Tarjeta de producto / Cuenta bancaria */
+.bank-card {
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(71, 29, 38, 0.04);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.bank-card:hover {
+    box-shadow: 0 4px 12px rgba(71, 29, 38, 0.08);
+    border-color: var(--border);
+}
+
+/* ==========================================================================
+   SEGURIDAD VISUAL (Protección contra Data-Scraping / Capturas accidentales)
+   ========================================================================== */
+*:not(.can-select) * {
+    user-select: none;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+}
+
+/* Permitir selección de datos explícitos como IBANs o números de transferencia */
+.can-select,
+.can-select * {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+}

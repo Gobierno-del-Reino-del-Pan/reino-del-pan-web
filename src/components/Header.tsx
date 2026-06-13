@@ -14,6 +14,7 @@ const otrosItems = [
   { href: "/donations", label: "Donaciones" },
   { href: "/laliga", label: "La Liga" },
   { href: "/tvp", label: "TVP" },
+  { href: "/lpb", label: "LPB" },
 ];
 
 interface DiscordUser {

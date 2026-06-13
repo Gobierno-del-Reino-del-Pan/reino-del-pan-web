@@ -37,7 +37,7 @@ export default function LaLigaPaniense() {
                             className="h-8 w-auto object-contain"
                         />
                         <span className="text-2xl font-laliga-title tracking-tight text-white flex gap-1 uppercase">
-                            LA<span className="text-red-600">LIGA</span> <span className="font-light">PANIENSE</span>
+                            LA<span className="text-red-600">MIGA</span> <span className="font-light">PANIENSE</span>
                         </span>
                     </div>
 
@@ -257,7 +257,7 @@ export default function LaLigaPaniense() {
                     </div>
 
                     <div className="border-t border-slate-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-                        <p>© 2026 LaLiga Paniense. Todos los derechos reservados.</p>
+                        <p>© 2026 LaMiga Paniense. Todos los derechos reservados.</p>
                     </div>
                 </div>
             </footer>

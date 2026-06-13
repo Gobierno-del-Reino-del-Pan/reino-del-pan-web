@@ -18,6 +18,7 @@ import TVP from "./pages/TVP";
 import CSD from "./pages/LALIGA/CSD";
 import JuegoLimpio from "./pages/LALIGA/juego-limpio";
 import Reglamento from "./pages/LALIGA/reglamento";
+import LPB from "./pages/LaboralBank/LPB";
 
 function App() {
   return (
