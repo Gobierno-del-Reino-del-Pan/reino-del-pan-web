@@ -21,9 +21,42 @@ const supabase = createClient(
 // ── Roles desde JSON ──────────────────────────────────────────────────────────
 let rolesData = { roles: [] };
 try {
-  rolesData = JSON.parse(readFileSync(path.resolve(__dirname, "data", "roles.json"), "utf-8"));
+  const raw = JSON.parse(readFileSync(path.resolve(__dirname, "data", "roles.json"), "utf-8"));
+  const rawRoles = raw?.roles;
+
+  if (Array.isArray(rawRoles)) {
+    // Formato: { "roles": [ { nombre, discord_role_id, ... }, ... ] }
+    rolesData = { roles: rawRoles };
+  } else if (rawRoles && typeof rawRoles === "object") {
+    // Formato por categorías:
+    // { "roles": { "profesiones": [...], "regiones": [...], "especiales": [...], ... } }
+    const flattened = [];
+    for (const categoria of Object.values(rawRoles)) {
+      if (Array.isArray(categoria)) {
+        flattened.push(...categoria);
+      }
+    }
+    rolesData = { roles: flattened };
+  } else if (Array.isArray(raw)) {
+    // Formato: [ { nombre, discord_role_id, ... }, ... ]
+    rolesData = { roles: raw };
+  } else if (raw && typeof raw === "object") {
+    // Formato plano: { "GIMNASIO": "1508...", "ALTO_MANDO": "1508..." }
+    rolesData = {
+      roles: Object.entries(raw).map(([name, discord_role_id]) => ({
+        nombre: name,
+        discord_role_id: String(discord_role_id),
+      })),
+    };
+  } else {
+    console.warn("⚠️ data/roles.json no tiene un formato reconocido. Usando lista vacía.");
+  }
 } catch (e) {
   console.warn("⚠️ No se pudo leer data/roles.json:", e.message);
+}
+
+if (!Array.isArray(rolesData.roles)) {
+  rolesData.roles = [];
 }
 
 // ── Discord OAuth2 config ─────────────────────────────────────────────────────
