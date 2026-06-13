@@ -37,6 +37,8 @@ function App() {
         <Route path="/LALIGA/juego-limpio" component={JuegoLimpio} />
         <Route path="/LALIGA/reglamento" component={Reglamento} />
 
+        <Route path="/lpb" component={LPB} />
+
         <Route path="/tvp" component={TVP} />
         <Route path="/dpi" component={DPI} />
         <Route path="/dpi/create" component={CreateDPI} />
