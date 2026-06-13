@@ -1,5 +1,6 @@
 import React from 'react';
 import './LPB.css';
+import "tailwindcss";
 
 export default function LaboralPanianBank() {
     return (
