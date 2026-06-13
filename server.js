@@ -25,11 +25,8 @@ try {
   const rawRoles = raw?.roles;
 
   if (Array.isArray(rawRoles)) {
-    // Formato: { "roles": [ { nombre, discord_role_id, ... }, ... ] }
     rolesData = { roles: rawRoles };
   } else if (rawRoles && typeof rawRoles === "object") {
-    // Formato por categorías:
-    // { "roles": { "profesiones": [...], "regiones": [...], "especiales": [...], ... } }
     const flattened = [];
     for (const [categoria, lista] of Object.entries(rawRoles)) {
       if (Array.isArray(lista)) {
@@ -40,10 +37,8 @@ try {
     }
     rolesData = { roles: flattened };
   } else if (Array.isArray(raw)) {
-    // Formato: [ { nombre, discord_role_id, ... }, ... ]
     rolesData = { roles: raw };
   } else if (raw && typeof raw === "object") {
-    // Formato plano: { "GIMNASIO": "1508...", "ALTO_MANDO": "1508..." }
     rolesData = {
       roles: Object.entries(raw).map(([name, discord_role_id]) => ({
         nombre: name,
@@ -88,7 +83,7 @@ function setSessionCookie(res, user) {
   const token = signUserToken(user);
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: true,       // En Vercel siempre se sirve por HTTPS
+    secure: true,
     sameSite: "lax",
     maxAge: COOKIE_MAX_AGE,
   });
@@ -150,7 +145,6 @@ const app = express();
 const port = process.env.PORT || 3344;
 const staticFolder = path.resolve(__dirname, "dist", "public");
 
-// 🔧 FIX: confiar en el proxy (necesario para HTTPS en duckdns.org / Vercel)
 app.set('trust proxy', 1);
 
 app.use(express.json({ limit: "1mb" }));
@@ -182,7 +176,6 @@ function requireAuth(req, res, next) {
 // AUTH DISCORD
 // ─────────────────────────────────────────────────────────────────────────────
 
-// GET /auth/discord → redirige a Discord
 app.get("/auth/discord", (req, res) => {
   const params = new URLSearchParams({
     client_id: DISCORD_CLIENT_ID,
@@ -193,13 +186,11 @@ app.get("/auth/discord", (req, res) => {
   res.redirect(`https://discord.com/oauth2/authorize?${params}`);
 });
 
-// GET /auth/discord/callback → intercambia code por token, carga datos
 app.get("/auth/discord/callback", async (req, res) => {
   const { code } = req.query;
   if (!code) return res.redirect("/?auth=error");
 
   try {
-    // 1. Obtener token de acceso
     const tokenRes = await fetch(`${DISCORD_API}/oauth2/token`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -216,14 +207,12 @@ app.get("/auth/discord/callback", async (req, res) => {
 
     const accessToken = tokenData.access_token;
 
-    // 2. Obtener perfil Discord
     const profileRes = await fetch(`${DISCORD_API}/users/@me`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     const profile = await profileRes.json();
     if (!profile.id) throw new Error("No se pudo obtener perfil");
 
-    // 3. Comprobar si está en el guild y obtener roles
     const memberRes = await fetch(
       `${DISCORD_API}/users/@me/guilds/${GUILD_ID}/member`,
       { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -238,19 +227,16 @@ app.get("/auth/discord/callback", async (req, res) => {
       inGuild = true;
     }
 
-    // 4. Cruzar roles de Discord con roles.json
     const rolesDelUsuario = rolesData.roles.filter(r =>
       r.discord_role_id && memberRoleIds.includes(r.discord_role_id)
     );
 
-    // 5. Buscar en tabla verificados
     const { data: verificado } = await supabase
       .from("verificados")
       .select("dpi")
       .eq("discord_id", profile.id)
       .maybeSingle();
 
-    // 6. Si tiene DPI verificado, buscar datos del DPI
     let dpiData = null;
     if (verificado?.dpi) {
       const { data: dpi } = await supabase
@@ -261,22 +247,31 @@ app.get("/auth/discord/callback", async (req, res) => {
       dpiData = dpi;
     }
 
-    // 7. Construir payload del usuario y firmarlo como JWT en cookie
+    const avatarUrl = profile.avatar
+      ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png?size=128`
+      : `https://cdn.discordapp.com/embed/avatars/${parseInt(profile.id) % 5}.png`;
+
+    // 🔧 Sincronización automática de perfil en la tabla de usuarios de Supabase
+    await supabase.from("usuarios").upsert({
+      discord_id: profile.id,
+      username: profile.username,
+      avatar_url: avatarUrl,
+      updated_at: new Date().toISOString()
+    });
+
     const userPayload = {
       id: profile.id,
       username: profile.username,
-      avatar: profile.avatar
-        ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png?size=128`
-        : `https://cdn.discordapp.com/embed/avatars/${parseInt(profile.id) % 5}.png`,
+      avatar: avatarUrl,
       inGuild,
       roles: rolesDelUsuario,
       dpi: dpiData,
       verificado: !!verificado,
+      matrimonio: null, // Valores por defecto en JWT
+      hijos: []
     };
 
     setSessionCookie(res, userPayload);
-
-    // Redirigir a la carpeta del ciudadano
     res.redirect("/carpeta");
 
   } catch (err) {
@@ -285,7 +280,6 @@ app.get("/auth/discord/callback", async (req, res) => {
   }
 });
 
-// GET /auth/logout
 app.get("/auth/logout", (req, res) => {
   res.clearCookie(COOKIE_NAME, {
     httpOnly: true,
@@ -295,19 +289,73 @@ app.get("/auth/logout", (req, res) => {
   res.redirect("/");
 });
 
-// GET /api/me → devuelve datos de sesión al frontend
-app.get("/api/me", (req, res) => {
+// ── ACTUALIZADO: GET /api/me (Intercepta la sesión y extrae dinámicamente datos de Supabase) ──
+app.get("/api/me", async (req, res) => {
   const token = req.cookies?.[COOKIE_NAME];
   if (!token) return res.status(401).json({ user: null });
+
   try {
     const user = jwt.verify(token, JWT_SECRET);
+    const discordId = user.id;
+
+    // 1. Consultar Matrimonio (u1 o u2)
+    const { data: matrimonioData } = await supabase
+      .from('matrimonios')
+      .select(`
+        fecha_boda,
+        u1:user_id_1 (discord_id, username, avatar_url),
+        u2:user_id_2 (discord_id, username, avatar_url)
+      `)
+      .or(`user_id_1.eq.${discordId},user_id_2.eq.${discordId}`)
+      .maybeSingle();
+
+    let matrimonio = null;
+    if (matrimonioData) {
+      const esU1 = matrimonioData.u1.discord_id === discordId;
+      const conyuge = esU1 ? matrimonioData.u2 : matrimonioData.u1;
+
+      matrimonio = {
+        conyuge_id: conyuge.discord_id,
+        conyuge_username: conyuge.username,
+        conyuge_avatar: conyuge.avatar_url,
+        fecha_boda: matrimonioData.fecha_boda
+      };
+    }
+
+    // 2. Consultar Hijos (Adoptivos con FK o Creados con cadenas planas)
+    const { data: hijosData } = await supabase
+      .from('hijos')
+      .select(`
+        id,
+        tipo,
+        hijo_discord_id,
+        nombre_ficticio,
+        avatar_ficticio,
+        usuarios:hijo_discord_id (username, avatar_url)
+      `)
+      .eq('padre_id', discordId);
+
+    const hijos = (hijosData || []).map(h => {
+      const esCreado = h.tipo === 'creado';
+      return {
+        hijo_id: esCreado ? `creado_${h.id}` : h.hijo_discord_id,
+        hijo_username: esCreado ? h.nombre_ficticio : h.usuarios?.username || "Desconocido",
+        hijo_avatar: esCreado ? h.avatar_ficticio : h.usuarios?.avatar_url || "https://cdn.discordapp.com/embed/avatars/0.png",
+        tipo: h.tipo
+      };
+    });
+
+    // Inyectamos las relaciones en caliente al payload del usuario antes de retornar
+    user.matrimonio = matrimonio;
+    user.hijos = hijos;
+
     return res.json({ user });
-  } catch {
+  } catch (err) {
     return res.status(401).json({ user: null });
   }
 });
 
-// GET /api/me/refresh → refresca datos de sesión (roles y DPI actualizados)
+// GET /api/me/refresh
 app.get("/api/me/refresh", requireAuth, async (req, res) => {
   try {
     const userId = req.user.id;
@@ -334,12 +382,10 @@ app.get("/api/me/refresh", requireAuth, async (req, res) => {
       verificado: !!verificado,
     };
 
-    // Quitamos campos propios del JWT antes de volver a firmarlo
     delete updatedUser.iat;
     delete updatedUser.exp;
 
     setSessionCookie(res, updatedUser);
-
     return res.json({ user: updatedUser });
   } catch (err) {
     console.error("[/api/me/refresh]", err);
@@ -348,7 +394,7 @@ app.get("/api/me/refresh", requireAuth, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DPI ENDPOINTS (existentes)
+// DPI ENDPOINTS 
 // ─────────────────────────────────────────────────────────────────────────────
 
 app.post("/api/dpi/create", async (req, res) => {
@@ -418,7 +464,6 @@ app.get("/api/dpi/verify/:code", async (req, res) => {
     .eq("dpi_number", full).single();
   if (error || !data) return res.status(404).send(verifyHtml(null));
 
-  // Buscar los roles del titular del DPI (si está verificado en Discord)
   let rolesDelUsuario = [];
   try {
     const { data: verificado } = await supabase
@@ -449,30 +494,21 @@ app.get("/api/dpi/verify/:code", async (req, res) => {
 
 app.get("/health", (_req, res) => res.json({ status: "OK" }));
 
-// ── Helper de escape básico para atributos/texto en HTML ───────────────────────
 function escHtml(str) {
   return String(str ?? "").replace(/[&<>"']/g, (c) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   }[c]));
 }
 
-// ── HTML verificación QR ──────────────────────────────────────────────────────
 function verifyHtml(d, roles = []) {
-  if (!d) return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>DPI no encontrado</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;background:#1a0a0a;color:#c0a060;text-align:center}</style>
-    </head><body><h2>DPI no encontrado</h2></body></html>`;
+  if (!d) return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>DPI no encontrado</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;background:#1a0a0a;color:#c0a060;text-align:center}</style></head><body><h2>DPI no encontrado</h2></body></html>`;
 
   const rolesHtml = roles.length > 0 ? `
     <div class="roles-row">
       ${roles.map(r => {
     const titulo = escHtml(r.nombre);
-    if (r.emoji) {
-      return `<span class="role-icon" title="${titulo}">${r.emoji}</span>`;
-    }
-    if (r.imagen) {
-      return `<img class="role-icon" src="${escHtml(r.imagen)}" alt="${titulo}" title="${titulo}"/>`;
-    }
+    if (r.emoji) return `<span class="role-icon" title="${titulo}">${r.emoji}</span>`;
+    if (r.imagen) return `<img class="role-icon" src="${escHtml(r.imagen)}" alt="${titulo}" title="${titulo}"/>`;
     return "";
   }).join("")}
     </div>` : "";
@@ -499,8 +535,6 @@ function verifyHtml(d, roles = []) {
     .logo{display:block;margin:0 auto 1.2rem;width:56px;box-shadow:0 6px 18px rgba(15,50,106,0.08);border-radius:50%;transition:transform 220ms ease,filter 0.25s ease}
     .logo:hover{transform:translateY(-2px) rotate(-2deg);filter:drop-shadow(0 0 12px rgba(151,180,224,0.45))}
   </style>
-
-
   <div class="card">
     <img src="/logo.png" class="logo" alt="Logo" onerror="this.style.display='none'"/>
     <div style="text-align:center"><span class="badge">✓ DPI Verificado</span></div>
@@ -518,7 +552,6 @@ function verifyHtml(d, roles = []) {
 </body></html>`;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 function formatDate(d) {
   return [String(d.getDate()).padStart(2, "0"), String(d.getMonth() + 1).padStart(2, "0"), d.getFullYear()].join("/");
 }
@@ -531,7 +564,7 @@ function buildQrUrl(dpiNumber) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PROXY DE DISCORD (Para la lista de miembros usando el Bot)
+// PROXY DE DISCORD
 // ─────────────────────────────────────────────────────────────────────────────
 
 app.get("/api/roles", async (req, res) => {
@@ -541,16 +574,12 @@ app.get("/api/roles", async (req, res) => {
       return res.status(500).json({ error: "Configuración incompleta en el servidor." });
     }
 
-    // Discord devuelve como máximo 1000 miembros por petición.
-    // Paginamos con "after" hasta traer la lista completa del servidor.
     const allMembers = [];
     let after = "0";
 
     while (true) {
       const response = await fetch(`${DISCORD_API}/guilds/${GUILD_ID}/members?limit=1000&after=${after}`, {
-        headers: {
-          Authorization: `Bot ${DISCORD_TOKEN.trim()}`,
-        },
+        headers: { Authorization: `Bot ${DISCORD_TOKEN.trim()}` },
       });
 
       const page = await response.json();
@@ -561,16 +590,12 @@ app.get("/api/roles", async (req, res) => {
       }
 
       if (!Array.isArray(page) || page.length === 0) break;
-
       allMembers.push(...page);
-
       if (page.length < 1000) break;
       after = page[page.length - 1].user.id;
     }
 
     console.log(`[/api/roles] Miembros totales obtenidos: ${allMembers.length}`);
-
-    // Si todo va bien, le devolvemos la lista completa de miembros a tu Frontend
     return res.json(allMembers);
 
   } catch (error) {
@@ -579,16 +604,12 @@ app.get("/api/roles", async (req, res) => {
   }
 });
 
-// ── Fallback SPA ──────────────────────────────────────────────────────────────
 app.get("*", (_req, res) => {
   res.sendFile(path.join(staticFolder, "index.html"));
 });
 
-// export default siempre al top-level (requerido por ESM)
-// En Vercel Serverless la plataforma usa este export; en local se ignora
 export default app;
 
-// Solo levantamos el servidor HTTP cuando NO estamos en Vercel Serverless
 if (!(process.env.NODE_ENV === "production" && !process.env.LOCAL_RUN)) {
   app.listen(port, () => {
     console.log(`  Server furula en http://localhost:${port}`);
