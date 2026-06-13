@@ -171,7 +171,7 @@
       {
         "id": "rol_EQUIPOMZ",
         "nombre": "Equipo MZ",
-        "imagen": "/roles/EQUIPOMZ.png",
+        "imagen": "/roles/equipoMZ.png",
         "discord_role_id": "1515390908248621359"
       },
       {
