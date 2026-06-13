@@ -15,15 +15,30 @@ interface DPIData {
   valid_until: string;
 }
 
-// Interfaz actualizada para ser compatible con roles.json (incluye categoría e imagen)
 interface Rol {
   id: string;
   nombre: string;
-  descripcion?: string;     // Solo lo tienen las profesiones
-  emoji?: string;            // Profesiones y regiones
-  imagen?: string | null;    // estado_ciudadano y especiales
-  categoria?: string;        // "profesiones" | "regiones" | "estado_ciudadano" | "especiales"
+  descripcion?: string;
+  emoji?: string;
+  imagen?: string | null;
+  // Actualizado para soportar las nuevas categorías del JSON
+  categoria?: "profesiones" | "regiones" | "estado_ciudadano" | "especiales" | "equipos" | "mafia";
   discord_role_id: string;
+}
+
+// Interfaces para Relaciones Familiares
+interface Matrimonio {
+  conyuge_id: string;
+  conyuge_username: string;
+  conyuge_avatar: string;
+  fecha_boda: string;
+}
+
+interface Hijo {
+  hijo_id: string;
+  hijo_username: string;
+  hijo_avatar: string;
+  tipo: "adoptivo" | "creado";
 }
 
 interface DiscordUser {
@@ -34,9 +49,10 @@ interface DiscordUser {
   verificado: boolean;
   dpi: DPIData | null;
   roles: Rol[];
+  matrimonio: Matrimonio | null; // Añadido
+  hijos: Hijo[];                 // Añadido
 }
 
-// ── Icono de un rol: emoji, imagen o fallback ──────────────────────────────────
 function RolIcono({ rol }: { rol: Rol }) {
   if (rol.emoji) {
     return <div className="text-4xl drop-shadow-sm leading-none">{rol.emoji}</div>;
@@ -53,11 +69,9 @@ function RolIcono({ rol }: { rol: Rol }) {
   return <div className="text-4xl drop-shadow-sm leading-none">💼</div>;
 }
 
-// ── Tarjeta individual de rol ──────────────────────────────────────────────────
 function RolCard({ rol }: { rol: Rol }) {
   return (
     <div
-      key={rol.discord_role_id}
       className="group flex items-start gap-4 p-4 rounded-xl border border-border bg-background/40 hover:border-accent/40 hover:bg-accent/5 transition-all duration-200"
     >
       <RolIcono rol={rol} />
@@ -75,7 +89,6 @@ function RolCard({ rol }: { rol: Rol }) {
   );
 }
 
-// ── Sección de roles agrupada por categoría ─────────────────────────────────────
 function RolSeccion({ titulo, roles }: { titulo: string; roles: Rol[] }) {
   if (roles.length === 0) return null;
   return (
@@ -101,10 +114,13 @@ function RolSeccion({ titulo, roles }: { titulo: string; roles: Rol[] }) {
   );
 }
 
+// Mapeo de categorías actualizado con las dos nuevas secciones requeridas
 const CATEGORIAS: { key: string; titulo: string }[] = [
   { key: "profesiones", titulo: "Mi profesión" },
   { key: "regiones", titulo: "Mi región" },
   { key: "estado_ciudadano", titulo: "Estado ciudadano" },
+  { key: "equipos", titulo: "Mi Equipo" },
+  { key: "mafia", titulo: "Registros de Familia / Mafia" },
   { key: "especiales", titulo: "Roles especiales" },
 ];
 
@@ -242,9 +258,10 @@ export default function Carpeta() {
   }
 
   const dpi = user.dpi;
-  const nombre = dpi.nombre.charAt(0) + dpi.nombre.slice(1).toLowerCase();
+  const nombreCompleto = `${dpi.nombre} ${dpi.apellidos}`.toLowerCase()
+    .replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
 
-  // Agrupar los roles del usuario por categoría (los que no tengan categoria van a "otros")
+  // Agrupación de roles dinámicos
   const rolesPorCategoria: Record<string, Rol[]> = {};
   for (const rol of user.roles) {
     const cat = rol.categoria || "otros";
@@ -259,24 +276,85 @@ export default function Carpeta() {
 
       <main className="flex-1 py-12 px-4 md:px-0">
         <div className="container mx-auto max-w-2xl space-y-8">
-          {/* Bienvenida + avatar */}
+
+          {/* Ficha Perfil Principal */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-5"
+            className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 p-6 rounded-2xl border border-border bg-card"
           >
-            <img
-              src={user.avatar}
-              alt={user.username}
-              className="w-16 h-16 rounded-full border-2 border-accent/30"
-            />
-            <div>
-              <p className="text-xs uppercase tracking-[0.4em] text-accent">Bienvenido</p>
-              <h1 className="mt-1 text-3xl font-semibold display-font">{nombre}</h1>
+            <div className="flex items-center gap-5">
+              <img
+                src={user.avatar}
+                alt={user.username}
+                className="w-16 h-16 rounded-full border-2 border-accent/30 object-cover"
+              />
+              <div>
+                <p className="text-xs uppercase tracking-[0.4em] text-accent">Ciudadano Registrado</p>
+                <h1 className="mt-1 text-2xl font-semibold display-font text-foreground">{nombreCompleto}</h1>
+                <p className="text-xs text-foreground/40 font-mono">@{user.username}</p>
+              </div>
             </div>
           </motion.div>
 
-          {/* Roles agrupados por categoría */}
+          {/* NUEVO MÓDULO: Relaciones Familiares (Matrimonio e Hijos) */}
+          {(user.matrimonio || user.hijos?.length > 0) && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-6 rounded-2xl border border-border bg-card space-y-4"
+            >
+              <p className="text-xs uppercase tracking-[0.3em] text-accent font-medium border-b border-border pb-2">
+                Núcleo Familiar Familiar
+              </p>
+
+              {/* Estado de Casado */}
+              {user.matrimonio && (
+                <div className="flex items-center gap-4 bg-background/30 p-3 rounded-xl border border-border/60">
+                  <span className="text-2xl">💍</span>
+                  <div className="flex items-center gap-3 flex-1">
+                    <img
+                      src={user.matrimonio.conyuge_avatar}
+                      alt={user.matrimonio.conyuge_username}
+                      className="w-9 h-9 rounded-full object-cover border border-accent/20"
+                    />
+                    <div>
+                      <p className="text-xs text-foreground/50">Casado/a con:</p>
+                      <p className="text-sm font-medium text-foreground">@{user.matrimonio.conyuge_username}</p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono text-foreground/30 hidden sm:block">
+                    Desde: {new Date(user.matrimonio.fecha_boda).toLocaleDateString()}
+                  </span>
+                </div>
+              )}
+
+              {/* Lista de Hijos */}
+              {user.hijos && user.hijos.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs text-foreground/50 font-medium pl-1">Hijos registrados:</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {user.hijos.map((hijo) => (
+                      <div key={hijo.hijo_id} className="flex items-center gap-3 bg-background/20 p-2.5 rounded-xl border border-border/40">
+                        <span className="text-xl">{hijo.tipo === "adoptivo" ? "🧒" : "🍼"}</span>
+                        <img
+                          src={hijo.hijo_avatar}
+                          alt={hijo.hijo_username}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                        <div>
+                          <p className="text-xs font-medium text-foreground">@{hijo.hijo_username}</p>
+                          <p className="text-[10px] text-accent/70 capitalize">{hijo.tipo}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {/* Secciones de Roles del Servidor */}
           {user.roles.length > 0 ? (
             <>
               {CATEGORIAS.map(({ key, titulo }) => (
@@ -285,53 +363,24 @@ export default function Carpeta() {
               <RolSeccion titulo="Otros roles" roles={otros} />
             </>
           ) : (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="rounded-2xl border border-border bg-card overflow-hidden"
-            >
+            <div className="rounded-2xl border border-border bg-card overflow-hidden">
               <div className="px-6 py-4 border-b border-border">
-                <p className="text-xs uppercase tracking-[0.3em] text-accent font-medium">
-                  Mi profesión
-                </p>
+                <p className="text-xs uppercase tracking-[0.3em] text-accent font-medium">Mi profesión</p>
               </div>
-              <div className="px-6 py-5">
-                <div className="text-center py-6">
-                  <p className="text-foreground/40 text-sm">
-                    Aún no tienes una profesión asignada.
-                  </p>
-                  <p className="text-foreground/30 text-xs mt-1">
-                    Contacta con las autoridades del Reino para ejercer un oficio.
-                  </p>
-                </div>
+              <div className="px-6 py-5 text-center py-6">
+                <p className="text-foreground/40 text-sm">Aún no tienes una profesión asignada.</p>
               </div>
-            </motion.div>
+            </div>
           )}
 
-          {/* Cerrar sesión */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="flex justify-center pt-4"
-          >
+          {/* Cierre de sesión */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-center pt-4">
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-foreground/30 hover:text-red-400 transition-colors duration-200 group"
             >
-              <svg
-                className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                />
+              <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
               Cerrar sesión
             </button>
