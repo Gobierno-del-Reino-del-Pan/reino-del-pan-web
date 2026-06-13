@@ -162,7 +162,7 @@ export default function Home() {
               </p>
             </div>
             <div className="mt-8 flex items-center">
-              <span className="text-xs uppercase tracking-[0.15em] font-mono font-bold text-emerald-800/90">Se une a nosotros para crear la primera entidad financiera de panama</span>
+              <span className="text-xs uppercase tracking-[0.15em] font-mono font-bold text-emerald-800/90">Se une a nosotros para crear la primera entidad financiera del Reino del Pan</span>
             </div>
           </div>
 
