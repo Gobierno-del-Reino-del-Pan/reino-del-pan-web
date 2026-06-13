@@ -4,8 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 import ws from "ws";
-import cookieParser from "cookie-parser";
-import jwt from "jsonwebtoken";
+import session from "express-session";
 import { readFileSync } from "node:fs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -34,30 +33,6 @@ const GUILD_ID = process.env.GUILD_ID;
 const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:5174";
 const DISCORD_REDIRECT_URI = `${PUBLIC_URL}/auth/discord/callback`;
 const DISCORD_API = "https://discord.com/api/v10";
-
-// ── JWT config ─────────────────────────────────────────────────────────────────
-const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-cambia-esto";
-const JWT_EXPIRES_IN = "7d";
-const COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 días
-const COOKIE_NAME = "session";
-
-if (!process.env.JWT_SECRET) {
-  console.warn("⚠️ JWT_SECRET no está definido en las variables de entorno. Usando un valor por defecto INSEGURO.");
-}
-
-function signUserToken(user) {
-  return jwt.sign(user, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-}
-
-function setSessionCookie(res, user) {
-  const token = signUserToken(user);
-  res.cookie(COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: true,       // En Vercel siempre se sirve por HTTPS
-    sameSite: "lax",
-    maxAge: COOKIE_MAX_AGE,
-  });
-}
 
 // ── Rate-limit en RAM ─────────────────────────────────────────────────────────
 const ipStore = new Map();
@@ -115,11 +90,23 @@ const app = express();
 const port = process.env.PORT || 3344;
 const staticFolder = path.resolve(__dirname, "dist", "public");
 
-// 🔧 FIX: confiar en el proxy (necesario para HTTPS en duckdns.org / Vercel)
+// 🔧 FIX: confiar en el proxy (necesario para HTTPS en duckdns.org)
 app.set('trust proxy', 1);
 
 app.use(express.json({ limit: "1mb" }));
-app.use(cookieParser());
+
+// ── Sesiones con configuración mejorada ────────────────────────────────────────
+app.use(session({
+  secret: process.env.SESSION_SECRET || "fallback-secret",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: 'auto',        // 'auto' detecta si la conexión es HTTPS
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    sameSite: "lax",
+  },
+}));
 
 app.use(express.static(staticFolder));
 
@@ -131,16 +118,10 @@ function getIP(req) {
   );
 }
 
-// ── Middleware: require auth (basado en JWT en cookie) ────────────────────────
+// ── Middleware: require auth ──────────────────────────────────────────────────
 function requireAuth(req, res, next) {
-  const token = req.cookies?.[COOKIE_NAME];
-  if (!token) return res.status(401).json({ error: "No autenticado." });
-  try {
-    req.user = jwt.verify(token, JWT_SECRET);
-    return next();
-  } catch (err) {
-    return res.status(401).json({ error: "Sesión inválida o expirada." });
-  }
+  if (req.session?.user) return next();
+  return res.status(401).json({ error: "No autenticado." });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -226,8 +207,8 @@ app.get("/auth/discord/callback", async (req, res) => {
       dpiData = dpi;
     }
 
-    // 7. Construir payload del usuario y firmarlo como JWT en cookie
-    const userPayload = {
+    // 7. Guardar en sesión los datos del usuario
+    req.session.user = {
       id: profile.id,
       username: profile.username,
       avatar: profile.avatar
@@ -239,10 +220,15 @@ app.get("/auth/discord/callback", async (req, res) => {
       verificado: !!verificado,
     };
 
-    setSessionCookie(res, userPayload);
-
-    // Redirigir a la carpeta del ciudadano
-    res.redirect("/carpeta");
+    // 🔧 FIX: Forzar el guardado de la sesión antes de redirigir
+    req.session.save((err) => {
+      if (err) {
+        console.error("Error guardando la sesión:", err);
+        return res.redirect("/?auth=error");
+      }
+      // Redirigir a la carpeta del ciudadano
+      res.redirect("/carpeta");
+    });
 
   } catch (err) {
     console.error("[/auth/discord/callback]", err);
@@ -252,30 +238,21 @@ app.get("/auth/discord/callback", async (req, res) => {
 
 // GET /auth/logout
 app.get("/auth/logout", (req, res) => {
-  res.clearCookie(COOKIE_NAME, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "lax",
+  req.session.destroy(() => {
+    res.redirect("/");
   });
-  res.redirect("/");
 });
 
 // GET /api/me → devuelve datos de sesión al frontend
 app.get("/api/me", (req, res) => {
-  const token = req.cookies?.[COOKIE_NAME];
-  if (!token) return res.status(401).json({ user: null });
-  try {
-    const user = jwt.verify(token, JWT_SECRET);
-    return res.json({ user });
-  } catch {
-    return res.status(401).json({ user: null });
-  }
+  if (!req.session?.user) return res.status(401).json({ user: null });
+  return res.json({ user: req.session.user });
 });
 
 // GET /api/me/refresh → refresca datos de sesión (roles y DPI actualizados)
 app.get("/api/me/refresh", requireAuth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.session.user.id;
 
     const { data: verificado } = await supabase
       .from("verificados")
@@ -293,19 +270,10 @@ app.get("/api/me/refresh", requireAuth, async (req, res) => {
       dpiData = dpi;
     }
 
-    const updatedUser = {
-      ...req.user,
-      dpi: dpiData,
-      verificado: !!verificado,
-    };
+    req.session.user.dpi = dpiData;
+    req.session.user.verificado = !!verificado;
 
-    // Quitamos campos propios del JWT antes de volver a firmarlo
-    delete updatedUser.iat;
-    delete updatedUser.exp;
-
-    setSessionCookie(res, updatedUser);
-
-    return res.json({ user: updatedUser });
+    return res.json({ user: req.session.user });
   } catch (err) {
     console.error("[/api/me/refresh]", err);
     return res.status(500).json({ error: "Error interno." });
@@ -404,7 +372,7 @@ function verifyHtml(d) {
     body{background:linear-gradient(135deg, #faf9f5 0%, #f5f2eb 100%);color:#1a1410;font-family:'RMNeue','Playfair Display',serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem;letter-spacing:0.3px;-webkit-font-smoothing:antialiased}
     .card{background:#ffffff;border:1px solid #e0dcd3;border-radius:0.75rem;max-width:380px;width:100%;padding:2rem;box-shadow:0 10px 30px rgba(15,50,106,0.08), 0 1px 3px rgba(0,0,0,0.02)}
     .badge{display:inline-block;background:#f0ede7;color:#0F326A;font-size:.75rem;font-weight:600;letter-spacing:.12em;padding:.35rem .8rem;border-radius:9999px;margin-bottom:1.5rem;text-transform:uppercase}
-    .dpi-num{font-size:2.7rem;font-family:'Chillvornia',sans-serif;color:#0F326A;background:#f5f2eb;border:1px solid #e0dcd3;padding:.6rem 1rem;border-radius:.5rem;text-align:center;margin-bottom:1.5rem;line-height:1.1}
+    .dpi-num{font-size:1.35rem;font-family:'Chillvornia',sans-serif;color:#0F326A;background:#f5f2eb;border:1px solid #e0dcd3;padding:.6rem 1rem;border-radius:.5rem;text-align:center;margin-bottom:1.5rem}
     .row{display:flex;justify-content:space-between;padding:.65rem 0;border-bottom:1px solid #e0dcd3;font-size:.92rem;gap:.5rem}
     .row:last-child{border-bottom:none}
     .label{color:#52525b;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;flex-shrink:0;font-weight:500}
@@ -414,7 +382,7 @@ function verifyHtml(d) {
     .logo:hover{transform:translateY(-2px) rotate(-2deg);filter:drop-shadow(0 0 12px rgba(151,180,224,0.45))}
   </style>
 
-
+  
   <div class="card">
     <img src="/logo.png" class="logo" alt="Logo" onerror="this.style.display='none'"/>
     <div style="text-align:center"><span class="badge">✓ DPI Verificado</span></div>
