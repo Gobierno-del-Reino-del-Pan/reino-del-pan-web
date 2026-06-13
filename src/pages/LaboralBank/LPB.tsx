@@ -1,5 +1,5 @@
 import React from 'react';
-import './pages/LaboralBank/LPB.css'; // Ruta del CSS solicitada
+import './LaboralBank/LPB.css'; // Ruta del CSS solicitada
 
 export default function LaboralPanianBank() {
     return (
