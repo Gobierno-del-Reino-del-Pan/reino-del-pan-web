@@ -1,81 +1,159 @@
 {
-  "roles": [
-    {
-      "id": "rol_policia",
-      "nombre": "Policía Panacional",
-      "descripcion": "Podrás asegurarte que los usuarios cumplan la Constitución del Reino y capturar a sinvergüenzas",
-      "emoji": "👮",
-      "discord_role_id": ""
-    },
-    {
-      "id": "rol_guardia",
-      "nombre": "Guardia Panadera",
-      "descripcion": "Podrás asegurarte que los usuarios cumplan la Constitución del Reino y podrás poner multas a diestro",
-      "emoji": "🍞",
-      "discord_role_id": ""
-    },
-    {
-      "id": "rol_militar",
-      "nombre": "Militar",
-      "descripcion": "Tu función será proteger a los ciudadanos en periodos de guerra o de incidencias climáticas graves.",
-      "emoji": "🪖",
-      "discord_role_id": ""
-    },
-    {
-      "id": "rol_medico",
-      "nombre": "Médico",
-      "descripcion": "Tu trabajo es asegurar que se mantenga el buen estado de salud de los ciudadanos.",
-      "emoji": "🩺",
-      "discord_role_id": ""
-    },
-    {
-      "id": "rol_profesor",
-      "nombre": "Profesor",
-      "descripcion": "Tu labor será enseñar a los niños, adolescentes y adultos todo lo que sea necesario.",
-      "emoji": "📚",
-      "discord_role_id": ""
-    },
-    {
-      "id": "rol_informatico",
-      "nombre": "Informático",
-      "descripcion": "Tu labor será la de programar, vigilar posibles vulnerabilidades y todo lo necesario para proteger.",
-      "emoji": "💻",
-      "discord_role_id": ""
-    },
-    {
-      "id": "rol_futbolista",
-      "nombre": "Futbolista",
-      "descripcion": "Tu función es clara, ganar y ganar partidos. Pero para poder ganar necesitarás un equipo ¿No?",
-      "emoji": "⚽",
-      "discord_role_id": "1511436597139079271"
-    },
-    {
-      "id": "rol_politico",
-      "nombre": "Político",
-      "descripcion": "Buscarás el bienestar de los ciudadanos (y seguro que a poder ser el tuyo). Funda, construye, haz.",
-      "emoji": "🏛️",
-      "discord_role_id": ""
-    },
-    {
-      "id": "rol_reportero",
-      "nombre": "Reportero de la Televisión Paniense",
-      "descripcion": "Tu labor será la de informar con RIGOR y IMPARCIALIDAD. Tienes de presidente al Sr. Alegre, niénsalo.",
-      "emoji": "📺",
-      "discord_role_id": ""
-    },
-    {
-      "id": "rol_veterinario",
-      "nombre": "Veterinario",
-      "descripcion": "Tu labor es la de curar a los pobres animalitos que sufren tras enfermedades o abandonos.",
-      "emoji": "🐾",
-      "discord_role_id": ""
-    },
-    {
-      "id": "rol_entrenador",
-      "nombre": "Entrenador Pokémon",
-      "descripcion": "Son personas que se encargan de capturar, criar, entrenar y cuidar de dichas criaturas. Lucha.",
-      "emoji": "🐉",
-      "discord_role_id": ""
-    }
-  ]
+  "roles": {
+    "profesiones": [
+      {
+        "id": "rol_policia",
+        "nombre": "Policía Panacional",
+        "descripcion": "Podrás asegurarte que los usuarios cumplan la Constitución del Reino y capturar a sinvergüenzas",
+        "emoji": "👮",
+        "discord_role_id": "1506369608020394154"
+      },
+      {
+        "id": "rol_guardia",
+        "nombre": "Guardia Panadera",
+        "descripcion": "Podrás asegurarte que los usuarios cumplan la Constitución del Reino y podrás poner multas a diestro",
+        "emoji": "🍞",
+        "discord_role_id": "1506042666398515283"
+      },
+      {
+        "id": "rol_militar",
+        "nombre": "Militar",
+        "descripcion": "Tu función será proteger a los ciudadanos en periodos de guerra o de incidencias climáticas graves.",
+        "emoji": "🪖",
+        "discord_role_id": "1506310531173318900"
+      },
+      {
+        "id": "rol_medico",
+        "nombre": "Médico",
+        "descripcion": "Tu trabajo es asegurar que se mantenga el buen estado de salud de los ciudadanos.",
+        "emoji": "🩺",
+        "discord_role_id": "1506309465509728427"
+      },
+      {
+        "id": "rol_profesor",
+        "nombre": "Profesor",
+        "descripcion": "Tu labor será enseñar a los niños, adolescentes y adultos todo lo que sea necesario.",
+        "emoji": "📚",
+        "discord_role_id": "1506311016777126142"
+      },
+      {
+        "id": "rol_informatico",
+        "nombre": "Informático",
+        "descripcion": "Tu labor será la de programar, vigilar posibles vulnerabilidades y todo lo necesario para proteger.",
+        "emoji": "💻",
+        "discord_role_id": "1506311242376286410"
+      },
+      {
+        "id": "rol_futbolista",
+        "nombre": "Futbolista",
+        "descripcion": "Tu función es clara, ganar y ganar partidos. Pero para poder ganar necesitarás un equipo ¿No?",
+        "emoji": "⚽",
+        "discord_role_id": "1506311569590714490"
+      },
+      {
+        "id": "rol_politico",
+        "nombre": "Político",
+        "descripcion": "Buscarás el bienestar de los ciudadanos (y seguro que a poder ser el tuyo). Funda, construye, haz.",
+        "emoji": "🏛️",
+        "discord_role_id": "1506312544388775986"
+      },
+      {
+        "id": "rol_reportero",
+        "nombre": "Reportero de la Televisión Paniense",
+        "descripcion": "Tu labor será la de informar con RIGOR y IMPARCIALIDAD. Tienes de presidente al Sr. Alegre, niénsalo.",
+        "emoji": "📺",
+        "discord_role_id": "1507784487084363858"
+      },
+      {
+        "id": "rol_veterinario",
+        "nombre": "Veterinario",
+        "descripcion": "Tu labor es la de curar a los pobres animalitos que sufren tras enfermedades o abandonos.",
+        "emoji": "🐾",
+        "discord_role_id": "1507830871225401535"
+      },
+      {
+        "id": "rol_entrenador",
+        "nombre": "Entrenador Pokémon",
+        "descripcion": "Son personas que se encargan de capturar, criar, entrenar y cuidar de dichas criaturas. Lucha.",
+        "emoji": "🐉",
+        "discord_role_id": "1508081112230920402"
+      }
+    ],
+    "regiones": [
+      {
+        "id": "rol_region_baguette",
+        "nombre": "🥖 Baguette",
+        "discord_role_id": "1505999177728004256"
+      },
+      {
+        "id": "rol_region_pimbo",
+        "nombre": "🍞Pimbo",
+        "discord_role_id": "1505999483346096178"
+      },
+      {
+        "id": "rol_region_pretzel",
+        "nombre": "🥨Pretzel",
+        "discord_role_id": "1505999600920559866"
+      },
+      {
+        "id": "rol_region_croissant",
+        "nombre": "🥐Croissant",
+        "discord_role_id": "1505999687713427476"
+      },
+      {
+        "id": "rol_region_singluten",
+        "nombre": "🌾Sin Gluten",
+        "discord_role_id": "1505999895486533722"
+      },
+      {
+        "id": "rol_region_panplano",
+        "nombre": "🫓Pan Plano/Arepa",
+        "discord_role_id": "1505999993335451720"
+      }
+    ],
+    "estado_ciudadano": [
+      {
+        "id": "rol_ciudadano",
+        "nombre": "Ciudadano",
+        "discord_role_id": "1381611108812460034"
+      },
+      {
+        "id": "rol_regularizacion",
+        "nombre": "Proceso de Regularización",
+        "discord_role_id": "1506046752740999178"
+      }
+    ],
+    "especiales": [
+      {
+        "id": "rol_alto_mando",
+        "nombre": "Alto Mando",
+        "discord_role_id": "1508080141501333576"
+      },
+      {
+        "id": "rol_entrenadores_gimnasio",
+        "nombre": "Entrenadores de Gimnasio Pokémon",
+        "discord_role_id": "1508080870303596604"
+      },
+      {
+        "id": "rol_mafioso",
+        "nombre": "Mafiosos",
+        "discord_role_id": "1506394893201707068"
+      },
+      {
+        "id": "rol_jefe_mafia",
+        "nombre": "Jefe de la Mafia",
+        "discord_role_id": "1506395165290401843"
+      },
+      {
+        "id": "rol_administrador",
+        "nombre": "Administrador",
+        "discord_role_id": "1398358560295096341"
+      },
+      {
+        "id": "rol_perra_del_estado",
+        "nombre": "Perra del Estado",
+        "discord_role_id": "1510772727433138297"
+      }
+    ]
+  }
 }
