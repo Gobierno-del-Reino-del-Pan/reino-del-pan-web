@@ -248,6 +248,8 @@ export default function PKMN() {
                 <div className="px-6 py-3 bg-accent/5 border-t border-accent/10 text-[11px] text-accent/70 font-mono">Asignación: Infraestructuras de Combate Gubernamentales</div>
               </motion.div>
 
+              &nbsp;&nbsp;
+
               {/* Tarjeta 3: Popplio */}
               <motion.div {...fadeUp(0.42)} className="col-span-1 md:col-span-2 rounded-2xl border border-blue-500/20 bg-gradient-to-r from-card/40 via-blue-950/[0.02] to-card/40 overflow-hidden flex flex-col justify-between shadow-md">
                 <div className="p-6 sm:p-8 flex flex-col md:flex-row gap-6 md:items-center">
@@ -275,6 +277,9 @@ export default function PKMN() {
                 </div>
               </motion.div>
             </div>
+
+            &nbsp;&nbsp;
+
             {/* Tarjeta 4: Sprigatito */}
             <motion.div {...fadeUp(0.42)} className="col-span-1 md:col-span-2 rounded-2xl border border-green-500/20 bg-gradient-to-r from-card/40 via-green-950/[0.02] to-card/40 overflow-hidden flex flex-col justify-between shadow-md">
               <div className="p-6 sm:p-8 flex flex-col md:flex-row gap-6 md:items-center">
@@ -307,7 +312,9 @@ export default function PKMN() {
               </div>
             </motion.div>
 
-            {/* Tarjeta 4: Cyndaquil */}
+            &nbsp;&nbsp;
+
+            {/* Tarjeta 5: Cyndaquil */}
             <motion.div {...fadeUp(0.42)} className="col-span-1 md:col-span-2 rounded-2xl border border-orange-500/20 bg-gradient-to-r from-card/40 via-orange-950/[0.02] to-card/40 overflow-hidden flex flex-col justify-between shadow-md">
               <div className="p-6 sm:p-8 flex flex-col md:flex-row gap-6 md:items-center">
                 <div className="w-full md:w-44 flex flex-col items-center justify-center bg-background/50 border border-border/80 rounded-xl p-4 shadow-sm shrink-0 gap-3">
