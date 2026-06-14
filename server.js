@@ -418,26 +418,43 @@ app.get("/api/me/refresh", requireAuth, async (req, res) => {
   }
 });
 
-// ── ENPOINT DE CLASIFICACIÓN / LEADERBOARD (Usa requireAuth para proteger el ranking) ──
-// Cambia esto en tu archivo de servidor si aún no lo has hecho:
+// ── ENDPOINT DE CLASIFICACIÓN / LEADERBOARD CORREGIDO (Sin JOIN forzado) ──
 app.get("/api/leaderboard", async (req, res) => {
   try {
-    const { data: ranking, error } = await supabase
+    // 1. Traemos todos los niveles ordenados por total_xp
+    const { data: ranking, error: levelErr } = await supabase
       .from("user_levels")
-      .select(`
-        user_id,
-        username,
-        level,
-        xp,
-        total_xp,
-        messages,
-        usuarios:user_id (avatar_url)
-      `)
+      .select("user_id, username, level, xp, total_xp, messages")
       .order("total_xp", { ascending: false });
 
-    if (error) throw error;
+    if (levelErr) throw levelErr;
+    if (!ranking || ranking.length === 0) {
+      return res.json({
+        top5: [],
+        rankingCompleto: [],
+        destacados: { masMensajes: null, menosMensajes: null }
+      });
+    }
 
-    const usuariosFormateados = (ranking || []).map((u, index) => ({
+    // 2. Extraemos todos los IDs de usuario únicos que tienen nivel
+    const userIds = ranking.map(u => u.user_id);
+
+    // 3. Traemos los avatares de la tabla 'usuarios' para esos IDs
+    const { data: dbUsuarios, error: userErr } = await supabase
+      .from("usuarios")
+      .select("discord_id, avatar_url")
+      .in("discord_id", userIds);
+
+    if (userErr) throw userErr;
+
+    // Creamos un mapa rápido [id]: avatar_url para asociar velozmente
+    const avatarMap = {};
+    (dbUsuarios || []).forEach(u => {
+      avatarMap[u.discord_id] = u.avatar_url;
+    });
+
+    // 4. Formateamos e inyectamos el avatar correspondiente de forma manual
+    const usuariosFormateados = ranking.map((u, index) => ({
       posicion: index + 1,
       id: u.user_id,
       username: u.username,
@@ -445,7 +462,7 @@ app.get("/api/leaderboard", async (req, res) => {
       xp: u.xp,
       total_xp: u.total_xp,
       messages: u.messages,
-      avatar: u.usuarios?.avatar_url || `https://cdn.discordapp.com/embed/avatars/${index % 5}.png`
+      avatar: avatarMap[u.user_id] || `https://cdn.discordapp.com/embed/avatars/${index % 5}.png`
     }));
 
     const top5 = usuariosFormateados.slice(0, 5);
@@ -466,8 +483,8 @@ app.get("/api/leaderboard", async (req, res) => {
       }
     });
   } catch (err) {
-    console.error("[/api/leaderboard] Error:", err);
-    return res.status(500).json({ error: "Error al obtener el ranking." });
+    console.error("[/api/leaderboard] Error catastrófico:", err);
+    return res.status(500).json({ error: "Error interno al procesar el ranking." });
   }
 });
 
