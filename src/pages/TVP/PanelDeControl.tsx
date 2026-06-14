@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { supabase } from "../../lib/supabaseClient";
 
 interface UserSession {
@@ -9,8 +9,6 @@ interface UserSession {
 }
 
 export default function PanelDeControl() {
-    const [, setLocation] = useLocation();
-
     // Estados de autenticación y carga
     const [user, setUser] = useState<UserSession | null>(null);
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
@@ -29,8 +27,6 @@ export default function PanelDeControl() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formMessage, setFormMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-    // Configuración de IDs de Discord
-    const GUILD_ID = "1381359904731693056"; // OBLIGATORIO: Reemplaza con el ID de tu servidor de Discord
     const REPORTER_ROLE_ID = "1507784487084363858";
 
     useEffect(() => {
@@ -38,74 +34,39 @@ export default function PanelDeControl() {
             try {
                 setLoading(true);
 
-                // 1. Obtener la sesión actual de Supabase con los tokens de Discord
-                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-                if (sessionError || !session || !session.user) {
+                // Consultamos al endpoint centralizado del servidor la sesión actual
+                const res = await fetch("/api/me");
+                if (!res.ok) {
                     setIsAuthorized(false);
                     return;
                 }
 
-                const authUser = session.user;
-                const discordId = authUser.user_metadata?.provider_id || authUser.id;
+                const data = await res.json();
 
-                // 2. Traer datos básicos para la interfaz desde tu tabla de usuarios
-                const { data: userData } = await supabase
-                    .from("usuarios")
-                    .select("discord_id, username, avatar_url")
-                    .eq("discord_id", discordId)
-                    .maybeSingle();
-
-                if (userData) {
-                    setUser(userData);
-                } else {
-                    // Fallback si no está en tu tabla local pero sí está logueado en Supabase
-                    setUser({
-                        discord_id: discordId,
-                        username: authUser.user_metadata?.full_name || authUser.user_metadata?.name || "Reportero",
-                        avatar_url: authUser.user_metadata?.avatar_url || ""
-                    });
-                }
-
-                // 3. CONSULTA A DISCORD: Obtener el token de acceso OAuth2 del usuario
-                const providerToken = session.provider_token;
-
-                if (!providerToken) {
-                    console.error("No se encontró el token de proveedor. Asegúrate de pedir los 'scopes' correctos al iniciar sesión.");
+                if (!data.user) {
                     setIsAuthorized(false);
                     return;
                 }
 
-                // Pedimos a Discord los datos del miembro dentro de TU servidor específico
-                const discordResponse = await fetch(
-                    `https://discord.com/api/v10/users/@me/guilds/${GUILD_ID}/member`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${providerToken}`,
-                        },
-                    }
-                );
+                // Seteamos la información visual del usuario
+                setUser({
+                    discord_id: data.user.id,
+                    username: data.user.username,
+                    avatar_url: data.user.avatar
+                });
 
-                if (!discordResponse.ok) {
-                    console.error("El usuario no pertenece al servidor o el token expiró");
-                    setIsAuthorized(false);
-                    return;
-                }
+                // Comprobamos si dentro de sus roles asignados está el ID de reportero
+                const roles: any[] = data.user.roles || [];
+                const hasReporterRole = roles.some(rol => rol.discord_role_id === REPORTER_ROLE_ID);
 
-                const memberData = await discordResponse.json();
-
-                // Los roles del usuario vienen en un array de strings (IDs de los roles)
-                const userRoles: string[] = memberData.roles || [];
-
-                // Validamos si el ID del rol de reportero está en su lista de roles de Discord
-                if (userRoles.includes(REPORTER_ROLE_ID)) {
+                if (hasReporterRole) {
                     setIsAuthorized(true);
                 } else {
                     setIsAuthorized(false);
                 }
 
             } catch (err) {
-                console.error("Error en la validación mediante API de Discord:", err);
+                console.error("Error validando permisos de reportero:", err);
                 setIsAuthorized(false);
             } finally {
                 setLoading(false);
@@ -127,25 +88,32 @@ export default function PanelDeControl() {
         }
 
         try {
-            const { error } = await supabase
-                .from("tvp_news")
-                .insert([
-                    {
-                        id: id.trim().toLowerCase().replace(/\s+/g, "-"),
-                        type,
-                        category: category.toUpperCase(),
-                        title,
-                        summary: type === "main" ? summary : null,
-                        time_label: timeLabel,
-                        img_url: imgUrl,
-                        created_at: new Date().toISOString()
-                    }
-                ]);
+            // Enviamos la petición de creación a la API segura de nuestro Server.js
+            const response = await fetch("/api/news", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    id: id.trim().toLowerCase().replace(/\s+/g, "-"),
+                    type,
+                    category: category.toUpperCase(),
+                    title,
+                    summary: type === "main" ? summary : null,
+                    time_label: timeLabel,
+                    img_url: imgUrl
+                })
+            });
 
-            if (error) throw error;
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || "Ocurrió un error en el servidor.");
+            }
 
             setFormMessage({ type: "success", text: "¡Noticia publicada con éxito en la base de datos de la TVP!" });
 
+            // Resetear el formulario
             setId("");
             setTitle("");
             setSummary("");
@@ -154,7 +122,7 @@ export default function PanelDeControl() {
 
         } catch (err: any) {
             console.error(err);
-            setFormMessage({ type: "error", text: err.message || "Error al conectar con la base de datos de Supabase." });
+            setFormMessage({ type: "error", text: err.message || "Error al conectar con el servidor." });
         } finally {
             setIsSubmitting(false);
         }
@@ -164,7 +132,7 @@ export default function PanelDeControl() {
         return (
             <div className="min-h-screen bg-[#07080c] text-white flex flex-col items-center justify-center font-tvp-text">
                 <span className="w-8 h-8 border-4 border-[#ff4d00] border-t-transparent rounded-full animate-spin"></span>
-                <p className="text-xs uppercase tracking-[0.2em] font-tvp-head text-white/50 mt-4">Sincronizando con Discord API...</p>
+                <p className="text-xs uppercase tracking-[0.2em] font-tvp-head text-white/50 mt-4">Sincronizando credenciales de prensa...</p>
             </div>
         );
     }

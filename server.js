@@ -129,6 +129,18 @@ function recordUsage(ip) {
   scheduleClean(ip);
 }
 
+// ── Funciones Auxiliares de Formato (Movidas arriba para evitar errores) ───────
+function formatDate(d) {
+  return [String(d.getDate()).padStart(2, "0"), String(d.getMonth() + 1).padStart(2, "0"), d.getFullYear()].join("/");
+}
+function addMonths(base, months) {
+  const d = new Date(base); d.setMonth(d.getMonth() + months); return formatDate(d);
+}
+function buildQrUrl(dpiNumber) {
+  const code = encodeURIComponent(dpiNumber.replace("DPI - ", ""));
+  return `${PUBLIC_URL}/api/dpi/verify/${code}`;
+}
+
 // ── Generador atómico de DPI ──────────────────────────────────────────────────
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 async function getNextDPINumber() {
@@ -682,17 +694,6 @@ function verifyHtml(d, roles = [], avatarUrl = "") {
     <p class="valid-stamp">Documento válido</p>
   </div>
 </body></html>`;
-}
-
-function formatDate(d) {
-  return [String(d.getDate()).padStart(2, "0"), String(d.getMonth() + 1).padStart(2, "0"), d.getFullYear()].join("/");
-}
-function addMonths(base, months) {
-  const d = new Date(base); d.setMonth(d.getMonth() + months); return formatDate(d);
-}
-function buildQrUrl(dpiNumber) {
-  const code = encodeURIComponent(dpiNumber.replace("DPI - ", ""));
-  return `${PUBLIC_URL}/api/dpi/verify/${code}`;
 }
 
 // ── PROXY DE DISCORD ─────────────────────────────────────────────────────────────
