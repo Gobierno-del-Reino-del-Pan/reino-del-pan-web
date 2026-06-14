@@ -637,6 +637,7 @@ app.get("/api/dpi/verify/:code", async (req, res) => {
 const ROLE_CONSORCIO = "1515829072209510603";
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
+
 /**
  * Helper para asignar el rol de Discord mediante la API REST
  */
