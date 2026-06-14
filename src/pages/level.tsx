@@ -41,12 +41,13 @@ function formatNumber(n: number): string {
 }
 
 function getValidAvatar(user: RankUser): string {
-    if (user.avatar && user.avatar.trim() !== "" && !user.avatar.includes("null")) {
-        return user.avatar;
+    const src = user.avatar?.trim();
+    if (src && src !== "" && !src.includes("null") && !src.includes("undefined")) {
+        return src;
     }
-    // Usamos BigInt(5) en lugar de 5n para evitar conflictos con versiones de ES inferiores a ES2020
-    const defaultIndex = user.id ? Number(BigInt(user.id) % BigInt(5)) : 0;
-    return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
+    // Fallback seguro sin BigInt sobre UUID
+    const seed = user.username?.charCodeAt(0) ?? 0;
+    return `https://cdn.discordapp.com/embed/avatars/${seed % 5}.png`;
 }
 
 const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
@@ -171,6 +172,26 @@ function Podium({ top3 }: { top3: RankUser[] }) {
                                 👑
                             </motion.span>
                         )}
+
+                        <div style={{ position: "relative", marginBottom: 10 }}>
+                            <img
+                                src={getValidAvatar(user)}
+                                alt={user.username}
+                                onError={handleImageError}
+                                style={{
+                                    width: avatarSize[user.posicion],
+                                    height: avatarSize[user.posicion],
+                                    borderRadius: "50%",
+                                    objectFit: "cover",
+                                    border: `3px solid ${topBorder[user.posicion]}`,
+                                    boxShadow: isFirst ? "0 6px 24px rgba(15,50,106,0.3)" : "0 3px 10px rgba(0,0,0,0.08)",
+                                    display: "block",
+                                }}
+                            />
+                            <span style={{ position: "absolute", bottom: -4, right: -4, fontSize: 16, lineHeight: 1 }}>
+                                {MEDAL[user.posicion]}
+                            </span>
+                        </div>
 
                         <div style={{ position: "relative", marginBottom: 10 }}>
                             <img
