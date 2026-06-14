@@ -65,6 +65,71 @@ const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:5174";
 const DISCORD_REDIRECT_URI = `${PUBLIC_URL}/auth/discord/callback`;
 const DISCORD_API = "https://discord.com/api/v10";
 
+// ── Configuración de Roles de Discord para Asignación Directa ──────────────────
+const ROLE_CIUDADANO_ID = "1381611108812460034";
+const ROLE_REGULARIZACION_ID = "1506046752740999178";
+
+const REGION_ROLES = {
+  "BAGUETTE": "1505999177728004256",
+  "PIMBO": "1505999483346096178",
+  "PRETZEL": "1505999600920559866",
+  "CROISSANT": "1505999687713427476",
+  "SIN GLUTEN": "1505999895486533722",
+  "PAN PLANO": "1505999993335451720"
+};
+
+// ── Función para gestionar los roles en Discord ──────────────────────────────
+async function handleDiscordVerificationRoles(userId, regionName) {
+  if (!DISCORD_TOKEN || !GUILD_ID) {
+    console.error("❌ Falta DISCORD_TOKEN o GUILD_ID para procesar los roles.");
+    return;
+  }
+
+  const rolesToAssign = [ROLE_CIUDADANO_ID];
+  // Convertimos a mayúsculas para asegurar coincidencia limpia con el mapa de regiones
+  const cleanRegion = (regionName || "").trim().toUpperCase();
+
+  if (REGION_ROLES[cleanRegion]) {
+    rolesToAssign.push(REGION_ROLES[cleanRegion]);
+  }
+
+  // 1. Asignar los nuevos roles (Ciudadano + Región)
+  for (const roleId of rolesToAssign) {
+    const url = `${DISCORD_API}/guilds/${GUILD_ID}/members/${userId}/roles/${roleId}`;
+    try {
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bot ${DISCORD_TOKEN.trim()}`,
+          "X-Audit-Log-Reason": "DPI Creado correctamente en la Web"
+        }
+      });
+      if (!response.ok) {
+        console.error(`Error asignando el rol ${roleId}:`, response.statusText);
+      }
+    } catch (error) {
+      console.error(`Error de red al asignar rol ${roleId}:`, error);
+    }
+  }
+
+  // 2. Quitar el rol de Regularización
+  const removeUrl = `${DISCORD_API}/guilds/${GUILD_ID}/members/${userId}/roles/${ROLE_REGULARIZACION_ID}`;
+  try {
+    const response = await fetch(removeUrl, {
+      method: "DELETE",
+      headers: {
+        "Authorization": `Bot ${DISCORD_TOKEN.trim()}`,
+        "X-Audit-Log-Reason": "Usuario verificado: Removiendo rol de regularización"
+      }
+    });
+    if (!response.ok && response.status !== 404) {
+      console.error(`Error quitando el rol de regularización:`, response.statusText);
+    }
+  } catch (error) {
+    console.error(`Error de red al quitar rol de regularización:`, error);
+  }
+}
+
 // ── JWT config ─────────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-cambia-esto";
 const JWT_EXPIRES_IN = "7d";
@@ -565,6 +630,10 @@ app.post("/api/dpi/create", requireAuth, async (req, res) => {
 
     recordUsage(ip);
 
+    // ── GESTIÓN DE ROLES EN DISCORD ──
+    // Se ejecuta de manera asíncrona tras validar que el guardado en base de datos fue exitoso.
+    await handleDiscordVerificationRoles(req.user.id, region);
+
     // Opcional: Actualizamos la sesión del usuario para que refleje que ya está verificado sin forzar relog
     req.user.verificado = true;
     req.user.dpi = { dpi_number: dpiNumber, nombre, apellidos, genero, fecha_nac: fecha, region, issued_at: expDate, valid_until: valDate };
@@ -732,7 +801,7 @@ function verifyHtml(d, roles = [], avatarUrl = "") {
     body{background:linear-gradient(135deg, #faf9f5 0%, #f5f2eb 100%);color:#1a1410;font-family:'RMNeue','Playfair Display',serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem;letter-spacing:0.3px;-webkit-font-smoothing:antialiased}
     .card{background:#ffffff;border:1px solid #e0dcd3;border-radius:0.75rem;max-width:380px;width:100%;padding:2rem;box-shadow:0 10px 30px rgba(15,50,106,0.08), 0 1px 3px rgba(0,0,0,0.02)}
     .header-logos{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem}
-    .badge{display:inline-block;background:#f0ede7;color:#0F326A;font-size:.75rem;font-weight:600;letter-spacing:.12em;padding:.35rem .8rem;border-radius:9999px;text-transform:uppercase}
+    .badge{display:inline-block;background:#f0ede7;color:#0F326A;font-size:.75rem;font-weight:600;letter-spacing:.12em;padding:.35rem .8rem;border-radius9999px;text-transform:uppercase}
     .dpi-num{font-size:2.7rem;font-family:'Chillvornia',sans-serif;color:#0F326A;background:#f5f2eb;border:1px solid #e0dcd3;padding:.6rem 1rem;border-radius:.5rem;text-align:center;margin-bottom:1.5rem;line-height:1.1}
     .row{display:flex;justify-content:space-between;padding:.65rem 0;border-bottom:1px solid #e0dcd3;font-size:.92rem;gap:.5rem}
     .row:last-child{border-bottom:none}
@@ -794,23 +863,13 @@ app.get("/api/roles", async (req, res) => {
       after = page[page.length - 1].user.id;
     }
 
-    console.log(`[/api/roles] Miembros totales obtenidos: ${allMembers.length}`);
     return res.json(allMembers);
-
-  } catch (error) {
-    console.error("❌ Error en el proxy /api/roles:", error);
-    return res.status(500).json({ error: "Error interno al conectar con Discord." });
+  } catch (err) {
+    console.error("Error en proxy /api/roles:", err);
+    return res.status(500).json({ error: "Error de red interno." });
   }
 });
 
-app.get("*", (_req, res) => {
-  res.sendFile(path.join(staticFolder, "index.html"));
+app.listen(port, () => {
+  console.log(`🚀 Servidor corriendo en http://localhost:${port}`);
 });
-
-export default app;
-
-if (!(process.env.NODE_ENV === "production" && !process.env.LOCAL_RUN)) {
-  app.listen(port, () => {
-    console.log(`  Server furula en http://localhost:${port}`);
-  });
-}
