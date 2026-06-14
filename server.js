@@ -633,7 +633,7 @@ app.get("/api/dpi/verify/:code", async (req, res) => {
 // ENDPOINTS: CONSORCIO DE TRANSPORTES (REINO DEL PAN)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Configuración de Discord (Asegúrate de tener DISCORD_BOT_TOKEN y GUILD_ID en tu .env)
+// Asegúrate de tener DISCORD_BOT_TOKEN y GUILD_ID en tu .env)
 const ROLE_CONSORCIO = "1515829072209510603";
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
