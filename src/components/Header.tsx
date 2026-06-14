@@ -232,7 +232,7 @@ export default function Header() {
                         className="w-[1em] h-[1em] object-contain inline-block align-text-bottom"
                         alt="logo consorcio"
                       />
-                      <span>Consorcio</span>
+                      <span>Tarjeta Transporte</span>
                     </a>
 
                     {esReportero && (
@@ -240,7 +240,7 @@ export default function Header() {
                         href="/TVP/PanelDeControl"
                         className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-accent bg-accent/5 hover:bg-accent/10 transition duration-200 border-t border-black/5"
                       >
-                        🎥 Panel Reporteros
+                        🎥 Panel TVP
                       </Link>
                     )}
 
