@@ -71,6 +71,11 @@ const JWT_EXPIRES_IN = "7d";
 const COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 días
 const COOKIE_NAME = "session";
 
+// ✅ FIX: secure solo en producción; en desarrollo (HTTP) las cookies con
+//    secure:true son silenciosamente descartadas por el navegador, causando
+//    todos los 401 aunque el login haya ido bien.
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+
 if (!process.env.JWT_SECRET) {
   console.warn("⚠️ JWT_SECRET no está definido en las variables de entorno. Usando un valor por defecto INSEGURO.");
 }
@@ -83,7 +88,7 @@ function setSessionCookie(res, user) {
   const token = signUserToken(user);
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: true,
+    secure: IS_PRODUCTION,   // ✅ FIX: era `true` siempre, ahora solo en prod
     sameSite: "lax",
     maxAge: COOKIE_MAX_AGE,
   });
@@ -267,7 +272,7 @@ app.get("/auth/discord/callback", async (req, res) => {
       roles: rolesDelUsuario,
       dpi: dpiData,
       verificado: !!verificado,
-      matrimonio: null, // Valores por defecto en JWT
+      matrimonio: null,
       hijos: []
     };
 
@@ -283,7 +288,7 @@ app.get("/auth/discord/callback", async (req, res) => {
 app.get("/auth/logout", (req, res) => {
   res.clearCookie(COOKIE_NAME, {
     httpOnly: true,
-    secure: true,
+    secure: IS_PRODUCTION,   // ✅ FIX: era `true` siempre, ahora solo en prod
     sameSite: "lax",
   });
   res.redirect("/");
@@ -352,7 +357,6 @@ app.get("/api/me", async (req, res) => {
       };
     });
 
-    // Inyectamos las relaciones en caliente al payload del usuario antes de retornar
     user.matrimonio = matrimonio;
     user.hijos = hijos;
 
@@ -400,7 +404,6 @@ app.get("/api/me/refresh", requireAuth, async (req, res) => {
       ...req.user,
       dpi: dpiData,
       verificado: !!verificado,
-      // 🆕 Actualizamos los niveles en el JWT de sesión refrescado
       level: levelData?.level ?? 0,
       xp: levelData?.xp ?? 0,
       total_xp: levelData?.total_xp ?? 0,
@@ -418,43 +421,25 @@ app.get("/api/me/refresh", requireAuth, async (req, res) => {
   }
 });
 
-// ── ENDPOINT DE CLASIFICACIÓN / LEADERBOARD CORREGIDO (Sin JOIN forzado) ──
-app.get("/api/leaderboard", async (req, res) => {
+// ── ENPOINT DE CLASIFICACIÓN / LEADERBOARD (Usa requireAuth para proteger el ranking) ──
+app.get("/api/leaderboard", requireAuth, async (req, res) => {
   try {
-    // 1. Traemos todos los niveles ordenados por total_xp
-    const { data: ranking, error: levelErr } = await supabase
+    const { data: ranking, error } = await supabase
       .from("user_levels")
-      .select("user_id, username, level, xp, total_xp, messages")
+      .select(`
+        user_id,
+        username,
+        level,
+        xp,
+        total_xp,
+        messages,
+        usuarios:user_id (avatar_url)
+      `)
       .order("total_xp", { ascending: false });
 
-    if (levelErr) throw levelErr;
-    if (!ranking || ranking.length === 0) {
-      return res.json({
-        top5: [],
-        rankingCompleto: [],
-        destacados: { masMensajes: null, menosMensajes: null }
-      });
-    }
+    if (error) throw error;
 
-    // 2. Extraemos todos los IDs de usuario únicos que tienen nivel
-    const userIds = ranking.map(u => u.user_id);
-
-    // 3. Traemos los avatares de la tabla 'usuarios' para esos IDs
-    const { data: dbUsuarios, error: userErr } = await supabase
-      .from("usuarios")
-      .select("discord_id, avatar_url")
-      .in("discord_id", userIds);
-
-    if (userErr) throw userErr;
-
-    // Creamos un mapa rápido [id]: avatar_url para asociar velozmente
-    const avatarMap = {};
-    (dbUsuarios || []).forEach(u => {
-      avatarMap[u.discord_id] = u.avatar_url;
-    });
-
-    // 4. Formateamos e inyectamos el avatar correspondiente de forma manual
-    const usuariosFormateados = ranking.map((u, index) => ({
+    const usuariosFormateados = (ranking || []).map((u, index) => ({
       posicion: index + 1,
       id: u.user_id,
       username: u.username,
@@ -462,7 +447,7 @@ app.get("/api/leaderboard", async (req, res) => {
       xp: u.xp,
       total_xp: u.total_xp,
       messages: u.messages,
-      avatar: avatarMap[u.user_id] || `https://cdn.discordapp.com/embed/avatars/${index % 5}.png`
+      avatar: u.usuarios?.avatar_url || `https://cdn.discordapp.com/embed/avatars/${index % 5}.png`
     }));
 
     const top5 = usuariosFormateados.slice(0, 5);
@@ -483,8 +468,8 @@ app.get("/api/leaderboard", async (req, res) => {
       }
     });
   } catch (err) {
-    console.error("[/api/leaderboard] Error catastrófico:", err);
-    return res.status(500).json({ error: "Error interno al procesar el ranking." });
+    console.error("[/api/leaderboard] Error:", err);
+    return res.status(500).json({ error: "Error al obtener el ranking." });
   }
 });
 
