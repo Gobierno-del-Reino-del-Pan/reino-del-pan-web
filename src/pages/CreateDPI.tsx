@@ -6,6 +6,7 @@ import { Link, useLocation } from "wouter";
 import QRCode from "qrcode";
 import jsPDF from "jspdf";
 
+// Como toqueis estas posiciones os rajo, atentamente: Rexy
 const CFG = {
   color: "#5a1a1a",
   front: {
@@ -221,9 +222,6 @@ export default function CreateDPI() {
     front: string; back: string; dpiNumber: string;
   } | null>(null);
 
-  // Evita el bloqueo inmediato si el usuario acaba de crear el documento con éxito en esta sesión
-  const [justGenerated, setJustGenerated] = useState(false);
-
   const [form, setForm] = useState({
     nombre: "", apellidos: "", genero: "", fecha: "", region: "",
   });
@@ -243,12 +241,15 @@ export default function CreateDPI() {
       });
   }, []);
 
+  // Lógica ejecutada al pulsar el botón de Discord
   const handleDiscordAction = () => {
     if (!user) {
+      // Si no hay sesión, redirige a la ruta de autenticación de tu backend
       window.location.href = "/api/auth/discord";
       return;
     }
 
+    // Si ya hay sesión iniciada, ejecuta el autorrelleno clásico
     const cleanLetters = user.username.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, " ").trim();
     const standardizedSpace = cleanLetters.replace(/\s+/g, " ");
     const words = standardizedSpace.split(" ");
@@ -280,13 +281,13 @@ export default function CreateDPI() {
     }
   };
 
+  // Muestra el botón si el usuario no está logueado, u opcionalmente si está logueado pero no verificado ni tiene un DPI previo
   const showDiscordBtn = !user || (!user.verificado && !user.dpi);
 
-  // MODIFICADO: Si ya tiene un DPI verificado Y NO lo acaba de crear ahora mismo, se bloquea.
-  // Si lo acaba de crear (justGenerated === true), hasVerifiedDPI será false, permitiendo ver la descarga.
-  const hasVerifiedDPI = user && (user.verificado || user.dpi) && !justGenerated;
+  // Condición de bloqueo estricto si ya posee un DPI verificado
+  const hasVerifiedDPI = user && (user.verificado || user.dpi);
 
-  // ─── Mouse events ────────────────────────────────────────────────────────────
+  // ─── Helpers de posición ────────────────────────────────────────────────────
   const mousePos = (e: React.MouseEvent, c: HTMLCanvasElement) => {
     const r = c.getBoundingClientRect();
     return {
@@ -295,6 +296,7 @@ export default function CreateDPI() {
     };
   };
 
+  // ─── Mouse events ────────────────────────────────────────────────────────────
   const startDraw = (e: React.MouseEvent) => {
     if (!canvasRef.current) return;
     setDrawing(true);
@@ -320,32 +322,44 @@ export default function CreateDPI() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
     let isDrawing = false;
 
     const onTouchStart = (e: TouchEvent) => {
-      e.preventDefault(); isDrawing = true;
-      const r = canvas.getBoundingClientRect(); const t = e.touches[0];
+      e.preventDefault();
+      isDrawing = true;
+      const r = canvas.getBoundingClientRect();
+      const t = e.touches[0];
       const x = (t.clientX - r.left) * (canvas.width / r.width);
       const y = (t.clientY - r.top) * (canvas.height / r.height);
       const ctx = canvas.getContext("2d")!;
-      ctx.beginPath(); ctx.moveTo(x, y);
+      ctx.beginPath();
+      ctx.moveTo(x, y);
     };
 
     const onTouchMove = (e: TouchEvent) => {
-      e.preventDefault(); if (!isDrawing) return;
-      const r = canvas.getBoundingClientRect(); const t = e.touches[0];
+      e.preventDefault();
+      if (!isDrawing) return;
+      const r = canvas.getBoundingClientRect();
+      const t = e.touches[0];
       const x = (t.clientX - r.left) * (canvas.width / r.width);
       const y = (t.clientY - r.top) * (canvas.height / r.height);
       const ctx = canvas.getContext("2d")!;
       ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.strokeStyle = "#111";
-      ctx.lineTo(x, y); ctx.stroke();
+      ctx.lineTo(x, y);
+      ctx.stroke();
     };
 
-    const onTouchEnd = (e: TouchEvent) => { e.preventDefault(); isDrawing = false; canvas.getContext("2d")?.beginPath(); };
+    const onTouchEnd = (e: TouchEvent) => {
+      e.preventDefault();
+      isDrawing = false;
+      canvas.getContext("2d")?.beginPath();
+    };
 
     canvas.addEventListener("touchstart", onTouchStart, { passive: false });
     canvas.addEventListener("touchmove", onTouchMove, { passive: false });
     canvas.addEventListener("touchend", onTouchEnd, { passive: false });
+
     return () => {
       canvas.removeEventListener("touchstart", onTouchStart);
       canvas.removeEventListener("touchmove", onTouchMove);
@@ -354,7 +368,9 @@ export default function CreateDPI() {
   }, []);
 
   const clearSignature = () =>
-    canvasRef.current?.getContext("2d")?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    canvasRef.current?.getContext("2d")?.clearRect(
+      0, 0, canvasRef.current.width, canvasRef.current.height
+    );
 
   const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -385,7 +401,9 @@ export default function CreateDPI() {
 
   const submit = async () => {
     if (!validate()) return;
-    setGenerating(true); setGenError(""); setPreview(null);
+    setGenerating(true);
+    setGenError("");
+    setPreview(null);
 
     try {
       const apiRes = await fetch("/api/dpi/create", {
@@ -428,15 +446,21 @@ export default function CreateDPI() {
         }),
       ]);
 
-      // MODIFICADO: Primero guardamos el preview y marcamos la sesión como completada con éxito.
-      setJustGenerated(true);
       setPreview({ front: frontImg, back: backImg, dpiNumber });
+
+      if (user) {
+        setUser({
+          ...user,
+          verificado: true,
+          dpi: dpiNumber
+        });
+      }
 
       setTimeout(() => previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
 
     } catch (err: any) {
       console.error(err);
-      setGenError("Error al generar el DPI. Revisa la consola backend.");
+      setGenError("Error al generar el DPI. Asegúrate de que las plantillas estén en /templates/");
     } finally {
       setGenerating(false);
     }
@@ -457,7 +481,8 @@ export default function CreateDPI() {
 
   const inputCls = (key: string, inlineErr?: string) => {
     const hasErr = inlineErr || submitErrors[key];
-    return `w-full rounded-xl border px-4 py-3 bg-background outline-none transition text-sm ${hasErr ? "border-red-500 focus:border-red-500" : "border-border focus:border-accent"}`;
+    return `w-full rounded-xl border px-4 py-3 bg-background outline-none transition text-sm ${hasErr ? "border-red-500 focus:border-red-500" : "border-border focus:border-accent"
+      }`;
   };
 
   const nombreErr = form.nombre ? textError(form.nombre, "nombre") : "";
@@ -466,12 +491,14 @@ export default function CreateDPI() {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Header />
+
       <main className="flex-1 py-10 px-4 md:px-0">
         <div className="container mx-auto max-w-2xl space-y-4">
 
           {loadingUser ? (
             <div className="py-20 text-center text-sm text-foreground/50">Cargando datos de perfil...</div>
           ) : hasVerifiedDPI ? (
+            /* Alerta de bloqueo para usuarios con DPI ya verificado */
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -482,156 +509,234 @@ export default function CreateDPI() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
+
               <div className="space-y-2">
                 <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Acción No Permitida</h2>
                 <p className="text-sm text-foreground/70 max-w-md mx-auto">
                   No puedes crear un nuevo documento debido a que ya cuentas con un <span className="text-red-400 font-semibold">DPI verificado</span> asociado a tu cuenta.
                 </p>
               </div>
+
               <div className="grid gap-3 pt-2 max-w-md mx-auto">
-                <button type="button" onClick={() => setLocation("/dpi/restore")} className="w-full py-3.5 rounded-xl bg-accent text-black font-bold text-sm shadow-md transition-all">
+                <button
+                  type="button"
+                  onClick={() => setLocation("/dpi/restore")}
+                  className="w-full py-3.5 rounded-xl bg-accent text-black font-bold text-sm shadow-md hover:opacity-90 active:scale-[0.99] transition-all"
+                >
                   ¿Quieres Recuperar tu DPI?
                 </button>
-                <button type="button" onClick={() => setLocation("/")} className="w-full py-3.5 rounded-xl border border-border bg-background text-foreground/80 font-medium text-sm transition-all">
+                <button
+                  type="button"
+                  onClick={() => setLocation("/")}
+                  className="w-full py-3.5 rounded-xl border border-border bg-background text-foreground/80 font-medium text-sm hover:bg-foreground/5 active:scale-[0.99] transition-all"
+                >
                   Volver a Inicio
                 </button>
               </div>
             </motion.div>
           ) : (
+            /* Formulario Estándar para usuarios no verificados o no logueados */
             <>
-              {/* MODIFICADO: Ocultamos el formulario si ya se ha generado el preview con éxito para que solo vean su nuevo DPI */}
-              {!preview ? (
-                <>
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
-                    <h1 className="text-2xl sm:text-3xl font-bold">
-                      Crear <span className="text-accent">DPI</span>
-                    </h1>
-                    {showDiscordBtn && (
-                      <button
-                        type="button"
-                        onClick={handleDiscordAction}
-                        className="inline-flex items-center justify-center gap-2 self-start sm:self-auto px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#5865F2] hover:bg-[#4752C4] text-white transition-all shadow-md active:scale-[0.98]"
-                      >
-                        <svg className="w-4 h-4 fill-current" viewBox="0 0 127.14 96.36">
-                          <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.45-5c.87-.64,1.72-1.32,2.53-2a75.47,75.47,0,0,0,72.75,0c.81.71,1.66,1.39,2.53,2a68.43,68.43,0,0,1-10.45,5,77.7,77.7,0,0,0,6.63,10.85,105.73,105.73,0,0,0,31.06-18.83C129.81,50.54,123.36,27.77,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.93,46,53.82,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.17,46,96.06,53,91,65.69,84.69,65.69Z" />
-                        </svg>
-                        {user ? "Autorellenar con Discord" : "Iniciar sesión con Discord"}
-                      </button>
-                    )}
-                  </div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
+                <h1 className="text-2xl sm:text-3xl font-bold">
+                  Crear <span className="text-accent">DPI</span>
+                </h1>
 
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-foreground/50">Nombre</span>
-                      <CharCounter value={form.nombre} max={LIMITS.nombre} />
-                    </div>
-                    <input className={inputCls("nombre", nombreErr)} placeholder="Nombre" value={form.nombre} maxLength={LIMITS.nombre + 5} onChange={e => setForm({ ...form, nombre: e.target.value })} />
-                    {(nombreErr || submitErrors.nombre) && <p className="text-red-500 text-xs mt-1">{nombreErr || submitErrors.nombre}</p>}
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-foreground/50">Apellidos</span>
-                      <CharCounter value={form.apellidos} max={LIMITS.apellidos} />
-                    </div>
-                    <input className={inputCls("apellidos", apellidosErr)} placeholder="Apellidos" value={form.apellidos} maxLength={LIMITS.apellidos + 5} onChange={e => setForm({ ...form, apellidos: e.target.value })} />
-                    {(apellidosErr || submitErrors.apellidos) && <p className="text-red-500 text-xs mt-1">{apellidosErr || submitErrors.apellidos}</p>}
-                  </div>
-
-                  <div>
-                    <select className={inputCls("genero")} value={form.genero} onChange={e => setForm({ ...form, genero: e.target.value })}>
-                      <option value="">Género</option>
-                      <option>Hombre</option>
-                      <option>Mujer</option>
-                    </select>
-                    {submitErrors.genero && <p className="text-red-500 text-xs mt-1">{submitErrors.genero}</p>}
-                  </div>
-
-                  <div>
-                    <span className="text-xs text-foreground/50 block mb-1">Fecha de nacimiento</span>
-                    <input type="date" className={inputCls("fecha")} value={form.fecha} onChange={e => setForm({ ...form, fecha: e.target.value })} />
-                    {submitErrors.fecha && <p className="text-red-500 text-xs mt-1">{submitErrors.fecha}</p>}
-                  </div>
-
-                  <div>
-                    <select className={inputCls("region")} value={form.region} onChange={e => setForm({ ...form, region: e.target.value })}>
-                      <option value="">Región</option>
-                      <option>Baguette</option>
-                      <option>Pan Plano</option>
-                      <option>Croissant</option>
-                      <option>Pretzel</option>
-                      <option>Pimbo</option>
-                      <option>Sin Gluten</option>
-                    </select>
-                    {submitErrors.region && <p className="text-red-500 text-xs mt-1">{submitErrors.region}</p>}
-                  </div>
-
-                  <div>
-                    <span className="text-xs text-foreground/50 block mb-1">Foto de perfil</span>
-                    <div className={`border-2 border-dashed rounded-xl p-4 cursor-pointer flex items-center gap-4 transition ${submitErrors.photo ? "border-red-500" : "border-border hover:border-accent/50"}`} onClick={() => fileRef.current?.click()}>
-                      <input ref={fileRef} type="file" accept="image/*" hidden onChange={handlePhoto} />
-                      {!photo ? <p className="text-sm text-foreground/60">Toca para subir tu foto</p> : <><img src={photo} className="w-16 h-20 object-cover rounded-lg flex-shrink-0" alt="foto" /><span className="text-sm text-foreground/60">Cambiar foto</span></>}
-                    </div>
-                    {submitErrors.photo && <p className="text-red-500 text-xs mt-1">{submitErrors.photo}</p>}
-                  </div>
-
-                  <div>
-                    <span className="text-xs text-foreground/50 block mb-1">Firma</span>
-                    <div className={`border rounded-xl overflow-hidden transition ${submitErrors.signature ? "border-red-500" : "border-border"}`}>
-                      <div className="flex items-center justify-between px-3 pt-2 pb-1">
-                        <p className="text-xs text-foreground/50">Firma aquí con el dedo o el ratón</p>
-                        <button type="button" onClick={clearSignature} className="text-xs text-foreground/40 hover:text-foreground/70 transition px-2 py-1">Borrar</button>
-                      </div>
-                      <canvas ref={canvasRef} width={600} height={160} className="w-full touch-none" style={{ height: "160px", cursor: "crosshair", display: "block" }} onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw} />
-                    </div>
-                    {submitErrors.signature && <p className="text-red-500 text-xs mt-1">{submitErrors.signature}</p>}
-                  </div>
-
-                  <button onClick={submit} disabled={generating} className="w-full py-4 rounded-xl bg-accent text-black font-bold disabled:opacity-60 transition text-sm sm:text-base">
-                    {generating ? "Generando DPI…" : "Crear DPI"}
+                {showDiscordBtn && (
+                  <button
+                    type="button"
+                    onClick={handleDiscordAction}
+                    className="inline-flex items-center justify-center gap-2 self-start sm:self-auto px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#5865F2] hover:bg-[#4752C4] text-white transition-all shadow-md active:scale-[0.98]"
+                  >
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 127.14 96.36">
+                      <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.45-5c.87-.64,1.72-1.32,2.53-2a75.47,75.47,0,0,0,72.75,0c.81.71,1.66,1.39,2.53,2a68.43,68.43,0,0,1-10.45,5,77.7,77.7,0,0,0,6.63,10.85,105.73,105.73,0,0,0,31.06-18.83C129.81,50.54,123.36,27.77,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.93,46,53.82,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.17,46,96.06,53,91,65.69,84.69,65.69Z" />
+                    </svg>
+                    {user ? "Autorellenar con Discord" : "Iniciar sesión con Discord"}
                   </button>
+                )}
+              </div>
 
-                  {genError && <p className="text-red-500 text-sm text-center">{genError}</p>}
-                </>
-              ) : (
-                /* SECCIÓN DE PREVIEW EDITADA */
-                <motion.div ref={previewRef} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="space-y-5 my-6">
-                  <div className="text-center p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                    <h2 className="text-xl font-bold text-emerald-400">¡Tu DPI ha sido creado con éxito! ✓</h2>
-                    <p className="text-xs text-foreground/70 mt-1">También hemos actualizado tus roles de Ciudadano y Región en Discord.</p>
-                    <p className="text-sm font-mono text-accent mt-2 font-bold">{preview.dpiNumber}</p>
+              {/* Nombre */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-foreground/50">Nombre</span>
+                  <CharCounter value={form.nombre} max={LIMITS.nombre} />
+                </div>
+                <input
+                  className={inputCls("nombre", nombreErr)}
+                  placeholder="Nombre"
+                  value={form.nombre}
+                  maxLength={LIMITS.nombre + 5}
+                  onChange={e => setForm({ ...form, nombre: e.target.value })}
+                />
+                {(nombreErr || submitErrors.nombre) && (
+                  <p className="text-red-500 text-xs mt-1">{nombreErr || submitErrors.nombre}</p>
+                )}
+              </div>
+
+              {/* Apellidos */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-foreground/50">Apellidos</span>
+                  <CharCounter value={form.apellidos} max={LIMITS.apellidos} />
+                </div>
+                <input
+                  className={inputCls("apellidos", apellidosErr)}
+                  placeholder="Apellidos"
+                  value={form.apellidos}
+                  maxLength={LIMITS.apellidos + 5}
+                  onChange={e => setForm({ ...form, apellidos: e.target.value })}
+                />
+                {(apellidosErr || submitErrors.apellidos) && (
+                  <p className="text-red-500 text-xs mt-1">{apellidosErr || submitErrors.apellidos}</p>
+                )}
+              </div>
+
+              {/* Género */}
+              <div>
+                <select className={inputCls("genero")} value={form.genero}
+                  onChange={e => setForm({ ...form, genero: e.target.value })}>
+                  <option value="">Género</option>
+                  <option>Hombre</option>
+                  <option>Mujer</option>
+                </select>
+                {submitErrors.genero && <p className="text-red-500 text-xs mt-1">{submitErrors.genero}</p>}
+              </div>
+
+              {/* Fecha nacimiento */}
+              <div>
+                <span className="text-xs text-foreground/50 block mb-1">Fecha de nacimiento</span>
+                <input type="date" className={inputCls("fecha")} value={form.fecha}
+                  onChange={e => setForm({ ...form, fecha: e.target.value })} />
+                {submitErrors.fecha && <p className="text-red-500 text-xs mt-1">{submitErrors.fecha}</p>}
+              </div>
+
+              {/* Región */}
+              <div>
+                <select className={inputCls("region")} value={form.region}
+                  onChange={e => setForm({ ...form, region: e.target.value })}>
+                  <option value="">Región</option>
+                  <option>Baguette</option>
+                  <option>Pan Plano</option>
+                  <option>Croissant</option>
+                  <option>Pretzel</option>
+                  <option>Pimbo</option>
+                  <option>Sin Gluten</option>
+                </select>
+                {submitErrors.region && <p className="text-red-500 text-xs mt-1">{submitErrors.region}</p>}
+              </div>
+
+              {/* Foto */}
+              <div>
+                <span className="text-xs text-foreground/50 block mb-1">Foto de perfil</span>
+                <div
+                  className={`border-2 border-dashed rounded-xl p-4 cursor-pointer flex items-center gap-4 transition ${submitErrors.photo ? "border-red-500" : "border-border hover:border-accent/50"
+                    }`}
+                  onClick={() => fileRef.current?.click()}
+                >
+                  <input ref={fileRef} type="file" accept="image/*" hidden onChange={handlePhoto} />
+                  {!photo
+                    ? <p className="text-sm text-foreground/60">Toca para subir tu foto</p>
+                    : <>
+                      <img src={photo} className="w-16 h-20 object-cover rounded-lg flex-shrink-0" alt="foto" />
+                      <span className="text-sm text-foreground/60">Cambiar foto</span>
+                    </>
+                  }
+                </div>
+                {submitErrors.photo && <p className="text-red-500 text-xs mt-1">{submitErrors.photo}</p>}
+              </div>
+
+              {/* Firma */}
+              <div>
+                <span className="text-xs text-foreground/50 block mb-1">Firma</span>
+                <div className={`border rounded-xl overflow-hidden transition ${submitErrors.signature ? "border-red-500" : "border-border"
+                  }`}>
+                  <div className="flex items-center justify-between px-3 pt-2 pb-1">
+                    <p className="text-xs text-foreground/50">Firma aquí con el dedo o el ratón</p>
+                    <button
+                      type="button"
+                      onClick={clearSignature}
+                      className="text-xs text-foreground/40 hover:text-foreground/70 transition px-2 py-1"
+                    >
+                      Borrar
+                    </button>
+                  </div>
+                  <canvas
+                    ref={canvasRef}
+                    width={600}
+                    height={160}
+                    className="w-full touch-none"
+                    style={{ height: "160px", cursor: "crosshair", display: "block" }}
+                    onMouseDown={startDraw}
+                    onMouseMove={draw}
+                    onMouseUp={stopDraw}
+                    onMouseLeave={stopDraw}
+                  />
+                </div>
+                {submitErrors.signature && <p className="text-red-500 text-xs mt-1">{submitErrors.signature}</p>}
+              </div>
+
+              {/* Botón de envío */}
+              <button
+                onClick={submit}
+                disabled={generating}
+                className="w-full py-4 rounded-xl bg-accent text-black font-bold cursor-pointer disabled:opacity-60 transition text-sm sm:text-base"
+              >
+                {generating ? "Generando DPI…" : "Crear DPI"}
+              </button>
+
+              {genError && <p className="text-red-500 text-sm text-center">{genError}</p>}
+
+              {/* Preview */}
+              {preview && (
+                <motion.div
+                  ref={previewRef}
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="space-y-5 pt-6 border-t border-border"
+                >
+                  <div>
+                    <h2 className="text-xl font-bold">Tu DPI está listo ✓</h2>
+                    <p className="text-sm font-mono text-accent mt-1">{preview.dpiNumber}</p>
                   </div>
 
                   <div className="space-y-3">
-                    <p className="text-sm font-semibold text-foreground/70">Parte Delantera</p>
-                    <img src={preview.front} alt="DPI Delantera" className="w-full rounded-xl border border-border shadow-md" />
-
-                    <p className="text-sm font-semibold text-foreground/70 pt-1">Parte Trasera</p>
-                    <img src={preview.back} alt="DPI Trasera" className="w-full rounded-xl border border-border shadow-md" />
+                    <p className="text-sm font-semibold text-foreground/70">Delantera</p>
+                    <img src={preview.front} alt="DPI Delantera"
+                      className="w-full rounded-xl border border-border shadow-md" />
+                    <p className="text-sm font-semibold text-foreground/70 pt-1">Trasera</p>
+                    <img src={preview.back} alt="DPI Trasera"
+                      className="w-full rounded-xl border border-border shadow-md" />
                   </div>
 
-                  <div className="grid gap-3 pt-2">
-                    <button onClick={dlBothImgs} className="w-full py-4 rounded-xl bg-accent text-black font-bold hover:brightness-95 transition text-sm shadow-md">
-                      Descargar Imágenes (JPG)
+                  <div className="space-y-3">
+                    <button onClick={dlBothImgs}
+                      className="w-full py-4 rounded-xl bg-accent text-black font-bold cursor-pointer hover:opacity-90 transition">
+                      Descarga tu DPI en foto
                     </button>
-                    <button onClick={() => generatePDF(preview.front, preview.back, preview.dpiNumber)} className="w-full py-4 rounded-xl border-2 border-accent text-accent font-bold hover:bg-accent/5 transition text-sm">
-                      Descargar Documento (PDF)
-                    </button>
-                    <button onClick={() => setLocation("/")} className="w-full py-3 rounded-xl bg-background border border-border text-foreground/60 text-xs transition">
-                      Volver al Inicio
+                    <button onClick={() => generatePDF(preview.front, preview.back, preview.dpiNumber)}
+                      className="w-full py-4 rounded-xl border-2 border-accent text-accent font-bold cursor-pointer hover:bg-accent/10 transition">
+                      Descargar DPI en PDF
                     </button>
                   </div>
                 </motion.div>
               )}
 
-              {!preview && (
-                <p className="text-center text-xs text-foreground/60 pb-4">
-                  Al crear tu DPI aceptas nuestros{" "}
-                  <a href="/terms" style={{ color: "#f5a623", textDecoration: "underline", textUnderlineOffset: "4px" }}>Términos y Condiciones</a>
-                </p>
-              )}
+              <p className="text-center text-xs text-foreground/60 pb-4">
+                Al crear tu DPI aceptas nuestros{" "}
+                <a href="/terms" style={{
+                  color: "#f5a623",
+                  textDecoration: "underline",
+                  textUnderlineOffset: "4px",
+                  textDecorationThickness: "1px",
+                }}>
+                  Términos y Condiciones
+                </a>
+              </p>
             </>
           )}
+
         </div>
       </main>
       <Footer />
