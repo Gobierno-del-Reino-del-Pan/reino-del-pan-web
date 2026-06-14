@@ -15,7 +15,6 @@ const otrosItems = [
   { href: "/donations", label: "Donaciones" },
   { href: "/laliga", label: "LA MiGA" },
   { href: "/tvp", label: "TVP" },
-  //{ href: "/lpb", label: "LPB" },
 ];
 
 interface DiscordUser {
@@ -25,7 +24,7 @@ interface DiscordUser {
   inGuild: boolean;
   verificado: boolean;
   dpi: { nombre: string; apellidos: string; dpi_number: string } | null;
-  roles: { id: string; nombre: string; emoji: string }[];
+  roles: any[]; // Flexibilizado para aceptar objetos o strings directos del backend
 }
 
 export default function Header() {
@@ -75,21 +74,28 @@ export default function Header() {
     setOtrosOpen(false);
   }, [location]);
 
-  // Determinar si el usuario logueado tiene rango de Reportero
+  // Filtro inteligente para detectar el rol (funciona si viene como string o como objeto)
   const esReportero = useMemo(() => {
-    return !!user?.roles?.some(
-      (rol) =>
-        rol.nombre.toLowerCase() === "reportero" ||
-        rol.nombre.toLowerCase() === "reporteros"
-    );
+    if (!user || !Array.isArray(user.roles)) return false;
+    return user.roles.some((rol) => {
+      if (!rol) return false;
+      const nombreRol = typeof rol === "string" ? rol : (rol.nombre || rol.name || "");
+      const limpio = nombreRol.toLowerCase().trim();
+      return limpio === "reportero" || limpio === "reporteros";
+    });
   }, [user]);
 
+  // Inyectamos dinámicamente "Mi Carpeta" y "Reportero" en la lista principal de navegación
   const allNavItems = useMemo(() => {
-    return [
-      ...navItems,
-      ...(user ? [{ href: "/carpeta", label: "Mi Carpeta" }] : []),
-    ];
-  }, [user]);
+    const items = [...navItems];
+    if (user) {
+      items.push({ href: "/carpeta", label: "Mi Carpeta" });
+    }
+    if (esReportero) {
+      items.push({ href: "/redaccion", label: "Reportero" }); // <- Ahora saldrá en el Header principal
+    }
+    return items;
+  }, [user, esReportero]);
 
   const isOtrosActive = useMemo(() => {
     return otrosItems.some(item => location.toLowerCase().startsWith(item.href.toLowerCase()));
@@ -193,14 +199,11 @@ export default function Header() {
 
                 {menuOpen && (
                   <div className="absolute right-0 mt-3 w-48 rounded-xl border border-black/10 bg-white/95 backdrop-blur-lg shadow-xl overflow-hidden z-50">
-
-                    {/* Encabezado */}
                     <div className="px-4 py-2.5 border-b border-black/5 bg-black/[0.02]">
                       <p className="text-[10px] text-black/40 uppercase tracking-wider font-semibold">Ciudadano</p>
                       <p className="text-xs font-bold text-black truncate mt-0.5">{user.username}</p>
                     </div>
 
-                    {/* Enlace: Mi Carpeta */}
                     <Link
                       href="/carpeta"
                       className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-black/70 hover:text-accent hover:bg-accent/5 transition duration-200"
@@ -209,13 +212,12 @@ export default function Header() {
                     </Link>
 
                     <a
-                      href={`/api/dpi/verify-discord/${user.id}`} // Pasamos el ID de Discord directo
+                      href={`/api/dpi/verify-discord/${user.id}`}
                       className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-black/70 hover:text-accent hover:bg-accent/5 transition duration-200 border-t border-black/5"
                     >
                       🆔 Tarjeta DPI
                     </a>
 
-                    {/* Enlace: Panel Reporteros (Solo si cumple el rol) */}
                     {esReportero && (
                       <Link
                         href="/redaccion"
@@ -225,7 +227,6 @@ export default function Header() {
                       </Link>
                     )}
 
-                    {/* Botón: Cerrar Sesión */}
                     <button
                       onClick={() => { window.location.href = "/auth/logout"; }}
                       className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-red-500 hover:bg-red-500/10 transition duration-200 border-t border-black/5 cursor-pointer"
@@ -245,7 +246,7 @@ export default function Header() {
                   border border-accent text-accent bg-accent/5
                   transition-all duration-300 hover:bg-accent hover:text-background hover:shadow-[0_0_25px_rgba(212,175,55,0.35)] active:scale-[0.98]"
               >
-                <img src="/clave.png" alt="" className="w-3.5 h-3.5 object-contain opacity-90 group-hover:brightness-0" />
+                <img src="/clave.png" alt="" className="w-3.5 h-3.5 object-contain opacity-90" />
                 Mi Carpeta
               </button>
             )}
@@ -267,10 +268,7 @@ export default function Header() {
 
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-40 pt-[69px]">
-          <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={() => { setMobileOpen(false); }}
-          />
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => { setMobileOpen(false); }} />
           <div className="relative bg-neutral-100 border-b border-neutral-300 shadow-2xl overflow-y-auto max-h-[calc(100vh-69px)] animate-in slide-in-from-top duration-200">
             <nav className="container mx-auto px-5 py-6 flex flex-col gap-2">
               {allNavItems.map((item) => {
@@ -294,16 +292,6 @@ export default function Header() {
                   </Link>
                 );
               })}
-
-              {/* Opción para móviles si el ciudadano es Reportero */}
-              {esReportero && (
-                <Link
-                  href="/redaccion"
-                  className="relative flex items-center px-4 py-3 rounded-md text-[11px] font-bold uppercase tracking-[0.18em] transition-all duration-200 text-accent bg-accent/10 border border-accent/20"
-                >
-                  <span className="flex-1">🎥 Panel Reporteros</span>
-                </Link>
-              )}
 
               <div className="h-px bg-neutral-300 my-2" />
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500 px-4 mb-1">Otros apartados</p>
@@ -333,16 +321,6 @@ export default function Header() {
                   className="mt-2 flex items-center justify-center gap-2 px-4 py-3 rounded-full text-[11px] font-bold uppercase tracking-[0.18em] border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition-all duration-200 cursor-pointer shadow-sm"
                 >
                   Cerrar Sesión
-                </button>
-              )}
-
-              {!user && !loading && (
-                <button
-                  onClick={() => { window.location.href = "/auth/discord"; }}
-                  className="mt-4 flex items-center justify-center gap-2 px-4 py-3.5 rounded-full text-[11px] font-bold uppercase tracking-[0.18em] border border-neutral-400 bg-neutral-950 text-white hover:bg-neutral-800 transition-all duration-300 cursor-pointer shadow-md"
-                >
-                  <img src="/clave.png" alt="" className="w-3.5 h-3.5 object-contain brightness-0 invert" />
-                  Mi Carpeta
                 </button>
               )}
             </nav>
