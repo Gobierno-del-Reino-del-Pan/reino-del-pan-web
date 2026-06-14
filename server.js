@@ -628,6 +628,156 @@ app.get("/api/dpi/verify/:code", async (req, res) => {
   res.send(verifyHtml(data, rolesDelUsuario, userAvatarUrl));
 });
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ENDPOINTS: CONSORCIO DE TRANSPORTES (REINO DEL PAN)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/transporte/tarjeta
+ * Obtiene la tarjeta de transporte del usuario autenticado si existe.
+ */
+app.get("/api/transporte/tarjeta", requireAuth, async (req, res) => {
+  try {
+    const discordId = req.user.id;
+
+    const { data: tarjeta, error } = await supabase
+      .from("consorcio_tarjetas")
+      .select("*")
+      .eq("discord_id", discordId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error al obtener tarjeta de transporte:", error);
+      return res.status(500).json({ error: "Error en la base de datos al buscar tu tarjeta." });
+    }
+
+    return res.json({ tarjeta });
+  } catch (err) {
+    console.error("[GET /api/transporte/tarjeta]", err);
+    return res.status(500).json({ error: "Error interno del servidor." });
+  }
+});
+
+/**
+ * POST /api/transporte/tarjeta/solicitar
+ * Crea una tarjeta vinculando automáticamente los datos del DPI del usuario de Supabase.
+ */
+app.post("/api/transporte/tarjeta/solicitar", requireAuth, async (req, res) => {
+  try {
+    const discordId = req.user.id;
+
+    // 1. Verificar si ya posee una tarjeta activa/registrada (La base de datos tiene una restricción UNIQUE)
+    const { data: tarjetaExistente } = await supabase
+      .from("consorcio_tarjetas")
+      .select("id")
+      .eq("discord_id", discordId)
+      .maybeSingle();
+
+    if (tarjetaExistente) {
+      return res.status(400).json({ error: "Ya tienes una tarjeta de transporte vinculada a tu cuenta." });
+    }
+
+    // 2. Extraer los datos reales del DPI del usuario utilizando la tabla 'verificados' y 'dpis'
+    const { data: verificado, error: vErr } = await supabase
+      .from("verificados")
+      .select("dpi")
+      .eq("discord_id", discordId)
+      .maybeSingle();
+
+    if (vErr || !verificado?.dpi) {
+      return res.status(403).json({ error: "Debes tener un DPI verificado para solicitar la tarjeta de transporte." });
+    }
+
+    const { data: dpiData, error: dpiErr } = await supabase
+      .from("dpis")
+      .select("dpi_number, nombre, apellidos, region")
+      .eq("dpi_number", verificado.dpi)
+      .maybeSingle();
+
+    if (dpiErr || !dpiData) {
+      return res.status(404).json({ error: "No se encontraron los datos de tu DPI oficial en el sistema." });
+    }
+
+    // 3. Insertar la nueva tarjeta en la base de datos
+    // Nota: 'numero_tarjeta', 'emitida_at' y 'caduca_at' usan los DEFAULTS de tu SQL.
+    const { data: nuevaTarjeta, error: insertErr } = await supabase
+      .from("consorcio_tarjetas")
+      .insert({
+        dpi: dpiData.dpi_number,
+        nombre: dpiData.nombre,
+        apellidos: dpiData.apellidos,
+        region: dpiData.region, // Debe cumplir con el CHECK de regiones de pan
+        discord_id: discordId
+      })
+      .select()
+      .single();
+
+    if (insertErr) {
+      console.error("Error al insertar tarjeta:", insertErr);
+      // Validar si falla por el CHECK de regiones permitidas
+      if (insertErr.message.includes("consorcio_tarjetas_region_check")) {
+        return res.status(400).json({ error: "Tu región de DPI no está autorizada por el Consorcio del Pan." });
+      }
+      return res.status(400).json({ error: `No se pudo emitir la tarjeta: ${insertErr.message}` });
+    }
+
+    return res.json({ success: true, message: "¡Tarjeta de transporte emitida con éxito!", tarjeta: nuevaTarjeta });
+
+  } catch (err) {
+    console.error("[POST /api/transporte/tarjeta/solicitar]", err);
+    return res.status(500).json({ error: "Error interno al procesar la solicitud." });
+  }
+});
+
+/**
+ * POST /api/transporte/tarjeta/renovar
+ * Extiende la validez de la tarjeta por 1 año más e incrementa el contador de renovaciones.
+ */
+app.post("/api/transporte/tarjeta/renovar", requireAuth, async (req, res) => {
+  try {
+    const discordId = req.user.id;
+
+    // Buscar la tarjeta actual
+    const { data: tarjeta, error: findErr } = await supabase
+      .from("consorcio_tarjetas")
+      .select("id, renovaciones, caduca_at")
+      .eq("discord_id", discordId)
+      .maybeSingle();
+
+    if (findErr || !tarjeta) {
+      return res.status(444).json({ error: "No dispones de ninguna tarjeta que renovar." });
+    }
+
+    // Calcular la nueva fecha de caducidad (1 año extra desde el momento actual)
+    const nuevaCaducidad = new Date();
+    nuevaCaducidad.setFullYear(nuevaCaducidad.getFullYear() + 1);
+
+    const { data: tarjetaRenovada, error: updateErr } = await supabase
+      .from("consorcio_tarjetas")
+      .update({
+        activa: true, // Nos aseguramos de reactivarla si estaba vencida
+        renovaciones: tarjeta.renovaciones + 1,
+        ultima_renovacion: new Date().toISOString(),
+        caduca_at: nuevaCaducidad.toISOString()
+      })
+      .eq("discord_id", discordId)
+      .select()
+      .single();
+
+    if (updateErr) {
+      console.error("Error al renovar tarjeta:", updateErr);
+      return res.status(400).json({ error: "Error al actualizar la vigencia de la tarjeta." });
+    }
+
+    return res.json({ success: true, message: "Tarjeta renovada por 1 año adicional.", tarjeta: tarjetaRenovada });
+
+  } catch (err) {
+    console.error("[POST /api/transporte/tarjeta/renovar]", err);
+    return res.status(500).json({ error: "Error interno al procesar la renovación." });
+  }
+});
+
 // ── ENDPOINT PARA PUBLICAR NOTICIAS (MESA DE REDACCIÓN) ───────────────────────
 app.post("/api/news", requireAuth, async (req, res) => {
   try {
