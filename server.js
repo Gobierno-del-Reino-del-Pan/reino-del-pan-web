@@ -513,34 +513,70 @@ app.get("/api/dpi/verify-discord/:discordId", async (req, res) => {
   }
 });
 
-app.post("/api/dpi/create", async (req, res) => {
+// Modificado para guardar atómicamente en dpis y verificados usando req.user de Discord
+app.post("/api/dpi/create", requireAuth, async (req, res) => {
   const ip = getIP(req);
   const { allowed, retryAfterMs } = checkRateLimit(ip);
   if (!allowed) {
     const hours = Math.ceil(retryAfterMs / 3_600_000);
     return res.status(429).json({ error: "Demasiados DPIs creados. Inténtalo más tarde.", retryAfterMs, retryAfterHours: hours });
   }
+
   const { nombre, apellidos, genero, fecha, region } = req.body ?? {};
   if (!nombre || !apellidos || !genero || !fecha || !region)
     return res.status(400).json({ error: "Faltan campos obligatorios." });
+
   try {
     const dpiNumber = await getNextDPINumber();
     const today = new Date();
     const expDate = formatDate(today);
     const valDate = addMonths(today, 14);
     const qrUrl = buildQrUrl(dpiNumber);
+
+    // 1. Insertar el documento en la tabla principal "dpis"
     const { error: dbErr } = await supabase.from("dpis").insert({
-      dpi_number: dpiNumber, nombre: nombre.trim().toUpperCase(),
-      apellidos: apellidos.trim().toUpperCase(), genero, fecha_nac: fecha,
-      region: region.trim().toUpperCase(), issued_at: expDate,
-      valid_until: valDate, ip_address: ip, qr_url: qrUrl,
+      dpi_number: dpiNumber,
+      nombre: nombre.trim().toUpperCase(),
+      apellidos: apellidos.trim().toUpperCase(),
+      genero,
+      fecha_nac: fecha,
+      region: region.trim().toUpperCase(),
+      issued_at: expDate,
+      valid_until: valDate,
+      ip_address: ip,
+      qr_url: qrUrl,
     });
-    if (dbErr) throw new Error(dbErr.message);
+
+    if (dbErr) throw new Error(`[Tabla dpis] ${dbErr.message}`);
+
+    // 2. Insertar de manera vinculada en la tabla "verificados" usando los datos de la sesión de Discord
+    const { error: vErr } = await supabase.from("verificados").insert({
+      discord_id: req.user.id,
+      discord_username: req.user.username,
+      dpi: dpiNumber
+    });
+
+    if (vErr) {
+      console.error("Error al registrar en verificados. Intentando revertir DPI...");
+      // Cleanup para evitar registros huérfanos si la tabla secundaria falla
+      await supabase.from("dpis").delete().eq("dpi_number", dpiNumber);
+      throw new Error(`[Tabla verificados] ${vErr.message}`);
+    }
+
     recordUsage(ip);
+
+    // Opcional: Actualizamos la sesión del usuario para que refleje que ya está verificado sin forzar relog
+    req.user.verificado = true;
+    req.user.dpi = { dpi_number: dpiNumber, nombre, apellidos, genero, fecha_nac: fecha, region, issued_at: expDate, valid_until: valDate };
+    setSessionCookie(res, req.user);
+
     return res.json({ dpiNumber, issuedAt: expDate, validUntil: valDate, qrUrl });
   } catch (err) {
     console.error("[/api/dpi/create]", err);
-    return res.status(500).json({ error: "Error interno. Intenta de nuevo." });
+    if (err.message?.includes("duplicate key") || err.message?.includes("23505")) {
+      return res.status(400).json({ error: "Tu cuenta de Discord o este número de DPI ya se encuentra verificado." });
+    }
+    return res.status(500).json({ error: "Error interno al guardar los registros. Intenta de nuevo." });
   }
 });
 
