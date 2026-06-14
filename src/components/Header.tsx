@@ -4,17 +4,17 @@ import { useEffect, useState, useRef, useMemo } from "react";
 const navItems = [
   { href: "/", label: "Inicio" },
   { href: "/about", label: "Acerca de" },
-  { href: "/level", label: "Nivel Cs." },
+  { href: "/level", label: "Niveles" },
   { href: "/dpi", label: "DPI" },
 ];
 
 const otrosItems = [
   { href: "/Politics", label: "Política" },
+  { href: "/gobierno", label: "Gobierno" },
   { href: "/pkmn", label: "PKMN" },
   { href: "/donations", label: "Donaciones" },
   { href: "/laliga", label: "LA MiGA" },
   { href: "/tvp", label: "TVP" },
-  { href: "/gobierno", label: "Gobierno" },
   //{ href: "/lpb", label: "LPB" },
 ];
 
