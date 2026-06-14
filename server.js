@@ -528,7 +528,11 @@ app.post("/api/dpi/create", async (req, res) => {
       region: region.trim().toUpperCase(), issued_at: expDate,
       valid_until: valDate, ip_address: ip, qr_url: qrUrl,
     });
-    if (dbErr) throw new Error(dbErr.message);
+    if (dbErr) {
+      console.error("[/api/dpi/create] INSERT ERROR:", JSON.stringify(dbErr, null, 2));
+      console.error("[/api/dpi/create] Datos enviados:", { dpi_number: dpiNumber, genero, fecha_nac: fecha, issued_at: expDate, valid_until: valDate });
+      throw new Error(dbErr.message);
+    }
     recordUsage(ip);
     return res.json({ dpiNumber, issuedAt: expDate, validUntil: valDate, qrUrl });
   } catch (err) {
