@@ -3,180 +3,180 @@ import QRCode from "qrcode";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 interface TarjetaData {
-    numero_tarjeta: string;
-    nombre: string;
-    apellidos: string;
-    region: string;
-    dpi: string;
-    discord_id: string;
-    emitida_at: string;
-    caduca_at: string;
-    activa: boolean;
-    caducada: boolean;
-    renovaciones: number;
-    ultima_renovacion: string | null;
+  numero_tarjeta: string;
+  nombre: string;
+  apellidos: string;
+  region: string;
+  dpi: string;
+  discord_id: string;
+  emitida_at: string;
+  caduca_at: string;
+  activa: boolean;
+  caducada: boolean;
+  renovaciones: number;
+  ultima_renovacion: string | null;
 }
 
 interface DiscordUser {
-    id: string;
-    username: string;
-    avatar: string | null;
-    global_name: string | null;
+  id: string;
+  username: string;
+  avatar: string | null;
+  global_name: string | null;
 }
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 const REGION_EMOJI: Record<string, string> = {
-    BAGUETTE: "🥖",
-    PIMBO: "🍞",
-    PRETZEL: "🥨",
-    CROISSANT: "🥐",
-    "SIN GLUTEN": "🌾",
-    "PAN PLANO": "🫓",
+  BAGUETTE: "🥖",
+  PIMBO: "🍞",
+  PRETZEL: "🥨",
+  CROISSANT: "🥐",
+  "SIN GLUTEN": "🌾",
+  "PAN PLANO": "🫓",
 };
 
 const REGIONES = ["BAGUETTE", "PIMBO", "PRETZEL", "CROISSANT", "SIN GLUTEN", "PAN PLANO"];
 
 // Rutas entre regiones (panel estilo Renfe)
 const RUTAS = [
-    { origen: "BAGUETTE", destino: "PIMBO", duracion: "32 min", tipo: "Interregional" },
-    { origen: "BAGUETTE", destino: "PRETZEL", duracion: "48 min", tipo: "Interregional" },
-    { origen: "PIMBO", destino: "CROISSANT", duracion: "25 min", tipo: "Interregional" },
-    { origen: "PIMBO", destino: "SIN GLUTEN", duracion: "41 min", tipo: "Interregional" },
-    { origen: "PRETZEL", destino: "PAN PLANO", duracion: "55 min", tipo: "Interregional" },
-    { origen: "CROISSANT", destino: "SIN GLUTEN", duracion: "19 min", tipo: "Interregional" },
-    { origen: "SIN GLUTEN", destino: "PAN PLANO", duracion: "37 min", tipo: "Interregional" },
-    { origen: "BAGUETTE", destino: "CROISSANT", duracion: "1h 10m", tipo: "Largo recorrido" },
-    { origen: "PRETZEL", destino: "PIMBO", duracion: "1h 02m", tipo: "Largo recorrido" },
-    { origen: "PAN PLANO", destino: "BAGUETTE", duracion: "1h 28m", tipo: "Largo recorrido" },
+  { origen: "BAGUETTE", destino: "PIMBO", duracion: "32 min", tipo: "Interregional" },
+  { origen: "BAGUETTE", destino: "PRETZEL", duracion: "48 min", tipo: "Interregional" },
+  { origen: "PIMBO", destino: "CROISSANT", duracion: "25 min", tipo: "Interregional" },
+  { origen: "PIMBO", destino: "SIN GLUTEN", duracion: "41 min", tipo: "Interregional" },
+  { origen: "PRETZEL", destino: "PAN PLANO", duracion: "55 min", tipo: "Interregional" },
+  { origen: "CROISSANT", destino: "SIN GLUTEN", duracion: "19 min", tipo: "Interregional" },
+  { origen: "SIN GLUTEN", destino: "PAN PLANO", duracion: "37 min", tipo: "Interregional" },
+  { origen: "BAGUETTE", destino: "CROISSANT", duracion: "1h 10m", tipo: "Largo recorrido" },
+  { origen: "PRETZEL", destino: "PIMBO", duracion: "1h 02m", tipo: "Largo recorrido" },
+  { origen: "PAN PLANO", destino: "BAGUETTE", duracion: "1h 28m", tipo: "Largo recorrido" },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(iso: string) {
-    return new Date(iso).toLocaleDateString("es-ES", {
-        day: "2-digit", month: "long", year: "numeric",
-    });
+  return new Date(iso).toLocaleDateString("es-ES", {
+    day: "2-digit", month: "long", year: "numeric",
+  });
 }
 
 function avatarUrl(user: DiscordUser) {
-    if (!user.avatar) return `https://cdn.discordapp.com/embed/avatars/0.png`;
-    return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`;
+  if (!user.avatar) return `https://cdn.discordapp.com/embed/avatars/0.png`;
+  return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`;
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 export default function Consorcio() {
-    const [tarjeta, setTarjeta] = useState<TarjetaData | null>(null);
-    const [user, setUser] = useState<DiscordUser | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [emitiendo, setEmitiendo] = useState(false);
-    const [flipped, setFlipped] = useState(false);
-    const [qrUrl, setQrUrl] = useState<string>("");
-    const [error, setError] = useState<string | null>(null);
-    const [filtroOrigen, setFiltroOrigen] = useState<string>("TODOS");
-    const [tick, setTick] = useState(0); // para animar el panel
+  const [tarjeta, setTarjeta] = useState<TarjetaData | null>(null);
+  const [user, setUser] = useState<DiscordUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [emitiendo, setEmitiendo] = useState(false);
+  const [flipped, setFlipped] = useState(false);
+  const [qrUrl, setQrUrl] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  const [filtroOrigen, setFiltroOrigen] = useState<string>("TODOS");
+  const [tick, setTick] = useState(0); // para animar el panel
 
-    // Simular sesión Discord (en producción vendrá de tu auth)
-    useEffect(() => {
-        const mockUser: DiscordUser = {
-            id: "123456789012345678",
-            username: "ciudadano_pan",
-            global_name: "Ciudadano del Pan",
-            avatar: null,
-        };
-        setUser(mockUser);
-        fetchTarjeta(mockUser.id);
-    }, []);
+  // Simular sesión Discord (en producción vendrá de tu auth)
+  useEffect(() => {
+    const mockUser: DiscordUser = {
+      id: "123456789012345678",
+      username: "ciudadano_pan",
+      global_name: "Ciudadano del Pan",
+      avatar: null,
+    };
+    setUser(mockUser);
+    fetchTarjeta(mockUser.id);
+  }, []);
 
-    // Animación del ticker del panel
-    useEffect(() => {
-        const id = setInterval(() => setTick(t => t + 1), 3000);
-        return () => clearInterval(id);
-    }, []);
+  // Animación del ticker del panel
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 3000);
+    return () => clearInterval(id);
+  }, []);
 
-    async function fetchTarjeta(discordId: string) {
-        setLoading(true);
-        setError(null);
-        try {
-            // En producción: supabase.rpc('consultar_tarjeta', { p_discord_id: discordId })
-            // Mock para desarrollo:
-            await new Promise(r => setTimeout(r, 800));
-            setTarjeta(null); // sin tarjeta aún → mostrar botón de emisión
-        } catch (e) {
-            setError("No se pudo conectar con el servidor.");
-        } finally {
-            setLoading(false);
-        }
+  async function fetchTarjeta(discordId: string) {
+    setLoading(true);
+    setError(null);
+    try {
+      // En producción: supabase.rpc('consultar_tarjeta', { p_discord_id: discordId })
+      // Mock para desarrollo:
+      await new Promise(r => setTimeout(r, 800));
+      setTarjeta(null); // sin tarjeta aún → mostrar botón de emisión
+    } catch (e) {
+      setError("No se pudo conectar con el servidor.");
+    } finally {
+      setLoading(false);
     }
+  }
 
-    async function emitirTarjeta() {
-        if (!user) return;
-        setEmitiendo(true);
-        setError(null);
-        try {
-            // En producción: supabase.rpc('emitir_o_renovar_tarjeta', { p_discord_id: user.id })
-            await new Promise(r => setTimeout(r, 1200));
-            const mockTarjeta: TarjetaData = {
-                numero_tarjeta: "CTPAN-10000001",
-                nombre: "Ana",
-                apellidos: "García Molina",
-                region: "BAGUETTE",
-                dpi: "DPI - 000001A",
-                discord_id: user.id,
-                emitida_at: new Date().toISOString(),
-                caduca_at: new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString(),
-                activa: true,
-                caducada: false,
-                renovaciones: 0,
-                ultima_renovacion: null,
-            };
-            setTarjeta(mockTarjeta);
-            const qr = await QRCode.toDataURL(
-                `CTPAN:${mockTarjeta.numero_tarjeta}:${mockTarjeta.dpi}`,
-                { width: 200, margin: 1, color: { dark: "#2a1a1a", light: "#ffffff" } }
-            );
-            setQrUrl(qr);
-        } catch (e) {
-            setError("Error al emitir la tarjeta. Inténtalo de nuevo.");
-        } finally {
-            setEmitiendo(false);
-        }
+  async function emitirTarjeta() {
+    if (!user) return;
+    setEmitiendo(true);
+    setError(null);
+    try {
+      // En producción: supabase.rpc('emitir_o_renovar_tarjeta', { p_discord_id: user.id })
+      await new Promise(r => setTimeout(r, 1200));
+      const mockTarjeta: TarjetaData = {
+        numero_tarjeta: "CTPAN-10000001",
+        nombre: "Ana",
+        apellidos: "García Molina",
+        region: "BAGUETTE",
+        dpi: "DPI - 000001A",
+        discord_id: user.id,
+        emitida_at: new Date().toISOString(),
+        caduca_at: new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString(),
+        activa: true,
+        caducada: false,
+        renovaciones: 0,
+        ultima_renovacion: null,
+      };
+      setTarjeta(mockTarjeta);
+      const qr = await QRCode.toDataURL(
+        `CTPAN:${mockTarjeta.numero_tarjeta}:${mockTarjeta.dpi}`,
+        { width: 200, margin: 1, color: { dark: "#2a1a1a", light: "#ffffff" } }
+      );
+      setQrUrl(qr);
+    } catch (e) {
+      setError("Error al emitir la tarjeta. Inténtalo de nuevo.");
+    } finally {
+      setEmitiendo(false);
     }
+  }
 
-    async function renovarTarjeta() {
-        if (!user || !tarjeta) return;
-        setEmitiendo(true);
-        try {
-            await new Promise(r => setTimeout(r, 1000));
-            const renovada = {
-                ...tarjeta,
-                emitida_at: new Date().toISOString(),
-                caduca_at: new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString(),
-                caducada: false,
-                renovaciones: tarjeta.renovaciones + 1,
-                ultima_renovacion: new Date().toISOString(),
-            };
-            setTarjeta(renovada);
-        } finally {
-            setEmitiendo(false);
-        }
+  async function renovarTarjeta() {
+    if (!user || !tarjeta) return;
+    setEmitiendo(true);
+    try {
+      await new Promise(r => setTimeout(r, 1000));
+      const renovada = {
+        ...tarjeta,
+        emitida_at: new Date().toISOString(),
+        caduca_at: new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString(),
+        caducada: false,
+        renovaciones: tarjeta.renovaciones + 1,
+        ultima_renovacion: new Date().toISOString(),
+      };
+      setTarjeta(renovada);
+    } finally {
+      setEmitiendo(false);
     }
+  }
 
-    // Generar QR cuando llega la tarjeta
-    useEffect(() => {
-        if (!tarjeta) return;
-        QRCode.toDataURL(
-            `CTPAN:${tarjeta.numero_tarjeta}:${tarjeta.dpi}`,
-            { width: 200, margin: 1, color: { dark: "#2a1a1a", light: "#ffffff" } }
-        ).then(setQrUrl).catch(() => { });
-    }, [tarjeta]);
+  // Generar QR cuando llega la tarjeta
+  useEffect(() => {
+    if (!tarjeta) return;
+    QRCode.toDataURL(
+      `CTPAN:${tarjeta.numero_tarjeta}:${tarjeta.dpi}`,
+      { width: 200, margin: 1, color: { dark: "#2a1a1a", light: "#ffffff" } }
+    ).then(setQrUrl).catch(() => { });
+  }, [tarjeta]);
 
-    const rutasFiltradas = filtroOrigen === "TODOS"
-        ? RUTAS
-        : RUTAS.filter(r => r.origen === filtroOrigen || r.destino === filtroOrigen);
+  const rutasFiltradas = filtroOrigen === "TODOS"
+    ? RUTAS
+    : RUTAS.filter(r => r.origen === filtroOrigen || r.destino === filtroOrigen);
 
-    // ── Render ──────────────────────────────────────────────────────────────────
-    return (
-        <>
-            <style>{`
+  // ── Render ──────────────────────────────────────────────────────────────────
+  return (
+    <>
+      <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap');
 
         :root {
@@ -810,240 +810,240 @@ export default function Consorcio() {
         }
       `}</style>
 
-            {/* ── Header ── */}
-            <header className="header">
-                <div className="header-logo">
-                    <img src="/CONSORCIO/consorcio.png" alt="Consorcio Transportes" />
-                    <div className="header-title">
-                        Consorcio de Transportes
-                        <span>Reino del Pan · Sede Electrónica</span>
-                    </div>
+      {/* ── Header ── */}
+      <header className="header">
+        <div className="header-logo">
+          <img src="/CONSORCIO/consorcio.png" alt="Consorcio Transportes" />
+          <div className="header-title">
+            Consorcio de Transportes
+            <span>Reino del Pan · Sede Electrónica</span>
+          </div>
+        </div>
+        {user && (
+          <div className="header-user">
+            <img src={avatarUrl(user)} alt={user.username} />
+            <span className="header-user-name">{user.global_name || user.username}</span>
+          </div>
+        )}
+      </header>
+
+      {/* ── Main ── */}
+      <main className="main">
+        <p className="section-eyebrow">Sede Electrónica · Transportes</p>
+        <h1 className="section-title">Tu Tarjeta de Transporte</h1>
+
+        {error && <div className="error-box">⚠️ {error}</div>}
+
+        {loading ? (
+          <div className="loading-wrap">
+            <div className="spinner" />
+            <p className="loading-text">Consultando tu tarjeta…</p>
+          </div>
+        ) : !tarjeta ? (
+          /* ── Sin tarjeta ── */
+          <div className="empty-state">
+            <div className="empty-icon">🪪</div>
+            <div className="empty-title">Aún no tienes tarjeta</div>
+            <p className="empty-sub">
+              Solicita tu Tarjeta de Transporte gratuita del Consorcio. Válida 1 año en todas las regiones del Reino del Pan.
+            </p>
+            <button className="btn-primary" onClick={emitirTarjeta} disabled={emitiendo}>
+              {emitiendo ? "⏳ Emitiendo…" : "🪪 Solicitar mi tarjeta"}
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* ── Tarjeta flip ── */}
+            <div className="card-scene">
+              <div
+                className={`card-flip${flipped ? " is-flipped" : ""}`}
+                onClick={() => setFlipped(f => !f)}
+                title="Haz clic para girar la tarjeta"
+              >
+                {/* Delantera */}
+                <div className="card-face card-front">
+                  <img
+                    className="card-bg"
+                    src="/CONSORCIO/tarjeta.jpg"
+                    alt="Tarjeta Transporte"
+                  />
                 </div>
-                {user && (
-                    <div className="header-user">
-                        <img src={avatarUrl(user)} alt={user.username} />
-                        <span className="header-user-name">{user.global_name || user.username}</span>
+
+                {/* Trasera */}
+                <div className="card-face card-back">
+                  <div className="card-back-header">
+                    <div className="card-back-logo">
+                      Consorcio<br />Transportes
                     </div>
+                    <div className="card-back-numero">
+                      {tarjeta.numero_tarjeta}
+                    </div>
+                  </div>
+
+                  <div className="card-back-strip">
+                    <span className="card-back-strip-text">
+                      ███████████████████████████████████████████
+                    </span>
+                  </div>
+
+                  <div className="card-back-body">
+                    <div className="card-back-datos">
+                      <div className="card-back-nombre">
+                        {tarjeta.nombre} {tarjeta.apellidos}
+                      </div>
+                      <div className="card-back-detalle">
+                        <strong>DPI</strong> {tarjeta.dpi}<br />
+                        <strong>REGIÓN</strong> {REGION_EMOJI[tarjeta.region]} {tarjeta.region}<br />
+                        <strong>VÁLIDA HASTA</strong> {fmt(tarjeta.caduca_at)}
+                      </div>
+                    </div>
+                    {qrUrl && (
+                      <div className="card-back-qr">
+                        <img src={qrUrl} alt="QR de tarjeta" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p className="flip-hint">
+              Haz clic en la tarjeta para girarla ·
+              <button onClick={() => setFlipped(f => !f)}>
+                ver {flipped ? "delantera" : "trasera"}
+              </button>
+            </p>
+
+            {/* ── Info grid ── */}
+            <div className="info-grid">
+              <div className="info-card">
+                <div className="info-card-label">Titular</div>
+                <div className="info-card-value">{tarjeta.nombre} {tarjeta.apellidos}</div>
+                <div className="info-card-sub">DPI: {tarjeta.dpi}</div>
+              </div>
+              <div className="info-card">
+                <div className="info-card-label">Región</div>
+                <div className="info-card-value">
+                  {REGION_EMOJI[tarjeta.region]} {tarjeta.region}
+                </div>
+                <div className="info-card-sub">Zona de origen</div>
+              </div>
+              <div className="info-card">
+                <div className="info-card-label">Emisión</div>
+                <div className="info-card-value" style={{ fontSize: "1rem" }}>{fmt(tarjeta.emitida_at)}</div>
+                {tarjeta.renovaciones > 0 && (
+                  <div className="info-card-sub">{tarjeta.renovaciones} renovación(es)</div>
                 )}
-            </header>
+              </div>
+              <div className="info-card">
+                <div className="info-card-label">Caducidad</div>
+                <div className="info-card-value" style={{ fontSize: "1rem" }}>{fmt(tarjeta.caduca_at)}</div>
+                {tarjeta.caducada
+                  ? <span className="badge-warn">⚠️ Caducada</span>
+                  : <span className="badge-ok">✓ Vigente</span>
+                }
+              </div>
+            </div>
 
-            {/* ── Main ── */}
-            <main className="main">
-                <p className="section-eyebrow">Sede Electrónica · Transportes</p>
-                <h1 className="section-title">Tu Tarjeta de Transporte</h1>
-
-                {error && <div className="error-box">⚠️ {error}</div>}
-
-                {loading ? (
-                    <div className="loading-wrap">
-                        <div className="spinner" />
-                        <p className="loading-text">Consultando tu tarjeta…</p>
-                    </div>
-                ) : !tarjeta ? (
-                    /* ── Sin tarjeta ── */
-                    <div className="empty-state">
-                        <div className="empty-icon">🪪</div>
-                        <div className="empty-title">Aún no tienes tarjeta</div>
-                        <p className="empty-sub">
-                            Solicita tu Tarjeta de Transporte gratuita del Consorcio. Válida 1 año en todas las regiones del Reino del Pan.
-                        </p>
-                        <button className="btn-primary" onClick={emitirTarjeta} disabled={emitiendo}>
-                            {emitiendo ? "⏳ Emitiendo…" : "🪪 Solicitar mi tarjeta"}
-                        </button>
-                    </div>
-                ) : (
-                    <>
-                        {/* ── Tarjeta flip ── */}
-                        <div className="card-scene">
-                            <div
-                                className={`card-flip${flipped ? " is-flipped" : ""}`}
-                                onClick={() => setFlipped(f => !f)}
-                                title="Haz clic para girar la tarjeta"
-                            >
-                                {/* Delantera */}
-                                <div className="card-face card-front">
-                                    <img
-                                        className="card-bg"
-                                        src="/CONSORCIO/tarjeta.png"
-                                        alt="Tarjeta Transporte"
-                                    />
-                                </div>
-
-                                {/* Trasera */}
-                                <div className="card-face card-back">
-                                    <div className="card-back-header">
-                                        <div className="card-back-logo">
-                                            Consorcio<br />Transportes
-                                        </div>
-                                        <div className="card-back-numero">
-                                            {tarjeta.numero_tarjeta}
-                                        </div>
-                                    </div>
-
-                                    <div className="card-back-strip">
-                                        <span className="card-back-strip-text">
-                                            ███████████████████████████████████████████
-                                        </span>
-                                    </div>
-
-                                    <div className="card-back-body">
-                                        <div className="card-back-datos">
-                                            <div className="card-back-nombre">
-                                                {tarjeta.nombre} {tarjeta.apellidos}
-                                            </div>
-                                            <div className="card-back-detalle">
-                                                <strong>DPI</strong> {tarjeta.dpi}<br />
-                                                <strong>REGIÓN</strong> {REGION_EMOJI[tarjeta.region]} {tarjeta.region}<br />
-                                                <strong>VÁLIDA HASTA</strong> {fmt(tarjeta.caduca_at)}
-                                            </div>
-                                        </div>
-                                        {qrUrl && (
-                                            <div className="card-back-qr">
-                                                <img src={qrUrl} alt="QR de tarjeta" />
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <p className="flip-hint">
-                            Haz clic en la tarjeta para girarla ·
-                            <button onClick={() => setFlipped(f => !f)}>
-                                ver {flipped ? "delantera" : "trasera"}
-                            </button>
-                        </p>
-
-                        {/* ── Info grid ── */}
-                        <div className="info-grid">
-                            <div className="info-card">
-                                <div className="info-card-label">Titular</div>
-                                <div className="info-card-value">{tarjeta.nombre} {tarjeta.apellidos}</div>
-                                <div className="info-card-sub">DPI: {tarjeta.dpi}</div>
-                            </div>
-                            <div className="info-card">
-                                <div className="info-card-label">Región</div>
-                                <div className="info-card-value">
-                                    {REGION_EMOJI[tarjeta.region]} {tarjeta.region}
-                                </div>
-                                <div className="info-card-sub">Zona de origen</div>
-                            </div>
-                            <div className="info-card">
-                                <div className="info-card-label">Emisión</div>
-                                <div className="info-card-value" style={{ fontSize: "1rem" }}>{fmt(tarjeta.emitida_at)}</div>
-                                {tarjeta.renovaciones > 0 && (
-                                    <div className="info-card-sub">{tarjeta.renovaciones} renovación(es)</div>
-                                )}
-                            </div>
-                            <div className="info-card">
-                                <div className="info-card-label">Caducidad</div>
-                                <div className="info-card-value" style={{ fontSize: "1rem" }}>{fmt(tarjeta.caduca_at)}</div>
-                                {tarjeta.caducada
-                                    ? <span className="badge-warn">⚠️ Caducada</span>
-                                    : <span className="badge-ok">✓ Vigente</span>
-                                }
-                            </div>
-                        </div>
-
-                        {/* ── QR + acción renovar ── */}
-                        {qrUrl && (
-                            <div className="qr-section">
-                                <img src={qrUrl} alt="QR Tarjeta" />
-                                <div>
-                                    <div className="qr-info-title">Código QR de verificación</div>
-                                    <div className="qr-info-sub">
-                                        Presenta este código en los tornos de acceso.<br />
-                                        Número: <strong>{tarjeta.numero_tarjeta}</strong>
-                                    </div>
-                                    {(tarjeta.caducada) && (
-                                        <button
-                                            className="btn-primary"
-                                            style={{ marginTop: 14 }}
-                                            onClick={renovarTarjeta}
-                                            disabled={emitiendo}
-                                        >
-                                            {emitiendo ? "⏳ Renovando…" : "🔄 Renovar tarjeta"}
-                                        </button>
-                                    )}
-                                    {!tarjeta.caducada && (
-                                        <button
-                                            className="btn-secondary"
-                                            style={{ marginTop: 14 }}
-                                            onClick={renovarTarjeta}
-                                            disabled={emitiendo}
-                                        >
-                                            {emitiendo ? "⏳ Renovando…" : "🔄 Renovar anticipadamente"}
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </>
-                )}
-
-                {/* ── Panel de rutas (siempre visible) ── */}
-                <div className="panel-rutas">
-                    <div className="panel-header">
-                        <div className="panel-header-left">
-                            <div className="panel-dot" />
-                            <span className="panel-title">Rutas Interregionales — En Servicio</span>
-                        </div>
-                        <span className="panel-time">
-                            {new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
-                        </span>
-                    </div>
-
-                    <div className="panel-filter">
-                        <button
-                            className={`filter-btn${filtroOrigen === "TODOS" ? " active" : ""}`}
-                            onClick={() => setFiltroOrigen("TODOS")}
-                        >
-                            Todas
-                        </button>
-                        {REGIONES.map(r => (
-                            <button
-                                key={r}
-                                className={`filter-btn${filtroOrigen === r ? " active" : ""}`}
-                                onClick={() => setFiltroOrigen(r)}
-                            >
-                                {REGION_EMOJI[r]} {r}
-                            </button>
-                        ))}
-                    </div>
-
-                    {rutasFiltradas.map((ruta, i) => (
-                        <div className="panel-row" key={i}>
-                            <div className="panel-estacion">
-                                <span className="panel-estacion-emoji">{REGION_EMOJI[ruta.origen]}</span>
-                                {ruta.origen}
-                            </div>
-                            <div className="panel-arrow">→</div>
-                            <div className="panel-estacion">
-                                <span className="panel-estacion-emoji">{REGION_EMOJI[ruta.destino]}</span>
-                                {ruta.destino}
-                            </div>
-                            <div className="panel-duracion">{ruta.duracion}</div>
-                            <div className={`panel-tipo ${ruta.tipo === "Interregional" ? "tipo-inter" : "tipo-largo"}`}>
-                                {ruta.tipo}
-                            </div>
-                        </div>
-                    ))}
+            {/* ── QR + acción renovar ── */}
+            {qrUrl && (
+              <div className="qr-section">
+                <img src={qrUrl} alt="QR Tarjeta" />
+                <div>
+                  <div className="qr-info-title">Código QR de verificación</div>
+                  <div className="qr-info-sub">
+                    Presenta este código en los tornos de acceso.<br />
+                    Número: <strong>{tarjeta.numero_tarjeta}</strong>
+                  </div>
+                  {(tarjeta.caducada) && (
+                    <button
+                      className="btn-primary"
+                      style={{ marginTop: 14 }}
+                      onClick={renovarTarjeta}
+                      disabled={emitiendo}
+                    >
+                      {emitiendo ? "⏳ Renovando…" : "🔄 Renovar tarjeta"}
+                    </button>
+                  )}
+                  {!tarjeta.caducada && (
+                    <button
+                      className="btn-secondary"
+                      style={{ marginTop: 14 }}
+                      onClick={renovarTarjeta}
+                      disabled={emitiendo}
+                    >
+                      {emitiendo ? "⏳ Renovando…" : "🔄 Renovar anticipadamente"}
+                    </button>
+                  )}
                 </div>
+              </div>
+            )}
+          </>
+        )}
 
-                {/* ── Banner próximamente ── */}
-                <div className="banner">
-                    <div className="banner-icon">🌍</div>
-                    <div className="banner-text">
-                        <div className="banner-eyebrow">Próximamente</div>
-                        <div className="banner-title">
-                            Muy pronto el abono cubrirá<br />viajes fuera del Reino del Pan
-                        </div>
-                        <div className="banner-sub">
-                            Estamos trabajando en acuerdos con territorios vecinos para ampliar la red de transporte.
-                        </div>
-                    </div>
-                </div>
-            </main>
-        </>
-    );
+        {/* ── Panel de rutas (siempre visible) ── */}
+        <div className="panel-rutas">
+          <div className="panel-header">
+            <div className="panel-header-left">
+              <div className="panel-dot" />
+              <span className="panel-title">Rutas Interregionales — En Servicio</span>
+            </div>
+            <span className="panel-time">
+              {new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
+            </span>
+          </div>
+
+          <div className="panel-filter">
+            <button
+              className={`filter-btn${filtroOrigen === "TODOS" ? " active" : ""}`}
+              onClick={() => setFiltroOrigen("TODOS")}
+            >
+              Todas
+            </button>
+            {REGIONES.map(r => (
+              <button
+                key={r}
+                className={`filter-btn${filtroOrigen === r ? " active" : ""}`}
+                onClick={() => setFiltroOrigen(r)}
+              >
+                {REGION_EMOJI[r]} {r}
+              </button>
+            ))}
+          </div>
+
+          {rutasFiltradas.map((ruta, i) => (
+            <div className="panel-row" key={i}>
+              <div className="panel-estacion">
+                <span className="panel-estacion-emoji">{REGION_EMOJI[ruta.origen]}</span>
+                {ruta.origen}
+              </div>
+              <div className="panel-arrow">→</div>
+              <div className="panel-estacion">
+                <span className="panel-estacion-emoji">{REGION_EMOJI[ruta.destino]}</span>
+                {ruta.destino}
+              </div>
+              <div className="panel-duracion">{ruta.duracion}</div>
+              <div className={`panel-tipo ${ruta.tipo === "Interregional" ? "tipo-inter" : "tipo-largo"}`}>
+                {ruta.tipo}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Banner próximamente ── */}
+        <div className="banner">
+          <div className="banner-icon">🌍</div>
+          <div className="banner-text">
+            <div className="banner-eyebrow">Próximamente</div>
+            <div className="banner-title">
+              Muy pronto el abono cubrirá<br />viajes fuera del Reino del Pan
+            </div>
+            <div className="banner-sub">
+              Estamos trabajando en acuerdos con territorios vecinos para ampliar la red de transporte.
+            </div>
+          </div>
+        </div>
+      </main>
+    </>
+  );
 }
