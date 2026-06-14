@@ -124,6 +124,7 @@ const CATEGORIAS: { key: string; titulo: string }[] = [
   { key: "equipos", titulo: "Mi Equipo" },
   { key: "mafia", titulo: "Registros de Familia / Mafia" },
   { key: "especiales", titulo: "Roles especiales" },
+  { key: "servicios", titulo: "Servicios" }
 ];
 
 export default function Carpeta() {
