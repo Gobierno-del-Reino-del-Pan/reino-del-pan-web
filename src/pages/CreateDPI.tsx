@@ -226,7 +226,6 @@ export default function CreateDPI() {
 
   const [submitErrors, setSubmitErrors] = useState<Record<string, string>>({});
 
-  // Carga de estado de sesión para autorelleno
   useEffect(() => {
     fetch("/api/me")
       .then((r) => r.json())
@@ -236,16 +235,33 @@ export default function CreateDPI() {
 
   const handleAutofill = () => {
     if (!user) return;
-    // Sanitizamos el nombre quitando caracteres no permitidos por la regex ONLY_LETTERS
-    const cleanUsername = user.username.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "").trim();
-    const words = cleanUsername.split(/\s+/);
 
-    let nombreAutofill = cleanUsername.substring(0, LIMITS.nombre);
+    // MODIFICACIÓN: Limpiamos números y símbolos extraños para dejar solo letras legibles y espacios
+    const cleanLetters = user.username.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, " ").trim();
+    // Reemplazamos múltiples espacios por uno solo
+    const standardizedSpace = cleanLetters.replace(/\s+/g, " ");
+
+    // Separamos en palabras
+    const words = standardizedSpace.split(" ");
+
+    // Capitalizamos la primera letra de cada palabra de forma elegante
+    const capitalizedWords = words.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+
+    let nombreAutofill = "";
     let apellidosAutofill = "";
 
-    if (words.length > 1) {
-      nombreAutofill = words[0].substring(0, LIMITS.nombre);
-      apellidosAutofill = words.slice(1).join(" ").substring(0, LIMITS.apellidos);
+    if (capitalizedWords.length > 0 && capitalizedWords[0] !== "") {
+      // Si el nombre procesado tiene varias palabras, estructuramos Nombre y Apellidos
+      if (capitalizedWords.length === 1) {
+        nombreAutofill = capitalizedWords[0].substring(0, LIMITS.nombre);
+      } else if (capitalizedWords.length === 2) {
+        nombreAutofill = capitalizedWords[0].substring(0, LIMITS.nombre);
+        apellidosAutofill = capitalizedWords[1].substring(0, LIMITS.apellidos);
+      } else {
+        // Si tiene 3 o más palabras (Ej: "Juan Carlos Pérez Gómez"), tomamos las dos primeras como nombre
+        nombreAutofill = capitalizedWords.slice(0, 2).join(" ").substring(0, LIMITS.nombre);
+        apellidosAutofill = capitalizedWords.slice(2).join(" ").substring(0, LIMITS.apellidos);
+      }
     }
 
     setForm(prev => ({
@@ -259,7 +275,6 @@ export default function CreateDPI() {
     }
   };
 
-  // El botón aparece solo si está logueado y NO tiene un DPI verificado válido
   const showAutofillBtn = user && !user.verificado && !user.dpi;
 
   // ─── Helpers de posición ────────────────────────────────────────────────────
@@ -466,7 +481,6 @@ export default function CreateDPI() {
               Crear <span className="text-accent">DPI</span>
             </h1>
 
-            {/* Botón de Autorellenado Inteligente con Discord */}
             {showAutofillBtn && (
               <button
                 type="button"
