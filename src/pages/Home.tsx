@@ -272,12 +272,12 @@ export default function Home() {
               <div className="h-5 w-[1px] bg-white/20"></div>
               <h3 className="font-tvp-head text-base md:text-xl font-bold tracking-widest uppercase text-white flex items-center gap-2">
                 <span className="w-2.5 h-2.5 bg-[#ff4d00] rounded-full animate-ping"></span>
-                TVP EN DIRECTO
+
               </h3>
             </div>
             <Link to="/tvp">
               <span className="text-xs text-[#ff4d00] cursor-pointer hover:underline uppercase tracking-[0.25em] font-bold font-tvp-head transition-all">
-                Portal Play →
+                Portal tvp Play →
               </span>
             </Link>
           </div>
