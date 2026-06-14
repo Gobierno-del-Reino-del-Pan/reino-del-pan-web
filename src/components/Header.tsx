@@ -223,6 +223,14 @@ export default function Header() {
                       🆔 Tarjeta DPI
                     </a>
 
+                    <a
+                      href={"/Consorcio/consorcio.tsx"}
+                      className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-black/70 hover:text-accent hover:bg-accent/5 transition duration-200 border-t border-black/5"
+                    >
+                      <img src="/consorcio.png" className="w-4 h-4 object-contain" />
+                      Consorcio
+                    </a>
+
                     {esReportero && (
                       <Link
                         href="/TVP/PanelDeControl"

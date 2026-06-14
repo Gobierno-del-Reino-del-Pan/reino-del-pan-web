@@ -633,6 +633,44 @@ app.get("/api/dpi/verify/:code", async (req, res) => {
 // ENDPOINTS: CONSORCIO DE TRANSPORTES (REINO DEL PAN)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Configuración de Discord (Asegúrate de tener DISCORD_BOT_TOKEN y GUILD_ID en tu .env)
+const ROLE_CONSORCIO = "1515829072209510603";
+const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
+
+/**
+ * Helper para asignar el rol de Discord mediante la API REST
+ */
+async function asignarRolDiscord(discordId) {
+  if (!DISCORD_BOT_TOKEN || !GUILD_ID) {
+    console.error("[Discord] Falta DISCORD_BOT_TOKEN o GUILD_ID en las variables de entorno.");
+    return false;
+  }
+
+  const url = `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${discordId}/roles/${ROLE_CONSORCIO}`;
+
+  try {
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
+        "X-Audit-Log-Reason": "Tarjeta de transporte del Consorcio emitida/renovada automáticamente",
+      },
+    });
+
+    if (response.ok || response.status === 204) {
+      console.log(`[Discord] Rol asignado con éxito al usuario ${discordId}`);
+      return true;
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      console.error(`[Discord API Error] Status: ${response.status}`, errorData);
+      return false;
+    }
+  } catch (err) {
+    console.error("[Discord Network Error] No se pudo asignar el rol:", err);
+    return false;
+  }
+}
+
 /**
  * GET /api/transporte/tarjeta
  * Obtiene la tarjeta de transporte del usuario autenticado si existe.
@@ -700,14 +738,13 @@ app.post("/api/transporte/tarjeta/solicitar", requireAuth, async (req, res) => {
     }
 
     // 3. Insertar la nueva tarjeta en la base de datos
-    // Nota: 'numero_tarjeta', 'emitida_at' y 'caduca_at' usan los DEFAULTS de tu SQL.
     const { data: nuevaTarjeta, error: insertErr } = await supabase
       .from("consorcio_tarjetas")
       .insert({
         dpi: dpiData.dpi_number,
         nombre: dpiData.nombre,
         apellidos: dpiData.apellidos,
-        region: dpiData.region, // Debe cumplir con el CHECK de regiones de pan
+        region: dpiData.region,
         discord_id: discordId
       })
       .select()
@@ -715,14 +752,25 @@ app.post("/api/transporte/tarjeta/solicitar", requireAuth, async (req, res) => {
 
     if (insertErr) {
       console.error("Error al insertar tarjeta:", insertErr);
-      // Validar si falla por el CHECK de regiones permitidas
       if (insertErr.message.includes("consorcio_tarjetas_region_check")) {
         return res.status(400).json({ error: "Tu región de DPI no está autorizada por el Consorcio del Pan." });
       }
       return res.status(400).json({ error: `No se pudo emitir la tarjeta: ${insertErr.message}` });
     }
 
-    return res.json({ success: true, message: "¡Tarjeta de transporte emitida con éxito!", tarjeta: nuevaTarjeta });
+    // 4. Asignación automática del Rol en el servidor de Discord
+    const rolAsignado = await asignarRolDiscord(discordId);
+
+    let mensajeExito = "¡Tarjeta de transporte emitida con éxito!";
+    if (!rolAsignado) {
+      mensajeExito += " Nota: La tarjeta se creó pero hubo un problema al asignarte el rol en Discord, contacta con soporte.";
+    }
+
+    return res.json({
+      success: true,
+      message: mensajeExito,
+      tarjeta: nuevaTarjeta
+    });
 
   } catch (err) {
     console.error("[POST /api/transporte/tarjeta/solicitar]", err);
@@ -756,7 +804,7 @@ app.post("/api/transporte/tarjeta/renovar", requireAuth, async (req, res) => {
     const { data: tarjetaRenovada, error: updateErr } = await supabase
       .from("consorcio_tarjetas")
       .update({
-        activa: true, // Nos aseguramos de reactivarla si estaba vencida
+        activa: true,
         renovaciones: tarjeta.renovaciones + 1,
         ultima_renovacion: new Date().toISOString(),
         caduca_at: nuevaCaducidad.toISOString()
@@ -769,6 +817,9 @@ app.post("/api/transporte/tarjeta/renovar", requireAuth, async (req, res) => {
       console.error("Error al renovar tarjeta:", updateErr);
       return res.status(400).json({ error: "Error al actualizar la vigencia de la tarjeta." });
     }
+
+    // Asegurar que conserva el rol activo tras la renovación
+    await asignarRolDiscord(discordId);
 
     return res.json({ success: true, message: "Tarjeta renovada por 1 año adicional.", tarjeta: tarjetaRenovada });
 
