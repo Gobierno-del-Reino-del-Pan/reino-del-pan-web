@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useMemo } from "react";
 const navItems = [
   { href: "/", label: "Inicio" },
   { href: "/about", label: "Acerca de" },
-  { href: "/level", label: "Level" },
+  { href: "/level", label: "Nivel Cs." },
   { href: "/dpi", label: "DPI" },
 ];
 
