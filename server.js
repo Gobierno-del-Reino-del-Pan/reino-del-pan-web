@@ -65,70 +65,6 @@ const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:5174";
 const DISCORD_REDIRECT_URI = `${PUBLIC_URL}/auth/discord/callback`;
 const DISCORD_API = "https://discord.com/api/v10";
 
-// ── Configuración de Roles de Discord para Asignación Directa ──────────────────
-const ROLE_CIUDADANO_ID = "1381611108812460034";
-const ROLE_REGULARIZACION_ID = "1506046752740999178";
-
-const REGION_ROLES = {
-  "BAGUETTE": "1505999177728004256",
-  "PIMBO": "1505999483346096178",
-  "PRETZEL": "1505999600920559866",
-  "CROISSANT": "1505999687713427476",
-  "SIN GLUTEN": "1505999895486533722",
-  "PAN PLANO": "1505999993335451720"
-};
-
-// ── Función para gestionar los roles en Discord ──────────────────────────────
-async function handleDiscordVerificationRoles(userId, regionName) {
-  if (!DISCORD_TOKEN || !GUILD_ID) {
-    console.error("❌ Falta DISCORD_TOKEN o GUILD_ID para procesar los roles.");
-    return;
-  }
-
-  const rolesToAssign = [ROLE_CIUDADANO_ID];
-  const cleanRegion = (regionName || "").trim().toUpperCase();
-
-  if (REGION_ROLES[cleanRegion]) {
-    rolesToAssign.push(REGION_ROLES[cleanRegion]);
-  }
-
-  // 1. Asignar los nuevos roles (Ciudadano + Región)
-  for (const roleId of rolesToAssign) {
-    const url = `${DISCORD_API}/guilds/${GUILD_ID}/members/${userId}/roles/${roleId}`;
-    try {
-      const response = await fetch(url, {
-        method: "PUT",
-        headers: {
-          "Authorization": `Bot ${DISCORD_TOKEN.trim()}`,
-          "X-Audit-Log-Reason": "DPI Creado correctamente en la Web"
-        }
-      });
-      if (!response.ok) {
-        console.error(`Error asignando el rol ${roleId}:`, response.statusText);
-      }
-    } catch (error) {
-      console.error(`Error de red al asignar rol ${roleId}:`, error);
-    }
-  }
-
-  // 2. Quitar el rol de Regularización
-  const removeUrl = `${DISCORD_API}/guilds/${GUILD_ID}/members/${userId}/roles/${ROLE_REGULARIZACION_ID}`;
-  try {
-    const response = await fetch(removeUrl, {
-      method: "DELETE",
-      headers: {
-        "Authorization": `Bot ${DISCORD_TOKEN.trim()}`,
-        "X-Audit-Log-Reason": "Usuario verificado: Removiendo rol de regularización"
-      }
-    });
-    if (!response.ok && response.status !== 404) {
-      console.error(`Error quitando el rol de regularización:`, response.statusText);
-    }
-  } catch (error) {
-    console.error(`Error de red al quitar rol de regularización:`, error);
-  }
-}
-
 // ── JWT config ─────────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-cambia-esto";
 const JWT_EXPIRES_IN = "7d";
@@ -191,18 +127,6 @@ function recordUsage(ip) {
   else if (entry.count >= SOFT_LIMIT) entry.blockedUntil = now + SOFT_COOLDOWN_MS;
   ipStore.set(ip, entry);
   scheduleClean(ip);
-}
-
-// ── Funciones Auxiliares de Formato ───────────────────────────────────────────
-function formatDate(d) {
-  return [String(d.getDate()).padStart(2, "0"), String(d.getMonth() + 1).padStart(2, "0"), d.getFullYear()].join("/");
-}
-function addMonths(base, months) {
-  const d = new Date(base); d.setMonth(d.getMonth() + months); return formatDate(d);
-}
-function buildQrUrl(dpiNumber) {
-  const code = encodeURIComponent(dpiNumber.replace("DPI - ", ""));
-  return `${PUBLIC_URL}/api/dpi/verify/${code}`;
 }
 
 // ── Generador atómico de DPI ──────────────────────────────────────────────────
@@ -327,6 +251,7 @@ app.get("/auth/discord/callback", async (req, res) => {
       ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png?size=128`
       : `https://cdn.discordapp.com/embed/avatars/${parseInt(profile.id) % 5}.png`;
 
+    // 🔧 Sincronización automática de perfil en la tabla de usuarios de Supabase
     await supabase.from("usuarios").upsert({
       discord_id: profile.id,
       username: profile.username,
@@ -342,7 +267,7 @@ app.get("/auth/discord/callback", async (req, res) => {
       roles: rolesDelUsuario,
       dpi: dpiData,
       verificado: !!verificado,
-      matrimonio: null,
+      matrimonio: null, // Valores por defecto en JWT
       hijos: []
     };
 
@@ -364,7 +289,7 @@ app.get("/auth/logout", (req, res) => {
   res.redirect("/");
 });
 
-// ── GET /api/me ──
+// ── ACTUALIZADO: GET /api/me (Intercepta la sesión y extrae dinámicamente datos de Supabase) ──
 app.get("/api/me", async (req, res) => {
   const token = req.cookies?.[COOKIE_NAME];
   if (!token) return res.status(401).json({ user: null });
@@ -373,12 +298,14 @@ app.get("/api/me", async (req, res) => {
     const user = jwt.verify(token, JWT_SECRET);
     const discordId = user.id;
 
+    // 🆕 NUEVO: Obtener el nivel y estadísticas desde la tabla 'user_levels'
     const { data: levelData } = await supabase
       .from("user_levels")
       .select("level, xp, total_xp, messages")
       .eq("user_id", discordId)
       .maybeSingle();
 
+    // 1. Consultar Matrimonio (u1 o u2)
     const { data: matrimonioData } = await supabase
       .from('matrimonios')
       .select(`
@@ -402,6 +329,7 @@ app.get("/api/me", async (req, res) => {
       };
     }
 
+    // 2. Consultar Hijos (Adoptivos con FK o Creados con cadenas planas)
     const { data: hijosData } = await supabase
       .from('hijos')
       .select(`
@@ -424,9 +352,11 @@ app.get("/api/me", async (req, res) => {
       };
     });
 
+    // Inyectamos las relaciones en caliente al payload del usuario antes de retornar
     user.matrimonio = matrimonio;
     user.hijos = hijos;
 
+    // 🆕 Inyectamos los datos de nivel con fallback a 0 si el registro no existe aún
     user.level = levelData?.level ?? 0;
     user.xp = levelData?.xp ?? 0;
     user.total_xp = levelData?.total_xp ?? 0;
@@ -459,6 +389,7 @@ app.get("/api/me/refresh", requireAuth, async (req, res) => {
       dpiData = dpi;
     }
 
+    // 🆕 NUEVO: También traemos el nivel aquí al refrescar la sesión
     const { data: levelData } = await supabase
       .from("user_levels")
       .select("level, xp, total_xp, messages")
@@ -469,6 +400,7 @@ app.get("/api/me/refresh", requireAuth, async (req, res) => {
       ...req.user,
       dpi: dpiData,
       verificado: !!verificado,
+      // 🆕 Actualizamos los niveles en el JWT de sesión refrescado
       level: levelData?.level ?? 0,
       xp: levelData?.xp ?? 0,
       total_xp: levelData?.total_xp ?? 0,
@@ -486,9 +418,10 @@ app.get("/api/me/refresh", requireAuth, async (req, res) => {
   }
 });
 
-// ── ENDPOINT LEADERBOARD ──
+// ── ENDPOINT DE CLASIFICACIÓN / LEADERBOARD CORREGIDO (Sin JOIN forzado) ──
 app.get("/api/leaderboard", async (req, res) => {
   try {
+    // 1. Traemos todos los niveles ordenados por total_xp
     const { data: ranking, error: levelErr } = await supabase
       .from("user_levels")
       .select("user_id, username, level, xp, total_xp, messages")
@@ -503,8 +436,10 @@ app.get("/api/leaderboard", async (req, res) => {
       });
     }
 
+    // 2. Extraemos todos los IDs de usuario únicos que tienen nivel
     const userIds = ranking.map(u => u.user_id);
 
+    // 3. Traemos los avatares de la tabla 'usuarios' para esos IDs
     const { data: dbUsuarios, error: userErr } = await supabase
       .from("usuarios")
       .select("discord_id, avatar_url")
@@ -512,11 +447,13 @@ app.get("/api/leaderboard", async (req, res) => {
 
     if (userErr) throw userErr;
 
+    // Creamos un mapa rápido [id]: avatar_url para asociar velozmente
     const avatarMap = {};
     (dbUsuarios || []).forEach(u => {
       avatarMap[u.discord_id] = u.avatar_url;
     });
 
+    // 4. Formateamos e inyectamos el avatar correspondiente de forma manual
     const usuariosFormateados = ranking.map((u, index) => ({
       posicion: index + 1,
       id: u.user_id,
@@ -540,7 +477,10 @@ app.get("/api/leaderboard", async (req, res) => {
     return res.json({
       top5,
       rankingCompleto,
-      destacados: { masMensajes, menosMensajes }
+      destacados: {
+        masMensajes,
+        menosMensajes
+      }
     });
   } catch (err) {
     console.error("[/api/leaderboard] Error catastrófico:", err);
@@ -548,10 +488,14 @@ app.get("/api/leaderboard", async (req, res) => {
   }
 });
 
-// ── DPI ENDPOINTS ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// DPI ENDPOINTS 
+// ─────────────────────────────────────────────────────────────────────────────
 
+// ── NUEVA RUTA PUENTE: Obtener y verificar DPI dinámicamente mediante el ID de Discord ──
 app.get("/api/dpi/verify-discord/:discordId", async (req, res) => {
   const { discordId } = req.params;
+
   try {
     const { data: verificado, error } = await supabase
       .from("verificados")
@@ -570,102 +514,41 @@ app.get("/api/dpi/verify-discord/:discordId", async (req, res) => {
 
     const code = encodeURIComponent(verificado.dpi.replace("DPI - ", ""));
     return res.redirect(`/api/dpi/verify/${code}`);
+
   } catch (err) {
     console.error("[/api/dpi/verify-discord] Error catastrófico:", err);
     return res.status(500).send("Error interno del servidor.");
   }
 });
 
-// ── ENDPOINT FIXEADO: /api/dpi/create ──
-app.post("/api/dpi/create", requireAuth, async (req, res) => {
+app.post("/api/dpi/create", async (req, res) => {
   const ip = getIP(req);
   const { allowed, retryAfterMs } = checkRateLimit(ip);
   if (!allowed) {
     const hours = Math.ceil(retryAfterMs / 3_600_000);
     return res.status(429).json({ error: "Demasiados DPIs creados. Inténtalo más tarde.", retryAfterMs, retryAfterHours: hours });
   }
-
   const { nombre, apellidos, genero, fecha, region } = req.body ?? {};
   if (!nombre || !apellidos || !genero || !fecha || !region)
     return res.status(400).json({ error: "Faltan campos obligatorios." });
-
   try {
     const dpiNumber = await getNextDPINumber();
     const today = new Date();
-
-    // 1. Guardamos las fechas en formato ISO estricto (YYYY-MM-DD) para evitar el error 500 en SQL
-    const isoIssuedAt = today.toISOString().split('T')[0];
-
-    const targetExpiration = new Date(today);
-    targetExpiration.setMonth(targetExpiration.getMonth() + 14);
-    const isoValidUntil = targetExpiration.toISOString().split('T')[0];
-
+    const expDate = formatDate(today);
+    const valDate = addMonths(today, 14);
     const qrUrl = buildQrUrl(dpiNumber);
-
-    // 2. Insertar o reemplazar el documento en la tabla principal "dpis"
     const { error: dbErr } = await supabase.from("dpis").insert({
-      dpi_number: dpiNumber,
-      nombre: nombre.trim().toUpperCase(),
-      apellidos: apellidos.trim().toUpperCase(),
-      genero,
-      fecha_nac: fecha,
-      region: region.trim().toUpperCase(),
-      issued_at: isoIssuedAt,
-      valid_until: isoValidUntil,
-      ip_address: ip,
-      qr_url: qrUrl,
+      dpi_number: dpiNumber, nombre: nombre.trim().toUpperCase(),
+      apellidos: apellidos.trim().toUpperCase(), genero, fecha_nac: fecha,
+      region: region.trim().toUpperCase(), issued_at: expDate,
+      valid_until: valDate, ip_address: ip, qr_url: qrUrl,
     });
-
-    if (dbErr) throw new Error(`[Tabla dpis] ${dbErr.message}`);
-
-    // 3. CAMBIO CLAVE: Usamos .upsert() para evitar bloqueos por registros de Discord antiguos
-    const { error: vErr } = await supabase.from("verificados").upsert({
-      discord_id: req.user.id,
-      discord_username: req.user.username,
-      dpi: dpiNumber
-    }, { onConflict: 'discord_id' }); // Sobrescribe si el discord_id ya existe
-
-    if (vErr) {
-      console.error("Error al registrar en verificados. Revirtiendo DPI...");
-      await supabase.from("dpis").delete().eq("dpi_number", dpiNumber);
-      throw new Error(`[Tabla verificados] ${vErr.message}`);
-    }
-
+    if (dbErr) throw new Error(dbErr.message);
     recordUsage(ip);
-
-    // Sincronización asíncrona de roles en Discord
-    await handleDiscordVerificationRoles(req.user.id, region);
-
-    // Formateamos visualmente a DD/MM/YYYY únicamente para el cliente de React y la sesión JWT
-    const displayIssuedAt = formatDate(today);
-    const displayValidUntil = formatDate(targetExpiration);
-
-    req.user.verificado = true;
-    req.user.dpi = {
-      dpi_number: dpiNumber,
-      nombre: nombre.trim().toUpperCase(),
-      apellidos: apellidos.trim().toUpperCase(),
-      genero,
-      fecha_nac: fecha,
-      region: region.trim().toUpperCase(),
-      issued_at: displayIssuedAt,
-      valid_until: displayValidUntil
-    };
-    setSessionCookie(res, req.user);
-
-    // Mapeo perfecto en camelCase para el Frontend
-    return res.json({
-      dpiNumber,
-      issuedAt: displayIssuedAt,
-      validUntil: displayValidUntil,
-      qrUrl
-    });
+    return res.json({ dpiNumber, issuedAt: expDate, validUntil: valDate, qrUrl });
   } catch (err) {
-    console.error("❌ ERROR INTERNO EN /api/dpi/create:", err);
-    if (err.message?.includes("duplicate key") || err.message?.includes("23505")) {
-      return res.status(400).json({ error: "Tu cuenta de Discord o este número de DPI ya se encuentra verificado." });
-    }
-    return res.status(500).json({ error: "Error interno al guardar los registros. Intenta de nuevo." });
+    console.error("[/api/dpi/create]", err);
+    return res.status(500).json({ error: "Error interno. Intenta de nuevo." });
   }
 });
 
@@ -703,12 +586,9 @@ app.get("/api/dpi/verify/:code", async (req, res) => {
   const { data, error } = await supabase
     .from("dpis").select("dpi_number,nombre,apellidos,genero,fecha_nac,region,issued_at,valid_until")
     .eq("dpi_number", full).single();
-
   if (error || !data) return res.status(404).send(verifyHtml(null));
 
   let rolesDelUsuario = [];
-  let userAvatarUrl = null;
-
   try {
     const { data: verificado } = await supabase
       .from("verificados")
@@ -716,75 +596,24 @@ app.get("/api/dpi/verify/:code", async (req, res) => {
       .eq("dpi", full)
       .maybeSingle();
 
-    if (verificado?.discord_id) {
-      const { data: dbUser } = await supabase
-        .from("usuarios")
-        .select("avatar_url")
-        .eq("discord_id", verificado.discord_id)
-        .maybeSingle();
-
-      if (dbUser?.avatar_url) {
-        userAvatarUrl = dbUser.avatar_url;
-      }
-
-      if (DISCORD_TOKEN) {
-        const memberRes = await fetch(
-          `${DISCORD_API}/guilds/${GUILD_ID}/members/${verificado.discord_id}`,
-          { headers: { Authorization: `Bot ${DISCORD_TOKEN.trim()}` } }
+    if (verificado?.discord_id && DISCORD_TOKEN) {
+      const memberRes = await fetch(
+        `${DISCORD_API}/guilds/${GUILD_ID}/members/${verificado.discord_id}`,
+        { headers: { Authorization: `Bot ${DISCORD_TOKEN.trim()}` } }
+      );
+      if (memberRes.ok) {
+        const memberData = await memberRes.json();
+        const memberRoleIds = memberData.roles ?? [];
+        rolesDelUsuario = rolesData.roles.filter(r =>
+          r.discord_role_id && memberRoleIds.includes(r.discord_role_id)
         );
-        if (memberRes.ok) {
-          const memberData = await memberRes.json();
-          const memberRoleIds = memberData.roles ?? [];
-          rolesDelUsuario = rolesData.roles.filter(r =>
-            r.discord_role_id && memberRoleIds.includes(r.discord_role_id)
-          );
-        }
       }
     }
   } catch (err) {
-    console.error("[/api/dpi/verify] Error obteniendo datos del usuario:", err);
+    console.error("[/api/dpi/verify] Error obteniendo roles:", err);
   }
 
-  if (!userAvatarUrl) {
-    userAvatarUrl = "https://cdn.discordapp.com/embed/avatars/0.png";
-  }
-
-  res.send(verifyHtml(data, rolesDelUsuario, userAvatarUrl));
-});
-
-app.post("/api/news", requireAuth, async (req, res) => {
-  try {
-    const { id, type, category, title, summary, time_label, img_url } = req.body ?? {};
-
-    if (!id || !type || !category || !title || !time_label || !img_url) {
-      return res.status(400).json({ error: "Por favor, rellena todos los campos obligatorios." });
-    }
-
-    const { data, error } = await supabase
-      .from("tvp_news")
-      .insert({
-        id: id.trim().toLowerCase(),
-        type,
-        category: category.trim().toUpperCase(),
-        title: title.trim(),
-        summary: type === "main" ? summary?.trim() : null,
-        time_label: time_label.trim(),
-        img_url: img_url.trim()
-      })
-      .select()
-      .maybeSingle();
-
-    if (error) {
-      console.error("Error de Supabase al insertar noticia:", error);
-      return res.status(400).json({ error: `Base de datos: ${error.message}` });
-    }
-
-    return res.json({ success: true, message: "¡Noticia publicada con éxito!", data });
-
-  } catch (err) {
-    console.error("[/api/news] Error catastrófico:", err);
-    return res.status(500).json({ error: "Error interno del servidor al procesar la noticia." });
-  }
+  res.send(verifyHtml(data, rolesDelUsuario));
 });
 
 app.get("/health", (_req, res) => res.json({ status: "OK" }));
@@ -795,7 +624,7 @@ function escHtml(str) {
   }[c]));
 }
 
-function verifyHtml(d, roles = [], avatarUrl = "") {
+function verifyHtml(d, roles = []) {
   if (!d) return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>DPI no encontrado</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;background:#1a0a0a;color:#c0a060;text-align:center}</style></head><body><h2>DPI no encontrado</h2></body></html>`;
 
   const rolesHtml = roles.length > 0 ? `
@@ -818,8 +647,7 @@ function verifyHtml(d, roles = [], avatarUrl = "") {
     *{box-sizing:border-box;margin:0;padding:0}
     body{background:linear-gradient(135deg, #faf9f5 0%, #f5f2eb 100%);color:#1a1410;font-family:'RMNeue','Playfair Display',serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem;letter-spacing:0.3px;-webkit-font-smoothing:antialiased}
     .card{background:#ffffff;border:1px solid #e0dcd3;border-radius:0.75rem;max-width:380px;width:100%;padding:2rem;box-shadow:0 10px 30px rgba(15,50,106,0.08), 0 1px 3px rgba(0,0,0,0.02)}
-    .header-logos{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem}
-    .badge{display:inline-block;background:#f0ede7;color:#0F326A;font-size:.75rem;font-weight:600;letter-spacing:.12em;padding:.35rem .8rem;border-radius:9999px;text-transform:uppercase}
+    .badge{display:inline-block;background:#f0ede7;color:#0F326A;font-size:.75rem;font-weight:600;letter-spacing:.12em;padding:.35rem .8rem;border-radius:9999px;margin-bottom:1.5rem;text-transform:uppercase}
     .dpi-num{font-size:2.7rem;font-family:'Chillvornia',sans-serif;color:#0F326A;background:#f5f2eb;border:1px solid #e0dcd3;padding:.6rem 1rem;border-radius:.5rem;text-align:center;margin-bottom:1.5rem;line-height:1.1}
     .row{display:flex;justify-content:space-between;padding:.65rem 0;border-bottom:1px solid #e0dcd3;font-size:.92rem;gap:.5rem}
     .row:last-child{border-bottom:none}
@@ -828,15 +656,12 @@ function verifyHtml(d, roles = [], avatarUrl = "") {
     .roles-row{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:.6rem;margin-top:1.4rem}
     .role-icon{width:1.7rem;height:1.7rem;font-size:1.7rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;object-fit:contain}
     .valid-stamp{margin-top:1.4rem;text-align:center;font-size:.8rem;color:#166534;font-weight:600;letter-spacing:.15em;text-transform:uppercase;background:#f0fdf4;padding:.4rem;border-radius:.375rem}
-    .logo{width:56px;height:56px;box-shadow:0 6px 18px rgba(15,50,106,0.08);border-radius:50%;transition:transform 220ms ease}
-    .user-avatar{width:64px;height:64px;border-radius:0.5rem;object-fit:cover;border:2px solid #0F326A;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+    .logo{display:block;margin:0 auto 1.2rem;width:56px;box-shadow:0 6px 18px rgba(15,50,106,0.08);border-radius:50%;transition:transform 220ms ease,filter 0.25s ease}
+    .logo:hover{transform:translateY(-2px) rotate(-2deg);filter:drop-shadow(0 0 12px rgba(151,180,224,0.45))}
 </style>
   <div class="card">
-    <div class="header-logos">
-      <img src="/logo.png" class="logo" alt="Logo" onerror="this.style.display='none'"/>
-      <img src="${escHtml(avatarUrl)}" class="user-avatar" alt="Foto Ciudadano"/>
-    </div>
-    <div style="text-align:center; margin-bottom:1rem;"><span class="badge">✓ DPI Verificado</span></div>
+    <img src="/logo.png" class="logo" alt="Logo" onerror="this.style.display='none'"/>
+    <div style="text-align:center"><span class="badge">✓ DPI Verificado</span></div>
     <div class="dpi-num">${d.dpi_number}</div>
     <div class="row"><span class="label">Nombre</span><span class="val">${escHtml(d.nombre)}</span></div>
     <div class="row"><span class="label">Apellidos</span><span class="val">${escHtml(d.apellidos)}</span></div>
@@ -851,7 +676,19 @@ function verifyHtml(d, roles = [], avatarUrl = "") {
 </body></html>`;
 }
 
-// ── PROXY DE DISCORD ──
+function formatDate(d) {
+  return [String(d.getDate()).padStart(2, "0"), String(d.getMonth() + 1).padStart(2, "0"), d.getFullYear()].join("/");
+}
+function addMonths(base, months) {
+  const d = new Date(base); d.setMonth(d.getMonth() + months); return formatDate(d);
+}
+function buildQrUrl(dpiNumber) {
+  const code = encodeURIComponent(dpiNumber.replace("DPI - ", ""));
+  return `${PUBLIC_URL}/api/dpi/verify/${code}`;
+}
+
+// ── PROXY DE DISCORD ─────────────────────────────────────────────────────────────
+
 app.get("/api/roles", async (req, res) => {
   try {
     if (!DISCORD_TOKEN) {
@@ -874,21 +711,29 @@ app.get("/api/roles", async (req, res) => {
         return res.status(response.status).json(page);
       }
 
-      if (!Array.isArray(page) || page.length === 0) {
-        break;
-      }
-
+      if (!Array.isArray(page) || page.length === 0) break;
       allMembers.push(...page);
+      if (page.length < 1000) break;
       after = page[page.length - 1].user.id;
     }
 
-    return res.json({ totalMembers: allMembers.length, members: allMembers });
-  } catch (err) {
-    console.error("[/api/roles] Error obteniendo miembros de Discord:", err);
-    return res.status(500).json({ error: "Error interno del servidor al procesar roles." });
+    console.log(`[/api/roles] Miembros totales obtenidos: ${allMembers.length}`);
+    return res.json(allMembers);
+
+  } catch (error) {
+    console.error("❌ Error en el proxy /api/roles:", error);
+    return res.status(500).json({ error: "Error interno al conectar con Discord." });
   }
 });
 
-app.listen(port, () => {
-  console.log(`🚀 Servidor corriendo en el puerto ${port}`);
+app.get("*", (_req, res) => {
+  res.sendFile(path.join(staticFolder, "index.html"));
 });
+
+export default app;
+
+if (!(process.env.NODE_ENV === "production" && !process.env.LOCAL_RUN)) {
+  app.listen(port, () => {
+    console.log(`  Server furula en http://localhost:${port}`);
+  });
+}
