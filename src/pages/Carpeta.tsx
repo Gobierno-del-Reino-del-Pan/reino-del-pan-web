@@ -299,11 +299,29 @@ export default function Carpeta() {
             </div>
 
             {/* LADO DERECHO: Nivel del Ciudadano */}
-            <div className="flex flex-col items-start sm:items-end justify-center bg-accent/5 border border-accent/20 rounded-xl px-5 py-3 min-w-[100px]">
-              <span className="text-[10px] uppercase tracking-widest text-accent font-medium">Nivel</span>
-              <span className="text-3xl font-bold font-mono text-foreground mt-0.5">
+            <div className="flex flex-col items-center justify-center bg-[var(--accent)]/5 border border-[var(--border)] rounded-xl px-5 py-3.5 min-w-[120px] text-center sm:text-right sm:items-end gap-1">
+              <span className="text-[10px] uppercase tracking-[0.25em] text-[var(--muted-foreground)] font-medium font-[var(--body-font)]">
+                Nivel
+              </span>
+              <span className="text-4xl font-normal text-[var(--primary)] leading-none font-[var(--display-font)]">
                 {user.level ?? 0}
               </span>
+
+              {/* Opcional: Una pequeña barra de progreso discreta usando tus puntos de XP */}
+              {user.xp !== undefined && (
+                <div className="w-full mt-1 space-y-1">
+                  <div className="w-full h-1 bg-[var(--border)] rounded-full overflow-hidden">
+                    {/* Aquí puedes meter tu lógica matemática de nivel, por ahora calcula sobre un estándar de 1000xp por nivel */}
+                    <div
+                      className="h-full bg-[var(--primary)] transition-all duration-500"
+                      style={{ width: `${Math.min(((user.xp ?? 0) % 1000) / 10, 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-[8px] font-mono tracking-widest text-[var(--muted-foreground)] opacity-70">
+                    {user.xp} XP
+                  </p>
+                </div>
+              )}
             </div>
           </motion.div>
 
