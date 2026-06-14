@@ -19,6 +19,7 @@ import CSD from "./pages/LALIGA/CSD";
 import JuegoLimpio from "./pages/LALIGA/juego-limpio";
 import Reglamento from "./pages/LALIGA/reglamento";
 import LPB from "./pages/LaboralBank/LPB";
+import Level from "./pages/level";
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
         <Route path="/LALIGA/reglamento" component={Reglamento} />
 
         <Route path="/lpb" component={LPB} />
+        <Route path="/level" component={Level} />
 
         <Route path="/tvp" component={TVP} />
         <Route path="/dpi" component={DPI} />

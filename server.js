@@ -418,6 +418,58 @@ app.get("/api/me/refresh", requireAuth, async (req, res) => {
   }
 });
 
+// ── ENPOINT DE CLASIFICACIÓN / LEADERBOARD (Usa requireAuth para proteger el ranking) ──
+app.get("/api/leaderboard", requireAuth, async (req, res) => {
+  try {
+    const { data: ranking, error } = await supabase
+      .from("user_levels")
+      .select(`
+        user_id,
+        username,
+        level,
+        xp,
+        total_xp,
+        messages,
+        usuarios:user_id (avatar_url)
+      `)
+      .order("total_xp", { ascending: false });
+
+    if (error) throw error;
+
+    const usuariosFormateados = (ranking || []).map((u, index) => ({
+      posicion: index + 1,
+      id: u.user_id,
+      username: u.username,
+      level: u.level,
+      xp: u.xp,
+      total_xp: u.total_xp,
+      messages: u.messages,
+      avatar: u.usuarios?.avatar_url || `https://cdn.discordapp.com/embed/avatars/${index % 5}.png`
+    }));
+
+    const top5 = usuariosFormateados.slice(0, 5);
+    const rankingCompleto = usuariosFormateados;
+
+    const masMensajes = [...usuariosFormateados].sort((a, b) => b.messages - a.messages)[0] || null;
+    const activos = usuariosFormateados.filter(u => u.messages > 0);
+    const menosMensajes = activos.length > 0
+      ? [...activos].sort((a, b) => a.messages - b.messages)[0]
+      : (usuariosFormateados[usuariosFormateados.length - 1] || null);
+
+    return res.json({
+      top5,
+      rankingCompleto,
+      destacados: {
+        masMensajes,
+        menosMensajes
+      }
+    });
+  } catch (err) {
+    console.error("[/api/leaderboard] Error:", err);
+    return res.status(500).json({ error: "Error al obtener el ranking." });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // DPI ENDPOINTS 
 // ─────────────────────────────────────────────────────────────────────────────

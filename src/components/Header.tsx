@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useMemo } from "react";
 const navItems = [
   { href: "/", label: "Inicio" },
   { href: "/about", label: "Acerca de" },
-  { href: "/gobierno", label: "Gobierno" },
+  { href: "/level", label: "Level" },
   { href: "/dpi", label: "DPI" },
 ];
 
@@ -14,6 +14,7 @@ const otrosItems = [
   { href: "/donations", label: "Donaciones" },
   { href: "/laliga", label: "La Liga" },
   { href: "/tvp", label: "TVP" },
+  { href: "/gobierno", label: "Gobierno" },
   //{ href: "/lpb", label: "LPB" },
 ];
 
