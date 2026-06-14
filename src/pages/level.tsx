@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 ───────────────────────────────────────────── */
 interface RankUser {
     posicion: number;
-    id: string;
+    id: string; // user_id de Supabase
     username: string;
     level: number;
     xp: number;
@@ -40,10 +40,23 @@ function formatNumber(n: number): string {
     return n.toLocaleString("es-ES");
 }
 
-const MEDAL: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
+function getValidAvatar(user: RankUser): string {
+    if (user.avatar && user.avatar.trim() !== "" && !user.avatar.includes("null")) {
+        return user.avatar;
+    }
+    // Usamos BigInt(5) en lugar de 5n para evitar conflictos con versiones de ES inferiores a ES2020
+    const defaultIndex = user.id ? Number(BigInt(user.id) % BigInt(5)) : 0;
+    return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
+}
+
+const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
+};
+
+const MEDAL: Record<number, string> = { 1: "👑", 2: "🥈", 3: "🥉" };
 
 /* ─────────────────────────────────────────────
-    SKELETON (ANCHO COMPLETO)
+    SKELETON
 ───────────────────────────────────────────── */
 function SkeletonBlock({ w, h, radius = 6 }: { w: string | number; h: number; radius?: number }) {
     return (
@@ -67,7 +80,6 @@ function LeaderboardSkeleton() {
                     <SkeletonBlock w={240} h={36} />
                     <SkeletonBlock w={180} h={12} />
                 </div>
-                {/* Podio */}
                 <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 8, padding: "1rem 0" }}>
                     {[82, 110, 60].map((h, i) => (
                         <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, flex: 1 }}>
@@ -76,7 +88,6 @@ function LeaderboardSkeleton() {
                         </div>
                     ))}
                 </div>
-                {/* Filas */}
                 <div style={{ border: "1px solid var(--border)", borderRadius: 12, overflow: "hidden" }}>
                     {[...Array(5)].map((_, i) => (
                         <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 20px", borderBottom: i < 4 ? "1px solid var(--border)" : "none" }}>
@@ -151,7 +162,6 @@ function Podium({ top3 }: { top3: RankUser[] }) {
                         transition={{ delay: i * 0.08 + 0.1, type: "spring", stiffness: 200, damping: 20 }}
                         style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1, maxWidth: 220 }}
                     >
-                        {/* Corona flotante */}
                         {isFirst && (
                             <motion.span
                                 animate={{ y: [0, -4, 0] }}
@@ -162,11 +172,11 @@ function Podium({ top3 }: { top3: RankUser[] }) {
                             </motion.span>
                         )}
 
-                        {/* Avatar */}
                         <div style={{ position: "relative", marginBottom: 10 }}>
                             <img
-                                src={user.avatar}
+                                src={getValidAvatar(user)}
                                 alt={user.username}
+                                onError={handleImageError}
                                 style={{
                                     width: avatarSize[user.posicion],
                                     height: avatarSize[user.posicion],
@@ -182,7 +192,6 @@ function Podium({ top3 }: { top3: RankUser[] }) {
                             </span>
                         </div>
 
-                        {/* Nombre */}
                         <p style={{
                             fontSize: 13, fontWeight: 600, fontFamily: "var(--body-font)",
                             color: "var(--foreground)", textAlign: "center", marginBottom: 2,
@@ -195,7 +204,6 @@ function Podium({ top3 }: { top3: RankUser[] }) {
                             Nv. {user.level}
                         </p>
 
-                        {/* Bloque podio */}
                         <div style={{
                             width: "100%",
                             height: podiumHeight[user.posicion],
@@ -258,13 +266,18 @@ function HighlightCard({ emoji, label, user }: { emoji: string; label: string; u
                     {formatNumber(user.messages)} mensajes
                 </p>
             </div>
-            <img src={user.avatar} alt="" style={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--border)", flexShrink: 0 }} />
+            <img
+                src={getValidAvatar(user)}
+                alt=""
+                onError={handleImageError}
+                style={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--border)", flexShrink: 0 }}
+            />
         </div>
     );
 }
 
 /* ─────────────────────────────────────────────
-    COMPONENTE PRINCIPAL (PÚBLICO Y ANCHO COMPLETO)
+    COMPONENTE PRINCIPAL
 ───────────────────────────────────────────── */
 export default function Level() {
     const [, navigate] = useLocation();
@@ -402,7 +415,12 @@ export default function Level() {
                                             <span style={{ fontFamily: "var(--display-font)", fontSize: 20, color: "var(--primary)", width: 32, textAlign: "center", flexShrink: 0 }}>
                                                 {user.posicion}
                                             </span>
-                                            <img src={user.avatar} alt={user.username} style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--border)" }} />
+                                            <img
+                                                src={getValidAvatar(user)}
+                                                alt={user.username}
+                                                onError={handleImageError}
+                                                style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--border)" }}
+                                            />
                                             <div style={{ flex: 1, minWidth: 0 }}>
                                                 <p style={{ fontSize: 14, fontWeight: 500, color: "var(--foreground)", fontFamily: "var(--body-font)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                                     @{user.username}
@@ -465,7 +483,12 @@ export default function Level() {
                                                         </td>
                                                         <td style={{ padding: "14px 24px" }}>
                                                             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                                                                <img src={user.avatar} alt={user.username} style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover", border: "1px solid var(--border)", flexShrink: 0 }} />
+                                                                <img
+                                                                    src={getValidAvatar(user)}
+                                                                    alt={user.username}
+                                                                    onError={handleImageError}
+                                                                    style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover", border: "1px solid var(--border)", flexShrink: 0 }}
+                                                                />
                                                                 <div style={{ minWidth: 0, width: "100%" }}>
                                                                     <p style={{ fontSize: 14, fontWeight: 500, color: "var(--foreground)", fontFamily: "var(--body-font)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                                                         @{user.username}
