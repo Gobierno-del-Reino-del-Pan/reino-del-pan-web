@@ -298,6 +298,13 @@ app.get("/api/me", async (req, res) => {
     const user = jwt.verify(token, JWT_SECRET);
     const discordId = user.id;
 
+    // 🆕 NUEVO: Obtener el nivel y estadísticas desde la tabla 'user_levels'
+    const { data: levelData } = await supabase
+      .from("user_levels")
+      .select("level, xp, total_xp, messages")
+      .eq("user_id", discordId)
+      .maybeSingle();
+
     // 1. Consultar Matrimonio (u1 o u2)
     const { data: matrimonioData } = await supabase
       .from('matrimonios')
@@ -349,6 +356,12 @@ app.get("/api/me", async (req, res) => {
     user.matrimonio = matrimonio;
     user.hijos = hijos;
 
+    // 🆕 Inyectamos los datos de nivel con fallback a 0 si el registro no existe aún
+    user.level = levelData?.level ?? 0;
+    user.xp = levelData?.xp ?? 0;
+    user.total_xp = levelData?.total_xp ?? 0;
+    user.messages = levelData?.messages ?? 0;
+
     return res.json({ user });
   } catch (err) {
     return res.status(401).json({ user: null });
@@ -376,10 +389,22 @@ app.get("/api/me/refresh", requireAuth, async (req, res) => {
       dpiData = dpi;
     }
 
+    // 🆕 NUEVO: También traemos el nivel aquí al refrescar la sesión
+    const { data: levelData } = await supabase
+      .from("user_levels")
+      .select("level, xp, total_xp, messages")
+      .eq("user_id", userId)
+      .maybeSingle();
+
     const updatedUser = {
       ...req.user,
       dpi: dpiData,
       verificado: !!verificado,
+      // 🆕 Actualizamos los niveles en el JWT de sesión refrescado
+      level: levelData?.level ?? 0,
+      xp: levelData?.xp ?? 0,
+      total_xp: levelData?.total_xp ?? 0,
+      messages: levelData?.messages ?? 0,
     };
 
     delete updatedUser.iat;

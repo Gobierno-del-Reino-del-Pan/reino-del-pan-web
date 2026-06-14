@@ -21,12 +21,10 @@ interface Rol {
   descripcion?: string;
   emoji?: string;
   imagen?: string | null;
-  // Actualizado para soportar las nuevas categorías del JSON
   categoria?: "profesiones" | "regiones" | "estado_ciudadano" | "especiales" | "equipos" | "mafia";
   discord_role_id: string;
 }
 
-// Interfaces para Relaciones Familiares
 interface Matrimonio {
   conyuge_id: string;
   conyuge_username: string;
@@ -41,6 +39,7 @@ interface Hijo {
   tipo: "adoptivo" | "creado";
 }
 
+// ── INTERFAZ EXTENDIDA CON LAS PROPIEDADES DE NIVEL ──
 interface DiscordUser {
   id: string;
   username: string;
@@ -49,8 +48,12 @@ interface DiscordUser {
   verificado: boolean;
   dpi: DPIData | null;
   roles: Rol[];
-  matrimonio: Matrimonio | null; // Añadido
-  hijos: Hijo[];                 // Añadido
+  matrimonio: Matrimonio | null;
+  hijos: Hijo[];
+  level?: number;      // 🆕 Añadido
+  xp?: number;         // 🆕 Añadido
+  total_xp?: number;   // 🆕 Añadido
+  messages?: number;   // 🆕 Añadido
 }
 
 function RolIcono({ rol }: { rol: Rol }) {
@@ -114,7 +117,6 @@ function RolSeccion({ titulo, roles }: { titulo: string; roles: Rol[] }) {
   );
 }
 
-// Mapeo de categorías actualizado con las dos nuevas secciones requeridas
 const CATEGORIAS: { key: string; titulo: string }[] = [
   { key: "profesiones", titulo: "Mi profesión" },
   { key: "regiones", titulo: "Mi región" },
@@ -261,7 +263,6 @@ export default function Carpeta() {
   const nombreCompleto = `${dpi.nombre} ${dpi.apellidos}`.toLowerCase()
     .replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
 
-  // Agrupación de roles dinámicos
   const rolesPorCategoria: Record<string, Rol[]> = {};
   for (const rol of user.roles) {
     const cat = rol.categoria || "otros";
@@ -283,6 +284,7 @@ export default function Carpeta() {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 p-6 rounded-2xl border border-border bg-card"
           >
+            {/* LADO IZQUIERDO: Avatar e Información básica */}
             <div className="flex items-center gap-5">
               <img
                 src={user.avatar}
@@ -295,9 +297,17 @@ export default function Carpeta() {
                 <p className="text-xs text-foreground/40 font-mono mt-1.5">@{user.username}</p>
               </div>
             </div>
+
+            {/* LADO DERECHO: Nivel del Ciudadano */}
+            <div className="flex flex-col items-start sm:items-end justify-center bg-accent/5 border border-accent/20 rounded-xl px-5 py-3 min-w-[100px]">
+              <span className="text-[10px] uppercase tracking-widest text-accent font-medium">Nivel</span>
+              <span className="text-3xl font-bold font-mono text-foreground mt-0.5">
+                {user.level ?? 0}
+              </span>
+            </div>
           </motion.div>
 
-          {/* NUEVO MÓDULO: Relaciones Familiares (Matrimonio e Hijos) */}
+          {/* MÓDULO: Relaciones Familiares (Matrimonio e Hijos) */}
           {(user.matrimonio || user.hijos?.length > 0) && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -305,10 +315,9 @@ export default function Carpeta() {
               className="p-6 rounded-2xl border border-border bg-card space-y-4"
             >
               <p className="text-xs uppercase tracking-[0.3em] text-accent font-medium border-b border-border pb-2">
-                Núcleo Familiar Familiar
+                Núcleo Familiar
               </p>
 
-              {/* Estado de Casado */}
               {user.matrimonio && (
                 <div className="flex items-center gap-4 bg-background/30 p-3 rounded-xl border border-border/60">
                   <span className="text-2xl">💍</span>
@@ -329,7 +338,6 @@ export default function Carpeta() {
                 </div>
               )}
 
-              {/* Lista de Hijos */}
               {user.hijos && user.hijos.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-xs text-foreground/50 font-medium pl-1">Hijos registrados:</p>
