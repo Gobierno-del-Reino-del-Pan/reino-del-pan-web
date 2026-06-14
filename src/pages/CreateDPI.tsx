@@ -10,19 +10,19 @@ import jsPDF from "jspdf";
 const CFG = {
   color: "#5a1a1a",
   front: {
-    apellidos: { x: 1000,  y: 520,  size: 54, weight: "bold", family: "'Times New Roman', serif" },
-    nombre:    { x: 1000,  y: 728,  size: 54, weight: "bold", family: "'Times New Roman', serif" },
-    genero:    { x: 1000, y: 940,  size: 60, weight: "bold", family: "'Times New Roman', serif" },
-    fecha:     { x: 1000, y: 1200, size: 54, weight: "bold", family: "'Times New Roman', serif" },
-    dpiNum:    { x: 80,   y: 1100, size: 70, weight: "bold", family: "'Courier New', monospace" },
+    apellidos: { x: 1000, y: 520, size: 54, weight: "bold", family: "'Times New Roman', serif" },
+    nombre: { x: 1000, y: 728, size: 54, weight: "bold", family: "'Times New Roman', serif" },
+    genero: { x: 1000, y: 940, size: 60, weight: "bold", family: "'Times New Roman', serif" },
+    fecha: { x: 1000, y: 1200, size: 54, weight: "bold", family: "'Times New Roman', serif" },
+    dpiNum: { x: 80, y: 1100, size: 70, weight: "bold", family: "'Courier New', monospace" },
     photo: { cx: 310, cy: 670, w: 500, h: 520 },
   },
   back: {
-    expFecha: { x: 280,  y: 390, size: 60, weight: "bold", family: "'Times New Roman', serif" },
+    expFecha: { x: 280, y: 390, size: 60, weight: "bold", family: "'Times New Roman', serif" },
     valFecha: { x: 1300, y: 410, size: 60, weight: "bold", family: "'Times New Roman', serif" },
-    region:   { x: 360,  y: 570, size: 60, weight: "bold", family: "'Times New Roman', serif" },
-    qr:       { cx: 1490, cy: 870, size: 370 },
-    sig:      { x: 270, y: 910, w: 590, h: 238 },
+    region: { x: 360, y: 570, size: 60, weight: "bold", family: "'Times New Roman', serif" },
+    qr: { cx: 1490, cy: 870, size: 370 },
+    sig: { x: 270, y: 910, w: 590, h: 238 },
   },
 };
 
@@ -39,7 +39,7 @@ function loadImg(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     if (!src.startsWith("blob:") && !src.startsWith("data:")) img.crossOrigin = "anonymous";
-    img.onload  = () => resolve(img);
+    img.onload = () => resolve(img);
     img.onerror = (e) => reject(e);
     img.src = src;
   });
@@ -64,22 +64,22 @@ function applyFont(ctx: CanvasRenderingContext2D, cfg: FontCfg) {
 
 async function makeQRWithLogo(text: string, qrSize: number): Promise<string> {
   const qrDataUrl = await QRCode.toDataURL(text, {
-    width:  qrSize,
+    width: qrSize,
     margin: 1,
-    color:  { dark: "#5a1a1a", light: "#fffbf0" },
+    color: { dark: "#5a1a1a", light: "#fffbf0" },
     errorCorrectionLevel: "H",
   });
   const canvas = document.createElement("canvas");
-  canvas.width  = qrSize;
+  canvas.width = qrSize;
   canvas.height = qrSize;
   const ctx = canvas.getContext("2d")!;
   const qrImg = await loadImg(qrDataUrl);
   ctx.drawImage(qrImg, 0, 0, qrSize, qrSize);
   try {
-    const logo     = await loadImg("/logo.png");
+    const logo = await loadImg("/logo.png");
     const logoSize = Math.round(qrSize * 0.22);
-    const lx       = Math.round((qrSize - logoSize) / 2);
-    const ly       = Math.round((qrSize - logoSize) / 2);
+    const lx = Math.round((qrSize - logoSize) / 2);
+    const ly = Math.round((qrSize - logoSize) / 2);
     const pad = Math.round(logoSize * 0.12);
     ctx.fillStyle = "#fffbf0";
     ctx.beginPath();
@@ -92,7 +92,7 @@ async function makeQRWithLogo(text: string, qrSize: number): Promise<string> {
 
 async function renderFront(data: {
   nombre: string; apellidos: string; genero: string;
-  fecha: string;  dpiNumber: string; photoSrc: string;
+  fecha: string; dpiNumber: string; photoSrc: string;
   issuedAt: string; validUntil: string;
 }): Promise<string> {
   const W = 1920, H = 1279;
@@ -105,7 +105,7 @@ async function renderFront(data: {
     const photoImg = await loadImg(data.photoSrc);
     drawCover(ctx, photoImg, f.photo.cx - f.photo.w / 2, f.photo.cy - f.photo.h / 2, f.photo.w, f.photo.h);
   }
-  ctx.fillStyle    = CFG.color;
+  ctx.fillStyle = CFG.color;
   ctx.textBaseline = "middle";
   applyFont(ctx, f.apellidos);
   ctx.fillText(data.apellidos.toUpperCase(), f.apellidos.x, f.apellidos.y);
@@ -130,7 +130,7 @@ async function renderBack(data: {
   const ctx = canvas.getContext("2d")!;
   const b = CFG.back;
   ctx.drawImage(await loadImg("/templates/detras.jpg"), 0, 0, W, H);
-  ctx.fillStyle    = CFG.color;
+  ctx.fillStyle = CFG.color;
   ctx.textBaseline = "middle";
   applyFont(ctx, b.expFecha);
   ctx.fillText(data.issuedAt, b.expFecha.x, b.expFecha.y);
@@ -139,8 +139,8 @@ async function renderBack(data: {
   applyFont(ctx, b.region);
   ctx.fillText(data.region.toUpperCase(), b.region.x, b.region.y);
   const qrWithLogo = await makeQRWithLogo(data.qrUrl, b.qr.size);
-  const qrImg      = await loadImg(qrWithLogo);
-  const qs         = b.qr.size;
+  const qrImg = await loadImg(qrWithLogo);
+  const qs = b.qr.size;
   ctx.drawImage(qrImg, b.qr.cx - qs / 2, b.qr.cy - qs / 2, qs, qs);
   if (data.signatureDataUrl) {
     const sigImg = await loadImg(data.signatureDataUrl);
@@ -168,7 +168,7 @@ function textError(value: string, field: "nombre" | "apellidos"): string {
   if (!ONLY_LETTERS.test(t)) return "Solo se permiten letras";
   if ((t.match(/[a-zA-ZáéíóúÁÉÍÓÚñÑ]/g) || []).length < 2) return "Mínimo 2 letras";
   const spaces = (t.match(/ /g) || []).length;
-  if (field === "nombre"    && spaces > 1) return "Máximo 2 palabras";
+  if (field === "nombre" && spaces > 1) return "Máximo 2 palabras";
   if (field === "apellidos" && spaces > 3) return "Máximo 4 palabras";
   if (t.length > LIMITS[field]) return `Máximo ${LIMITS[field]} caracteres`;
   return "";
@@ -187,28 +187,27 @@ function ageError(dateStr: string): string {
 }
 
 function CharCounter({ value, max }: { value: string; max: number }) {
-  const len  = value.trim().length;
+  const len = value.trim().length;
   const over = len > max;
   const near = len >= max * 0.85;
   return (
-    <span className={`text-xs tabular-nums transition-colors ${
-      over ? "text-red-500 font-semibold" : near ? "text-yellow-400" : "text-foreground/30"
-    }`}>
+    <span className={`text-xs tabular-nums transition-colors ${over ? "text-red-500 font-semibold" : near ? "text-yellow-400" : "text-foreground/30"
+      }`}>
       {len}/{max}
     </span>
   );
 }
 
 export default function CreateDPI() {
-  const canvasRef  = useRef<HTMLCanvasElement | null>(null);
-  const fileRef    = useRef<HTMLInputElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
   const previewRef = useRef<HTMLDivElement | null>(null);
 
-  const [drawing,    setDrawing]    = useState(false);
-  const [photo,      setPhoto]      = useState("");
+  const [drawing, setDrawing] = useState(false);
+  const [photo, setPhoto] = useState("");
   const [generating, setGenerating] = useState(false);
-  const [genError,   setGenError]   = useState("");
-  const [preview,    setPreview]    = useState<{
+  const [genError, setGenError] = useState("");
+  const [preview, setPreview] = useState<{
     front: string; back: string; dpiNumber: string;
   } | null>(null);
 
@@ -222,8 +221,8 @@ export default function CreateDPI() {
   const mousePos = (e: React.MouseEvent, c: HTMLCanvasElement) => {
     const r = c.getBoundingClientRect();
     return {
-      x: (e.clientX - r.left) * (c.width  / r.width),
-      y: (e.clientY - r.top)  * (c.height / r.height),
+      x: (e.clientX - r.left) * (c.width / r.width),
+      y: (e.clientY - r.top) * (c.height / r.height),
     };
   };
 
@@ -231,8 +230,8 @@ export default function CreateDPI() {
     const r = c.getBoundingClientRect();
     const t = e.touches[0];
     return {
-      x: (t.clientX - r.left) * (c.width  / r.width),
-      y: (t.clientY - r.top)  * (c.height / r.height),
+      x: (t.clientX - r.left) * (c.width / r.width),
+      y: (t.clientY - r.top) * (c.height / r.height),
     };
   };
 
@@ -272,7 +271,7 @@ export default function CreateDPI() {
       const r = canvas.getBoundingClientRect();
       const t = e.touches[0];
       const x = (t.clientX - r.left) * (canvas.width / r.width);
-      const y = (t.clientY - r.top)  * (canvas.height / r.height);
+      const y = (t.clientY - r.top) * (canvas.height / r.height);
       const ctx = canvas.getContext("2d")!;
       ctx.beginPath();
       ctx.moveTo(x, y);
@@ -284,7 +283,7 @@ export default function CreateDPI() {
       const r = canvas.getBoundingClientRect();
       const t = e.touches[0];
       const x = (t.clientX - r.left) * (canvas.width / r.width);
-      const y = (t.clientY - r.top)  * (canvas.height / r.height);
+      const y = (t.clientY - r.top) * (canvas.height / r.height);
       const ctx = canvas.getContext("2d")!;
       ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.strokeStyle = "#111";
       ctx.lineTo(x, y);
@@ -298,13 +297,13 @@ export default function CreateDPI() {
     };
 
     canvas.addEventListener("touchstart", onTouchStart, { passive: false });
-    canvas.addEventListener("touchmove",  onTouchMove,  { passive: false });
-    canvas.addEventListener("touchend",   onTouchEnd,   { passive: false });
+    canvas.addEventListener("touchmove", onTouchMove, { passive: false });
+    canvas.addEventListener("touchend", onTouchEnd, { passive: false });
 
     return () => {
       canvas.removeEventListener("touchstart", onTouchStart);
-      canvas.removeEventListener("touchmove",  onTouchMove);
-      canvas.removeEventListener("touchend",   onTouchEnd);
+      canvas.removeEventListener("touchmove", onTouchMove);
+      canvas.removeEventListener("touchend", onTouchEnd);
     };
   }, []);
 
@@ -331,10 +330,10 @@ export default function CreateDPI() {
     const ae = textError(form.apellidos, "apellidos");
     if (ae || !form.apellidos) err.apellidos = ae || "Apellidos requeridos";
     if (!form.genero) err.genero = "Selecciona género";
-    if (!form.fecha)  err.fecha  = "Fecha requerida";
+    if (!form.fecha) err.fecha = "Fecha requerida";
     else { const fe = ageError(form.fecha); if (fe) err.fecha = fe; }
     if (!form.region) err.region = "Selecciona región";
-    if (!photo)       err.photo  = "Sube una foto";
+    if (!photo) err.photo = "Sube una foto";
     if (!hasSignature()) err.signature = "Falta firma";
     setSubmitErrors(err);
     return Object.keys(err).length === 0;
@@ -348,14 +347,14 @@ export default function CreateDPI() {
 
     try {
       const apiRes = await fetch("/api/dpi/create", {
-        method:  "POST",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          nombre:    form.nombre,
+          nombre: form.nombre,
           apellidos: form.apellidos,
-          genero:    form.genero,
-          fecha:     form.fecha,
-          region:    form.region,
+          genero: form.genero,
+          fecha: form.fecha,
+          region: form.region,
         }),
       });
 
@@ -413,12 +412,11 @@ export default function CreateDPI() {
 
   const inputCls = (key: string, inlineErr?: string) => {
     const hasErr = inlineErr || submitErrors[key];
-    return `w-full rounded-xl border px-4 py-3 bg-background outline-none transition text-sm ${
-      hasErr ? "border-red-500 focus:border-red-500" : "border-border focus:border-accent"
-    }`;
+    return `w-full rounded-xl border px-4 py-3 bg-background outline-none transition text-sm ${hasErr ? "border-red-500 focus:border-red-500" : "border-border focus:border-accent"
+      }`;
   };
 
-  const nombreErr    = form.nombre    ? textError(form.nombre,    "nombre")    : "";
+  const nombreErr = form.nombre ? textError(form.nombre, "nombre") : "";
   const apellidosErr = form.apellidos ? textError(form.apellidos, "apellidos") : "";
 
   return (
@@ -497,6 +495,7 @@ export default function CreateDPI() {
               <option>Croissant</option>
               <option>Pretzel</option>
               <option>Pimbo</option>
+              <option>Sin Gluten</option>
             </select>
             {submitErrors.region && <p className="text-red-500 text-xs mt-1">{submitErrors.region}</p>}
           </div>
@@ -505,18 +504,17 @@ export default function CreateDPI() {
           <div>
             <span className="text-xs text-foreground/50 block mb-1">Foto de perfil</span>
             <div
-              className={`border-2 border-dashed rounded-xl p-4 cursor-pointer flex items-center gap-4 transition ${
-                submitErrors.photo ? "border-red-500" : "border-border hover:border-accent/50"
-              }`}
+              className={`border-2 border-dashed rounded-xl p-4 cursor-pointer flex items-center gap-4 transition ${submitErrors.photo ? "border-red-500" : "border-border hover:border-accent/50"
+                }`}
               onClick={() => fileRef.current?.click()}
             >
               <input ref={fileRef} type="file" accept="image/*" hidden onChange={handlePhoto} />
               {!photo
                 ? <p className="text-sm text-foreground/60">Toca para subir tu foto</p>
                 : <>
-                    <img src={photo} className="w-16 h-20 object-cover rounded-lg flex-shrink-0" alt="foto" />
-                    <span className="text-sm text-foreground/60">Cambiar foto</span>
-                  </>
+                  <img src={photo} className="w-16 h-20 object-cover rounded-lg flex-shrink-0" alt="foto" />
+                  <span className="text-sm text-foreground/60">Cambiar foto</span>
+                </>
               }
             </div>
             {submitErrors.photo && <p className="text-red-500 text-xs mt-1">{submitErrors.photo}</p>}
@@ -525,9 +523,8 @@ export default function CreateDPI() {
           {/* Firma — con soporte touch */}
           <div>
             <span className="text-xs text-foreground/50 block mb-1">Firma</span>
-            <div className={`border rounded-xl overflow-hidden transition ${
-              submitErrors.signature ? "border-red-500" : "border-border"
-            }`}>
+            <div className={`border rounded-xl overflow-hidden transition ${submitErrors.signature ? "border-red-500" : "border-border"
+              }`}>
               <div className="flex items-center justify-between px-3 pt-2 pb-1">
                 <p className="text-xs text-foreground/50">Firma aquí con el dedo o el ratón</p>
                 <button
