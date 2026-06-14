@@ -9,13 +9,13 @@ import { motion, AnimatePresence } from "framer-motion";
 ───────────────────────────────────────────── */
 interface RankUser {
     posicion: number;
-    id: string; // user_id de Supabase / Discord
-    username: string;
+    id: string; // discord_id de tu tabla usuarios
+    username: string; // username de tu tabla usuarios
     level: number;
     xp: number;
     total_xp: number;
     messages: number;
-    avatar: string;
+    avatar: string; // Este campo recibirá el valor de avatar_url de la BD
 }
 
 interface LeaderboardData {
@@ -40,22 +40,24 @@ function formatNumber(n: number): string {
     return n.toLocaleString("es-ES");
 }
 
-function getValidAvatar(user: RankUser | undefined): string {
-    if (!user) return "https://cdn.discordapp.com/embed/avatars/0.png";
-
+/**
+ * Procesa el avatar_url de la tabla public.usuarios.
+ * Soporta URLs completas almacenadas en la base de datos o hashes nativos de Discord.
+ */
+function getValidAvatar(user: RankUser): string {
     const src = user.avatar?.trim();
 
-    // Si viene una URL directa y válida
+    // 1. Si ya viene una URL directa y válida almacenada en avatar_url
     if (src && src.startsWith("http") && !src.includes("null") && !src.includes("undefined")) {
         return src;
     }
 
-    // Si es un hash de avatar de Discord válido
+    // 2. Si sólo se guardó el hash binario/texto del avatar de Discord, construimos su CDN usando el id
     if (src && src.length > 5 && !src.startsWith("http") && user.id) {
         return `https://cdn.discordapp.com/avatars/${user.id}/${src}.png?size=128`;
     }
 
-    // Fallback basado en el ID de usuario de Discord
+    // 3. Fallback: Si no hay avatar, usamos el sistema por defecto de Discord basado en su ID
     if (user.id) {
         try {
             const lastDigit = Number(user.id.slice(-2)) || 0;
@@ -100,7 +102,7 @@ function LeaderboardSkeleton() {
                     <SkeletonBlock w={180} h={12} />
                 </div>
                 <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 8, padding: "1rem 0" }}>
-                    {[82, 110, 60].map((h, i) => (
+                    {[110, 82, 60].map((h, i) => (
                         <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, flex: 1 }}>
                             <div style={{ width: 48, height: 48, borderRadius: "50%", background: "linear-gradient(90deg, var(--muted) 25%, var(--secondary) 50%, var(--muted) 75%)", backgroundSize: "600px 100%", animation: "ldb-shimmer 1.5s infinite linear" }} />
                             <SkeletonBlock w="100%" h={h} radius={6} />
@@ -145,18 +147,20 @@ function XPBar({ xp }: { xp: number }) {
 }
 
 /* ─────────────────────────────────────────────
-    PODIO TOP 3 (CORREGIDO Y CENTRADO)
+    PODIO TOP 3 (Modificado: 2º Centrado)
 ───────────────────────────────────────────── */
 function Podium({ top3 }: { top3: RankUser[] }) {
-    // Reordenamos el podio visualmente: [Top 2, Top 1, Top 3] de forma segura
+    // Reordenamos el array de renderizado para que el orden visual de izquierda a derecha sea: 2º - 1º - 3º
     const order = [
         top3.find(u => u.posicion === 2),
         top3.find(u => u.posicion === 1),
         top3.find(u => u.posicion === 3),
-    ].filter((u): u is RankUser => !!u);
+    ].filter(Boolean) as RankUser[];
 
-    const podiumHeight: Record<number, number> = { 1: 120, 2: 90, 3: 70 };
-    const avatarSize: Record<number, number> = { 1: 72, 2: 60, 3: 54 };
+    // He modificado las alturas de los bloques para equilibrar el diseño con el 2º en el centro.
+    // Ahora el 1º es el más alto (120px), el 2º es el mediano (95px) y el 3º el más bajo (70px).
+    const podiumHeight: Record<number, number> = { 1: 120, 2: 95, 3: 70 };
+    const avatarSize: Record<number, number> = { 1: 72, 2: 62, 3: 54 };
 
     const podiumBg: Record<number, string> = {
         1: "linear-gradient(180deg, var(--primary) 0%, #0a2455 100%)",
@@ -171,28 +175,18 @@ function Podium({ top3 }: { top3: RankUser[] }) {
     };
 
     return (
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 12, padding: "2rem 1rem 0", width: "100%" }}>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 12, padding: "2rem 2rem 0", width: "100%" }}>
             {order.map((user, i) => {
                 const isFirst = user.posicion === 1;
-                const size = avatarSize[user.posicion] || 60;
-
                 return (
                     <motion.div
                         key={user.id}
                         initial={{ opacity: 0, y: 24 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.08 + 0.1, type: "spring", stiffness: 200, damping: 20 }}
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            flex: 1,
-                            maxWidth: "220px",
-                            width: "100%",
-                            textAlign: "center"
-                        }}
+                        style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1, maxWidth: 220, width: "100%" }}
                     >
-                        {/* Corona flotante uniforme */}
+                        {/* Corona flotante para el Top 1 */}
                         <div style={{ height: 36, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 4 }}>
                             {isFirst && (
                                 <motion.span
@@ -205,26 +199,18 @@ function Podium({ top3 }: { top3: RankUser[] }) {
                             )}
                         </div>
 
-                        {/* Contenedor del Avatar Centrado */}
-                        <div style={{
-                            position: "relative",
-                            marginBottom: 10,
-                            display: "inline-flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            width: size,
-                            height: size
-                        }}>
+                        {/* Contenedor del Avatar */}
+                        <div style={{ position: "relative", marginBottom: 10, display: "flex", justifyContent: "center", alignItems: "center" }}>
                             <img
                                 src={getValidAvatar(user)}
                                 alt={user.username}
                                 onError={handleImageError}
                                 style={{
-                                    width: "100%",
-                                    height: "100%",
+                                    width: avatarSize[user.posicion],
+                                    height: avatarSize[user.posicion],
                                     borderRadius: "50%",
                                     objectFit: "cover",
-                                    border: `3px solid ${topBorder[user.posicion] || "transparent"}`,
+                                    border: `3px solid ${topBorder[user.posicion]}`,
                                     boxShadow: isFirst ? "0 6px 24px rgba(15,50,106,0.3)" : "0 3px 10px rgba(0,0,0,0.08)",
                                     display: "block",
                                 }}
@@ -234,7 +220,7 @@ function Podium({ top3 }: { top3: RankUser[] }) {
                             </span>
                         </div>
 
-                        {/* Datos de Texto Asegurando simetría */}
+                        {/* Datos de Texto */}
                         <p style={{
                             fontSize: 13, fontWeight: 600, fontFamily: "var(--body-font)",
                             color: "var(--foreground)", textAlign: "center", marginBottom: 2,
@@ -247,27 +233,22 @@ function Podium({ top3 }: { top3: RankUser[] }) {
                             Nv. {user.level}
                         </p>
 
-                        {/* Bloque visual del podio perfectamente alineado */}
+                        {/* Bloque visual del podio */}
                         <div style={{
                             width: "100%",
-                            height: podiumHeight[user.posicion] || 80,
+                            height: podiumHeight[user.posicion],
                             background: podiumBg[user.posicion],
                             borderTop: `3px solid ${topBorder[user.posicion]}`,
                             borderRadius: "12px 12px 0 0",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
+                            display: "flex", alignItems: "center", justifyContent: "center",
                             boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1)"
                         }}>
                             <span style={{
                                 fontFamily: "var(--display-font)",
                                 fontSize: isFirst ? 36 : 26,
-                                color: isFirst ? "#fff" : "rgba(255,255,255,0.9)",
-                                fontWeight: 600,
-                                textAlign: "center",
-                                display: "block",
-                                width: "100%",
-                                lineHeight: 1
+                                color: isFirst ? "#fff" : "rgba(255,255,255,0.85)",
+                                fontWeight: 400,
+                                letterSpacing: "-0.02em",
                             }}>
                                 {user.posicion}
                             </span>
@@ -477,7 +458,7 @@ export default function Level() {
                                                 <XPBar xp={user.xp} />
                                             </div>
                                             <div style={{ textAlign: "right", flexShrink: 0 }}>
-                                                <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: 24, background: "rgba(151,180,224,0.12)", border: "1px solid rgba(151,180,224,0.3)", borderRadius: 20, fontSize: 11, color: "var(--primary)", fontFamily: "var(--body-font)", fontWeight: 600, padding: "0 10px", minWidth: 44 }}>
+                                                <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 44, height: 24, background: "rgba(151,180,224,0.12)", border: "1px solid rgba(151,180,224,0.3)", borderRadius: 20, fontSize: 11, color: "var(--primary)", fontFamily: "var(--body-font)", fontWeight: 600, padding: "0 10px" }}>
                                                     Nv. {user.level}
                                                 </span>
                                                 <p style={{ fontSize: 11, color: "var(--muted-foreground)", fontFamily: "var(--body-font)", marginTop: 4 }}>
@@ -487,7 +468,87 @@ export default function Level() {
                                         </div>
                                     ))}
                                 </motion.div>
-                                {/* ... Resto de la tabla inmersiva que completaba tu archivo ... */}
+
+                                {/* Tabla Completa Inmersiva */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 14 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.18 }}
+                                    style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: "var(--radius-xl)", overflow: "hidden", boxShadow: "0 4px 20px rgba(15,50,106,0.02)" }}
+                                >
+                                    <div style={{ padding: "16px 24px", borderBottom: "1px solid var(--border)" }}>
+                                        <p style={{ fontSize: 11, letterSpacing: "0.28em", color: "var(--muted-foreground)", textTransform: "uppercase", fontWeight: 600, fontFamily: "var(--body-font)" }}>
+                                            📋 &nbsp;Registro General de Ciudadanos
+                                        </p>
+                                    </div>
+
+                                    <div style={{ overflowX: "auto" }}>
+                                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                                            <thead>
+                                                <tr style={{ borderBottom: "1px solid var(--border)", background: "rgba(240,237,231,0.5)" }}>
+                                                    {["#", "Ciudadano", "Nivel", "Mensajes", "XP Total"].map((h, i) => (
+                                                        <th key={h} style={{
+                                                            padding: "14px 24px",
+                                                            fontSize: 10, fontWeight: 600,
+                                                            letterSpacing: "0.2em", textTransform: "uppercase",
+                                                            color: "var(--muted-foreground)",
+                                                            fontFamily: "var(--body-font)",
+                                                            textAlign: i === 0 ? "center" : i >= 2 ? "right" : "left",
+                                                        }}>
+                                                            {h}
+                                                        </th>
+                                                    ))}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {data.rankingCompleto.map((user, i) => (
+                                                    <tr
+                                                        key={user.id}
+                                                        style={{ borderBottom: i < data.rankingCompleto.length - 1 ? "1px solid rgba(224,220,211,0.5)" : "none", transition: "background 0.2s ease" }}
+                                                        onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = "rgba(151,180,224,0.06)"}
+                                                        onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = "transparent"}
+                                                    >
+                                                        <td style={{ padding: "14px 24px", textAlign: "center", fontFamily: "var(--display-font)", fontSize: 18, color: "var(--primary)", width: 50 }}>
+                                                            {user.posicion}
+                                                        </td>
+                                                        <td style={{ padding: "14px 24px" }}>
+                                                            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                                                <img
+                                                                    src={getValidAvatar(user)}
+                                                                    alt={user.username}
+                                                                    onError={handleImageError}
+                                                                    style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover", border: "1px solid var(--border)", flexShrink: 0 }}
+                                                                />
+                                                                <div style={{ minWidth: 0, width: "100%" }}>
+                                                                    <p style={{ fontSize: 14, fontWeight: 500, color: "var(--foreground)", fontFamily: "var(--body-font)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                                        @{user.username}
+                                                                    </p>
+                                                                    <XPBar xp={user.xp} />
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td style={{ padding: "14px 24px", textAlign: "right" }}>
+                                                            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: 24, background: "rgba(151,180,224,0.12)", border: "1px solid rgba(151,180,224,0.25)", borderRadius: 20, fontSize: 11, color: "var(--primary)", fontFamily: "var(--body-font)", fontWeight: 600, padding: "0 10px", minWidth: 38 }}>
+                                                                {user.level}
+                                                            </span>
+                                                        </td>
+                                                        <td style={{ padding: "14px 24px", textAlign: "right", fontSize: 12, color: "var(--muted-foreground)", fontFamily: "var(--body-font)" }}>
+                                                            {formatNumber(user.messages)}
+                                                        </td>
+                                                        <td style={{ padding: "14px 24px", textAlign: "right" }}>
+                                                            <p style={{ fontSize: 12, fontWeight: 600, color: "var(--foreground)", fontFamily: "var(--body-font)" }}>
+                                                                {formatNumber(user.total_xp)}
+                                                            </p>
+                                                            <p style={{ fontSize: 9, color: "var(--muted-foreground)", fontFamily: "var(--body-font)", marginTop: 1, letterSpacing: "0.1em" }}>
+                                                                XP
+                                                            </p>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </motion.div>
                             </motion.div>
                         )}
                     </AnimatePresence>
