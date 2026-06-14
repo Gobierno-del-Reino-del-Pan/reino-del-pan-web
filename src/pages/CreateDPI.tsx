@@ -29,14 +29,6 @@ const CFG = {
 const LIMITS = { nombre: 20, apellidos: 30 };
 const ONLY_LETTERS = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
 
-interface DiscordUser {
-  id: string;
-  username: string;
-  avatar: string;
-  verificado: boolean;
-  dpi: any | null;
-}
-
 function formatDate(dateStr: string): string {
   if (!dateStr) return "";
   const [y, m, d] = dateStr.split("-");
@@ -211,7 +203,6 @@ export default function CreateDPI() {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const previewRef = useRef<HTMLDivElement | null>(null);
 
-  const [user, setUser] = useState<DiscordUser | null>(null);
   const [drawing, setDrawing] = useState(false);
   const [photo, setPhoto] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -226,63 +217,21 @@ export default function CreateDPI() {
 
   const [submitErrors, setSubmitErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    fetch("/api/me")
-      .then((r) => r.json())
-      .then((d) => setUser(d.user ?? null))
-      .catch(() => setUser(null));
-  }, []);
-
-  const handleAutofill = () => {
-    if (!user) return;
-
-    // MODIFICACIÓN: Limpiamos números y símbolos extraños para dejar solo letras legibles y espacios
-    const cleanLetters = user.username.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, " ").trim();
-    // Reemplazamos múltiples espacios por uno solo
-    const standardizedSpace = cleanLetters.replace(/\s+/g, " ");
-
-    // Separamos en palabras
-    const words = standardizedSpace.split(" ");
-
-    // Capitalizamos la primera letra de cada palabra de forma elegante
-    const capitalizedWords = words.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
-
-    let nombreAutofill = "";
-    let apellidosAutofill = "";
-
-    if (capitalizedWords.length > 0 && capitalizedWords[0] !== "") {
-      // Si el nombre procesado tiene varias palabras, estructuramos Nombre y Apellidos
-      if (capitalizedWords.length === 1) {
-        nombreAutofill = capitalizedWords[0].substring(0, LIMITS.nombre);
-      } else if (capitalizedWords.length === 2) {
-        nombreAutofill = capitalizedWords[0].substring(0, LIMITS.nombre);
-        apellidosAutofill = capitalizedWords[1].substring(0, LIMITS.apellidos);
-      } else {
-        // Si tiene 3 o más palabras (Ej: "Juan Carlos Pérez Gómez"), tomamos las dos primeras como nombre
-        nombreAutofill = capitalizedWords.slice(0, 2).join(" ").substring(0, LIMITS.nombre);
-        apellidosAutofill = capitalizedWords.slice(2).join(" ").substring(0, LIMITS.apellidos);
-      }
-    }
-
-    setForm(prev => ({
-      ...prev,
-      nombre: nombreAutofill,
-      apellidos: apellidosAutofill
-    }));
-
-    if (user.avatar) {
-      setPhoto(user.avatar);
-    }
-  };
-
-  const showAutofillBtn = user && !user.verificado && !user.dpi;
-
   // ─── Helpers de posición ────────────────────────────────────────────────────
   const mousePos = (e: React.MouseEvent, c: HTMLCanvasElement) => {
     const r = c.getBoundingClientRect();
     return {
       x: (e.clientX - r.left) * (c.width / r.width),
       y: (e.clientY - r.top) * (c.height / r.height),
+    };
+  };
+
+  const touchPos = (e: React.TouchEvent, c: HTMLCanvasElement) => {
+    const r = c.getBoundingClientRect();
+    const t = e.touches[0];
+    return {
+      x: (t.clientX - r.left) * (c.width / r.width),
+      y: (t.clientY - r.top) * (c.height / r.height),
     };
   };
 
@@ -309,6 +258,7 @@ export default function CreateDPI() {
   };
 
   // ─── Touch events ────────────────────────────────────────────────────────────
+  // Registramos con addEventListener para poder usar { passive: false }
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -476,24 +426,9 @@ export default function CreateDPI() {
       <main className="flex-1 py-10 px-4 md:px-0">
         <div className="container mx-auto max-w-2xl space-y-4">
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
-            <h1 className="text-2xl sm:text-3xl font-bold">
-              Crear <span className="text-accent">DPI</span>
-            </h1>
-
-            {showAutofillBtn && (
-              <button
-                type="button"
-                onClick={handleAutofill}
-                className="inline-flex items-center justify-center gap-2 self-start sm:self-auto px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#5865F2] hover:bg-[#4752C4] text-white transition-all shadow-md active:scale-[0.98]"
-              >
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 127.14 96.36">
-                  <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.45-5c.87-.64,1.72-1.32,2.53-2a75.47,75.47,0,0,0,72.75,0c.81.71,1.66,1.39,2.53,2a68.43,68.43,0,0,1-10.45,5,77.7,77.7,0,0,0,6.63,10.85,105.73,105.73,0,0,0,31.06-18.83C129.81,50.54,123.36,27.77,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.93,46,53.82,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.17,46,96.06,53,91,65.69,84.69,65.69Z" />
-                </svg>
-                Autorellenar con Discord
-              </button>
-            )}
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold">
+            Crear <span className="text-accent">DPI</span>
+          </h1>
 
           {/* Nombre */}
           <div>
@@ -585,7 +520,7 @@ export default function CreateDPI() {
             {submitErrors.photo && <p className="text-red-500 text-xs mt-1">{submitErrors.photo}</p>}
           </div>
 
-          {/* Firma */}
+          {/* Firma — con soporte touch */}
           <div>
             <span className="text-xs text-foreground/50 block mb-1">Firma</span>
             <div className={`border rounded-xl overflow-hidden transition ${submitErrors.signature ? "border-red-500" : "border-border"

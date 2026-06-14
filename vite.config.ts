@@ -14,11 +14,4 @@ export default defineConfig({
     outDir: "dist",
     emptyOutDir: true,
   },
-  server: {
-    proxy: {
-      "/api": "http://localhost:3344",
-      "/auth": "http://localhost:3344",
-      "/health": "http://localhost:3344",
-    },
-  },
 });
