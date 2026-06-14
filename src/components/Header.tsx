@@ -74,12 +74,11 @@ export default function Header() {
     setOtrosOpen(false);
   }, [location]);
 
-  // Filtro corregido con la ID real del rol de reportero ("1507784487084363858")
+  // Filtro corregido con la ID del rol de reportero ("1507784487084363858")
   const esReportero = useMemo(() => {
     if (!user || !Array.isArray(user.roles)) return false;
     return user.roles.some((rol) => {
       if (!rol) return false;
-      // Comprobamos tanto por ID de Discord (Recomendado) como por texto por si acaso
       const idRol = rol.id || rol.discord_role_id || String(rol);
       const nombreRol = typeof rol === "string" ? rol : (rol.nombre || rol.name || "");
 
@@ -95,9 +94,6 @@ export default function Header() {
     const items = [...navItems];
     if (user) {
       items.push({ href: "/carpeta", label: "Mi Carpeta" });
-    }
-    if (esReportero) {
-      items.push({ href: "/TVP/PanelDeControl", label: "Reportero" });
     }
     return items;
   }, [user, esReportero]);
@@ -194,24 +190,17 @@ export default function Header() {
                   onClick={() => { setMenuOpen(v => !v); }}
                   className="flex items-center focus:outline-none group cursor-pointer relative"
                 >
-                  {/* MODIFICACIÓN: Efecto visual en el círculo si es Reportero */}
+                  {/* Avatar con diseño estático e indicador fijo si es reportero */}
                   <img
                     src={user.avatar}
                     alt={user.username}
                     className={`w-8 h-8 rounded-full border-2 transition-all duration-300 shadow-md ${menuOpen
                       ? "border-accent scale-105 shadow-accent/20"
                       : esReportero
-                        ? "border-amber-400 ring-2 ring-amber-500/30 animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.5)]"
+                        ? "border-amber-400 ring-2 ring-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.3)]"
                         : "border-white/20 group-hover:border-accent/70"
                       }`}
                   />
-                  {/* Pequeño indicador LED de reportero */}
-                  {esReportero && (
-                    <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
-                    </span>
-                  )}
                 </button>
 
                 {menuOpen && (
@@ -239,7 +228,7 @@ export default function Header() {
 
                     {esReportero && (
                       <Link
-                        href="/redaccion"
+                        href="/TVP/PanelDeControl"
                         className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-accent bg-accent/5 hover:bg-accent/10 transition duration-200 border-t border-black/5"
                       >
                         🎥 Panel Reporteros
