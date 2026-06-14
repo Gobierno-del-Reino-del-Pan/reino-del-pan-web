@@ -18,7 +18,7 @@ export default function PanelDeControl() {
 
     // Estados del formulario para la tabla public.tvp_news
     const [id, setId] = useState("");
-    const [type, setType] = useState("secondary"); // 'main' o 'secondary'
+    const [type, setType] = useState("secondary");
     const [category, setCategory] = useState("POLÍTICA");
     const [title, setTitle] = useState("");
     const [summary, setSummary] = useState("");
@@ -29,6 +29,8 @@ export default function PanelDeControl() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formMessage, setFormMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+    // Configuración de IDs de Discord
+    const GUILD_ID = "TU_ID_DE_SERVIDOR_DE_DISCORD"; // OBLIGATORIO: Reemplaza con el ID de tu servidor de Discord
     const REPORTER_ROLE_ID = "1507784487084363858";
 
     useEffect(() => {
@@ -36,51 +38,74 @@ export default function PanelDeControl() {
             try {
                 setLoading(true);
 
-                // 1. Obtener la sesión del usuario actual desde Supabase Auth (Discord)
-                const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+                // 1. Obtener la sesión actual de Supabase con los tokens de Discord
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-                if (authError || !authUser) {
+                if (sessionError || !session || !session.user) {
                     setIsAuthorized(false);
-                    setLoading(false);
                     return;
                 }
 
+                const authUser = session.user;
                 const discordId = authUser.user_metadata?.provider_id || authUser.id;
 
-                // 2. Extraer los datos complementarios del perfil del Ciudadano
-                const { data: userData, error: userError } = await supabase
+                // 2. Traer datos básicos para la interfaz desde tu tabla de usuarios
+                const { data: userData } = await supabase
                     .from("usuarios")
                     .select("discord_id, username, avatar_url")
                     .eq("discord_id", discordId)
-                    .single();
+                    .maybeSingle();
 
-                if (userError || !userData) {
+                if (userData) {
+                    setUser(userData);
+                } else {
+                    // Fallback si no está en tu tabla local pero sí está logueado en Supabase
+                    setUser({
+                        discord_id: discordId,
+                        username: authUser.user_metadata?.full_name || authUser.user_metadata?.name || "Reportero",
+                        avatar_url: authUser.user_metadata?.avatar_url || ""
+                    });
+                }
+
+                // 3. CONSULTA A DISCORD: Obtener el token de acceso OAuth2 del usuario
+                const providerToken = session.provider_token;
+
+                if (!providerToken) {
+                    console.error("No se encontró el token de proveedor. Asegúrate de pedir los 'scopes' correctos al iniciar sesión.");
                     setIsAuthorized(false);
-                    setLoading(false);
                     return;
                 }
 
-                setUser(userData);
+                // Pedimos a Discord los datos del miembro dentro de TU servidor específico
+                const discordResponse = await fetch(
+                    `https://discord.com/api/v10/users/@me/guilds/${GUILD_ID}/member`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${providerToken}`,
+                        },
+                    }
+                );
 
-                // 3. Comprobar el Rol de Reportero (ID: 1507784487084363858)
-                // Se asume la existencia de una tabla relacional 'usuario_roles' o metadatos
-                const { data: roleData, error: roleError } = await supabase
-                    .from("usuario_roles")
-                    .select("*")
-                    .eq("discord_id", discordId)
-                    .eq("role_id", REPORTER_ROLE_ID);
+                if (!discordResponse.ok) {
+                    console.error("El usuario no pertenece al servidor o el token expiró");
+                    setIsAuthorized(false);
+                    return;
+                }
 
-                // Si no tienes tabla intermedia de roles, puedes procesar metadatos alternativos aquí
-                if (roleError || !roleData || roleData.length === 0) {
-                    // Fallback de seguridad en fase de pruebas: quitar si es restrictivo estricto
-                    // setIsAuthorized(false); 
-                    setIsAuthorized(true); // Cambiar a false si requieres validación estricta por DB relacional
-                } else {
+                const memberData = await discordResponse.json();
+
+                // Los roles del usuario vienen en un array de strings (IDs de los roles)
+                const userRoles: string[] = memberData.roles || [];
+
+                // Validamos si el ID del rol de reportero está en su lista de roles de Discord
+                if (userRoles.includes(REPORTER_ROLE_ID)) {
                     setIsAuthorized(true);
+                } else {
+                    setIsAuthorized(false);
                 }
 
             } catch (err) {
-                console.error("Error en la validación de credenciales:", err);
+                console.error("Error en la validación mediante API de Discord:", err);
                 setIsAuthorized(false);
             } finally {
                 setLoading(false);
@@ -102,20 +127,15 @@ export default function PanelDeControl() {
         }
 
         try {
-            // Si la noticia se marca como principal (main), se devalúan las anteriores estructuralmente
-            if (type === "main") {
-                // Opcional: Podrías añadir un query para actualizar las previas de 'main' a 'secondary' si deseas unicidad
-            }
-
             const { error } = await supabase
                 .from("tvp_news")
                 .insert([
                     {
-                        id: id.trim().toLowerCase().replace(/\s+/g, "-"), // Slugificación básica del ID
+                        id: id.trim().toLowerCase().replace(/\s+/g, "-"),
                         type,
                         category: category.toUpperCase(),
                         title,
-                        summary: type === "main" ? summary : null, // El modelo relacional permite null en secundarios
+                        summary: type === "main" ? summary : null,
                         time_label: timeLabel,
                         img_url: imgUrl,
                         created_at: new Date().toISOString()
@@ -126,7 +146,6 @@ export default function PanelDeControl() {
 
             setFormMessage({ type: "success", text: "¡Noticia publicada con éxito en la base de datos de la TVP!" });
 
-            // Limpieza del formulario tras inserción exitosa
             setId("");
             setTitle("");
             setSummary("");
@@ -145,7 +164,7 @@ export default function PanelDeControl() {
         return (
             <div className="min-h-screen bg-[#07080c] text-white flex flex-col items-center justify-center font-tvp-text">
                 <span className="w-8 h-8 border-4 border-[#ff4d00] border-t-transparent rounded-full animate-spin"></span>
-                <p className="text-xs uppercase tracking-[0.2em] font-tvp-head text-white/50 mt-4">Verificando Credenciales de Reportero...</p>
+                <p className="text-xs uppercase tracking-[0.2em] font-tvp-head text-white/50 mt-4">Sincronizando con Discord API...</p>
             </div>
         );
     }
@@ -156,7 +175,7 @@ export default function PanelDeControl() {
                 <div className="bg-red-500/10 border border-red-500/30 p-8 rounded-xl max-w-md shadow-2xl">
                     <h2 className="font-tvp-head text-2xl font-black tracking-wide text-red-500 uppercase mb-3">Acceso Denegado</h2>
                     <p className="text-sm text-neutral-400 font-light leading-relaxed mb-6">
-                        Este Panel de Control está restringido ÚNICAMENTE al cuerpo oficial de **Reporteros de la TVP**. Tu cuenta actual de ciudadano no dispone del Rol ID requerido.
+                        Este Panel de Control está restringido ÚNICAMENTE al cuerpo oficial de **Reporteros de la TVP**. Tu cuenta de Discord no dispone del Rol requerido en el servidor.
                     </p>
                     <Link to="/">
                         <button className="bg-white/10 hover:bg-white/20 text-white font-bold text-xs px-6 py-3 rounded-full transition-all tracking-widest uppercase font-tvp-head">
@@ -170,8 +189,6 @@ export default function PanelDeControl() {
 
     return (
         <div className="min-h-screen bg-[#07080c] text-white flex flex-col font-tvp-text selection:bg-[#ff4d00] selection:text-white">
-
-            {/* ENCABEZADO EXCLUSIVO PANEL */}
             <header className="w-full bg-[#0a0b10]/95 backdrop-blur-xl border-b border-white/5 px-6 md:px-12 py-5 flex items-center justify-between sticky top-0 z-50">
                 <div className="flex items-center gap-6">
                     <Link to="/">
@@ -196,9 +213,7 @@ export default function PanelDeControl() {
                 )}
             </header>
 
-            {/* CUERPO DEL PANEL */}
             <main className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 py-10">
-
                 <div className="mb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
                     <div>
                         <h1 className="font-tvp-head text-2xl sm:text-4xl font-black tracking-wide text-white">
@@ -215,21 +230,15 @@ export default function PanelDeControl() {
                     </Link>
                 </div>
 
-                {/* NOTIFICACIONES DEL SISTEMA */}
                 {formMessage && (
-                    <div className={`mb-8 p-4 rounded-xl border text-sm font-bold flex items-center gap-3 shadow-md animate-in fade-in duration-300 ${formMessage.type === "success"
-                        ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
-                        : "bg-red-500/10 border-red-500/25 text-red-400"
+                    <div className={`mb-8 p-4 rounded-xl border text-sm font-bold flex items-center gap-3 shadow-md animate-in fade-in duration-300 ${formMessage.type === "success" ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-400" : "bg-red-500/10 border-red-500/25 text-red-400"
                         }`}>
                         <span className="text-base">{formMessage.type === "success" ? "✓" : "⚠"}</span>
                         <p>{formMessage.text}</p>
                     </div>
                 )}
 
-                {/* FORMULARIO DE INSERCIÓN */}
                 <form onSubmit={handleSubmitNews} className="bg-[#0e1017] rounded-xl border border-white/5 p-6 sm:p-8 flex flex-col gap-6 shadow-2xl">
-
-                    {/* FILA 1: ID ÚNICO Y TIPO */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="flex flex-col gap-2 md:col-span-2">
                             <label className="text-[11px] font-bold tracking-widest text-neutral-400 uppercase font-tvp-head">
@@ -261,7 +270,6 @@ export default function PanelDeControl() {
                         </div>
                     </div>
 
-                    {/* FILA 2: CATEGORÍA Y ETIQUETA DE TIEMPO */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="flex flex-col gap-2">
                             <label className="text-[11px] font-bold tracking-widest text-neutral-400 uppercase font-tvp-head">
@@ -292,7 +300,6 @@ export default function PanelDeControl() {
                         </div>
                     </div>
 
-                    {/* FILA 3: TITULAR */}
                     <div className="flex flex-col gap-2">
                         <label className="text-[11px] font-bold tracking-widest text-neutral-400 uppercase font-tvp-head">
                             Titular de la Noticia <span className="text-[#ff4d00]">*</span>
@@ -307,7 +314,6 @@ export default function PanelDeControl() {
                         />
                     </div>
 
-                    {/* FILA 4: SUBTÍTULO / RESUMEN (Condicionado si es Principal) */}
                     <div className="flex flex-col gap-2 transition-all">
                         <label className="text-[11px] font-bold tracking-widest text-neutral-400 uppercase font-tvp-head flex justify-between">
                             <span>Resumen / Entradilla {type !== "main" && <span className="text-neutral-600 font-normal">(Opcional - Solo para Noticia Principal)</span>}</span>
@@ -322,7 +328,6 @@ export default function PanelDeControl() {
                         />
                     </div>
 
-                    {/* FILA 5: IMAGEN URL */}
                     <div className="flex flex-col gap-2">
                         <label className="text-[11px] font-bold tracking-widest text-neutral-400 uppercase font-tvp-head">
                             URL de la Imagen de Cabecera <span className="text-[#ff4d00]">*</span>
@@ -337,7 +342,6 @@ export default function PanelDeControl() {
                         />
                     </div>
 
-                    {/* BOTÓN DE EMISIÓN */}
                     <button
                         type="submit"
                         disabled={isSubmitting}
