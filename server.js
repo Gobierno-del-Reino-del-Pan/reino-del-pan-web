@@ -200,10 +200,6 @@ function formatDate(d) {
 function addMonths(base, months) {
   const d = new Date(base); d.setMonth(d.getMonth() + months); return formatDate(d);
 }
-// Función añadida para generar fechas compatibles con columnas DATE de SQL si fuese necesario (YYYY-MM-DD)
-function formatISODate(d) {
-  return d.toISOString().split('T')[0];
-}
 function buildQrUrl(dpiNumber) {
   const code = encodeURIComponent(dpiNumber.replace("DPI - ", ""));
   return `${PUBLIC_URL}/api/dpi/verify/${code}`;
@@ -580,7 +576,7 @@ app.get("/api/dpi/verify-discord/:discordId", async (req, res) => {
   }
 });
 
-// MODIFICADO: Corrección definitiva de guardado y mapeo de formatos de fecha ISO
+// ── ENDPOINT FIXEADO: /api/dpi/create ──
 app.post("/api/dpi/create", requireAuth, async (req, res) => {
   const ip = getIP(req);
   const { allowed, retryAfterMs } = checkRateLimit(ip);
@@ -597,7 +593,7 @@ app.post("/api/dpi/create", requireAuth, async (req, res) => {
     const dpiNumber = await getNextDPINumber();
     const today = new Date();
 
-    // Almacenamos las fechas en formato ISO limpio (YYYY-MM-DD) para asegurar compatibilidad total en SQL
+    // 1. Guardamos las fechas en formato ISO estricto (YYYY-MM-DD) para evitar el error 500 en SQL
     const isoIssuedAt = today.toISOString().split('T')[0];
 
     const targetExpiration = new Date(today);
@@ -606,13 +602,13 @@ app.post("/api/dpi/create", requireAuth, async (req, res) => {
 
     const qrUrl = buildQrUrl(dpiNumber);
 
-    // 1. Insertar el documento en la tabla principal "dpis"
+    // 2. Insertar o reemplazar el documento en la tabla principal "dpis"
     const { error: dbErr } = await supabase.from("dpis").insert({
       dpi_number: dpiNumber,
       nombre: nombre.trim().toUpperCase(),
       apellidos: apellidos.trim().toUpperCase(),
       genero,
-      fecha_nac: fecha, // El input nativo date de React ya envía "YYYY-MM-DD"
+      fecha_nac: fecha,
       region: region.trim().toUpperCase(),
       issued_at: isoIssuedAt,
       valid_until: isoValidUntil,
@@ -622,25 +618,25 @@ app.post("/api/dpi/create", requireAuth, async (req, res) => {
 
     if (dbErr) throw new Error(`[Tabla dpis] ${dbErr.message}`);
 
-    // 2. Insertar de manera vinculada en la tabla "verificados"
-    const { error: vErr } = await supabase.from("verificados").insert({
+    // 3. CAMBIO CLAVE: Usamos .upsert() para evitar bloqueos por registros de Discord antiguos
+    const { error: vErr } = await supabase.from("verificados").upsert({
       discord_id: req.user.id,
       discord_username: req.user.username,
       dpi: dpiNumber
-    });
+    }, { onConflict: 'discord_id' }); // Sobrescribe si el discord_id ya existe
 
     if (vErr) {
-      console.error("Error al registrar en verificados. Intentando revertir DPI...");
+      console.error("Error al registrar en verificados. Revirtiendo DPI...");
       await supabase.from("dpis").delete().eq("dpi_number", dpiNumber);
       throw new Error(`[Tabla verificados] ${vErr.message}`);
     }
 
     recordUsage(ip);
 
-    // Gestión asíncrona de Roles en Discord
+    // Sincronización asíncrona de roles en Discord
     await handleDiscordVerificationRoles(req.user.id, region);
 
-    // Formateamos visualmente a DD/MM/YYYY solo para la cookie de sesión y la respuesta JSON del cliente
+    // Formateamos visualmente a DD/MM/YYYY únicamente para el cliente de React y la sesión JWT
     const displayIssuedAt = formatDate(today);
     const displayValidUntil = formatDate(targetExpiration);
 
@@ -657,7 +653,7 @@ app.post("/api/dpi/create", requireAuth, async (req, res) => {
     };
     setSessionCookie(res, req.user);
 
-    // Retorna las llaves mapeadas en camelCase consistentes con tu aplicación React
+    // Mapeo perfecto en camelCase para el Frontend
     return res.json({
       dpiNumber,
       issuedAt: displayIssuedAt,
@@ -665,7 +661,7 @@ app.post("/api/dpi/create", requireAuth, async (req, res) => {
       qrUrl
     });
   } catch (err) {
-    console.error("[/api/dpi/create]", err);
+    console.error("❌ ERROR INTERNO EN /api/dpi/create:", err);
     if (err.message?.includes("duplicate key") || err.message?.includes("23505")) {
       return res.status(400).json({ error: "Tu cuenta de Discord o este número de DPI ya se encuentra verificado." });
     }
@@ -855,7 +851,7 @@ function verifyHtml(d, roles = [], avatarUrl = "") {
 </body></html>`;
 }
 
-// ── PROXY DE DISCORD (Se completó el bucle infinito y cierre del endpoint) ──
+// ── PROXY DE DISCORD ──
 app.get("/api/roles", async (req, res) => {
   try {
     if (!DISCORD_TOKEN) {
@@ -894,5 +890,5 @@ app.get("/api/roles", async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`🚀 Servidor ejecutándose correctamente en el puerto ${port}`);
+  console.log(`🚀 Servidor corriendo en el puerto ${port}`);
 });
