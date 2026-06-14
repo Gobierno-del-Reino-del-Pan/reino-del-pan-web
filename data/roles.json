@@ -155,6 +155,12 @@
         "nombre": "Perra del Estado",
         "imagen": "/roles/perradelestado.png",
         "discord_role_id": "1510772727433138297"
+      },
+      {
+        "id": "rol_presidente_parlamento",
+        "nombre": "Presidente del Parlamento",
+        "emoji": "🪑",
+        "discord_role_id": "1506037487254900908"
       }
     ],
     "equipos": [
@@ -183,6 +189,14 @@
         "nombre": "Jefe de la Mafia",
         "imagen": "/roles/jefemafia.png",
         "discord_role_id": "1506395165290401843"
+      }
+    ],
+    "servicios": [
+      {
+        "id": "rol_abono_transporte",
+        "nombre": "Tarjeta de Transporte del Consorcio de Transportes de Pan",
+        "imagen": "/roles/consorcio.png",
+        "discord_role_id": "1515829072209510603"
       }
     ]
   }
