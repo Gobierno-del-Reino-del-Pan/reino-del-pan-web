@@ -24,7 +24,7 @@ interface DiscordUser {
   inGuild: boolean;
   verificado: boolean;
   dpi: { nombre: string; apellidos: string; dpi_number: string } | null;
-  roles: any[]; // Flexibilizado para aceptar objetos o strings directos del backend
+  roles: any[];
 }
 
 export default function Header() {
@@ -74,25 +74,30 @@ export default function Header() {
     setOtrosOpen(false);
   }, [location]);
 
-  // Filtro inteligente para detectar el rol (funciona si viene como string o como objeto)
+  // Filtro corregido con la ID real del rol de reportero ("1507784487084363858")
   const esReportero = useMemo(() => {
     if (!user || !Array.isArray(user.roles)) return false;
     return user.roles.some((rol) => {
       if (!rol) return false;
+      // Comprobamos tanto por ID de Discord (Recomendado) como por texto por si acaso
+      const idRol = rol.id || rol.discord_role_id || String(rol);
       const nombreRol = typeof rol === "string" ? rol : (rol.nombre || rol.name || "");
-      const limpio = nombreRol.toLowerCase().trim();
-      return limpio === "reportero" || limpio === "reporteros";
+
+      return (
+        idRol === "1507784487084363858" ||
+        nombreRol.toLowerCase().includes("reportero")
+      );
     });
   }, [user]);
 
-  // Inyectamos dinámicamente "Mi Carpeta" y "Reportero" en la lista principal de navegación
+  // Lista de navegación adaptada
   const allNavItems = useMemo(() => {
     const items = [...navItems];
     if (user) {
       items.push({ href: "/carpeta", label: "Mi Carpeta" });
     }
     if (esReportero) {
-      items.push({ href: "/redaccion", label: "Reportero" }); // <- Ahora saldrá en el Header principal
+      items.push({ href: "/redaccion", label: "Reportero" });
     }
     return items;
   }, [user, esReportero]);
@@ -187,20 +192,34 @@ export default function Header() {
               <div className="relative" ref={menuRef}>
                 <button
                   onClick={() => { setMenuOpen(v => !v); }}
-                  className="flex items-center focus:outline-none group cursor-pointer"
+                  className="flex items-center focus:outline-none group cursor-pointer relative"
                 >
+                  {/* MODIFICACIÓN: Efecto visual en el círculo si es Reportero */}
                   <img
                     src={user.avatar}
                     alt={user.username}
-                    className={`w-8 h-8 rounded-full border-2 transition-all duration-300 shadow-md ${menuOpen ? "border-accent scale-105 shadow-accent/20" : "border-white/20 group-hover:border-accent/70"
+                    className={`w-8 h-8 rounded-full border-2 transition-all duration-300 shadow-md ${menuOpen
+                        ? "border-accent scale-105 shadow-accent/20"
+                        : esReportero
+                          ? "border-amber-400 ring-2 ring-amber-500/30 animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.5)]"
+                          : "border-white/20 group-hover:border-accent/70"
                       }`}
                   />
+                  {/* Pequeño indicador LED de reportero */}
+                  {esReportero && (
+                    <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                    </span>
+                  )}
                 </button>
 
                 {menuOpen && (
                   <div className="absolute right-0 mt-3 w-48 rounded-xl border border-black/10 bg-white/95 backdrop-blur-lg shadow-xl overflow-hidden z-50">
                     <div className="px-4 py-2.5 border-b border-black/5 bg-black/[0.02]">
-                      <p className="text-[10px] text-black/40 uppercase tracking-wider font-semibold">Ciudadano</p>
+                      <p className="text-[10px] text-black/40 uppercase tracking-wider font-semibold">
+                        {esReportero ? "🎥 Reportero TVP" : "Ciudadano"}
+                      </p>
                       <p className="text-xs font-bold text-black truncate mt-0.5">{user.username}</p>
                     </div>
 
