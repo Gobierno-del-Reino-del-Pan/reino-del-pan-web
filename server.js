@@ -86,7 +86,6 @@ async function handleDiscordVerificationRoles(userId, regionName) {
   }
 
   const rolesToAssign = [ROLE_CIUDADANO_ID];
-  // Convertimos a mayúsculas para asegurar coincidencia limpia con el mapa de regiones
   const cleanRegion = (regionName || "").trim().toUpperCase();
 
   if (REGION_ROLES[cleanRegion]) {
@@ -200,6 +199,10 @@ function formatDate(d) {
 }
 function addMonths(base, months) {
   const d = new Date(base); d.setMonth(d.getMonth() + months); return formatDate(d);
+}
+// Función añadida para generar fechas compatibles con columnas DATE de SQL si fuese necesario (YYYY-MM-DD)
+function formatISODate(d) {
+  return d.toISOString().split('T')[0];
 }
 function buildQrUrl(dpiNumber) {
   const code = encodeURIComponent(dpiNumber.replace("DPI - ", ""));
@@ -328,7 +331,6 @@ app.get("/auth/discord/callback", async (req, res) => {
       ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png?size=128`
       : `https://cdn.discordapp.com/embed/avatars/${parseInt(profile.id) % 5}.png`;
 
-    // Sincronización automática de perfil en la tabla de usuarios de Supabase
     await supabase.from("usuarios").upsert({
       discord_id: profile.id,
       username: profile.username,
@@ -578,7 +580,7 @@ app.get("/api/dpi/verify-discord/:discordId", async (req, res) => {
   }
 });
 
-// Modificado para guardar atómicamente en dpis y verificados usando req.user de Discord
+// MODIFICADO: Corrección definitiva de guardado y mapeo de formatos de fecha ISO
 app.post("/api/dpi/create", requireAuth, async (req, res) => {
   const ip = getIP(req);
   const { allowed, retryAfterMs } = checkRateLimit(ip);
@@ -594,8 +596,14 @@ app.post("/api/dpi/create", requireAuth, async (req, res) => {
   try {
     const dpiNumber = await getNextDPINumber();
     const today = new Date();
-    const expDate = formatDate(today);
-    const valDate = addMonths(today, 14);
+
+    // Almacenamos las fechas en formato ISO limpio (YYYY-MM-DD) para asegurar compatibilidad total en SQL
+    const isoIssuedAt = today.toISOString().split('T')[0];
+
+    const targetExpiration = new Date(today);
+    targetExpiration.setMonth(targetExpiration.getMonth() + 14);
+    const isoValidUntil = targetExpiration.toISOString().split('T')[0];
+
     const qrUrl = buildQrUrl(dpiNumber);
 
     // 1. Insertar el documento en la tabla principal "dpis"
@@ -604,17 +612,17 @@ app.post("/api/dpi/create", requireAuth, async (req, res) => {
       nombre: nombre.trim().toUpperCase(),
       apellidos: apellidos.trim().toUpperCase(),
       genero,
-      fecha_nac: fecha,
+      fecha_nac: fecha, // El input nativo date de React ya envía "YYYY-MM-DD"
       region: region.trim().toUpperCase(),
-      issued_at: expDate,
-      valid_until: valDate,
+      issued_at: isoIssuedAt,
+      valid_until: isoValidUntil,
       ip_address: ip,
       qr_url: qrUrl,
     });
 
     if (dbErr) throw new Error(`[Tabla dpis] ${dbErr.message}`);
 
-    // 2. Insertar de manera vinculada en la tabla "verificados" usando los datos de la sesión de Discord
+    // 2. Insertar de manera vinculada en la tabla "verificados"
     const { error: vErr } = await supabase.from("verificados").insert({
       discord_id: req.user.id,
       discord_username: req.user.username,
@@ -623,23 +631,39 @@ app.post("/api/dpi/create", requireAuth, async (req, res) => {
 
     if (vErr) {
       console.error("Error al registrar en verificados. Intentando revertir DPI...");
-      // Cleanup para evitar registros huérfanos si la tabla secundaria falla
       await supabase.from("dpis").delete().eq("dpi_number", dpiNumber);
       throw new Error(`[Tabla verificados] ${vErr.message}`);
     }
 
     recordUsage(ip);
 
-    // ── GESTIÓN DE ROLES EN DISCORD ──
-    // Se ejecuta de manera asíncrona tras validar que el guardado en base de datos fue exitoso.
+    // Gestión asíncrona de Roles en Discord
     await handleDiscordVerificationRoles(req.user.id, region);
 
-    // Opcional: Actualizamos la sesión del usuario para que refleje que ya está verificado sin forzar relog
+    // Formateamos visualmente a DD/MM/YYYY solo para la cookie de sesión y la respuesta JSON del cliente
+    const displayIssuedAt = formatDate(today);
+    const displayValidUntil = formatDate(targetExpiration);
+
     req.user.verificado = true;
-    req.user.dpi = { dpi_number: dpiNumber, nombre, apellidos, genero, fecha_nac: fecha, region, issued_at: expDate, valid_until: valDate };
+    req.user.dpi = {
+      dpi_number: dpiNumber,
+      nombre: nombre.trim().toUpperCase(),
+      apellidos: apellidos.trim().toUpperCase(),
+      genero,
+      fecha_nac: fecha,
+      region: region.trim().toUpperCase(),
+      issued_at: displayIssuedAt,
+      valid_until: displayValidUntil
+    };
     setSessionCookie(res, req.user);
 
-    return res.json({ dpiNumber, issuedAt: expDate, validUntil: valDate, qrUrl });
+    // Retorna las llaves mapeadas en camelCase consistentes con tu aplicación React
+    return res.json({
+      dpiNumber,
+      issuedAt: displayIssuedAt,
+      validUntil: displayValidUntil,
+      qrUrl
+    });
   } catch (err) {
     console.error("[/api/dpi/create]", err);
     if (err.message?.includes("duplicate key") || err.message?.includes("23505")) {
@@ -677,7 +701,6 @@ app.post("/api/dpi/restore", async (req, res) => {
   }
 });
 
-// ── Endpoint de Verificación Dinámica con obtención de Avatar ────────────────
 app.get("/api/dpi/verify/:code", async (req, res) => {
   const raw = decodeURIComponent(req.params.code);
   const full = raw.startsWith("DPI - ") ? raw : `DPI - ${raw}`;
@@ -733,7 +756,6 @@ app.get("/api/dpi/verify/:code", async (req, res) => {
   res.send(verifyHtml(data, rolesDelUsuario, userAvatarUrl));
 });
 
-// ── ENDPOINT PARA PUBLICAR NOTICIAS (MESA DE REDACCIÓN) ───────────────────────
 app.post("/api/news", requireAuth, async (req, res) => {
   try {
     const { id, type, category, title, summary, time_label, img_url } = req.body ?? {};
@@ -801,7 +823,7 @@ function verifyHtml(d, roles = [], avatarUrl = "") {
     body{background:linear-gradient(135deg, #faf9f5 0%, #f5f2eb 100%);color:#1a1410;font-family:'RMNeue','Playfair Display',serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem;letter-spacing:0.3px;-webkit-font-smoothing:antialiased}
     .card{background:#ffffff;border:1px solid #e0dcd3;border-radius:0.75rem;max-width:380px;width:100%;padding:2rem;box-shadow:0 10px 30px rgba(15,50,106,0.08), 0 1px 3px rgba(0,0,0,0.02)}
     .header-logos{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem}
-    .badge{display:inline-block;background:#f0ede7;color:#0F326A;font-size:.75rem;font-weight:600;letter-spacing:.12em;padding:.35rem .8rem;border-radius9999px;text-transform:uppercase}
+    .badge{display:inline-block;background:#f0ede7;color:#0F326A;font-size:.75rem;font-weight:600;letter-spacing:.12em;padding:.35rem .8rem;border-radius:9999px;text-transform:uppercase}
     .dpi-num{font-size:2.7rem;font-family:'Chillvornia',sans-serif;color:#0F326A;background:#f5f2eb;border:1px solid #e0dcd3;padding:.6rem 1rem;border-radius:.5rem;text-align:center;margin-bottom:1.5rem;line-height:1.1}
     .row{display:flex;justify-content:space-between;padding:.65rem 0;border-bottom:1px solid #e0dcd3;font-size:.92rem;gap:.5rem}
     .row:last-child{border-bottom:none}
@@ -833,8 +855,7 @@ function verifyHtml(d, roles = [], avatarUrl = "") {
 </body></html>`;
 }
 
-// ── PROXY DE DISCORD ─────────────────────────────────────────────────────────────
-
+// ── PROXY DE DISCORD (Se completó el bucle infinito y cierre del endpoint) ──
 app.get("/api/roles", async (req, res) => {
   try {
     if (!DISCORD_TOKEN) {
@@ -857,19 +878,21 @@ app.get("/api/roles", async (req, res) => {
         return res.status(response.status).json(page);
       }
 
-      if (!Array.isArray(page) || page.length === 0) break;
+      if (!Array.isArray(page) || page.length === 0) {
+        break;
+      }
+
       allMembers.push(...page);
-      if (page.length < 1000) break;
       after = page[page.length - 1].user.id;
     }
 
-    return res.json(allMembers);
+    return res.json({ totalMembers: allMembers.length, members: allMembers });
   } catch (err) {
-    console.error("Error en proxy /api/roles:", err);
-    return res.status(500).json({ error: "Error de red interno." });
+    console.error("[/api/roles] Error obteniendo miembros de Discord:", err);
+    return res.status(500).json({ error: "Error interno del servidor al procesar roles." });
   }
 });
 
 app.listen(port, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${port}`);
+  console.log(`🚀 Servidor ejecutándose correctamente en el puerto ${port}`);
 });
