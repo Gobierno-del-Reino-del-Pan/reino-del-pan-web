@@ -74,7 +74,6 @@ export default function Header() {
     setOtrosOpen(false);
   }, [location]);
 
-  // Filtro corregido con la ID del rol de reportero ("1507784487084363858")
   const esReportero = useMemo(() => {
     if (!user || !Array.isArray(user.roles)) return false;
     return user.roles.some((rol) => {
@@ -89,7 +88,6 @@ export default function Header() {
     });
   }, [user]);
 
-  // Lista de navegación adaptada
   const allNavItems = useMemo(() => {
     const items = [...navItems];
     if (user) {
@@ -190,7 +188,6 @@ export default function Header() {
                   onClick={() => { setMenuOpen(v => !v); }}
                   className="flex items-center focus:outline-none group cursor-pointer relative"
                 >
-                  {/* Avatar con diseño estático e indicador fijo si es reportero */}
                   <img
                     src={user.avatar}
                     alt={user.username}
@@ -248,14 +245,16 @@ export default function Header() {
                 )}
               </div>
             ) : (
+              /* MODIFICACIÓN: Botón adaptable si no está logueado */
               <button
                 onClick={() => { window.location.href = "/auth/discord"; }}
-                className="hidden sm:inline-flex items-center gap-2 shrink-0 whitespace-nowrap cursor-pointer px-5 py-2 rounded-full text-[11px] font-bold uppercase tracking-[0.18em]
+                className="inline-flex items-center gap-2 shrink-0 whitespace-nowrap cursor-pointer px-4 py-2 sm:px-5 rounded-full text-[11px] font-bold uppercase tracking-[0.18em]
                   border border-accent text-accent bg-accent/5
                   transition-all duration-300 hover:bg-accent hover:text-background hover:shadow-[0_0_25px_rgba(212,175,55,0.35)] active:scale-[0.98]"
               >
                 <img src="/clave.png" alt="" className="w-3.5 h-3.5 object-contain opacity-90" />
-                Mi Carpeta
+                <span className="block sm:hidden">Inicia Aquí</span>
+                <span className="hidden sm:block">Mi Carpeta</span>
               </button>
             )}
 
