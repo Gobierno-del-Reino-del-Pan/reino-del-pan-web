@@ -129,7 +129,7 @@ function recordUsage(ip) {
   scheduleClean(ip);
 }
 
-// ── Funciones Auxiliares de Formato (Movidas arriba para evitar errores) ───────
+// ── Funciones Auxiliares de Formato ───────────────────────────────────────────
 function formatDate(d) {
   return [String(d.getDate()).padStart(2, "0"), String(d.getMonth() + 1).padStart(2, "0"), d.getFullYear()].join("/");
 }
@@ -572,7 +572,7 @@ app.post("/api/dpi/restore", async (req, res) => {
   }
 });
 
-// ── CORREGIDO: Endpoint de Verificación Dinámica con obtención de Avatar ──
+// ── Endpoint de Verificación Dinámica con obtención de Avatar ────────────────
 app.get("/api/dpi/verify/:code", async (req, res) => {
   const raw = decodeURIComponent(req.params.code);
   const full = raw.startsWith("DPI - ") ? raw : `DPI - ${raw}`;
@@ -583,7 +583,7 @@ app.get("/api/dpi/verify/:code", async (req, res) => {
   if (error || !data) return res.status(404).send(verifyHtml(null));
 
   let rolesDelUsuario = [];
-  let userAvatarUrl = null; // Guardará el avatar dinámico de la DB
+  let userAvatarUrl = null;
 
   try {
     const { data: verificado } = await supabase
@@ -593,7 +593,6 @@ app.get("/api/dpi/verify/:code", async (req, res) => {
       .maybeSingle();
 
     if (verificado?.discord_id) {
-      // 1. Buscamos el avatar en caliente en tu tabla local 'usuarios'
       const { data: dbUser } = await supabase
         .from("usuarios")
         .select("avatar_url")
@@ -604,7 +603,6 @@ app.get("/api/dpi/verify/:code", async (req, res) => {
         userAvatarUrl = dbUser.avatar_url;
       }
 
-      // 2. Buscamos sus roles en Discord (si el bot tiene token configurado)
       if (DISCORD_TOKEN) {
         const memberRes = await fetch(
           `${DISCORD_API}/guilds/${GUILD_ID}/members/${verificado.discord_id}`,
@@ -623,12 +621,47 @@ app.get("/api/dpi/verify/:code", async (req, res) => {
     console.error("[/api/dpi/verify] Error obteniendo datos del usuario:", err);
   }
 
-  // Si no se encuentra avatar en la base de datos, usamos un fallback por defecto
   if (!userAvatarUrl) {
     userAvatarUrl = "https://cdn.discordapp.com/embed/avatars/0.png";
   }
 
   res.send(verifyHtml(data, rolesDelUsuario, userAvatarUrl));
+});
+
+// ── ENDPOINT PARA PUBLICAR NOTICIAS (MESA DE REDACCIÓN) ───────────────────────
+app.post("/api/news", requireAuth, async (req, res) => {
+  try {
+    const { id, type, category, title, summary, time_label, img_url } = req.body ?? {};
+
+    if (!id || !type || !category || !title || !time_label || !img_url) {
+      return res.status(400).json({ error: "Por favor, rellena todos los campos obligatorios." });
+    }
+
+    const { data, error } = await supabase
+      .from("tvp_news")
+      .insert({
+        id: id.trim().toLowerCase(),
+        type,
+        category: category.trim().toUpperCase(),
+        title: title.trim(),
+        summary: type === "main" ? summary?.trim() : null,
+        time_label: time_label.trim(),
+        img_url: img_url.trim()
+      })
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error de Supabase al insertar noticia:", error);
+      return res.status(400).json({ error: `Base de datos: ${error.message}` });
+    }
+
+    return res.json({ success: true, message: "¡Noticia publicada con éxito!", data });
+
+  } catch (err) {
+    console.error("[/api/news] Error catastrófico:", err);
+    return res.status(500).json({ error: "Error interno del servidor al procesar la noticia." });
+  }
 });
 
 app.get("/health", (_req, res) => res.json({ status: "OK" }));
@@ -639,7 +672,6 @@ function escHtml(str) {
   }[c]));
 }
 
-// ── MODIFICADO: Añadido soporte gráfico para renderizar el Avatar del Ciudadano ──
 function verifyHtml(d, roles = [], avatarUrl = "") {
   if (!d) return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>DPI no encontrado</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;background:#1a0a0a;color:#c0a060;text-align:center}</style></head><body><h2>DPI no encontrado</h2></body></html>`;
 
