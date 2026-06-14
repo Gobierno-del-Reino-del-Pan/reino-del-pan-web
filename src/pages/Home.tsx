@@ -1,7 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link } from "wouter";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+// Conexión a tu cliente de Supabase
+import { supabase } from "../lib/supabaseClient";
 
 const NEWS_ITEMS = [
   "Muy pronto los ciudadanos en proceso de regularización podrán solicitar su TPIE",
@@ -16,9 +18,73 @@ const STATS_ITEMS = [
   { stat: "50+", title: "Países conectados", desc: "Una comunidad diplomática que cruza borders internacionales." },
 ];
 
+const LOCAL_NEWS_FALLBACK = {
+  main: {
+    category: "POLÍTICA",
+    title: "Cargando noticias principales...",
+    summary: "Conectando con el servidor central de TVP para obtener las últimas actualizaciones del Reino...",
+    time: "Ahora",
+    img: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=800&auto=format&fit=crop"
+  },
+  secondary: [
+    { id: "n1", category: "INFO", title: "Actualizando boletines informativos secundarios...", time: "En línea", img: "https://images.unsplash.com/photo-1504370805625-d32c54b16100?q=80&w=400&auto=format&fit=crop" },
+    { id: "n2", category: "INFO", title: "Conectando con la parrilla de TVP Play...", time: "En línea", img: "https://images.unsplash.com/photo-1518063319789-7217e6706b04?q=80&w=400&auto=format&fit=crop" }
+  ]
+};
+
 export default function Home() {
   const news = useMemo(() => NEWS_ITEMS, []);
   const stats = useMemo(() => STATS_ITEMS, []);
+
+  const [mainNews, setMainNews] = useState(LOCAL_NEWS_FALLBACK.main);
+  const [secondaryNews, setSecondaryNews] = useState(LOCAL_NEWS_FALLBACK.secondary);
+
+  useEffect(() => {
+    async function fetchSupabaseNews() {
+      try {
+        if (supabase) {
+          const { data, error } = await supabase
+            .from('tvp_news')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (error) throw error;
+
+          if (data && data.length > 0) {
+            const supabaseMain = data.find((n: any) => n.type === 'main');
+            if (supabaseMain) {
+              setMainNews({
+                category: supabaseMain.category,
+                title: supabaseMain.title,
+                summary: supabaseMain.summary || '',
+                time: supabaseMain.time_label,
+                img: supabaseMain.img_url
+              });
+            }
+
+            const supabaseSecondaries = data.filter((n: any) => n.type === 'secondary');
+            if (supabaseSecondaries.length > 0) {
+              setSecondaryNews(supabaseSecondaries.slice(0, 2).map((n: any) => ({
+                id: n.id,
+                category: n.category,
+                title: n.title,
+                time: n.time_label,
+                img: n.img_url
+              })));
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Error al extraer noticias de Supabase:", err);
+      }
+    }
+
+    fetchSupabaseNews();
+  }, []);
+
+  const handleNewsClick = (title: string) => {
+    alert(`Abriendo emisión / artículo de TVP: \n"${title}"`);
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col relative overflow-x-hidden antialiased">
@@ -51,7 +117,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── HERO CON VÍDEO DE FONDO ───────────────────────────────────────── */}
+      {/* ── HERO CON VÍDEO DE FONDO (Original intacto) ───────────────────────────────────────── */}
       <main className="flex-1 relative flex items-center justify-center min-h-[calc(100vh-120px)] lg:min-h-0 py-12 sm:py-16 lg:py-24 px-4 sm:px-6">
         <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
           <video
@@ -63,7 +129,6 @@ export default function Home() {
           >
             <source src="/videos/hero.mp4" type="video/mp4" />
           </video>
-          {/* Se eliminó el gradiente que usaba "background" (que causaba la capa blanca) y se cambió por un degradado negro limpio */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black/80 lg:bg-gradient-to-r lg:from-black/90 lg:via-black/50 lg:to-transparent" />
           <div className="absolute inset-0 bg-black/30 backdrop-blur-[0.5px]" />
         </div>
@@ -126,7 +191,7 @@ export default function Home() {
         </div>
       </main>
 
-      {/* ── SECCIÓN: ANUNCIO INSTITUCIONAL COMPLETO (A SANGRE) ── */}
+      {/* ── SECCIÓN: ANUNCIO INSTITUCIONAL COMPLETO ── */}
       <section className="w-full">
         <img
           src="/anunciosgov/seguimosavanzando.jpg"
@@ -139,7 +204,7 @@ export default function Home() {
       <section className="w-full px-4 sm:px-6 py-16 lg:py-24 bg-[#CDCCD4]">
         <div className="container mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-          {/* Tarjeta Laboral Panian Bank (Blanca para contrastar sutilmente sobre el fondo azulado) */}
+          {/* Tarjeta Laboral Panian Bank */}
           <div className="rounded-[32px] bg-white p-8 sm:p-10 flex flex-col justify-between shadow-xl min-h-[380px] group transition-all duration-300 border border-black/5">
             <div>
               <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -166,7 +231,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Tarjeta PKMN (Blanca para contrastar sutilmente sobre el fondo azulado) */}
+          {/* Tarjeta PKMN */}
           <div className="rounded-[32px] bg-white p-8 sm:p-10 grid grid-cols-1 sm:grid-cols-[1.2fr_0.8fr] gap-6 items-center shadow-xl min-h-[380px] group transition-all duration-300 border border-black/5">
             <div className="flex flex-col justify-between h-full">
               <div>
@@ -177,7 +242,7 @@ export default function Home() {
                   Tercer Inicial Revelado
                 </h3>
                 <p className="mt-4 text-[14px] sm:text-base text-neutral-700 leading-relaxed font-normal">
-                  Cyndaquil es oficialmente el tercer inicial anunciado para el ecosistema del Reino. Su naturaleza y capacidades marcarán el inicio de una nueva era de exploración.
+                  Cyndaquil es oficialmente el tercer inicial anunciado para el ecosistema del Reino. Su naturaleza y capacidades marcarán el inicio de una nueva era de exploration.
                 </p>
               </div>
               <div className="mt-8 sm:mt-0">
@@ -196,6 +261,84 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── NUEVA SECCIÓN EXTRA: TARJETA TVP NOTICIAS (EXTRAÍDA DE SUPABASE) ── */}
+      <section className="w-full px-4 sm:px-6 mt-8 max-w-7xl mx-auto z-10">
+        <div className="w-full bg-[#07080c] text-white rounded-3xl overflow-hidden border border-white/5 p-6 sm:p-8 md:p-10 shadow-2xl flex flex-col gap-10 font-tvp-text selection:bg-[#ff4d00]">
+
+          {/* Header del Módulo TVP */}
+          <div className="flex items-center justify-between border-b border-white/10 pb-6">
+            <div className="flex items-center gap-4">
+              <img src="/TVP/TVP.png" alt="TVP" className="h-7 md:h-8 object-contain select-none" />
+              <div className="h-5 w-[1px] bg-white/20"></div>
+              <h3 className="font-tvp-head text-base md:text-xl font-bold tracking-widest uppercase text-white flex items-center gap-2">
+                <span className="w-2.5 h-2.5 bg-[#ff4d00] rounded-full animate-ping"></span>
+                TVP EN DIRECTO
+              </h3>
+            </div>
+            <Link to="/tvp">
+              <span className="text-xs text-[#ff4d00] cursor-pointer hover:underline uppercase tracking-[0.25em] font-bold font-tvp-head transition-all">
+                Portal Play →
+              </span>
+            </Link>
+          </div>
+
+          {/* Grid de Noticias de Supabase */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 md:gap-12">
+
+            {/* Noticia Principal */}
+            <div
+              onClick={() => handleNewsClick(mainNews.title)}
+              className="lg:col-span-2 group cursor-pointer bg-[#0e1017] rounded-2xl overflow-hidden border border-white/5 hover:border-[#ff4d00]/30 transition-all duration-300 shadow-xl flex flex-col justify-between"
+            >
+              <div className="relative w-full aspect-video overflow-hidden">
+                <img src={mainNews.img} alt={mainNews.title} className="w-full h-full object-cover group-hover:scale-[1.015] transition-transform duration-500" />
+                <span className="absolute top-4 left-4 bg-[#ff4d00] text-black text-[10px] sm:text-xs font-black px-4 py-2 rounded font-tvp-head tracking-[0.2em] uppercase shadow-md">
+                  {mainNews.category}
+                </span>
+              </div>
+
+              <div className="p-8 sm:p-10 md:p-12 flex flex-col gap-8 flex-1 justify-between">
+                <div className="flex flex-col gap-6">
+                  <span className="text-[11px] text-white/40 tracking-[0.25em] uppercase font-semibold font-mono">{mainNews.time}</span>
+                  <h3 className="font-tvp-head text-2xl sm:text-3xl md:text-4xl font-black text-white group-hover:text-[#ff4d00] transition-colors tracking-[0.06em] leading-[1.6]">
+                    {mainNews.title}
+                  </h3>
+                  <p className="text-sm sm:text-base text-neutral-400 font-light tracking-[0.05em] leading-[1.9] mt-2">
+                    {mainNews.summary}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Noticias Secundarias */}
+            <div className="flex flex-col gap-5 justify-between">
+              {secondaryNews.map((sn) => (
+                <div
+                  key={sn.id}
+                  onClick={() => handleNewsClick(sn.title)}
+                  className="group cursor-pointer bg-[#0e1017] rounded-2xl overflow-hidden border border-white/5 hover:border-[#ff4d00]/20 transition-all duration-300 shadow-md flex flex-col h-full justify-between"
+                >
+                  <div className="relative w-full aspect-video overflow-hidden shrink-0">
+                    <img src={sn.img} alt={sn.title} className="w-full h-full object-cover group-hover:scale-[1.015] transition-transform duration-500" />
+                    <span className="absolute top-3 left-3 bg-[#0a0b10]/95 backdrop-blur text-white text-[9px] font-bold px-3 py-1.5 rounded tracking-[0.2em] uppercase font-tvp-head border border-white/5">
+                      {sn.category}
+                    </span>
+                  </div>
+
+                  <div className="p-10 flex flex-col gap-10 flex-1 justify-center">
+                    <span className="text-[10px] text-white/40 font-medium tracking-[0.2em] font-mono">{sn.time}</span>
+                    <h4 className="font-tvp-head font-bold text-base sm:text-xl text-white/90 group-hover:text-[#ff4d00] transition-colors tracking-[0.07em] leading-[1.7]">
+                      {sn.title}
+                    </h4>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+          </div>
+        </div>
+      </section>
+
       <Footer />
 
       <style dangerouslySetInnerHTML={{
@@ -204,6 +347,18 @@ export default function Home() {
           0% { transform: translate3d(0, 0, 0); }
           100% { transform: translate3d(-50%, 0, 0); }
         }
+        @font-face {
+            font-family: 'TVP-Heading';
+            src: url('/TVP/TVP.ttf') format('truetype');
+            font-weight: bold;
+        }
+        @font-face {
+            font-family: 'TVP-Text';
+            src: url('/TVP/TVPtext.ttf') format('truetype');
+            font-weight: normal;
+        }
+        .font-tvp-head { font-family: 'TVP-Heading', sans-serif; }
+        .font-tvp-text { font-family: 'TVP-Text', sans-serif; }
       `}} />
     </div>
   );
