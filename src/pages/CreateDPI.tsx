@@ -282,7 +282,8 @@ export default function CreateDPI() {
 
   const showDiscordBtn = !user || (!user.verificado && !user.dpi);
 
-  // Si ya tiene un DPI verificado y NO lo acaba de hacer ahora mismo, se activa el bloqueo
+  // MODIFICADO: Si ya tiene un DPI verificado Y NO lo acaba de crear ahora mismo, se bloquea.
+  // Si lo acaba de crear (justGenerated === true), hasVerifiedDPI será false, permitiendo ver la descarga.
   const hasVerifiedDPI = user && (user.verificado || user.dpi) && !justGenerated;
 
   // ─── Mouse events ────────────────────────────────────────────────────────────
@@ -427,7 +428,7 @@ export default function CreateDPI() {
         }),
       ]);
 
-      // Marcamos que se acaba de generar con éxito para no bloquear la UI inmediatamente
+      // MODIFICADO: Primero guardamos el preview y marcamos la sesión como completada con éxito.
       setJustGenerated(true);
       setPreview({ front: frontImg, back: backImg, dpiNumber });
 
@@ -498,120 +499,137 @@ export default function CreateDPI() {
             </motion.div>
           ) : (
             <>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
-                <h1 className="text-2xl sm:text-3xl font-bold">
-                  Crear <span className="text-accent">DPI</span>
-                </h1>
-                {showDiscordBtn && (
-                  <button
-                    type="button"
-                    onClick={handleDiscordAction}
-                    className="inline-flex items-center justify-center gap-2 self-start sm:self-auto px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#5865F2] hover:bg-[#4752C4] text-white transition-all shadow-md active:scale-[0.98]"
-                  >
-                    <svg className="w-4 h-4 fill-current" viewBox="0 0 127.14 96.36">
-                      <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.45-5c.87-.64,1.72-1.32,2.53-2a75.47,75.47,0,0,0,72.75,0c.81.71,1.66,1.39,2.53,2a68.43,68.43,0,0,1-10.45,5,77.7,77.7,0,0,0,6.63,10.85,105.73,105.73,0,0,0,31.06-18.83C129.81,50.54,123.36,27.77,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.93,46,53.82,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.17,46,96.06,53,91,65.69,84.69,65.69Z" />
-                    </svg>
-                    {user ? "Autorellenar con Discord" : "Iniciar sesión con Discord"}
-                  </button>
-                )}
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-foreground/50">Nombre</span>
-                  <CharCounter value={form.nombre} max={LIMITS.nombre} />
-                </div>
-                <input className={inputCls("nombre", nombreErr)} placeholder="Nombre" value={form.nombre} maxLength={LIMITS.nombre + 5} onChange={e => setForm({ ...form, nombre: e.target.value })} />
-                {(nombreErr || submitErrors.nombre) && <p className="text-red-500 text-xs mt-1">{nombreErr || submitErrors.nombre}</p>}
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-foreground/50">Apellidos</span>
-                  <CharCounter value={form.apellidos} max={LIMITS.apellidos} />
-                </div>
-                <input className={inputCls("apellidos", apellidosErr)} placeholder="Apellidos" value={form.apellidos} maxLength={LIMITS.apellidos + 5} onChange={e => setForm({ ...form, apellidos: e.target.value })} />
-                {(apellidosErr || submitErrors.apellidos) && <p className="text-red-500 text-xs mt-1">{apellidosErr || submitErrors.apellidos}</p>}
-              </div>
-
-              <div>
-                <select className={inputCls("genero")} value={form.genero} onChange={e => setForm({ ...form, genero: e.target.value })}>
-                  <option value="">Género</option>
-                  <option>Hombre</option>
-                  <option>Mujer</option>
-                </select>
-                {submitErrors.genero && <p className="text-red-500 text-xs mt-1">{submitErrors.genero}</p>}
-              </div>
-
-              <div>
-                <span className="text-xs text-foreground/50 block mb-1">Fecha de nacimiento</span>
-                <input type="date" className={inputCls("fecha")} value={form.fecha} onChange={e => setForm({ ...form, fecha: e.target.value })} />
-                {submitErrors.fecha && <p className="text-red-500 text-xs mt-1">{submitErrors.fecha}</p>}
-              </div>
-
-              <div>
-                <select className={inputCls("region")} value={form.region} onChange={e => setForm({ ...form, region: e.target.value })}>
-                  <option value="">Región</option>
-                  <option>Baguette</option>
-                  <option>Pan Plano</option>
-                  <option>Croissant</option>
-                  <option>Pretzel</option>
-                  <option>Pimbo</option>
-                  <option>Sin Gluten</option>
-                </select>
-                {submitErrors.region && <p className="text-red-500 text-xs mt-1">{submitErrors.region}</p>}
-              </div>
-
-              <div>
-                <span className="text-xs text-foreground/50 block mb-1">Foto de perfil</span>
-                <div className={`border-2 border-dashed rounded-xl p-4 cursor-pointer flex items-center gap-4 transition ${submitErrors.photo ? "border-red-500" : "border-border hover:border-accent/50"}`} onClick={() => fileRef.current?.click()}>
-                  <input ref={fileRef} type="file" accept="image/*" hidden onChange={handlePhoto} />
-                  {!photo ? <p className="text-sm text-foreground/60">Toca para subir tu foto</p> : <><img src={photo} className="w-16 h-20 object-cover rounded-lg flex-shrink-0" alt="foto" /><span className="text-sm text-foreground/60">Cambiar foto</span></>}
-                </div>
-                {submitErrors.photo && <p className="text-red-500 text-xs mt-1">{submitErrors.photo}</p>}
-              </div>
-
-              <div>
-                <span className="text-xs text-foreground/50 block mb-1">Firma</span>
-                <div className={`border rounded-xl overflow-hidden transition ${submitErrors.signature ? "border-red-500" : "border-border"}`}>
-                  <div className="flex items-center justify-between px-3 pt-2 pb-1">
-                    <p className="text-xs text-foreground/50">Firma aquí con el dedo o el ratón</p>
-                    <button type="button" onClick={clearSignature} className="text-xs text-foreground/40 hover:text-foreground/70 transition px-2 py-1">Borrar</button>
+              {/* MODIFICADO: Ocultamos el formulario si ya se ha generado el preview con éxito para que solo vean su nuevo DPI */}
+              {!preview ? (
+                <>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
+                    <h1 className="text-2xl sm:text-3xl font-bold">
+                      Crear <span className="text-accent">DPI</span>
+                    </h1>
+                    {showDiscordBtn && (
+                      <button
+                        type="button"
+                        onClick={handleDiscordAction}
+                        className="inline-flex items-center justify-center gap-2 self-start sm:self-auto px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#5865F2] hover:bg-[#4752C4] text-white transition-all shadow-md active:scale-[0.98]"
+                      >
+                        <svg className="w-4 h-4 fill-current" viewBox="0 0 127.14 96.36">
+                          <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.45-5c.87-.64,1.72-1.32,2.53-2a75.47,75.47,0,0,0,72.75,0c.81.71,1.66,1.39,2.53,2a68.43,68.43,0,0,1-10.45,5,77.7,77.7,0,0,0,6.63,10.85,105.73,105.73,0,0,0,31.06-18.83C129.81,50.54,123.36,27.77,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.93,46,53.82,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.17,46,96.06,53,91,65.69,84.69,65.69Z" />
+                        </svg>
+                        {user ? "Autorellenar con Discord" : "Iniciar sesión con Discord"}
+                      </button>
+                    )}
                   </div>
-                  <canvas ref={canvasRef} width={600} height={160} className="w-full touch-none" style={{ height: "160px", cursor: "crosshair", display: "block" }} onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw} />
-                </div>
-                {submitErrors.signature && <p className="text-red-500 text-xs mt-1">{submitErrors.signature}</p>}
-              </div>
 
-              <button onClick={submit} disabled={generating} className="w-full py-4 rounded-xl bg-accent text-black font-bold disabled:opacity-60 transition text-sm sm:text-base">
-                {generating ? "Generando DPI…" : "Crear DPI"}
-              </button>
-
-              {genError && <p className="text-red-500 text-sm text-center">{genError}</p>}
-
-              {preview && (
-                <motion.div ref={previewRef} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="space-y-5 pt-6 border-t border-border">
                   <div>
-                    <h2 className="text-xl font-bold">Tu DPI está listo ✓</h2>
-                    <p className="text-sm font-mono text-accent mt-1">{preview.dpiNumber}</p>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-foreground/50">Nombre</span>
+                      <CharCounter value={form.nombre} max={LIMITS.nombre} />
+                    </div>
+                    <input className={inputCls("nombre", nombreErr)} placeholder="Nombre" value={form.nombre} maxLength={LIMITS.nombre + 5} onChange={e => setForm({ ...form, nombre: e.target.value })} />
+                    {(nombreErr || submitErrors.nombre) && <p className="text-red-500 text-xs mt-1">{nombreErr || submitErrors.nombre}</p>}
                   </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-foreground/50">Apellidos</span>
+                      <CharCounter value={form.apellidos} max={LIMITS.apellidos} />
+                    </div>
+                    <input className={inputCls("apellidos", apellidosErr)} placeholder="Apellidos" value={form.apellidos} maxLength={LIMITS.apellidos + 5} onChange={e => setForm({ ...form, apellidos: e.target.value })} />
+                    {(apellidosErr || submitErrors.apellidos) && <p className="text-red-500 text-xs mt-1">{apellidosErr || submitErrors.apellidos}</p>}
+                  </div>
+
+                  <div>
+                    <select className={inputCls("genero")} value={form.genero} onChange={e => setForm({ ...form, genero: e.target.value })}>
+                      <option value="">Género</option>
+                      <option>Hombre</option>
+                      <option>Mujer</option>
+                    </select>
+                    {submitErrors.genero && <p className="text-red-500 text-xs mt-1">{submitErrors.genero}</p>}
+                  </div>
+
+                  <div>
+                    <span className="text-xs text-foreground/50 block mb-1">Fecha de nacimiento</span>
+                    <input type="date" className={inputCls("fecha")} value={form.fecha} onChange={e => setForm({ ...form, fecha: e.target.value })} />
+                    {submitErrors.fecha && <p className="text-red-500 text-xs mt-1">{submitErrors.fecha}</p>}
+                  </div>
+
+                  <div>
+                    <select className={inputCls("region")} value={form.region} onChange={e => setForm({ ...form, region: e.target.value })}>
+                      <option value="">Región</option>
+                      <option>Baguette</option>
+                      <option>Pan Plano</option>
+                      <option>Croissant</option>
+                      <option>Pretzel</option>
+                      <option>Pimbo</option>
+                      <option>Sin Gluten</option>
+                    </select>
+                    {submitErrors.region && <p className="text-red-500 text-xs mt-1">{submitErrors.region}</p>}
+                  </div>
+
+                  <div>
+                    <span className="text-xs text-foreground/50 block mb-1">Foto de perfil</span>
+                    <div className={`border-2 border-dashed rounded-xl p-4 cursor-pointer flex items-center gap-4 transition ${submitErrors.photo ? "border-red-500" : "border-border hover:border-accent/50"}`} onClick={() => fileRef.current?.click()}>
+                      <input ref={fileRef} type="file" accept="image/*" hidden onChange={handlePhoto} />
+                      {!photo ? <p className="text-sm text-foreground/60">Toca para subir tu foto</p> : <><img src={photo} className="w-16 h-20 object-cover rounded-lg flex-shrink-0" alt="foto" /><span className="text-sm text-foreground/60">Cambiar foto</span></>}
+                    </div>
+                    {submitErrors.photo && <p className="text-red-500 text-xs mt-1">{submitErrors.photo}</p>}
+                  </div>
+
+                  <div>
+                    <span className="text-xs text-foreground/50 block mb-1">Firma</span>
+                    <div className={`border rounded-xl overflow-hidden transition ${submitErrors.signature ? "border-red-500" : "border-border"}`}>
+                      <div className="flex items-center justify-between px-3 pt-2 pb-1">
+                        <p className="text-xs text-foreground/50">Firma aquí con el dedo o el ratón</p>
+                        <button type="button" onClick={clearSignature} className="text-xs text-foreground/40 hover:text-foreground/70 transition px-2 py-1">Borrar</button>
+                      </div>
+                      <canvas ref={canvasRef} width={600} height={160} className="w-full touch-none" style={{ height: "160px", cursor: "crosshair", display: "block" }} onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw} />
+                    </div>
+                    {submitErrors.signature && <p className="text-red-500 text-xs mt-1">{submitErrors.signature}</p>}
+                  </div>
+
+                  <button onClick={submit} disabled={generating} className="w-full py-4 rounded-xl bg-accent text-black font-bold disabled:opacity-60 transition text-sm sm:text-base">
+                    {generating ? "Generando DPI…" : "Crear DPI"}
+                  </button>
+
+                  {genError && <p className="text-red-500 text-sm text-center">{genError}</p>}
+                </>
+              ) : (
+                /* SECCIÓN DE PREVIEW EDITADA */
+                <motion.div ref={previewRef} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="space-y-5 my-6">
+                  <div className="text-center p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                    <h2 className="text-xl font-bold text-emerald-400">¡Tu DPI ha sido creado con éxito! ✓</h2>
+                    <p className="text-xs text-foreground/70 mt-1">También hemos actualizado tus roles de Ciudadano y Región en Discord.</p>
+                    <p className="text-sm font-mono text-accent mt-2 font-bold">{preview.dpiNumber}</p>
+                  </div>
+
                   <div className="space-y-3">
-                    <p className="text-sm font-semibold text-foreground/70">Delantera</p>
+                    <p className="text-sm font-semibold text-foreground/70">Parte Delantera</p>
                     <img src={preview.front} alt="DPI Delantera" className="w-full rounded-xl border border-border shadow-md" />
-                    <p className="text-sm font-semibold text-foreground/70 pt-1">Trasera</p>
+
+                    <p className="text-sm font-semibold text-foreground/70 pt-1">Parte Trasera</p>
                     <img src={preview.back} alt="DPI Trasera" className="w-full rounded-xl border border-border shadow-md" />
                   </div>
-                  <div className="space-y-3">
-                    <button onClick={dlBothImgs} className="w-full py-4 rounded-xl bg-accent text-black font-bold transition">Descarga tu DPI en foto</button>
-                    <button onClick={() => generatePDF(preview.front, preview.back, preview.dpiNumber)} className="w-full py-4 rounded-xl border-2 border-accent text-accent font-bold transition">Descargar DPI en PDF</button>
+
+                  <div className="grid gap-3 pt-2">
+                    <button onClick={dlBothImgs} className="w-full py-4 rounded-xl bg-accent text-black font-bold hover:brightness-95 transition text-sm shadow-md">
+                      Descargar Imágenes (JPG)
+                    </button>
+                    <button onClick={() => generatePDF(preview.front, preview.back, preview.dpiNumber)} className="w-full py-4 rounded-xl border-2 border-accent text-accent font-bold hover:bg-accent/5 transition text-sm">
+                      Descargar Documento (PDF)
+                    </button>
+                    <button onClick={() => setLocation("/")} className="w-full py-3 rounded-xl bg-background border border-border text-foreground/60 text-xs transition">
+                      Volver al Inicio
+                    </button>
                   </div>
                 </motion.div>
               )}
 
-              <p className="text-center text-xs text-foreground/60 pb-4">
-                Al crear tu DPI aceptas nuestros{" "}
-                <a href="/terms" style={{ color: "#f5a623", textDecoration: "underline", textUnderlineOffset: "4px" }}>Términos y Condiciones</a>
-              </p>
+              {!preview && (
+                <p className="text-center text-xs text-foreground/60 pb-4">
+                  Al crear tu DPI aceptas nuestros{" "}
+                  <a href="/terms" style={{ color: "#f5a623", textDecoration: "underline", textUnderlineOffset: "4px" }}>Términos y Condiciones</a>
+                </p>
+              )}
             </>
           )}
         </div>
