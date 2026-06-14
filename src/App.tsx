@@ -20,6 +20,7 @@ import JuegoLimpio from "./pages/LALIGA/juego-limpio";
 import Reglamento from "./pages/LALIGA/reglamento";
 import LPB from "./pages/LaboralBank/LPB";
 import Level from "./pages/level";
+import PanelDeControl from "./pages/TVP/PanelDeControl";
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
         <Route path="/level" component={Level} />
 
         <Route path="/tvp" component={TVP} />
+        <Route path="/tvp/paneldecontrol" component={PanelDeControl} />
         <Route path="/dpi" component={DPI} />
         <Route path="/dpi/create" component={CreateDPI} />
         <Route path="/dpi/restore" component={RestoreDPI} />
