@@ -30,7 +30,7 @@ export default function PanelDeControl() {
     const [formMessage, setFormMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
     // Configuración de IDs de Discord
-    const GUILD_ID = "TU_ID_DE_SERVIDOR_DE_DISCORD"; // OBLIGATORIO: Reemplaza con el ID de tu servidor de Discord
+    const GUILD_ID = "1381359904731693056"; // OBLIGATORIO: Reemplaza con el ID de tu servidor de Discord
     const REPORTER_ROLE_ID = "1507784487084363858";
 
     useEffect(() => {
