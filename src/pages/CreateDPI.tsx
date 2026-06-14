@@ -490,7 +490,7 @@ export default function CreateDPI() {
             <select className={inputCls("region")} value={form.region}
               onChange={e => setForm({ ...form, region: e.target.value })}>
               <option value="">Región</option>
-              <option>Baguete</option>
+              <option>Baguette</option>
               <option>Pan Plano</option>
               <option>Croissant</option>
               <option>Pretzel</option>
