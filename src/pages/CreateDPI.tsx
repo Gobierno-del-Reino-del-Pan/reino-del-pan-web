@@ -505,7 +505,7 @@ export default function CreateDPI() {
               <div className="grid gap-3 pt-2 max-w-md mx-auto">
                 <button
                   type="button"
-                  onClick={() => setLocation("/profile")} // Ajusta la ruta a tu sección de perfil/recuperación
+                  onClick={() => setLocation("/dpi/restore")} // Ajusta la ruta a tu sección de perfil/recuperación
                   className="w-full py-3.5 rounded-xl bg-accent text-black font-bold text-sm shadow-md hover:opacity-90 active:scale-[0.99] transition-all"
                 >
                   ¿Quieres Recuperar tu DPI?
