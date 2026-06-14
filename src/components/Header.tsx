@@ -97,7 +97,7 @@ export default function Header() {
       items.push({ href: "/carpeta", label: "Mi Carpeta" });
     }
     if (esReportero) {
-      items.push({ href: "/redaccion", label: "Reportero" });
+      items.push({ href: "/TVP/PanelDeControl", label: "Reportero" });
     }
     return items;
   }, [user, esReportero]);
@@ -199,10 +199,10 @@ export default function Header() {
                     src={user.avatar}
                     alt={user.username}
                     className={`w-8 h-8 rounded-full border-2 transition-all duration-300 shadow-md ${menuOpen
-                        ? "border-accent scale-105 shadow-accent/20"
-                        : esReportero
-                          ? "border-amber-400 ring-2 ring-amber-500/30 animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.5)]"
-                          : "border-white/20 group-hover:border-accent/70"
+                      ? "border-accent scale-105 shadow-accent/20"
+                      : esReportero
+                        ? "border-amber-400 ring-2 ring-amber-500/30 animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.5)]"
+                        : "border-white/20 group-hover:border-accent/70"
                       }`}
                   />
                   {/* Pequeño indicador LED de reportero */}
