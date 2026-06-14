@@ -474,21 +474,63 @@ export default function Level() {
                                     initial={{ opacity: 0, y: 14 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.18 }}
-                                    style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: "var(--radius-xl)", overflow: "hidden", boxShadow: "0 4px 20px rgba(15,50,106,0.02)" }}
+                                    style={{
+                                        background: "var(--card)",
+                                        border: "1px solid var(--border)",
+                                        borderRadius: "var(--radius-xl)",
+                                        overflow: "hidden",
+                                        boxShadow: "0 4px 20px rgba(15,50,106,0.02)"
+                                    }}
                                 >
-                                    <div style={{ padding: "16px 24px", borderBottom: "1px solid var(--border)" }}>
+                                    {/* Inyección de estilos CSS para manejar el responsive de la tabla sin librerías externas */}
+                                    <style>{`
+        @media (max-width: 640px) {
+            .responsive-table thead { display: none; }
+            .responsive-table tr { 
+                display: flex; 
+                flex-wrap: wrap; 
+                padding: 12px 16px !important; 
+                align-items: center;
+            }
+            .responsive-table td { 
+                padding: 4px 0 !important; 
+                border: none !important;
+            }
+            .cell-pos { width: 30px !important; text-align: left !important; order: 1; }
+            .cell-user { width: calc(100% - 100px) !important; order: 2; padding-left: 4px !important; }
+            .cell-level { width: 70px !important; text-align: right !important; order: 3; }
+            .cell-stat-container {
+                width: 100% !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                order: 4;
+                margin-top: 8px;
+                padding-top: 8px !important;
+                border-top: 1px dashed rgba(224,220,211,0.4) !important;
+            }
+            .cell-msg, .cell-xp { width: auto !important; text-align: left !important; }
+            .cell-xp { text-align: right !important; }
+            .mobile-label { display: inline-block !important; font-size: 10px; uppercase; color: var(--muted-foreground); margin-right: 6px; font-weight: 500; }
+        }
+        @media (min-width: 641px) {
+            .mobile-label { display: none; }
+        }
+    `}</style>
+
+                                    <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--border)" }}>
                                         <p style={{ fontSize: 11, letterSpacing: "0.28em", color: "var(--muted-foreground)", textTransform: "uppercase", fontWeight: 600, fontFamily: "var(--body-font)" }}>
                                             📋 &nbsp;Registro General de Ciudadanos
                                         </p>
                                     </div>
 
                                     <div style={{ overflowX: "auto" }}>
-                                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                                        <table className="responsive-table" style={{ width: "100%", borderCollapse: "collapse" }}>
                                             <thead>
                                                 <tr style={{ borderBottom: "1px solid var(--border)", background: "rgba(240,237,231,0.5)" }}>
                                                     {["#", "Ciudadano", "Nivel", "Mensajes", "XP Total"].map((h, i) => (
                                                         <th key={h} style={{
-                                                            padding: "14px 24px",
+                                                            padding: "12px 20px",
                                                             fontSize: 10, fontWeight: 600,
                                                             letterSpacing: "0.2em", textTransform: "uppercase",
                                                             color: "var(--muted-foreground)",
@@ -508,16 +550,19 @@ export default function Level() {
                                                         onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = "rgba(151,180,224,0.06)"}
                                                         onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = "transparent"}
                                                     >
-                                                        <td style={{ padding: "14px 24px", textAlign: "center", fontFamily: "var(--display-font)", fontSize: 18, color: "var(--primary)", width: 50 }}>
+                                                        {/* 1. POSICIÓN */}
+                                                        <td className="cell-pos" style={{ padding: "14px 20px", textAlign: "center", fontFamily: "var(--display-font)", fontSize: 16, color: "var(--primary)", width: 50 }}>
                                                             {user.posicion}
                                                         </td>
-                                                        <td style={{ padding: "14px 24px" }}>
-                                                            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+
+                                                        {/* 2. CIUDADANO (Avatar + Nombre + Barra) */}
+                                                        <td className="cell-user" style={{ padding: "14px 20px" }}>
+                                                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                                                                 <img
                                                                     src={getValidAvatar(user)}
                                                                     alt={user.username}
                                                                     onError={handleImageError}
-                                                                    style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover", border: "1px solid var(--border)", flexShrink: 0 }}
+                                                                    style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", border: "1px solid var(--border)", flexShrink: 0 }}
                                                                 />
                                                                 <div style={{ minWidth: 0, width: "100%" }}>
                                                                     <p style={{ fontSize: 14, fontWeight: 500, color: "var(--foreground)", fontFamily: "var(--body-font)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -527,21 +572,33 @@ export default function Level() {
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td style={{ padding: "14px 24px", textAlign: "right" }}>
-                                                            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: 24, background: "rgba(151,180,224,0.12)", border: "1px solid rgba(151,180,224,0.25)", borderRadius: 20, fontSize: 11, color: "var(--primary)", fontFamily: "var(--body-font)", fontWeight: 600, padding: "0 10px", minWidth: 38 }}>
+
+                                                        {/* 3. NIVEL */}
+                                                        <td className="cell-level" style={{ padding: "14px 20px", textAlign: "right" }}>
+                                                            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: 22, background: "rgba(151,180,224,0.12)", border: "1px solid rgba(151,180,224,0.25)", borderRadius: 20, fontSize: 11, color: "var(--primary)", fontFamily: "var(--body-font)", fontWeight: 600, padding: "0 8px", minWidth: 34 }}>
                                                                 {user.level}
                                                             </span>
                                                         </td>
-                                                        <td style={{ padding: "14px 24px", textAlign: "right", fontSize: 12, color: "var(--muted-foreground)", fontFamily: "var(--body-font)" }}>
-                                                            {formatNumber(user.messages)}
-                                                        </td>
-                                                        <td style={{ padding: "14px 24px", textAlign: "right" }}>
-                                                            <p style={{ fontSize: 12, fontWeight: 600, color: "var(--foreground)", fontFamily: "var(--body-font)" }}>
-                                                                {formatNumber(user.total_xp)}
-                                                            </p>
-                                                            <p style={{ fontSize: 9, color: "var(--muted-foreground)", fontFamily: "var(--body-font)", marginTop: 1, letterSpacing: "0.1em" }}>
-                                                                XP
-                                                            </p>
+
+                                                        {/* CONTENEDOR AGRUPADOR PARA MÓVIL (Mensajes + XP se ponen lado a lado abajo en mobile) */}
+                                                        <td className="cell-stat-container" style={{ padding: 0, display: "contents" }}>
+                                                            {/* 4. MENSAJES */}
+                                                            <td className="cell-msg" style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, color: "var(--muted-foreground)", fontFamily: "var(--body-font)" }}>
+                                                                <span className="mobile-label">Mensajes:</span>
+                                                                {formatNumber(user.messages)}
+                                                            </td>
+
+                                                            {/* 5. XP TOTAL */}
+                                                            <td className="cell-xp" style={{ padding: "14px 20px", textAlign: "right" }}>
+                                                                <div style={{ display: "inline-block", verticalAlign: "middle", textAlign: "right" }}>
+                                                                    <p style={{ fontSize: 12, fontWeight: 600, color: "var(--foreground)", fontFamily: "var(--body-font)", margin: 0 }}>
+                                                                        {formatNumber(user.total_xp)} <span className="mobile-label" style={{ fontSize: 9, marginLeft: 2 }}>XP</span>
+                                                                    </p>
+                                                                    <p className="desktop-only-xp-label" style={{ fontSize: 9, color: "var(--muted-foreground)", fontFamily: "var(--body-font)", marginTop: 1, letterSpacing: "0.1em", display: "block" }}>
+                                                                        XP
+                                                                    </p>
+                                                                </div>
+                                                            </td>
                                                         </td>
                                                     </tr>
                                                 ))}
