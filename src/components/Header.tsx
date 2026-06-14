@@ -12,7 +12,7 @@ const otrosItems = [
   { href: "/Politics", label: "Política" },
   { href: "/pkmn", label: "PKMN" },
   { href: "/donations", label: "Donaciones" },
-  { href: "/laliga", label: "La Liga" },
+  { href: "/laliga", label: "LA MiGA" },
   { href: "/tvp", label: "TVP" },
   { href: "/gobierno", label: "Gobierno" },
   //{ href: "/lpb", label: "LPB" },
