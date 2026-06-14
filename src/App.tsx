@@ -21,6 +21,7 @@ import Reglamento from "./pages/LALIGA/reglamento";
 import LPB from "./pages/LaboralBank/LPB";
 import Level from "./pages/level";
 import PanelDeControl from "./pages/TVP/PanelDeControl.tsx";
+import Consorcio from "./pages/Consorcio/consorcio";
 
 function App() {
   return (
@@ -41,6 +42,8 @@ function App() {
 
         <Route path="/lpb" component={LPB} />
         <Route path="/level" component={Level} />
+        <Route path="/consorcio" component={Consorcio} />
+
 
         <Route path="/tvp" component={TVP} />
         <Route path="/tvp/paneldecontrol" component={PanelDeControl} />
