@@ -32,10 +32,7 @@ export default function Level() {
     useEffect(() => {
         fetch("/api/leaderboard")
             .then((r) => {
-                if (r.status === 401) {
-                    window.location.href = "/auth/discord";
-                    return null;
-                }
+                if (!r.ok) throw new Error("Error al obtener el ranking");
                 return r.json();
             })
             .then((d) => {

@@ -419,7 +419,8 @@ app.get("/api/me/refresh", requireAuth, async (req, res) => {
 });
 
 // ── ENPOINT DE CLASIFICACIÓN / LEADERBOARD (Usa requireAuth para proteger el ranking) ──
-app.get("/api/leaderboard", requireAuth, async (req, res) => {
+// Cambia esto en tu archivo de servidor si aún no lo has hecho:
+app.get("/api/leaderboard", async (req, res) => {
   try {
     const { data: ranking, error } = await supabase
       .from("user_levels")
