@@ -20,7 +20,7 @@ import JuegoLimpio from "./pages/LALIGA/juego-limpio";
 import Reglamento from "./pages/LALIGA/reglamento";
 import LPB from "./pages/LaboralBank/LPB";
 import Level from "./pages/level";
-import PanelDeControl from "./pages/TVP/PanelDeControl";
+import PanelDeControl from "./pages/TVP/PanelDeControl.tsx";
 
 function App() {
   return (

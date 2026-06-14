@@ -4,7 +4,7 @@ const stats = [
   { value: "Casi 1 Año", label: "Desde su fundación" },
   { value: "5400+", label: "Solicitudes de DPI" },
   { value: "100%", label: "Comprometidos por la libertad" },
-  { value: "50+", label: "Países conectados" },
+  { value: "45+", label: "Países conectados" },
 ];
 
 export default function Stats() {
