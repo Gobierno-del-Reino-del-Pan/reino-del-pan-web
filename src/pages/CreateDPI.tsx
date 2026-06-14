@@ -241,9 +241,15 @@ export default function CreateDPI() {
       });
   }, []);
 
-  const handleAutofill = () => {
-    if (!user) return;
+  // Lógica ejecutada al pulsar el botón de Discord
+  const handleDiscordAction = () => {
+    if (!user) {
+      // Si no hay sesión, redirige a la ruta de autenticación de tu backend
+      window.location.href = "/api/auth/discord";
+      return;
+    }
 
+    // Si ya hay sesión iniciada, ejecuta el autorrelleno clásico
     const cleanLetters = user.username.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, " ").trim();
     const standardizedSpace = cleanLetters.replace(/\s+/g, " ");
     const words = standardizedSpace.split(" ");
@@ -275,8 +281,8 @@ export default function CreateDPI() {
     }
   };
 
-  // El botón de autorelleno sale solo si no está verificado ni tiene DPI previo
-  const showAutofillBtn = user && !user.verificado && !user.dpi;
+  // Muestra el botón si el usuario no está logueado, u opcionalmente si está logueado pero no verificado ni tiene un DPI previo
+  const showDiscordBtn = !user || (!user.verificado && !user.dpi);
 
   // Condición de bloqueo estricto si ya posee un DPI verificado
   const hasVerifiedDPI = user && (user.verificado || user.dpi);
@@ -441,6 +447,15 @@ export default function CreateDPI() {
       ]);
 
       setPreview({ front: frontImg, back: backImg, dpiNumber });
+
+      if (user) {
+        setUser({
+          ...user,
+          verificado: true,
+          dpi: dpiNumber
+        });
+      }
+
       setTimeout(() => previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
 
     } catch (err: any) {
@@ -505,7 +520,7 @@ export default function CreateDPI() {
               <div className="grid gap-3 pt-2 max-w-md mx-auto">
                 <button
                   type="button"
-                  onClick={() => setLocation("/dpi/restore")} // Ajusta la ruta a tu sección de perfil/recuperación
+                  onClick={() => setLocation("/dpi/restore")}
                   className="w-full py-3.5 rounded-xl bg-accent text-black font-bold text-sm shadow-md hover:opacity-90 active:scale-[0.99] transition-all"
                 >
                   ¿Quieres Recuperar tu DPI?
@@ -520,23 +535,23 @@ export default function CreateDPI() {
               </div>
             </motion.div>
           ) : (
-            /* Formulario Estándar para usuarios no verificados */
+            /* Formulario Estándar para usuarios no verificados o no logueados */
             <>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
                 <h1 className="text-2xl sm:text-3xl font-bold">
                   Crear <span className="text-accent">DPI</span>
                 </h1>
 
-                {showAutofillBtn && (
+                {showDiscordBtn && (
                   <button
                     type="button"
-                    onClick={handleAutofill}
+                    onClick={handleDiscordAction}
                     className="inline-flex items-center justify-center gap-2 self-start sm:self-auto px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#5865F2] hover:bg-[#4752C4] text-white transition-all shadow-md active:scale-[0.98]"
                   >
                     <svg className="w-4 h-4 fill-current" viewBox="0 0 127.14 96.36">
                       <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.45-5c.87-.64,1.72-1.32,2.53-2a75.47,75.47,0,0,0,72.75,0c.81.71,1.66,1.39,2.53,2a68.43,68.43,0,0,1-10.45,5,77.7,77.7,0,0,0,6.63,10.85,105.73,105.73,0,0,0,31.06-18.83C129.81,50.54,123.36,27.77,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.93,46,53.82,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.17,46,96.06,53,91,65.69,84.69,65.69Z" />
                     </svg>
-                    Autorellenar con Discord
+                    {user ? "Autorellenar con Discord" : "Iniciar sesión con Discord"}
                   </button>
                 )}
               </div>
