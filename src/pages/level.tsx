@@ -180,18 +180,18 @@ function Podium({ top3 }: { top3: RankUser[] }) {
                         transition={{ delay: i * 0.08 + 0.1, type: "spring", stiffness: 200, damping: 20 }}
                         style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1, maxWidth: 220, width: "100%" }}
                     >
-                        {/* Corona flotante para el Top 1 */}
-                        {isFirst ? (
-                            <motion.span
-                                animate={{ y: [0, -4, 0] }}
-                                transition={{ repeat: Infinity, duration: 2.6, ease: "easeInOut" }}
-                                style={{ fontSize: 24, marginBottom: 6, display: "block" }}
-                            >
-                                👑
-                            </motion.span>
-                        ) : (
-                            <div style={{ height: 30 }} /> /* Espaciador simétrico para evitar descentrados */
-                        )}
+                        {/* Corona flotante para el Top 1 — altura fija compartida por los 3 */}
+                        <div style={{ height: 36, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 4 }}>
+                            {isFirst && (
+                                <motion.span
+                                    animate={{ y: [0, -4, 0] }}
+                                    transition={{ repeat: Infinity, duration: 2.6, ease: "easeInOut" }}
+                                    style={{ fontSize: 24, lineHeight: 1, display: "block" }}
+                                >
+                                    👑
+                                </motion.span>
+                            )}
+                        </div>
 
                         {/* Contenedor del Avatar */}
                         <div style={{ position: "relative", marginBottom: 10, display: "flex", justifyContent: "center", alignItems: "center" }}>

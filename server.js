@@ -251,7 +251,7 @@ app.get("/auth/discord/callback", async (req, res) => {
       ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png?size=128`
       : `https://cdn.discordapp.com/embed/avatars/${parseInt(profile.id) % 5}.png`;
 
-    // 🔧 Sincronización automática de perfil en la tabla de usuarios de Supabase
+    // Sincronización automática de perfil en la tabla de usuarios de Supabase
     await supabase.from("usuarios").upsert({
       discord_id: profile.id,
       username: profile.username,
@@ -267,7 +267,7 @@ app.get("/auth/discord/callback", async (req, res) => {
       roles: rolesDelUsuario,
       dpi: dpiData,
       verificado: !!verificado,
-      matrimonio: null, // Valores por defecto en JWT
+      matrimonio: null,
       hijos: []
     };
 
@@ -289,7 +289,7 @@ app.get("/auth/logout", (req, res) => {
   res.redirect("/");
 });
 
-// ── ACTUALIZADO: GET /api/me (Intercepta la sesión y extrae dinámicamente datos de Supabase) ──
+// ── GET /api/me ──
 app.get("/api/me", async (req, res) => {
   const token = req.cookies?.[COOKIE_NAME];
   if (!token) return res.status(401).json({ user: null });
@@ -298,14 +298,12 @@ app.get("/api/me", async (req, res) => {
     const user = jwt.verify(token, JWT_SECRET);
     const discordId = user.id;
 
-    // 🆕 NUEVO: Obtener el nivel y estadísticas desde la tabla 'user_levels'
     const { data: levelData } = await supabase
       .from("user_levels")
       .select("level, xp, total_xp, messages")
       .eq("user_id", discordId)
       .maybeSingle();
 
-    // 1. Consultar Matrimonio (u1 o u2)
     const { data: matrimonioData } = await supabase
       .from('matrimonios')
       .select(`
@@ -329,7 +327,6 @@ app.get("/api/me", async (req, res) => {
       };
     }
 
-    // 2. Consultar Hijos (Adoptivos con FK o Creados con cadenas planas)
     const { data: hijosData } = await supabase
       .from('hijos')
       .select(`
@@ -352,11 +349,9 @@ app.get("/api/me", async (req, res) => {
       };
     });
 
-    // Inyectamos las relaciones en caliente al payload del usuario antes de retornar
     user.matrimonio = matrimonio;
     user.hijos = hijos;
 
-    // 🆕 Inyectamos los datos de nivel con fallback a 0 si el registro no existe aún
     user.level = levelData?.level ?? 0;
     user.xp = levelData?.xp ?? 0;
     user.total_xp = levelData?.total_xp ?? 0;
@@ -389,7 +384,6 @@ app.get("/api/me/refresh", requireAuth, async (req, res) => {
       dpiData = dpi;
     }
 
-    // 🆕 NUEVO: También traemos el nivel aquí al refrescar la sesión
     const { data: levelData } = await supabase
       .from("user_levels")
       .select("level, xp, total_xp, messages")
@@ -400,7 +394,6 @@ app.get("/api/me/refresh", requireAuth, async (req, res) => {
       ...req.user,
       dpi: dpiData,
       verificado: !!verificado,
-      // 🆕 Actualizamos los niveles en el JWT de sesión refrescado
       level: levelData?.level ?? 0,
       xp: levelData?.xp ?? 0,
       total_xp: levelData?.total_xp ?? 0,
@@ -418,10 +411,9 @@ app.get("/api/me/refresh", requireAuth, async (req, res) => {
   }
 });
 
-// ── ENDPOINT DE CLASIFICACIÓN / LEADERBOARD CORREGIDO (Sin JOIN forzado) ──
+// ── ENDPOINT LEADERBOARD ──
 app.get("/api/leaderboard", async (req, res) => {
   try {
-    // 1. Traemos todos los niveles ordenados por total_xp
     const { data: ranking, error: levelErr } = await supabase
       .from("user_levels")
       .select("user_id, username, level, xp, total_xp, messages")
@@ -436,10 +428,8 @@ app.get("/api/leaderboard", async (req, res) => {
       });
     }
 
-    // 2. Extraemos todos los IDs de usuario únicos que tienen nivel
     const userIds = ranking.map(u => u.user_id);
 
-    // 3. Traemos los avatares de la tabla 'usuarios' para esos IDs
     const { data: dbUsuarios, error: userErr } = await supabase
       .from("usuarios")
       .select("discord_id, avatar_url")
@@ -447,13 +437,11 @@ app.get("/api/leaderboard", async (req, res) => {
 
     if (userErr) throw userErr;
 
-    // Creamos un mapa rápido [id]: avatar_url para asociar velozmente
     const avatarMap = {};
     (dbUsuarios || []).forEach(u => {
       avatarMap[u.discord_id] = u.avatar_url;
     });
 
-    // 4. Formateamos e inyectamos el avatar correspondiente de forma manual
     const usuariosFormateados = ranking.map((u, index) => ({
       posicion: index + 1,
       id: u.user_id,
@@ -477,10 +465,7 @@ app.get("/api/leaderboard", async (req, res) => {
     return res.json({
       top5,
       rankingCompleto,
-      destacados: {
-        masMensajes,
-        menosMensajes
-      }
+      destacados: { masMensajes, menosMensajes }
     });
   } catch (err) {
     console.error("[/api/leaderboard] Error catastrófico:", err);
@@ -488,14 +473,10 @@ app.get("/api/leaderboard", async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DPI ENDPOINTS 
-// ─────────────────────────────────────────────────────────────────────────────
+// ── DPI ENDPOINTS ─────────────────────────────────────────────────────────────
 
-// ── NUEVA RUTA PUENTE: Obtener y verificar DPI dinámicamente mediante el ID de Discord ──
 app.get("/api/dpi/verify-discord/:discordId", async (req, res) => {
   const { discordId } = req.params;
-
   try {
     const { data: verificado, error } = await supabase
       .from("verificados")
@@ -514,7 +495,6 @@ app.get("/api/dpi/verify-discord/:discordId", async (req, res) => {
 
     const code = encodeURIComponent(verificado.dpi.replace("DPI - ", ""));
     return res.redirect(`/api/dpi/verify/${code}`);
-
   } catch (err) {
     console.error("[/api/dpi/verify-discord] Error catastrófico:", err);
     return res.status(500).send("Error interno del servidor.");
@@ -580,15 +560,19 @@ app.post("/api/dpi/restore", async (req, res) => {
   }
 });
 
+// ── CORREGIDO: Endpoint de Verificación Dinámica con obtención de Avatar ──
 app.get("/api/dpi/verify/:code", async (req, res) => {
   const raw = decodeURIComponent(req.params.code);
   const full = raw.startsWith("DPI - ") ? raw : `DPI - ${raw}`;
   const { data, error } = await supabase
     .from("dpis").select("dpi_number,nombre,apellidos,genero,fecha_nac,region,issued_at,valid_until")
     .eq("dpi_number", full).single();
+
   if (error || !data) return res.status(404).send(verifyHtml(null));
 
   let rolesDelUsuario = [];
+  let userAvatarUrl = null; // Guardará el avatar dinámico de la DB
+
   try {
     const { data: verificado } = await supabase
       .from("verificados")
@@ -596,24 +580,43 @@ app.get("/api/dpi/verify/:code", async (req, res) => {
       .eq("dpi", full)
       .maybeSingle();
 
-    if (verificado?.discord_id && DISCORD_TOKEN) {
-      const memberRes = await fetch(
-        `${DISCORD_API}/guilds/${GUILD_ID}/members/${verificado.discord_id}`,
-        { headers: { Authorization: `Bot ${DISCORD_TOKEN.trim()}` } }
-      );
-      if (memberRes.ok) {
-        const memberData = await memberRes.json();
-        const memberRoleIds = memberData.roles ?? [];
-        rolesDelUsuario = rolesData.roles.filter(r =>
-          r.discord_role_id && memberRoleIds.includes(r.discord_role_id)
+    if (verificado?.discord_id) {
+      // 1. Buscamos el avatar en caliente en tu tabla local 'usuarios'
+      const { data: dbUser } = await supabase
+        .from("usuarios")
+        .select("avatar_url")
+        .eq("discord_id", verificado.discord_id)
+        .maybeSingle();
+
+      if (dbUser?.avatar_url) {
+        userAvatarUrl = dbUser.avatar_url;
+      }
+
+      // 2. Buscamos sus roles en Discord (si el bot tiene token configurado)
+      if (DISCORD_TOKEN) {
+        const memberRes = await fetch(
+          `${DISCORD_API}/guilds/${GUILD_ID}/members/${verificado.discord_id}`,
+          { headers: { Authorization: `Bot ${DISCORD_TOKEN.trim()}` } }
         );
+        if (memberRes.ok) {
+          const memberData = await memberRes.json();
+          const memberRoleIds = memberData.roles ?? [];
+          rolesDelUsuario = rolesData.roles.filter(r =>
+            r.discord_role_id && memberRoleIds.includes(r.discord_role_id)
+          );
+        }
       }
     }
   } catch (err) {
-    console.error("[/api/dpi/verify] Error obteniendo roles:", err);
+    console.error("[/api/dpi/verify] Error obteniendo datos del usuario:", err);
   }
 
-  res.send(verifyHtml(data, rolesDelUsuario));
+  // Si no se encuentra avatar en la base de datos, usamos un fallback por defecto
+  if (!userAvatarUrl) {
+    userAvatarUrl = "https://cdn.discordapp.com/embed/avatars/0.png";
+  }
+
+  res.send(verifyHtml(data, rolesDelUsuario, userAvatarUrl));
 });
 
 app.get("/health", (_req, res) => res.json({ status: "OK" }));
@@ -624,7 +627,8 @@ function escHtml(str) {
   }[c]));
 }
 
-function verifyHtml(d, roles = []) {
+// ── MODIFICADO: Añadido soporte gráfico para renderizar el Avatar del Ciudadano ──
+function verifyHtml(d, roles = [], avatarUrl = "") {
   if (!d) return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>DPI no encontrado</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;background:#1a0a0a;color:#c0a060;text-align:center}</style></head><body><h2>DPI no encontrado</h2></body></html>`;
 
   const rolesHtml = roles.length > 0 ? `
@@ -647,7 +651,8 @@ function verifyHtml(d, roles = []) {
     *{box-sizing:border-box;margin:0;padding:0}
     body{background:linear-gradient(135deg, #faf9f5 0%, #f5f2eb 100%);color:#1a1410;font-family:'RMNeue','Playfair Display',serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem;letter-spacing:0.3px;-webkit-font-smoothing:antialiased}
     .card{background:#ffffff;border:1px solid #e0dcd3;border-radius:0.75rem;max-width:380px;width:100%;padding:2rem;box-shadow:0 10px 30px rgba(15,50,106,0.08), 0 1px 3px rgba(0,0,0,0.02)}
-    .badge{display:inline-block;background:#f0ede7;color:#0F326A;font-size:.75rem;font-weight:600;letter-spacing:.12em;padding:.35rem .8rem;border-radius:9999px;margin-bottom:1.5rem;text-transform:uppercase}
+    .header-logos{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem}
+    .badge{display:inline-block;background:#f0ede7;color:#0F326A;font-size:.75rem;font-weight:600;letter-spacing:.12em;padding:.35rem .8rem;border-radius:9999px;text-transform:uppercase}
     .dpi-num{font-size:2.7rem;font-family:'Chillvornia',sans-serif;color:#0F326A;background:#f5f2eb;border:1px solid #e0dcd3;padding:.6rem 1rem;border-radius:.5rem;text-align:center;margin-bottom:1.5rem;line-height:1.1}
     .row{display:flex;justify-content:space-between;padding:.65rem 0;border-bottom:1px solid #e0dcd3;font-size:.92rem;gap:.5rem}
     .row:last-child{border-bottom:none}
@@ -656,12 +661,15 @@ function verifyHtml(d, roles = []) {
     .roles-row{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:.6rem;margin-top:1.4rem}
     .role-icon{width:1.7rem;height:1.7rem;font-size:1.7rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;object-fit:contain}
     .valid-stamp{margin-top:1.4rem;text-align:center;font-size:.8rem;color:#166534;font-weight:600;letter-spacing:.15em;text-transform:uppercase;background:#f0fdf4;padding:.4rem;border-radius:.375rem}
-    .logo{display:block;margin:0 auto 1.2rem;width:56px;box-shadow:0 6px 18px rgba(15,50,106,0.08);border-radius:50%;transition:transform 220ms ease,filter 0.25s ease}
-    .logo:hover{transform:translateY(-2px) rotate(-2deg);filter:drop-shadow(0 0 12px rgba(151,180,224,0.45))}
+    .logo{width:56px;height:56px;box-shadow:0 6px 18px rgba(15,50,106,0.08);border-radius:50%;transition:transform 220ms ease}
+    .user-avatar{width:64px;height:64px;border-radius:0.5rem;object-fit:cover;border:2px solid #0F326A;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
 </style>
   <div class="card">
-    <img src="/logo.png" class="logo" alt="Logo" onerror="this.style.display='none'"/>
-    <div style="text-align:center"><span class="badge">✓ DPI Verificado</span></div>
+    <div class="header-logos">
+      <img src="/logo.png" class="logo" alt="Logo" onerror="this.style.display='none'"/>
+      <img src="${escHtml(avatarUrl)}" class="user-avatar" alt="Foto Ciudadano"/>
+    </div>
+    <div style="text-align:center; margin-bottom:1rem;"><span class="badge">✓ DPI Verificado</span></div>
     <div class="dpi-num">${d.dpi_number}</div>
     <div class="row"><span class="label">Nombre</span><span class="val">${escHtml(d.nombre)}</span></div>
     <div class="row"><span class="label">Apellidos</span><span class="val">${escHtml(d.apellidos)}</span></div>
