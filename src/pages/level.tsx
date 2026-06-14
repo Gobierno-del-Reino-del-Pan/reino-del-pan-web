@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 ───────────────────────────────────────────── */
 interface RankUser {
     posicion: number;
-    id: string; // user_id de Supabase
+    id: string; // user_id de Supabase / Discord
     username: string;
     level: number;
     xp: number;
@@ -42,12 +42,29 @@ function formatNumber(n: number): string {
 
 function getValidAvatar(user: RankUser): string {
     const src = user.avatar?.trim();
-    if (src && src !== "" && !src.includes("null") && !src.includes("undefined")) {
+
+    // Si viene una URL directa y válida (que no sea null/undefined en formato string)
+    if (src && src.startsWith("http") && !src.includes("null") && !src.includes("undefined")) {
         return src;
     }
-    // Fallback seguro sin BigInt sobre UUID
-    const seed = user.username?.charCodeAt(0) ?? 0;
-    return `https://cdn.discordapp.com/embed/avatars/${seed % 5}.png`;
+
+    // Si sólo es un hash de avatar de Discord, construimos la URL real del CDN usando su ID
+    if (src && src.length > 5 && !src.startsWith("http") && user.id) {
+        return `https://cdn.discordapp.com/avatars/${user.id}/${src}.png?size=128`;
+    }
+
+    // Fallback definitivo oficial: Sistema de avatares por defecto basado en el ID de usuario de Discord
+    if (user.id) {
+        try {
+            // Evaluamos los últimos dígitos del ID de forma segura para calcular el índice (0 a 5)
+            const lastDigit = Number(user.id.slice(-2)) || 0;
+            return `https://cdn.discordapp.com/embed/avatars/${lastDigit % 6}.png`;
+        } catch {
+            return "https://cdn.discordapp.com/embed/avatars/0.png";
+        }
+    }
+
+    return "https://cdn.discordapp.com/embed/avatars/0.png";
 }
 
 const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
@@ -161,9 +178,10 @@ function Podium({ top3 }: { top3: RankUser[] }) {
                         initial={{ opacity: 0, y: 24 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.08 + 0.1, type: "spring", stiffness: 200, damping: 20 }}
-                        style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1, maxWidth: 220 }}
+                        style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1, maxWidth: 220, width: "100%" }}
                     >
-                        {isFirst && (
+                        {/* Corona flotante para el Top 1 */}
+                        {isFirst ? (
                             <motion.span
                                 animate={{ y: [0, -4, 0] }}
                                 transition={{ repeat: Infinity, duration: 2.6, ease: "easeInOut" }}
@@ -171,9 +189,12 @@ function Podium({ top3 }: { top3: RankUser[] }) {
                             >
                                 👑
                             </motion.span>
+                        ) : (
+                            <div style={{ height: 30 }} /> /* Espaciador simétrico para evitar descentrados */
                         )}
 
-                        <div style={{ position: "relative", marginBottom: 10 }}>
+                        {/* Contenedor del Avatar */}
+                        <div style={{ position: "relative", marginBottom: 10, display: "flex", justifyContent: "center", alignItems: "center" }}>
                             <img
                                 src={getValidAvatar(user)}
                                 alt={user.username}
@@ -193,26 +214,7 @@ function Podium({ top3 }: { top3: RankUser[] }) {
                             </span>
                         </div>
 
-                        <div style={{ position: "relative", marginBottom: 10 }}>
-                            <img
-                                src={getValidAvatar(user)}
-                                alt={user.username}
-                                onError={handleImageError}
-                                style={{
-                                    width: avatarSize[user.posicion],
-                                    height: avatarSize[user.posicion],
-                                    borderRadius: "50%",
-                                    objectFit: "cover",
-                                    border: `3px solid ${topBorder[user.posicion]}`,
-                                    boxShadow: isFirst ? "0 6px 24px rgba(15,50,106,0.3)" : "0 3px 10px rgba(0,0,0,0.08)",
-                                    display: "block",
-                                }}
-                            />
-                            <span style={{ position: "absolute", bottom: -4, right: -4, fontSize: 16, lineHeight: 1 }}>
-                                {MEDAL[user.posicion]}
-                            </span>
-                        </div>
-
+                        {/* Datos de Texto */}
                         <p style={{
                             fontSize: 13, fontWeight: 600, fontFamily: "var(--body-font)",
                             color: "var(--foreground)", textAlign: "center", marginBottom: 2,
@@ -221,10 +223,11 @@ function Podium({ top3 }: { top3: RankUser[] }) {
                         }}>
                             @{user.username}
                         </p>
-                        <p style={{ fontSize: 11, color: "var(--muted-foreground)", fontFamily: "var(--body-font)", marginBottom: 12 }}>
+                        <p style={{ fontSize: 11, color: "var(--muted-foreground)", fontFamily: "var(--body-font)", marginBottom: 12, textAlign: "center" }}>
                             Nv. {user.level}
                         </p>
 
+                        {/* Bloque visual del podio */}
                         <div style={{
                             width: "100%",
                             height: podiumHeight[user.posicion],
