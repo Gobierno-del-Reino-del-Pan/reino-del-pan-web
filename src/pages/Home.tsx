@@ -272,7 +272,6 @@ export default function Home() {
               <div className="h-5 w-[1px] bg-white/20"></div>
               <h3 className="font-tvp-head text-base md:text-xl font-bold tracking-widest uppercase text-white flex items-center gap-2">
                 <span className="w-2.5 h-2.5 bg-[#ff4d00] rounded-full animate-ping"></span>
-                TVP EN DIRECTO
               </h3>
             </div>
             <Link to="/tvp">

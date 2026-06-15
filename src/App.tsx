@@ -22,6 +22,10 @@ import LPB from "./pages/LaboralBank/LPB";
 import Level from "./pages/level";
 import PanelDeControl from "./pages/TVP/PanelDeControl.tsx";
 import Consorcio from "./pages/Consorcio/consorcio";
+import Maps from "./pages/Maps";
+
+
+
 
 function App() {
   return (
@@ -43,7 +47,7 @@ function App() {
         <Route path="/lpb" component={LPB} />
         <Route path="/level" component={Level} />
         <Route path="/consorcio" component={Consorcio} />
-
+        <Route path="/maps" component={Maps} />
 
         <Route path="/tvp" component={TVP} />
         <Route path="/tvp/paneldecontrol" component={PanelDeControl} />
