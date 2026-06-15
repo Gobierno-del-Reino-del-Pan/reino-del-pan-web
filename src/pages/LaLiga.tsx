@@ -55,6 +55,47 @@ export default function LaLigaPaniense() {
                 </div>
             </header>
 
+            {/* PANEL DE ESCUDOS EN BLANCO */}
+            <section className="bg-slate-950 py-8 px-4 border-b border-slate-900">
+                <div className="max-w-7xl mx-auto">
+                    {/* Grid responsivo: cambia los números si tienes más o menos equipos */}
+                    <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-6 items-center justify-items-center">
+                        {[
+                            "Martini City F.C.png",
+                            "barcelona.png",
+                            "atletico.png",
+                            "valencia.png",
+                            "sevilla.png",
+                            "betis.png",
+                            "sociedad.png",
+                            "athletic.png",
+                            "girona.png",
+                            "villarreal.png"
+                            // ... Añade aquí todos los nombres exactos de tus archivos de la carpeta
+                        ].map((archivo, index) => {
+                            // Extraemos el nombre del equipo quitando la extensión para el atributo 'alt'
+                            const nombreEquipo = archivo.split('.')[0];
+
+                            return (
+                                <div
+                                    key={index}
+                                    className="group flex flex-col items-center justify-center p-2 transition duration-300"
+                                    title={nombreEquipo.toUpperCase()}
+                                >
+                                    <img
+                                        src={`/LALIGA/Equipos/${archivo}`}
+                                        alt={`Escudo de ${nombreEquipo}`}
+                                        // 'brightness-0 invert' hace la magia del blanco puro.
+                                        // 'opacity-60 hover:opacity-100' le da un toque interactivo muy pro.
+                                        className="h-12 w-12 object-contain filter brightness-0 invert opacity-60 group-hover:opacity-100 group-hover:scale-110 transition duration-200"
+                                    />
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            </section>
+
             {/* MAIN CONTENT */}
             <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
 
@@ -142,7 +183,7 @@ export default function LaLigaPaniense() {
                         </h3>
                         <div className="space-y-2 text-sm font-semibold text-slate-300">
                             <div className="flex justify-between items-center bg-red-600/10 p-3 rounded-lg border border-red-600/30">
-                                <span className="font-bold text-white">1. Real Pania FC</span>
+                                <span className="font-bold text-white">1. Martini City F.C.</span>
                                 <span className="text-red-500 font-black">24 PTS</span>
                             </div>
                             <div className="flex justify-between items-center p-3 hover:bg-slate-800 rounded-lg transition">
