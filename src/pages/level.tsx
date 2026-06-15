@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -314,6 +314,7 @@ export default function Level() {
     const [data, setData] = useState<LeaderboardData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
         const controller = new AbortController();
@@ -328,6 +329,17 @@ export default function Level() {
 
         return () => controller.abort();
     }, []);
+
+    // Filtrar rankingCompleto por nombre o ID (búsqueda case-insensitive)
+    const filteredRanking = useMemo(() => {
+        if (!data) return [];
+        const term = searchTerm.trim().toLowerCase();
+        if (term === "") return data.rankingCompleto;
+        return data.rankingCompleto.filter(user =>
+            user.username.toLowerCase().includes(term) ||
+            user.id.toLowerCase().includes(term)
+        );
+    }, [data, searchTerm]);
 
     const top3 = data?.top5.slice(0, 3) ?? [];
     const rest = data?.top5.slice(3) ?? [];
@@ -469,7 +481,7 @@ export default function Level() {
                                     ))}
                                 </motion.div>
 
-                                {/* Tabla Completa Inmersiva */}
+                                {/* Tabla Completa Inmersiva con Buscador */}
                                 <motion.div
                                     initial={{ opacity: 0, y: 14 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -482,6 +494,58 @@ export default function Level() {
                                         boxShadow: "0 4px 20px rgba(15,50,106,0.02)"
                                     }}
                                 >
+                                    <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", background: "rgba(151,180,224,0.06)", display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
+                                        <p style={{ fontSize: 11, letterSpacing: "0.28em", color: "var(--muted-foreground)", textTransform: "uppercase", fontWeight: 600, fontFamily: "var(--body-font)", margin: 0 }}>
+                                            📋 &nbsp;Registro General de Ciudadanos
+                                        </p>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                                            <div style={{ position: "relative" }}>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Buscar por nombre o ID..."
+                                                    value={searchTerm}
+                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                    style={{
+                                                        padding: "6px 12px",
+                                                        paddingLeft: "28px",
+                                                        fontSize: "12px",
+                                                        fontFamily: "var(--body-font)",
+                                                        background: "var(--background)",
+                                                        border: "1px solid var(--border)",
+                                                        borderRadius: "40px",
+                                                        color: "var(--foreground)",
+                                                        outline: "none",
+                                                        width: "220px",
+                                                        transition: "0.2s"
+                                                    }}
+                                                    onFocus={e => e.currentTarget.style.borderColor = "var(--accent)"}
+                                                    onBlur={e => e.currentTarget.style.borderColor = "var(--border)"}
+                                                />
+                                                <span style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", fontSize: "12px", opacity: 0.6 }}>🔍</span>
+                                            </div>
+                                            {searchTerm && (
+                                                <button
+                                                    onClick={() => setSearchTerm("")}
+                                                    style={{
+                                                        background: "transparent",
+                                                        border: "none",
+                                                        fontSize: "12px",
+                                                        color: "var(--accent)",
+                                                        cursor: "pointer",
+                                                        fontFamily: "var(--body-font)",
+                                                        padding: "4px 8px",
+                                                        borderRadius: "20px",
+                                                        transition: "0.2s"
+                                                    }}
+                                                    onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.backgroundColor = "rgba(151,180,224,0.1)"}
+                                                    onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"}
+                                                >
+                                                    ✕ Limpiar
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+
                                     {/* Inyección de estilos CSS para manejar el responsive de la tabla sin librerías externas */}
                                     <style>{`
         @media (max-width: 640px) {
@@ -518,12 +582,6 @@ export default function Level() {
         }
     `}</style>
 
-                                    <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--border)" }}>
-                                        <p style={{ fontSize: 11, letterSpacing: "0.28em", color: "var(--muted-foreground)", textTransform: "uppercase", fontWeight: 600, fontFamily: "var(--body-font)" }}>
-                                            📋 &nbsp;Registro General de Ciudadanos
-                                        </p>
-                                    </div>
-
                                     <div style={{ overflowX: "auto" }}>
                                         <table className="responsive-table" style={{ width: "100%", borderCollapse: "collapse" }}>
                                             <thead>
@@ -543,65 +601,73 @@ export default function Level() {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {data.rankingCompleto.map((user, i) => (
-                                                    <tr
-                                                        key={user.id}
-                                                        style={{ borderBottom: i < data.rankingCompleto.length - 1 ? "1px solid rgba(224,220,211,0.5)" : "none", transition: "background 0.2s ease" }}
-                                                        onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = "rgba(151,180,224,0.06)"}
-                                                        onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = "transparent"}
-                                                    >
-                                                        {/* 1. POSICIÓN */}
-                                                        <td className="cell-pos" style={{ padding: "14px 20px", textAlign: "center", fontFamily: "var(--display-font)", fontSize: 16, color: "var(--primary)", width: 50 }}>
-                                                            {user.posicion}
-                                                        </td>
-
-                                                        {/* 2. CIUDADANO (Avatar + Nombre + Barra) */}
-                                                        <td className="cell-user" style={{ padding: "14px 20px" }}>
-                                                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                                                                <img
-                                                                    src={getValidAvatar(user)}
-                                                                    alt={user.username}
-                                                                    onError={handleImageError}
-                                                                    style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", border: "1px solid var(--border)", flexShrink: 0 }}
-                                                                />
-                                                                <div style={{ minWidth: 0, width: "100%" }}>
-                                                                    <p style={{ fontSize: 14, fontWeight: 500, color: "var(--foreground)", fontFamily: "var(--body-font)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                                                        @{user.username}
-                                                                    </p>
-                                                                    <XPBar xp={user.xp} />
-                                                                </div>
-                                                            </div>
-                                                        </td>
-
-                                                        {/* 3. NIVEL */}
-                                                        <td className="cell-level" style={{ padding: "14px 20px", textAlign: "right" }}>
-                                                            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: 22, background: "rgba(151,180,224,0.12)", border: "1px solid rgba(151,180,224,0.25)", borderRadius: 20, fontSize: 11, color: "var(--primary)", fontFamily: "var(--body-font)", fontWeight: 600, padding: "0 8px", minWidth: 34 }}>
-                                                                {user.level}
-                                                            </span>
-                                                        </td>
-
-                                                        {/* CONTENEDOR AGRUPADOR PARA MÓVIL (Mensajes + XP se ponen lado a lado abajo en mobile) */}
-                                                        <td className="cell-stat-container" style={{ padding: 0, display: "contents" }}>
-                                                            {/* 4. MENSAJES */}
-                                                            <td className="cell-msg" style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, color: "var(--muted-foreground)", fontFamily: "var(--body-font)" }}>
-                                                                <span className="mobile-label">Mensajes:</span>
-                                                                {formatNumber(user.messages)}
-                                                            </td>
-
-                                                            {/* 5. XP TOTAL */}
-                                                            <td className="cell-xp" style={{ padding: "14px 20px", textAlign: "right" }}>
-                                                                <div style={{ display: "inline-block", verticalAlign: "middle", textAlign: "right" }}>
-                                                                    <p style={{ fontSize: 12, fontWeight: 600, color: "var(--foreground)", fontFamily: "var(--body-font)", margin: 0 }}>
-                                                                        {formatNumber(user.total_xp)} <span className="mobile-label" style={{ fontSize: 9, marginLeft: 2 }}>XP</span>
-                                                                    </p>
-                                                                    <p className="desktop-only-xp-label" style={{ fontSize: 9, color: "var(--muted-foreground)", fontFamily: "var(--body-font)", marginTop: 1, letterSpacing: "0.1em", display: "block" }}>
-                                                                        XP
-                                                                    </p>
-                                                                </div>
-                                                            </td>
+                                                {filteredRanking.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={5} style={{ textAlign: "center", padding: "40px 20px", color: "var(--muted-foreground)", fontFamily: "var(--body-font)", fontSize: 13 }}>
+                                                            🧙 No se encontró ningún ciudadano con "{searchTerm}"
                                                         </td>
                                                     </tr>
-                                                ))}
+                                                ) : (
+                                                    filteredRanking.map((user, i) => (
+                                                        <tr
+                                                            key={user.id}
+                                                            style={{ borderBottom: i < filteredRanking.length - 1 ? "1px solid rgba(224,220,211,0.5)" : "none", transition: "background 0.2s ease" }}
+                                                            onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = "rgba(151,180,224,0.06)"}
+                                                            onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = "transparent"}
+                                                        >
+                                                            {/* 1. POSICIÓN */}
+                                                            <td className="cell-pos" style={{ padding: "14px 20px", textAlign: "center", fontFamily: "var(--display-font)", fontSize: 16, color: "var(--primary)", width: 50 }}>
+                                                                {user.posicion}
+                                                            </td>
+
+                                                            {/* 2. CIUDADANO (Avatar + Nombre + Barra) */}
+                                                            <td className="cell-user" style={{ padding: "14px 20px" }}>
+                                                                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                                                    <img
+                                                                        src={getValidAvatar(user)}
+                                                                        alt={user.username}
+                                                                        onError={handleImageError}
+                                                                        style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", border: "1px solid var(--border)", flexShrink: 0 }}
+                                                                    />
+                                                                    <div style={{ minWidth: 0, width: "100%" }}>
+                                                                        <p style={{ fontSize: 14, fontWeight: 500, color: "var(--foreground)", fontFamily: "var(--body-font)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                                            @{user.username}
+                                                                        </p>
+                                                                        <XPBar xp={user.xp} />
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+
+                                                            {/* 3. NIVEL */}
+                                                            <td className="cell-level" style={{ padding: "14px 20px", textAlign: "right" }}>
+                                                                <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: 22, background: "rgba(151,180,224,0.12)", border: "1px solid rgba(151,180,224,0.25)", borderRadius: 20, fontSize: 11, color: "var(--primary)", fontFamily: "var(--body-font)", fontWeight: 600, padding: "0 8px", minWidth: 34 }}>
+                                                                    {user.level}
+                                                                </span>
+                                                            </td>
+
+                                                            {/* CONTENEDOR AGRUPADOR PARA MÓVIL (Mensajes + XP se ponen lado a lado abajo en mobile) */}
+                                                            <td className="cell-stat-container" style={{ padding: 0, display: "contents" }}>
+                                                                {/* 4. MENSAJES */}
+                                                                <td className="cell-msg" style={{ padding: "14px 20px", textAlign: "right", fontSize: 12, color: "var(--muted-foreground)", fontFamily: "var(--body-font)" }}>
+                                                                    <span className="mobile-label">Mensajes:</span>
+                                                                    {formatNumber(user.messages)}
+                                                                </td>
+
+                                                                {/* 5. XP TOTAL */}
+                                                                <td className="cell-xp" style={{ padding: "14px 20px", textAlign: "right" }}>
+                                                                    <div style={{ display: "inline-block", verticalAlign: "middle", textAlign: "right" }}>
+                                                                        <p style={{ fontSize: 12, fontWeight: 600, color: "var(--foreground)", fontFamily: "var(--body-font)", margin: 0 }}>
+                                                                            {formatNumber(user.total_xp)} <span className="mobile-label" style={{ fontSize: 9, marginLeft: 2 }}>XP</span>
+                                                                        </p>
+                                                                        <p className="desktop-only-xp-label" style={{ fontSize: 9, color: "var(--muted-foreground)", fontFamily: "var(--body-font)", marginTop: 1, letterSpacing: "0.1em", display: "block" }}>
+                                                                            XP
+                                                                        </p>
+                                                                    </div>
+                                                                </td>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
                                             </tbody>
                                         </table>
                                     </div>
