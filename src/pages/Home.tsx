@@ -5,6 +5,20 @@ import Footer from "../components/Footer";
 // Conexión a tu cliente de Supabase
 import { supabase } from "../lib/supabaseClient";
 
+// Interface estricta de TypeScript para el Servicio Meteorológico
+interface RegionWeather {
+  id: string;
+  region: string;
+  ciudad: string;
+  lat: number;
+  lon: number;
+  bgGradient: string;
+  temp?: string;
+  clima?: string;
+  icon?: string;
+  maxMin?: string;
+}
+
 const NEWS_ITEMS = [
   "Muy pronto los ciudadanos en proceso de regularización podrán solicitar su TPIE",
   "Corelia realizará una declaración institucional para informar sobre la situación de LaLiga Paniense",
@@ -39,7 +53,34 @@ export default function Home() {
   const [mainNews, setMainNews] = useState(LOCAL_NEWS_FALLBACK.main);
   const [secondaryNews, setSecondaryNews] = useState(LOCAL_NEWS_FALLBACK.secondary);
 
+  // Estados del Servicio Meteorológico
+  const [weatherData, setWeatherData] = useState<RegionWeather[]>([]);
+  const [weatherLoading, setWeatherLoading] = useState<boolean>(true);
+
+  // Configuración de las Regiones del Reino del Pan
+  const regionesConfig: RegionWeather[] = [
+    { id: "baguette", region: "Baguette 🥖", ciudad: "Pantopía", lat: 37.3828, lon: -5.9732, bgGradient: "from-amber-500/20 via-orange-600/10 to-transparent" },
+    { id: "pimbo", region: "Pimbo 🍞", ciudad: "Pimbolandia", lat: 40.9688, lon: -5.6639, bgGradient: "from-blue-400/10 via-slate-500/5 to-transparent" },
+    { id: "pretzel", region: "Pretzel 🥨", ciudad: "Pretzel", lat: 39.4698, lon: -0.3763, bgGradient: "from-sky-400/15 via-blue-500/5 to-transparent" },
+    { id: "croissant", region: "Croissant 🥐", ciudad: "Croissant", lat: 43.4832, lon: -1.5586, bgGradient: "from-indigo-500/15 via-slate-600/10 to-transparent" },
+    { id: "singluten", region: "Sin Glúten 🌾", ciudad: "Sin Glúten", lat: -34.6037, lon: -58.3816, bgGradient: "from-cyan-600/15 via-blue-900/10 to-transparent" },
+    { id: "panplano", region: "Pan Plano/Arepa 🫓", ciudad: "Arepada", lat: 34.0522, lon: -118.2437, bgGradient: "from-zinc-400/20 via-neutral-700/5 to-transparent" }
+  ];
+
+  const getWeatherStatus = (code: number) => {
+    if ([0].includes(code)) return { texto: "Despejado", icon: "☀️" };
+    if ([1, 2, 3].includes(code)) return { texto: "Parcialmente Nublado", icon: "⛅" };
+    if ([45, 48].includes(code)) return { texto: "Niebla", icon: "🌫️" };
+    if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return { texto: "Lluvia", icon: "🌧️" };
+    if ([71, 73, 75, 77, 85, 86].includes(code)) return { texto: "Nieve", icon: "❄️" };
+    if ([95, 96, 99].includes(code)) return { texto: "Tormenta eléctrica", icon: "⛈️" };
+    return { texto: "Variable", icon: "🌤️" };
+  };
+
+  // useEffect Unificado para Supabase y Clima
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchSupabaseNews() {
       try {
         if (supabase) {
@@ -52,7 +93,7 @@ export default function Home() {
 
           if (data && data.length > 0) {
             const supabaseMain = data.find((n: any) => n.type === 'main');
-            if (supabaseMain) {
+            if (supabaseMain && isMounted) {
               setMainNews({
                 category: supabaseMain.category,
                 title: supabaseMain.title,
@@ -63,7 +104,7 @@ export default function Home() {
             }
 
             const supabaseSecondaries = data.filter((n: any) => n.type === 'secondary');
-            if (supabaseSecondaries.length > 0) {
+            if (supabaseSecondaries.length > 0 && isMounted) {
               setSecondaryNews(supabaseSecondaries.slice(0, 2).map((n: any) => ({
                 id: n.id,
                 category: n.category,
@@ -79,7 +120,42 @@ export default function Home() {
       }
     }
 
+    const fetchWeather = async () => {
+      try {
+        const promesas = regionesConfig.map(async (reg) => {
+          const url = `https://api.open-meteo.com/v1/forecast?latitude=${reg.lat}&longitude=${reg.lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
+          const res = await fetch(url);
+          const data = await res.json();
+          const infoClima = getWeatherStatus(data.current.weather_code);
+
+          return {
+            ...reg,
+            temp: `${Math.round(data.current.temperature_2m)}°C`,
+            clima: infoClima.texto,
+            icon: infoClima.icon,
+            maxMin: `Máx: ${Math.round(data.daily.temperature_2m_max[0])}° Mín: ${Math.round(data.daily.temperature_2m_min[0])}°`,
+          };
+        });
+
+        const resultados = await Promise.all(promesas);
+        if (isMounted) {
+          setWeatherData(resultados);
+          setWeatherLoading(false);
+        }
+      } catch (error) {
+        console.error("Error al sincronizar con el satélite meteorológico:", error);
+      }
+    };
+
     fetchSupabaseNews();
+    fetchWeather();
+
+    const interval = setInterval(fetchWeather, 10 * 60 * 1000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   const handleNewsClick = (title: string) => {
@@ -200,6 +276,66 @@ export default function Home() {
         />
       </section>
 
+      {/* ── SECCIÓN METEOROLÓGICA DEL REINO (Inyectada exactamente aquí) ── */}
+      <section className="w-full bg-neutral-950 py-16 px-4 sm:px-6 border-t border-white/5">
+        <div className="container mx-auto max-w-7xl">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+            <div>
+              <span className="text-xs uppercase tracking-[0.3em] text-accent font-bold block mb-2">
+                Servicio Meteorológico Nacional
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                Estado del Clima en el Reino
+              </h2>
+            </div>
+            <p className="text-xs text-white/50 max-w-xs md:text-right font-medium">
+              Datos reales medidos por satélite para la gobernanza territorial del Reino del Pan.
+            </p>
+          </div>
+
+          {weatherLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="animate-pulse h-44 rounded-[24px] bg-neutral-900/50 border border-white/5" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {weatherData.map((item) => (
+                <div
+                  key={item.id}
+                  className={`relative overflow-hidden rounded-[24px] border border-white/10 bg-gradient-to-br ${item.bgGradient} bg-neutral-900/40 backdrop-blur-xl p-6 flex flex-col justify-between h-44 transition-all duration-300 hover:scale-[1.02] hover:border-white/20 hover:bg-neutral-900/60 shadow-md group`}
+                >
+                  <div className="flex justify-between items-start z-10">
+                    <div>
+                      <span className="text-[11px] font-bold tracking-widest uppercase text-white/40 block mb-0.5">
+                        Región {item.region}
+                      </span>
+                      <h3 className="text-xl font-bold text-white tracking-tight group-hover:text-accent transition-colors duration-300">
+                        {item.ciudad}
+                      </h3>
+                    </div>
+                    <span className="text-3xl filter drop-shadow-sm select-none">{item.icon}</span>
+                  </div>
+
+                  <div className="flex justify-between items-end z-10">
+                    <div>
+                      <p className="text-xs font-semibold text-white/80">{item.clima}</p>
+                      <p className="text-[11px] text-white/50 mt-0.5 font-medium">{item.maxMin}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-5xl font-light tracking-tighter text-white">
+                        {item.temp}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* ── SECCIÓN: CONTENEDOR INTEGRADO CON FONDO BLANCO AZULADO (#CDCCD4) ── */}
       <section className="w-full px-4 sm:px-6 py-16 lg:py-24 bg-[#CDCCD4]">
         <div className="container mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -222,7 +358,7 @@ export default function Home() {
               </h3>
               <p className="mt-4 text-[14px] sm:text-base text-neutral-700 leading-relaxed font-normal">
                 El Gobierno del Reino del Pan y Laboral Kutxa han alcanzado un acuerdo para la creación de Laboral Panian Bank.
-                Una nueva entidad financiera que impulsará el ahorro, la inversión y el crecimiento económico del país.
+                Una nueva entidad financiera que impulsará el ahorro, la inversión and el crecimiento económico del país.
                 El futuro de la banca paniense comienza hoy.
               </p>
             </div>
@@ -274,7 +410,7 @@ export default function Home() {
                 <span className="w-2.5 h-2.5 bg-[#ff4d00] rounded-full animate-ping"></span>
               </h3>
             </div>
-            <Link to="/tvp">
+            <Link href="/tvp">
               <span className="text-xs text-[#ff4d00] cursor-pointer hover:underline uppercase tracking-[0.25em] font-bold font-tvp-head transition-all">
                 Portal Play →
               </span>
