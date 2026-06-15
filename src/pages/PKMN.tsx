@@ -249,7 +249,7 @@ export default function PKMN() {
               </motion.div>
 
               &nbsp;&nbsp;
-
+              {/*NOTA SIMPLE */}
               {/* Tarjeta 3: Popplio */}
               <motion.div {...fadeUp(0.42)} className="col-span-1 md:col-span-2 rounded-2xl border border-blue-500/20 bg-gradient-to-r from-card/40 via-blue-950/[0.02] to-card/40 overflow-hidden flex flex-col justify-between shadow-md">
                 <div className="p-6 sm:p-8 flex flex-col md:flex-row gap-6 md:items-center">
