@@ -7,6 +7,7 @@ const navItems = [
   { href: "/level", label: "Niveles" },
   { href: "/dpi", label: "DPI" },
   { href: "/maps", label: "Mapa" },
+  { href: "/borp", label: "BORP" },
 ];
 
 const otrosItems = [
