@@ -43,19 +43,48 @@ export default function Gobierno() {
               </p>
 
               <p className="text-[14px] text-foreground/65 leading-relaxed">
-Estado institucional
+                Estado institucional
 
-Actualmente no existe un gobierno formalmente estructurado ni un gabinete en funciones dentro del Reino del Pan. Sin embargo, se mantiene un gobierno provisional encargado de la administración y supervisión del orden general, formado por los Moderadores y Vigilantes, quienes velan por el cumplimiento de las leyes y el funcionamiento básico del sistema.
+                Actualmente no existe un gobierno formalmente estructurado ni un gabinete en funciones dentro del Reino del Pan. Sin embargo, se mantiene un gobierno provisional encargado de la administración y supervisión del orden general, formado por los Moderadores y Vigilantes, quienes velan por el cumplimiento de las leyes y el funcionamiento básico del sistema.
 
-Todas estas funciones operan bajo la autoridad de Martini, quien ejerce la coordinación general del sistema institucional de manera provisional.
+                Todas estas funciones operan bajo la autoridad de Martini, quien ejerce la coordinación general del sistema institucional de manera provisional.
               </p>
+            </motion.div>
+
+            {/* MINISTERIO DE ECONOMÍA, COMERCIO Y TRANSPORTE */}
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.25 }}
+              className="mt-10 rounded-[20px] border border-accent/20 bg-accent/5 p-6 flex flex-col sm:flex-row sm:items-center gap-4"
+            >
+              <div className="flex-1">
+                <p className="text-xs uppercase tracking-[0.3em] text-accent font-medium mb-2">
+                  Recurso Oficial
+                </p>
+                <p className="text-[15px] font-semibold">
+                  Ministerio de Economía, Comercio y Transporte
+                </p>
+                <p className="mt-1 text-[13px] text-foreground/60 leading-relaxed">
+                  Portal oficial del Ministerio de Economía, Comercio y Transporte del Reino del Pan.
+                </p>
+              </div>
+
+              <a
+                href="https://mineco.duckdns.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-minimal shrink-0"
+              >
+                Visitar
+              </a>
             </motion.div>
 
             {/* ENCICLOPAN */}
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
+              transition={{ duration: 0.6, delay: 0.35 }}
               className="mt-10 rounded-[20px] border border-accent/20 bg-accent/5 p-6 flex flex-col sm:flex-row sm:items-center gap-4"
             >
               <div className="flex-1">
