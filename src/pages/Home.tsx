@@ -63,8 +63,11 @@ export default function Home() {
     { id: "pimbo", region: "Pimbo 🍞", ciudad: "Pimbolandia", lat: 40.9688, lon: -5.6639, bgGradient: "from-blue-400/10 via-slate-500/5 to-transparent" },
     { id: "pretzel", region: "Pretzel 🥨", ciudad: "Pretzel", lat: 39.4698, lon: -0.3763, bgGradient: "from-sky-400/15 via-blue-500/5 to-transparent" },
     { id: "croissant", region: "Croissant 🥐", ciudad: "Croissant", lat: 43.4832, lon: -1.5586, bgGradient: "from-indigo-500/15 via-slate-600/10 to-transparent" },
-    { id: "singluten", region: "Sin Glúten 🌾", ciudad: "Sin Glúten", lat: -34.6037, lon: -58.3816, bgGradient: "from-cyan-600/15 via-blue-900/10 to-transparent" },
-    { id: "panplano", region: "Pan Plano/Arepa 🫓", ciudad: "Arepada", lat: 34.0522, lon: -118.2437, bgGradient: "from-zinc-400/20 via-neutral-700/5 to-transparent" }
+    { id: "singluten", region: "Sin Glúten 🌾", ciudad: "Sin Glúten", lat: 34.0522, lon: -118.2437, bgGradient: "from-zinc-400/20 via-neutral-700/5 to-transparent" },
+    { id: "panplano", region: "Pan Plano/Arepa 🫓", ciudad: "Arepada", lat: -34.6037, lon: -58.3816, bgGradient: " from-red-600/15 via-blue-900/10 to-transparent" }
+
+
+
   ];
 
   const getWeatherStatus = (code: number) => {
