@@ -63,10 +63,10 @@ export default function Gobierno() {
                   Recurso Oficial
                 </p>
                 <p className="text-[15px] font-semibold">
-                  Ministerio de Economía, Comercio y Transporte
+                  Ministerio de Economía, Comercio y Empresa
                 </p>
                 <p className="mt-1 text-[13px] text-foreground/60 leading-relaxed">
-                  Portal oficial del Ministerio de Economía, Comercio y Transporte del Reino del Pan.
+                  Portal oficial del Ministerio de Economía, Comercio y Empresa del Reino del Pan.
                 </p>
               </div>
 

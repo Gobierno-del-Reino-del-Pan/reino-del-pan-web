@@ -35,7 +35,7 @@ export default function Donations() {
                   Anuncio Oficial
                 </span>
                 <p className="text-sm text-foreground/80 leading-relaxed font-medium">
-                  Muy pronto el Estado Paniense utilizará <span className="text-accent font-semibold">Laboral Panian Bank</span> para la gestión financiera automatizada.
+                  El Estado Paniense utiliza <span className="text-accent font-semibold">Laboral Panian Bank</span> para la gestión financiera automatizada de las donaciones.
                 </p>
               </div>
             </motion.div>
@@ -53,13 +53,13 @@ export default function Donations() {
               <div className="mt-4 w-12 h-0.5 bg-accent/60 rounded-full" />
 
               <p className="mt-5 max-w-2xl text-[15px] sm:text-base leading-relaxed text-foreground/70">
-                Apoya al desarrollo y sostenimiento del Reino del Pan enviando Panedas directamente a{" "}
-                <strong className="text-foreground font-semibold">rexy#0505</strong> a
-                través de los canales oficiales de economía en nuestro servidor de Discord.
+                Apoya al desarrollo y sostenimiento del Reino del Pan donando Panedas directamente
+                al <strong className="text-foreground font-semibold">Gobierno</strong>, a través del
+                comando oficial en Discord o mediante transferencia bancaria con Laboral Panian Bank (LPB).
               </p>
             </motion.div>
 
-            {/* Ficha del Destinatario (Diseño Mejorado) */}
+            {/* Método 1: Comando de Discord */}
             <motion.div
               {...fadeUp(0.22)}
               className="mt-12 rounded-2xl border border-border/60 bg-card/50 backdrop-blur-sm shadow-md overflow-hidden"
@@ -70,21 +70,21 @@ export default function Donations() {
                 <div className="sm:col-span-2 space-y-3">
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.3em] text-accent/80 font-mono font-semibold">
-                      Destinatario de Fondos
+                      Donación vía Discord
                     </p>
                     <p className="mt-1 text-3xl sm:text-4xl font-bold display-font tracking-tight text-foreground">
-                      rexy#0505
+                      Destinatario: Gobierno
                     </p>
                   </div>
 
                   <div className="flex flex-wrap gap-x-6 gap-y-2 pt-1 text-xs text-foreground/60 font-mono">
                     <div>
-                      <span className="text-foreground/40 mr-1.5">ID:</span>
-                      <code className="bg-background px-1.5 py-0.5 rounded border border-border/40 text-accent font-sans">832339047464173619</code>
+                      <span className="text-foreground/40 mr-1.5">Comando:</span>
+                      <code className="bg-background px-1.5 py-0.5 rounded border border-border/40 text-accent font-sans">!dar gobierno (cantidad)</code>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      <span>Cuenta Oficial Verificada</span>
+                      <span>Canal Oficial Verificado</span>
                     </div>
                   </div>
                 </div>
@@ -92,7 +92,8 @@ export default function Donations() {
                 {/* Columna Derecha: Información de rol */}
                 <div className="sm:border-l border-border/60 sm:pl-6 h-full flex flex-col justify-center">
                   <p className="text-xs text-foreground/50 leading-relaxed">
-                    Usuario único y oficial de la corona encargado de la recepción y auditoría de donaciones en Panedas.
+                    Escribe el comando en el canal de economía sustituyendo (cantidad) por el número
+                    de Panedas que deseas donar al Gobierno del Reino del Pan.
                   </p>
                 </div>
               </div>
@@ -114,9 +115,62 @@ export default function Donations() {
               </div>
             </motion.div>
 
+            {/* Método 2: Laboral Panian Bank */}
+            <motion.div
+              {...fadeUp(0.28)}
+              className="mt-6 rounded-2xl border border-border/60 bg-card/50 backdrop-blur-sm shadow-md overflow-hidden"
+            >
+              <div className="p-6 sm:p-8 grid gap-6 sm:grid-cols-3 items-start">
+
+                <div className="sm:col-span-2 space-y-3">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-accent/80 font-mono font-semibold">
+                      Donación vía LPB
+                    </p>
+                    <p className="mt-1 text-3xl sm:text-4xl font-bold display-font tracking-tight text-foreground">
+                      Laboral Panian Bank
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-x-6 gap-y-2 pt-1 text-xs text-foreground/60 font-mono">
+                    <div>
+                      <span className="text-foreground/40 mr-1.5">DPI:</span>
+                      <code className="bg-background px-1.5 py-0.5 rounded border border-border/40 text-accent font-sans">DPI - 000000A</code>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span>Cuenta Oficial Verificada</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="sm:border-l border-border/60 sm:pl-6 h-full flex flex-col justify-center">
+                  <p className="text-xs text-foreground/50 leading-relaxed">
+                    Realiza tu transferencia desde el portal de LPB indicando el DPI del Gobierno
+                    como destinatario de la donación.
+                  </p>
+                </div>
+              </div>
+
+              <div className="px-6 py-5 bg-background/40 border-t border-border/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <p className="text-xs text-foreground/60 max-w-md leading-relaxed">
+                  Las transferencias mediante LPB se procesan a través del portal oficial de transferencias.
+                </p>
+
+                <a
+                  href="https://mineco.duckdns.org/lpb/transferencia"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-accent text-accent-foreground text-xs font-semibold tracking-wider uppercase transition-all duration-200 hover:opacity-90 hover:shadow-lg active:scale-[0.98]"
+                >
+                  Ir a transferencia LPB
+                </a>
+              </div>
+            </motion.div>
+
             {/* Aviso Importante Regulado */}
             <motion.div
-              {...fadeUp(0.32)}
+              {...fadeUp(0.36)}
               className="mt-6 rounded-2xl border border-border/40 bg-background/30 p-5 flex gap-4 items-start"
             >
               <div className="text-accent text-lg mt-0.5 select-none font-mono">⚠️</div>
@@ -125,7 +179,10 @@ export default function Donations() {
                   Cláusula de Transparencia
                 </p>
                 <p className="text-xs text-foreground/60 leading-relaxed">
-                  Solo se consideran válidas las donaciones en Panedas enviadas al canal oficial. Toda aportación es voluntaria, con fines de desarrollo comunitario y no confiere derechos políticos ni es sujeta a reembolso.
+                  Solo se consideran válidas las donaciones en Panedas enviadas mediante el comando oficial
+                  de Discord o a través del portal de Laboral Panian Bank con el DPI indicado. Toda aportación
+                  es voluntaria, con fines de desarrollo comunitario y no confiere derechos políticos ni es
+                  sujeta a reembolso.
                 </p>
               </div>
             </motion.div>

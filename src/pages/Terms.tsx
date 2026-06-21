@@ -111,9 +111,52 @@ export default function Terms() {
               </p>
             </section>
 
+            {/* SECCIÓN 7: Validez y Caducidad del DPI */}
             <section>
               <h2 className="text-xl md:text-2xl font-semibold text-foreground mb-3">
-                7. Conducta del Usuario
+                7. Validez y Caducidad del DPI
+              </h2>
+              <p>
+                Todo DPI generado en la plataforma del Reino del Pan debe ser verificado en el servidor oficial de Discord en un plazo máximo de <strong className="text-foreground">30 días naturales</strong> desde su creación.
+              </p>
+              <p className="mt-3">
+                Transcurrido ese período sin haberse completado la verificación mediante el bot oficial, el DPI <strong className="text-foreground">perderá toda validez legal</strong> y será automáticamente eliminado de la base de datos del Reino. El número de DPI quedará liberado y no podrá ser recuperado.
+              </p>
+              <p className="mt-3">
+                La gestión de este proceso, así como la definición de las normativas asociadas, corresponde al <strong className="text-foreground">Ministerio de Transformación Digital</strong>, que podrá consultar en su sitio oficial:
+              </p>
+              <ul className="list-disc pl-5 mt-2 space-y-1">
+                <li>
+                  Web del Ministerio:{" "}
+                  <a
+                    href="https://mitd.duckdns.org"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#2563eb] underline underline-offset-2 font-medium hover:text-[#1d4ed8]"
+                  >
+                    https://mitd.duckdns.org
+                  </a>
+                </li>
+                <li>
+                  Normativas y disposiciones:{" "}
+                  <a
+                    href="https://mitd.duckdns.org/normativas"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#2563eb] underline underline-offset-2 font-medium hover:text-[#1d4ed8]"
+                  >
+                    https://mitd.duckdns.org/normativas
+                  </a>
+                </li>
+              </ul>
+              <p className="mt-3 text-foreground/60 text-xs">
+                El Ministerio se reserva el derecho de modificar los plazos o condiciones mediante disposiciones publicadas en su portal.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-xl md:text-2xl font-semibold text-foreground mb-3">
+                8. Conducta del Usuario
               </h2>
               <p>
                 El uso de datos ofensivos, imágenes inapropiadas o firmas malintencionadas resultará en sanciones. Dependiendo de la gravedad, estas pueden incluir:
@@ -128,7 +171,7 @@ export default function Terms() {
 
             <section>
               <h2 className="text-xl md:text-2xl font-semibold text-foreground mb-3">
-                8. Responsabilidad
+                9. Responsabilidad
               </h2>
               <p>
                 El sistema se proporciona "tal cual", sin garantías de disponibilidad continua ni ausencia de errores. El Reino del Pan no se hace responsable de pérdidas de datos, interrupciones del servicio ni daños derivados del uso o imposibilidad de uso de la plataforma.
@@ -137,7 +180,7 @@ export default function Terms() {
 
             <section>
               <h2 className="text-xl md:text-2xl font-semibold text-foreground mb-3">
-                9. Enlaces Externos
+                10. Enlaces Externos
               </h2>
               <p>
                 El sitio puede contener enlaces a sitios externos. No nos hacemos responsables del contenido, políticas ni prácticas de terceros.
@@ -146,7 +189,7 @@ export default function Terms() {
 
             <section>
               <h2 className="text-xl md:text-2xl font-semibold text-foreground mb-3">
-                10. Modificaciones
+                11. Modificaciones
               </h2>
               <p>
                 Estos términos pueden ser modificados en cualquier momento sin previo aviso. El uso continuado del sitio tras cualquier modificación implica la aceptación de los nuevos términos.
@@ -155,16 +198,24 @@ export default function Terms() {
 
             <section>
               <h2 className="text-xl md:text-2xl font-semibold text-foreground mb-3">
-                11. Contacto
+                12. Contacto
               </h2>
               <p>
-                Para dudas, reclamaciones o solicitudes relacionadas con estos términos, Contáctanos mediante nuestro{" "}<a href="https://discord.gg/reino-del-pan-1381359904731693056" target="_blank" rel="noopener noreferrer" style={{ color: "#d4af37", textDecoration: "underline", textUnderlineOffset: "4px", fontWeight: 600 }}>Servidor oficial</a>
+                Para dudas, reclamaciones o solicitudes relacionadas con estos términos, contáctanos mediante nuestro{" "}
+                <a
+                  href="https://discord.gg/reino-del-pan-1381359904731693056"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent underline underline-offset-4 font-medium"
+                >
+                  servidor oficial
+                </a>.
               </p>
             </section>
 
             <section className="pt-4 border-t border-border">
               <p className="text-xs md:text-sm text-foreground/50">
-                Última actualización: 1 de junio de 2026
+                Última actualización: 21 de junio de 2026
               </p>
             </section>
 
