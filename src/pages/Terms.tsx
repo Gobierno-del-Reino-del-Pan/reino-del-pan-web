@@ -111,7 +111,7 @@ export default function Terms() {
               </p>
             </section>
 
-            {/* NUEVA SECCIÓN: Validez y Caducidad del DPI */}
+            {/* SECCIÓN 7: Validez y Caducidad del DPI - con enlaces azules y subrayados */}
             <section>
               <h2 className="text-xl md:text-2xl font-semibold text-foreground mb-3">
                 7. Validez y Caducidad del DPI
@@ -132,7 +132,7 @@ export default function Terms() {
                     href="https://mitd.duckdns.org"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-accent underline underline-offset-4 font-medium"
+                    className="text-blue-600 underline underline-offset-2 font-medium hover:text-blue-800"
                   >
                     https://mitd.duckdns.org
                   </a>
@@ -143,7 +143,7 @@ export default function Terms() {
                     href="https://mitd.duckdns.org/normativas"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-accent underline underline-offset-4 font-medium"
+                    className="text-blue-600 underline underline-offset-2 font-medium hover:text-blue-800"
                   >
                     https://mitd.duckdns.org/normativas
                   </a>
