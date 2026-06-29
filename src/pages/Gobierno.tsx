@@ -80,11 +80,40 @@ export default function Gobierno() {
               </a>
             </motion.div>
 
-            {/* ENCICLOPAN */}
+            {/* MINISTERIO DE TRANSFORMACIÓN DIGITAL */}
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.35 }}
+              className="mt-10 rounded-[20px] border border-accent/20 bg-accent/5 p-6 flex flex-col sm:flex-row sm:items-center gap-4"
+            >
+              <div className="flex-1">
+                <p className="text-xs uppercase tracking-[0.3em] text-accent font-medium mb-2">
+                  Recurso Oficial
+                </p>
+                <p className="text-[15px] font-semibold">
+                  Ministerio de Transformación Digital
+                </p>
+                <p className="mt-1 text-[13px] text-foreground/60 leading-relaxed">
+                  Portal oficial del Ministerio de Transformación Digital del Reino del Pan. Impulsamos la digitalización, la modernización de la administración pública y el desarrollo de servicios digitales para todos los ciudadanos.
+                </p>
+              </div>
+
+              <a
+                href="https://mitd.duckdns.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-minimal shrink-0"
+              >
+                Visitar
+              </a>
+            </motion.div>
+
+            {/* ENCICLOPAN */}
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.45 }}
               className="mt-10 rounded-[20px] border border-accent/20 bg-accent/5 p-6 flex flex-col sm:flex-row sm:items-center gap-4"
             >
               <div className="flex-1">
