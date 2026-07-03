@@ -501,50 +501,84 @@ function UserProfileModal({ userId, onClose }: { userId: string | null; onClose:
         const controller = new AbortController();
         const team = profile.equipo_futbol.trim();
 
-        const searchUrl = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(team)}&language=es&format=json&origin=*&limit=1&type=item`;
+        // --- FUNCIÓN PRINCIPAL: WIKIDATA CORRECTO ---
+        const fetchFromWikidata = async () => {
+            const searchUrl = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(team)}&language=es&format=json&origin=*&limit=1&type=item`;
 
-        fetch(searchUrl, { signal: controller.signal })
-            .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-            .then(d => {
-                const entityId = d?.search?.[0]?.id;
-                if (!entityId) {
-                    console.warn(`[UserProfileModal] No se encontró entidad de Wikidata para "${team}".`);
-                    setTeamBadge(null);
-                    return null;
-                }
+            const res = await fetch(searchUrl, { signal: controller.signal });
+            if (!res.ok) throw new Error("Error en búsqueda Wikidata");
+            const searchData = await res.json();
 
-                // Pedimos P154 (logo), P18 (imagen general) y P94 (escudo de armas) juntas
-                const claimsUrl = `https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${entityId}&property=P154|P18|P94&format=json&origin=*`;
-                return fetch(claimsUrl, { signal: controller.signal })
-                    .then(r2 => { if (!r2.ok) throw new Error(`HTTP ${r2.status}`); return r2.json(); });
-            })
-            .then(claimsData => {
-                if (!claimsData) return;
+            const entityId = searchData?.search?.[0]?.id;
+            if (!entityId) return null;
 
-                const claims = claimsData?.claims || {};
+            // Arreglado: Usamos wbgetentities con props=claims para traer todas las propiedades juntas de forma legal
+            const entitiesUrl = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${entityId}&props=claims&format=json&origin=*`;
+            const resEntities = await fetch(entitiesUrl, { signal: controller.signal });
+            if (!resEntities.ok) throw new Error("Error obteniendo claims Wikidata");
+            const entitiesData = await resEntities.json();
 
-                // Sistema de prioridades (Fallback)
-                const logoClaim = claims.P154?.[0]?.mainsnak?.datavalue?.value; // 1. Logo oficial
-                const imageClaim = claims.P18?.[0]?.mainsnak?.datavalue?.value;  // 2. Imagen principal
-                const badgeClaim = claims.P94?.[0]?.mainsnak?.datavalue?.value;  // 3. Escudo histórico/blasón
+            const claims = entitiesData?.entities?.[entityId]?.claims || {};
+            const logo = claims.P154?.[0]?.mainsnak?.datavalue?.value; // Logo
+            const img = claims.P18?.[0]?.mainsnak?.datavalue?.value;   // Imagen
+            const badge = claims.P94?.[0]?.mainsnak?.datavalue?.value; // Escudo
 
-                const filename = logoClaim || imageClaim || badgeClaim;
+            const filename = logo || img || badge;
+            if (filename) {
+                const cleanFilename = filename.replace(/\s/g, '_');
+                return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(cleanFilename)}`;
+            }
+            return null;
+        };
 
-                if (filename) {
-                    // Reemplazamos los espacios por guiones bajos, que es el formato nativo de Wikimedia Commons
-                    const cleanFilename = filename.replace(/\s/g, '_');
-                    setTeamBadge(`https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(cleanFilename)}`);
+        // --- FALLBACK 1: WIKIPEDIA IMAGES API ---
+        const fetchFromWikipedia = async () => {
+            // Buscamos la página de Wikipedia del equipo para extraer su "pageimage"
+            const wpUrl = `https://es.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(team)}&prop=pageimages&format=json&pithumbsize=400&origin=*`;
+            const res = await fetch(wpUrl, { signal: controller.signal });
+            if (!res.ok) return null;
+            const data = await res.json();
+
+            const pages = data?.query?.pages || {};
+            const pageId = Object.keys(pages)[0];
+            if (pageId && pageId !== "-1") {
+                return pages[pageId].thumbnail?.source || null;
+            }
+            return null;
+        };
+
+        // --- FALLBACK 2: API DE LOGOS COMERCIALES (CLEARBIT/UNAVATAR) ---
+        const fetchFromClearbit = (teamName: string): string => {
+            const cleanName = teamName.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return `https://unavatar.io/twitter/${cleanName}?fallback=https://unavatar.io/clearbit/${cleanName}.com`;
+        };
+
+        // --- ORQUESTADOR EN CASCADA ---
+        const resolveTeamBadge = async () => {
+            try {
+                const wikidataUrl = await fetchFromWikidata();
+                if (wikidataUrl) { setTeamBadge(wikidataUrl); return; }
+
+                console.log(`[TeamBadge] Wikidata falló para "${team}". Intentando Wikipedia...`);
+                const wikipediaUrl = await fetchFromWikipedia();
+                if (wikipediaUrl) { setTeamBadge(wikipediaUrl); return; }
+
+                console.log(`[TeamBadge] Wikipedia falló para "${team}". Usando Fallback de Redes/Dominios...`);
+                setTeamBadge(fetchFromClearbit(team));
+
+            } catch (err: unknown) {
+                if (err instanceof Error) {
+                    if (err.name !== "AbortError") {
+                        console.error("[TeamBadge] Error crítico en la cascada de APIs:", err.message);
+                        setTeamBadge(fetchFromClearbit(team));
+                    }
                 } else {
-                    console.warn(`[UserProfileModal] La entidad para "${team}" no tiene ninguna imagen disponible (P154, P18, P94).`);
-                    setTeamBadge(null);
+                    console.error("[TeamBadge] Ocurrió un error inesperado:", err);
+                    setTeamBadge(fetchFromClearbit(team));
                 }
-            })
-            .catch(err => {
-                if (err.name !== "AbortError") {
-                    console.warn(`[UserProfileModal] Error buscando escudo para "${team}":`, err);
-                    setTeamBadge(null);
-                }
-            });
+            }
+        };
+        resolveTeamBadge();
 
         return () => controller.abort();
     }, [profile?.equipo_futbol]);
