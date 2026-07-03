@@ -512,7 +512,6 @@ function UserProfileModal({ userId, onClose }: { userId: string | null; onClose:
             const entityId = searchData?.search?.[0]?.id;
             if (!entityId) return null;
 
-            // Arreglado: Usamos wbgetentities con props=claims para traer todas las propiedades juntas de forma legal
             const entitiesUrl = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${entityId}&props=claims&format=json&origin=*`;
             const resEntities = await fetch(entitiesUrl, { signal: controller.signal });
             if (!resEntities.ok) throw new Error("Error obteniendo claims Wikidata");
@@ -533,7 +532,6 @@ function UserProfileModal({ userId, onClose }: { userId: string | null; onClose:
 
         // --- FALLBACK 1: WIKIPEDIA IMAGES API ---
         const fetchFromWikipedia = async () => {
-            // Buscamos la página de Wikipedia del equipo para extraer su "pageimage"
             const wpUrl = `https://es.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(team)}&prop=pageimages&format=json&pithumbsize=400&origin=*`;
             const res = await fetch(wpUrl, { signal: controller.signal });
             if (!res.ok) return null;
@@ -547,7 +545,23 @@ function UserProfileModal({ userId, onClose }: { userId: string | null; onClose:
             return null;
         };
 
-        // --- FALLBACK 2: API DE LOGOS COMERCIALES (CLEARBIT/UNAVATAR) ---
+        // --- NUEVO FALLBACK 2: API ABIERTA DE FÚTBOL (THESPORTSDB) ---
+        const fetchFromTheSportsDB = async () => {
+            try {
+                // Nota: El endpoint 'searchteams.php' con la key '1' es público y gratuito para desarrollo
+                const sportsDbUrl = `https://www.thesportsdb.com/api/v1/json/1/searchteams.php?t=${encodeURIComponent(team)}`;
+                const res = await fetch(sportsDbUrl, { signal: controller.signal });
+                if (!res.ok) return null;
+
+                const data = await res.json();
+                // Retorna la URL del escudo (strBadge) del primer equipo encontrado
+                return data?.teams?.[0]?.strBadge || null;
+            } catch {
+                return null;
+            }
+        };
+
+        // --- FALLBACK 3: API DE LOGOS COMERCIALES (CLEARBIT/UNAVATAR) ---
         const fetchFromClearbit = (teamName: string): string => {
             const cleanName = teamName.toLowerCase().replace(/[^a-z0-9]/g, '');
             return `https://unavatar.io/twitter/${cleanName}?fallback=https://unavatar.io/clearbit/${cleanName}.com`;
@@ -556,14 +570,22 @@ function UserProfileModal({ userId, onClose }: { userId: string | null; onClose:
         // --- ORQUESTADOR EN CASCADA ---
         const resolveTeamBadge = async () => {
             try {
+                // 1. Wikidata
                 const wikidataUrl = await fetchFromWikidata();
                 if (wikidataUrl) { setTeamBadge(wikidataUrl); return; }
 
+                // 2. Wikipedia
                 console.log(`[TeamBadge] Wikidata falló para "${team}". Intentando Wikipedia...`);
                 const wikipediaUrl = await fetchFromWikipedia();
                 if (wikipediaUrl) { setTeamBadge(wikipediaUrl); return; }
 
-                console.log(`[TeamBadge] Wikipedia falló para "${team}". Usando Fallback de Redes/Dominios...`);
+                // 3. API Fútbol (TheSportsDB)
+                console.log(`[TeamBadge] Wikipedia falló para "${team}". Intentando API de Fútbol...`);
+                const sportsDbUrl = await fetchFromTheSportsDB();
+                if (sportsDbUrl) { setTeamBadge(sportsDbUrl); return; }
+
+                // 4. Fallback Genérico Final
+                console.log(`[TeamBadge] API Fútbol falló para "${team}". Usando Fallback de Redes/Dominios...`);
                 setTeamBadge(fetchFromClearbit(team));
 
             } catch (err: unknown) {
