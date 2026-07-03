@@ -434,8 +434,9 @@ function UserProfileModal({ userId, onClose }: { userId: string | null; onClose:
     const [teamBadge, setTeamBadge] = useState<string | null>(null);
     const [pokemonSprite, setPokemonSprite] = useState<string | null>(null);
 
-    // Cargar el perfil del usuario seleccionado (tabla public.usuarios).
-    // El discord_id se usa únicamente para la petición, nunca se muestra.
+    // Cargar el perfil del usuario seleccionado directamente desde la tabla
+    // public.usuarios de Supabase (no hace falta backend propio: todo está
+    // en la tabla). El discord_id sólo se usa para la consulta, nunca se muestra.
     useEffect(() => {
         if (!userId) {
             setProfile(null);
@@ -449,9 +450,22 @@ function UserProfileModal({ userId, onClose }: { userId: string | null; onClose:
         setError(false);
         setProfile(null);
 
-        fetch(`/api/usuario/${userId}`, { signal: controller.signal })
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+        const columns = "username,avatar_url,insta,tiktok,x_twitter,cantante_favorito,cantante_imagen,pokemon_favorito,animal_favorito,equipo_futbol";
+
+        fetch(`${supabaseUrl}/rest/v1/usuarios?discord_id=eq.${userId}&select=${columns}`, {
+            signal: controller.signal,
+            headers: {
+                apikey: supabaseAnonKey,
+                Authorization: `Bearer ${supabaseAnonKey}`,
+            },
+        })
             .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-            .then(d => d && setProfile(d))
+            .then((rows: UserProfile[]) => {
+                if (Array.isArray(rows) && rows[0]) setProfile(rows[0]);
+                else setError(true);
+            })
             .catch(err => { if (err.name !== "AbortError") setError(true); })
             .finally(() => setLoading(false));
 
