@@ -498,20 +498,34 @@ function UserProfileModal({ userId, onClose }: { userId: string | null; onClose:
 
     // Buscar el escudo del equipo de fútbol favorito.
     // Nota: TheSportsDB retiró su clave de prueba gratuita "3" (ahora exige
-    // clave de pago, o la clave "123" que solo permite buscar "Arsenal"),
-    // así que usamos la API pública de Wikipedia (sin clave, sin registro),
-    // que devuelve la imagen principal del artículo del club — normalmente
-    // el escudo — a través de su thumbnail.
+    // clave de pago, o la clave "123" que solo permite buscar "Arsenal"), así
+    // que usamos la Action API de Wikipedia (sin clave, sin registro, CORS
+    // habilitado con origin=*) con "generator=search": busca por texto
+    // aproximado (tolera "Barça", "Atleti", nombres incompletos, etc.) y coge
+    // la imagen principal del artículo que mejor coincide — normalmente el escudo.
     useEffect(() => {
         if (!profile?.equipo_futbol) { setTeamBadge(null); return; }
         const controller = new AbortController();
+        const team = profile.equipo_futbol.trim();
 
-        fetch(`https://es.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(profile.equipo_futbol.trim())}`, { signal: controller.signal })
+        const searchUrl = `https://es.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(`${team} club de fútbol`)}&gsrlimit=1&prop=pageimages&piprop=original&format=json&origin=*`;
+
+        fetch(searchUrl, { signal: controller.signal })
             .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-            .then(d => setTeamBadge(d?.thumbnail?.source ?? d?.originalimage?.source ?? null))
+            .then(d => {
+                const pages = d?.query?.pages;
+                const page = pages ? (Object.values(pages)[0] as any) : null;
+                const badge = page?.original?.source ?? null;
+                if (badge) {
+                    setTeamBadge(badge);
+                } else {
+                    console.warn(`[UserProfileModal] No se encontró escudo en Wikipedia para "${team}". Respuesta:`, d);
+                    setTeamBadge(null);
+                }
+            })
             .catch(err => {
                 if (err.name !== "AbortError") {
-                    console.warn(`[UserProfileModal] No se encontró escudo para "${profile.equipo_futbol}":`, err);
+                    console.warn(`[UserProfileModal] Error buscando escudo para "${team}":`, err);
                 }
                 setTeamBadge(null);
             });
