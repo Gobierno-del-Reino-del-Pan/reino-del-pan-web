@@ -496,36 +496,47 @@ function UserProfileModal({ userId, onClose }: { userId: string | null; onClose:
         return () => controller.abort();
     }, [userId]);
 
-    // Buscar el escudo del equipo de fútbol favorito.
-    // Nota: TheSportsDB retiró su clave de prueba gratuita "3" (ahora exige
-    // clave de pago, o la clave "123" que solo permite buscar "Arsenal"), así
-    // que usamos la Action API de Wikipedia (sin clave, sin registro, CORS
-    // habilitado con origin=*) con "generator=search": busca por texto
-    // aproximado (tolera "Barça", "Atleti", nombres incompletos, etc.) y coge
-    // la imagen principal del artículo que mejor coincide — normalmente el escudo.
+    // Buscar el escudo del equipo de fútbol favorito usando Wikidata.
+    // Nota: TheSportsDB retiró su clave de prueba gratuita "3", y la imagen
+    // principal de un artículo de Wikipedia no siempre es el escudo (o no
+    // existe). Wikidata tiene una propiedad dedicada exactamente a esto:
+    // P154 "imagen de logo", pensada para escudos/logos de clubes y equipos.
+    // Es gratuita, sin clave, con CORS habilitado (origin=*).
+    // Paso 1: buscamos la entidad de Wikidata que coincide con el nombre del equipo.
+    // Paso 2: leemos su claim P154 y construimos la URL de la imagen en Commons.
     useEffect(() => {
         if (!profile?.equipo_futbol) { setTeamBadge(null); return; }
         const controller = new AbortController();
         const team = profile.equipo_futbol.trim();
 
-        const searchUrl = `https://es.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(`${team} club de fútbol`)}&gsrlimit=1&prop=pageimages&piprop=original&format=json&origin=*`;
+        const searchUrl = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(team)}&language=es&format=json&origin=*&limit=1&type=item`;
 
         fetch(searchUrl, { signal: controller.signal })
             .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
             .then(d => {
-                const pages = d?.query?.pages;
-                const page = pages ? (Object.values(pages)[0] as any) : null;
-                const badge = page?.original?.source ?? null;
-                if (badge) {
-                    setTeamBadge(badge);
+                const entityId = d?.search?.[0]?.id;
+                if (!entityId) {
+                    console.warn(`[UserProfileModal] No se encontró entidad de Wikidata para "${team}". Respuesta:`, d);
+                    setTeamBadge(null);
+                    return null;
+                }
+                const claimsUrl = `https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${entityId}&property=P154&format=json&origin=*`;
+                return fetch(claimsUrl, { signal: controller.signal })
+                    .then(r2 => { if (!r2.ok) throw new Error(`HTTP ${r2.status}`); return r2.json(); });
+            })
+            .then(claimsData => {
+                if (!claimsData) return;
+                const filename = claimsData?.claims?.P154?.[0]?.mainsnak?.datavalue?.value;
+                if (filename) {
+                    setTeamBadge(`https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(filename)}`);
                 } else {
-                    console.warn(`[UserProfileModal] No se encontró escudo en Wikipedia para "${team}". Respuesta:`, d);
+                    console.warn(`[UserProfileModal] La entidad de Wikidata para "${team}" no tiene logo (P154). Datos:`, claimsData);
                     setTeamBadge(null);
                 }
             })
             .catch(err => {
                 if (err.name !== "AbortError") {
-                    console.warn(`[UserProfileModal] Error buscando escudo para "${team}":`, err);
+                    console.warn(`[UserProfileModal] Error buscando escudo (Wikidata) para "${team}":`, err);
                 }
                 setTeamBadge(null);
             });
