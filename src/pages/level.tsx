@@ -501,105 +501,108 @@ function UserProfileModal({ userId, onClose }: { userId: string | null; onClose:
         const controller = new AbortController();
         const team = profile.equipo_futbol.trim();
 
-        // --- FUNCIÓN PRINCIPAL: WIKIDATA CORRECTO ---
-        const fetchFromWikidata = async () => {
-            const searchUrl = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(team)}&language=es&format=json&origin=*&limit=1&type=item`;
+        const fetchWithTimeout = (url: string, ms = 5000) => {
+            const timeoutId = setTimeout(() => controller.abort(), ms);
+            return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timeoutId));
+        };
 
-            const res = await fetch(searchUrl, { signal: controller.signal });
-            if (!res.ok) throw new Error("Error en búsqueda Wikidata");
-            const searchData = await res.json();
+        // --- WIKIDATA ---
+        const fetchFromWikidata = async (): Promise<string | null> => {
+            try {
+                const searchUrl = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(team)}&language=es&format=json&origin=*&limit=1&type=item`;
+                const res = await fetchWithTimeout(searchUrl);
+                if (!res.ok) return null;
+                const searchData = await res.json();
 
-            const entityId = searchData?.search?.[0]?.id;
-            if (!entityId) return null;
+                const entityId = searchData?.search?.[0]?.id;
+                if (!entityId) return null;
 
-            const entitiesUrl = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${entityId}&props=claims&format=json&origin=*`;
-            const resEntities = await fetch(entitiesUrl, { signal: controller.signal });
-            if (!resEntities.ok) throw new Error("Error obteniendo claims Wikidata");
-            const entitiesData = await resEntities.json();
+                const entitiesUrl = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${entityId}&props=claims&format=json&origin=*`;
+                const resEntities = await fetchWithTimeout(entitiesUrl);
+                if (!resEntities.ok) return null;
+                const entitiesData = await resEntities.json();
 
-            const claims = entitiesData?.entities?.[entityId]?.claims || {};
-            const logo = claims.P154?.[0]?.mainsnak?.datavalue?.value; // Logo
-            const img = claims.P18?.[0]?.mainsnak?.datavalue?.value;   // Imagen
-            const badge = claims.P94?.[0]?.mainsnak?.datavalue?.value; // Escudo
+                const claims = entitiesData?.entities?.[entityId]?.claims || {};
+                const logo = claims.P154?.[0]?.mainsnak?.datavalue?.value;
+                const img = claims.P18?.[0]?.mainsnak?.datavalue?.value;
+                const badge = claims.P94?.[0]?.mainsnak?.datavalue?.value;
 
-            const filename = logo || img || badge;
-            if (filename) {
+                const filename = logo || img || badge;
+                if (!filename) return null;
+
                 const cleanFilename = filename.replace(/\s/g, '_');
                 return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(cleanFilename)}`;
+            } catch {
+                return null; // nunca dejar que esto rompa la cascada
             }
-            return null;
         };
 
-        // --- FALLBACK 1: WIKIPEDIA IMAGES API ---
-        const fetchFromWikipedia = async () => {
-            const wpUrl = `https://es.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(team)}&prop=pageimages&format=json&pithumbsize=400&origin=*`;
-            const res = await fetch(wpUrl, { signal: controller.signal });
-            if (!res.ok) return null;
-            const data = await res.json();
-
-            const pages = data?.query?.pages || {};
-            const pageId = Object.keys(pages)[0];
-            if (pageId && pageId !== "-1") {
-                return pages[pageId].thumbnail?.source || null;
-            }
-            return null;
-        };
-
-        // --- NUEVO FALLBACK 2: API ABIERTA DE FÚTBOL (THESPORTSDB) ---
-        const fetchFromTheSportsDB = async () => {
+        // --- WIKIPEDIA (fallback 1) ---
+        const fetchFromWikipedia = async (): Promise<string | null> => {
             try {
-                // Nota: El endpoint 'searchteams.php' con la key '1' es público y gratuito para desarrollo
-                const sportsDbUrl = `https://www.thesportsdb.com/api/v1/json/1/searchteams.php?t=${encodeURIComponent(team)}`;
-                const res = await fetch(sportsDbUrl, { signal: controller.signal });
+                const wpUrl = `https://es.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(team)}&prop=pageimages&format=json&pithumbsize=400&origin=*`;
+                const res = await fetchWithTimeout(wpUrl);
                 if (!res.ok) return null;
-
                 const data = await res.json();
-                // Retorna la URL del escudo (strBadge) del primer equipo encontrado
-                return data?.teams?.[0]?.strBadge || null;
+
+                const pages = data?.query?.pages || {};
+                const pageId = Object.keys(pages)[0];
+                if (pageId && pageId !== "-1") {
+                    return pages[pageId].thumbnail?.source || null;
+                }
+                return null;
             } catch {
                 return null;
             }
         };
 
-        // --- FALLBACK 3: API DE LOGOS COMERCIALES (CLEARBIT/UNAVATAR) ---
-        const fetchFromClearbit = (teamName: string): string => {
-            const cleanName = teamName.toLowerCase().replace(/[^a-z0-9]/g, '');
-            return `https://unavatar.io/twitter/${cleanName}?fallback=https://unavatar.io/clearbit/${cleanName}.com`;
+        // --- THESPORTSDB (fallback 2) ---
+        const fetchFromTheSportsDB = async (): Promise<string | null> => {
+            try {
+                // La key de pruebas gratuita actual es "123", no "1" (esa ya fue desactivada)
+                const sportsDbUrl = `https://www.thesportsdb.com/api/v1/json/123/searchteams.php?t=${encodeURIComponent(team)}`;
+                const res = await fetchWithTimeout(sportsDbUrl);
+                if (!res.ok) return null;
+                const data = await res.json();
+                return data?.teams?.[0]?.strBadge || data?.teams?.[0]?.strTeamBadge || null;
+            } catch {
+                return null;
+            }
+        };
+
+        // --- FALLBACK FINAL GARANTIZADO: iniciales generadas, sin dependencias externas frágiles ---
+        const fetchGenericBadge = (teamName: string): string => {
+            const initials = teamName
+                .split(/\s+/)
+                .filter(Boolean)
+                .slice(0, 2)
+                .map(w => w[0])
+                .join('')
+                .toUpperCase();
+
+            // ui-avatars.com no requiere key, tiene CORS abierto y siempre devuelve una imagen válida
+            return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=1e293b&color=fff&size=128&bold=true&format=png`;
         };
 
         // --- ORQUESTADOR EN CASCADA ---
         const resolveTeamBadge = async () => {
-            try {
-                // 1. Wikidata
-                const wikidataUrl = await fetchFromWikidata();
-                if (wikidataUrl) { setTeamBadge(wikidataUrl); return; }
+            if (controller.signal.aborted) return;
 
-                // 2. Wikipedia
-                console.log(`[TeamBadge] Wikidata falló para "${team}". Intentando Wikipedia...`);
-                const wikipediaUrl = await fetchFromWikipedia();
-                if (wikipediaUrl) { setTeamBadge(wikipediaUrl); return; }
+            const wikidataUrl = await fetchFromWikidata();
+            if (wikidataUrl) { setTeamBadge(wikidataUrl); return; }
 
-                // 3. API Fútbol (TheSportsDB)
-                console.log(`[TeamBadge] Wikipedia falló para "${team}". Intentando API de Fútbol...`);
-                const sportsDbUrl = await fetchFromTheSportsDB();
-                if (sportsDbUrl) { setTeamBadge(sportsDbUrl); return; }
+            console.log(`[TeamBadge] Wikidata falló para "${team}". Intentando Wikipedia...`);
+            const wikipediaUrl = await fetchFromWikipedia();
+            if (wikipediaUrl) { setTeamBadge(wikipediaUrl); return; }
 
-                // 4. Fallback Genérico Final
-                console.log(`[TeamBadge] API Fútbol falló para "${team}". Usando Fallback de Redes/Dominios...`);
-                setTeamBadge(fetchFromClearbit(team));
+            console.log(`[TeamBadge] Wikipedia falló para "${team}". Intentando TheSportsDB...`);
+            const sportsDbUrl = await fetchFromTheSportsDB();
+            if (sportsDbUrl) { setTeamBadge(sportsDbUrl); return; }
 
-            } catch (err: unknown) {
-                if (err instanceof Error) {
-                    if (err.name !== "AbortError") {
-                        console.error("[TeamBadge] Error crítico en la cascada de APIs:", err.message);
-                        setTeamBadge(fetchFromClearbit(team));
-                    }
-                } else {
-                    console.error("[TeamBadge] Ocurrió un error inesperado:", err);
-                    setTeamBadge(fetchFromClearbit(team));
-                }
-            }
+            console.log(`[TeamBadge] TheSportsDB falló para "${team}". Usando badge de iniciales.`);
+            setTeamBadge(fetchGenericBadge(team));
         };
+
         resolveTeamBadge();
 
         return () => controller.abort();
