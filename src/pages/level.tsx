@@ -497,6 +497,8 @@ function UserProfileModal({ userId, onClose }: { userId: string | null; onClose:
     }, [userId]);
 
     useEffect(() => {
+        alert('useEffect corrió, equipo_futbol = ' + JSON.stringify(profile?.equipo_futbol));
+        if (!profile?.equipo_futbol) { setTeamBadge(null); return; }
         if (!profile?.equipo_futbol) { setTeamBadge(null); return; }
         const controller = new AbortController();
         const team = profile.equipo_futbol.trim();
