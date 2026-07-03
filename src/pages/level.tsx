@@ -27,6 +27,21 @@ interface LeaderboardData {
     };
 }
 
+/* Perfil extendido de un usuario (tabla public.usuarios), usado en la
+   ventana emergente tipo Instagram. El discord_id NUNCA se muestra. */
+interface UserProfile {
+    username: string;
+    avatar_url: string;
+    insta: string | null;
+    tiktok: string | null;
+    x_twitter: string | null;
+    cantante_favorito: string | null;
+    cantante_imagen: string | null;
+    pokemon_favorito: string | null;
+    animal_favorito: string | null;
+    equipo_futbol: string | null;
+}
+
 /* ─────────────────────────────────────────────
     HELPERS
 ───────────────────────────────────────────── */
@@ -75,6 +90,49 @@ const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
 };
 
 const MEDAL: Record<number, string> = { 1: "👑", 2: "🥈", 3: "🥉" };
+
+/* Emojis para los animales favoritos del perfil de usuario */
+const ANIMAL_EMOJIS: Record<string, string> = {
+    perro: "🐶", dog: "🐶",
+    gato: "🐱", cat: "🐱",
+    conejo: "🐰", rabbit: "🐰",
+    leon: "🦁", león: "🦁", lion: "🦁",
+    tigre: "🐯", tiger: "🐯",
+    oso: "🐻", bear: "🐻",
+    panda: "🐼",
+    zorro: "🦊", fox: "🦊",
+    lobo: "🐺", wolf: "🐺",
+    caballo: "🐴", horse: "🐴",
+    vaca: "🐮", cow: "🐮",
+    cerdo: "🐷", pig: "🐷",
+    rana: "🐸", frog: "🐸",
+    mono: "🐵", monkey: "🐵",
+    pollo: "🐔", gallina: "🐔", chicken: "🐔",
+    pinguino: "🐧", pingüino: "🐧", penguin: "🐧",
+    aguila: "🦅", águila: "🦅", eagle: "🦅",
+    buho: "🦉", búho: "🦉", owl: "🦉",
+    delfin: "🐬", delfín: "🐬", dolphin: "🐬",
+    ballena: "🐳", whale: "🐳",
+    tiburon: "🦈", tiburón: "🦈", shark: "🦈",
+    serpiente: "🐍", snake: "🐍",
+    tortuga: "🐢", turtle: "🐢",
+    elefante: "🐘", elephant: "🐘",
+    jirafa: "🦒", giraffe: "🦒",
+    koala: "🐨",
+    hamster: "🐹", hámster: "🐹",
+    ardilla: "🐿️", squirrel: "🐿️",
+    murcielago: "🦇", murciélago: "🦇", bat: "🦇",
+    cabra: "🐐", goat: "🐐",
+    oveja: "🐑", sheep: "🐑",
+    pato: "🦆", duck: "🦆",
+    caballito_de_mar: "🐴",
+};
+
+function getAnimalEmoji(animal: string | null | undefined): string {
+    if (!animal) return "🐾";
+    const key = animal.trim().toLowerCase();
+    return ANIMAL_EMOJIS[key] || "🐾";
+}
 
 /* ─────────────────────────────────────────────
     SKELETON
@@ -307,6 +365,260 @@ function HighlightCard({ emoji, label, user }: { emoji: string; label: string; u
 }
 
 /* ─────────────────────────────────────────────
+    PERFIL DE USUARIO (VENTANA EMERGENTE TIPO INSTAGRAM)
+───────────────────────────────────────────── */
+function SocialIcon({ href, src, alt }: { href: string; src: string; alt: string }) {
+    return (
+        <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+                width: 42, height: 42, borderRadius: "50%",
+                background: "var(--muted)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                border: "1px solid var(--border)",
+                transition: "transform 0.2s ease, box-shadow 0.2s ease",
+            }}
+            onMouseEnter={e => {
+                (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(-2px) scale(1.06)";
+                (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 6px 16px rgba(15,50,106,0.18)";
+            }}
+            onMouseLeave={e => {
+                (e.currentTarget as HTMLAnchorElement).style.transform = "none";
+                (e.currentTarget as HTMLAnchorElement).style.boxShadow = "none";
+            }}
+        >
+            <img src={src} alt={alt} style={{ width: 20, height: 20, objectFit: "contain" }} />
+        </a>
+    );
+}
+
+function FavoriteChip({ emoji, label, value, imageSrc }: { emoji?: string; label: string; value: string; imageSrc?: string | null }) {
+    return (
+        <div style={{
+            display: "flex", alignItems: "center", gap: 12,
+            padding: "10px 14px",
+            background: "var(--muted)",
+            borderRadius: "var(--radius-xl)",
+            border: "1px solid var(--border)",
+            width: "100%",
+        }}>
+            {imageSrc ? (
+                <img
+                    src={imageSrc}
+                    alt={value}
+                    onError={handleImageError}
+                    style={{ width: 30, height: 30, objectFit: "contain", borderRadius: "50%", flexShrink: 0, background: "var(--card)" }}
+                />
+            ) : (
+                <span style={{ fontSize: 20, flexShrink: 0, width: 30, textAlign: "center" }}>{emoji}</span>
+            )}
+            <div style={{ minWidth: 0 }}>
+                <p style={{ fontSize: 9, letterSpacing: "0.2em", color: "var(--muted-foreground)", textTransform: "uppercase", fontWeight: 600, fontFamily: "var(--body-font)", marginBottom: 2 }}>
+                    {label}
+                </p>
+                <p style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", fontFamily: "var(--body-font)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {value}
+                </p>
+            </div>
+        </div>
+    );
+}
+
+function UserProfileModal({ userId, onClose }: { userId: string | null; onClose: () => void }) {
+    const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(false);
+
+    const [teamBadge, setTeamBadge] = useState<string | null>(null);
+    const [pokemonSprite, setPokemonSprite] = useState<string | null>(null);
+
+    // Cargar el perfil del usuario seleccionado (tabla public.usuarios).
+    // El discord_id se usa únicamente para la petición, nunca se muestra.
+    useEffect(() => {
+        if (!userId) {
+            setProfile(null);
+            setTeamBadge(null);
+            setPokemonSprite(null);
+            return;
+        }
+
+        const controller = new AbortController();
+        setLoading(true);
+        setError(false);
+        setProfile(null);
+
+        fetch(`/api/usuario/${userId}`, { signal: controller.signal })
+            .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+            .then(d => d && setProfile(d))
+            .catch(err => { if (err.name !== "AbortError") setError(true); })
+            .finally(() => setLoading(false));
+
+        return () => controller.abort();
+    }, [userId]);
+
+    // Buscar el escudo del equipo de fútbol favorito (TheSportsDB, API pública gratuita)
+    useEffect(() => {
+        if (!profile?.equipo_futbol) { setTeamBadge(null); return; }
+        const controller = new AbortController();
+
+        fetch(`https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(profile.equipo_futbol)}`, { signal: controller.signal })
+            .then(r => r.json())
+            .then(d => setTeamBadge(d?.teams?.[0]?.strTeamBadge ?? null))
+            .catch(() => setTeamBadge(null));
+
+        return () => controller.abort();
+    }, [profile?.equipo_futbol]);
+
+    // Buscar el sprite del Pokémon favorito (PokeAPI)
+    useEffect(() => {
+        if (!profile?.pokemon_favorito) { setPokemonSprite(null); return; }
+        const controller = new AbortController();
+
+        fetch(`https://pokeapi.co/api/v2/pokemon/${encodeURIComponent(profile.pokemon_favorito.trim().toLowerCase())}`, { signal: controller.signal })
+            .then(r => { if (!r.ok) throw new Error("pokemon no encontrado"); return r.json(); })
+            .then(d => setPokemonSprite(d?.sprites?.other?.["official-artwork"]?.front_default ?? d?.sprites?.front_default ?? null))
+            .catch(() => setPokemonSprite(null));
+
+        return () => controller.abort();
+    }, [profile?.pokemon_favorito]);
+
+    const isOpen = !!userId;
+
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <motion.div
+                    key="profile-backdrop"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={onClose}
+                    style={{
+                        position: "fixed", inset: 0, zIndex: 100,
+                        background: "rgba(15,25,45,0.55)",
+                        backdropFilter: "blur(4px)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        padding: "1rem",
+                    }}
+                >
+                    <motion.div
+                        key="profile-card"
+                        initial={{ opacity: 0, scale: 0.92, y: 16 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.92, y: 16 }}
+                        transition={{ type: "spring", stiffness: 260, damping: 24 }}
+                        onClick={e => e.stopPropagation()}
+                        style={{
+                            width: "100%", maxWidth: 420,
+                            maxHeight: "88vh", overflowY: "auto",
+                            background: "var(--card)",
+                            border: "1px solid var(--border)",
+                            borderRadius: "var(--radius-xl)",
+                            boxShadow: "0 20px 60px rgba(15,50,106,0.25)",
+                            position: "relative",
+                        }}
+                    >
+                        <button
+                            onClick={onClose}
+                            aria-label="Cerrar"
+                            style={{
+                                position: "absolute", top: 14, right: 14,
+                                width: 32, height: 32, borderRadius: "50%",
+                                background: "var(--muted)", border: "1px solid var(--border)",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                cursor: "pointer", fontSize: 14, color: "var(--foreground)",
+                                zIndex: 2,
+                            }}
+                        >
+                            ✕
+                        </button>
+
+                        <div style={{ padding: "32px 28px 28px" }}>
+                            {loading && (
+                                <div style={{ textAlign: "center", padding: "2rem 0" }}>
+                                    <div style={{ display: "flex", justifyContent: "center" }}>
+                                        <SkeletonBlock w={88} h={88} radius={999} />
+                                    </div>
+                                    <div style={{ marginTop: 16, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                                        <SkeletonBlock w={140} h={16} />
+                                        <SkeletonBlock w={100} h={12} />
+                                    </div>
+                                </div>
+                            )}
+
+                            {!loading && error && (
+                                <div style={{ textAlign: "center", padding: "2rem 0" }}>
+                                    <p style={{ fontSize: 36, marginBottom: 12 }}>🧙</p>
+                                    <p style={{ fontSize: 13, color: "var(--muted-foreground)", fontFamily: "var(--body-font)" }}>
+                                        No fue posible cargar el perfil de este ciudadano.
+                                    </p>
+                                </div>
+                            )}
+
+                            {!loading && !error && profile && (
+                                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+                                    <img
+                                        src={profile.avatar_url || "https://cdn.discordapp.com/embed/avatars/0.png"}
+                                        alt={profile.username}
+                                        onError={handleImageError}
+                                        style={{
+                                            width: 88, height: 88, borderRadius: "50%",
+                                            objectFit: "cover", border: "3px solid var(--accent)",
+                                            boxShadow: "0 6px 20px rgba(15,50,106,0.2)",
+                                        }}
+                                    />
+
+                                    <p style={{ fontFamily: "var(--display-font)", fontSize: 22, color: "var(--primary)", fontWeight: 400, textAlign: "center" }}>
+                                        @{profile.username}
+                                    </p>
+
+                                    {(profile.insta || profile.tiktok || profile.x_twitter) && (
+                                        <div style={{ display: "flex", gap: 12 }}>
+                                            {profile.insta && (
+                                                <SocialIcon href={`https://www.instagram.com/${profile.insta}/`} src="/logos/instagram.png" alt="Instagram" />
+                                            )}
+                                            {profile.tiktok && (
+                                                <SocialIcon href={`https://www.tiktok.com/@${profile.tiktok}`} src="/logos/tiktok.png" alt="TikTok" />
+                                            )}
+                                            {profile.x_twitter && (
+                                                <SocialIcon href={`https://x.com/${profile.x_twitter}`} src="/logos/x.png" alt="X" />
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {(profile.cantante_favorito || profile.pokemon_favorito || profile.animal_favorito || profile.equipo_futbol) && (
+                                        <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 10, marginTop: 4 }}>
+                                            <p style={{ fontSize: 10, letterSpacing: "0.25em", color: "var(--muted-foreground)", textTransform: "uppercase", fontWeight: 600, fontFamily: "var(--body-font)", textAlign: "center", marginBottom: 2 }}>
+                                                Gustos del ciudadano
+                                            </p>
+
+                                            {profile.cantante_favorito && (
+                                                <FavoriteChip label="Cantante favorito" value={profile.cantante_favorito} imageSrc={profile.cantante_imagen} emoji="🎤" />
+                                            )}
+                                            {profile.pokemon_favorito && (
+                                                <FavoriteChip label="Pokémon favorito" value={profile.pokemon_favorito} imageSrc={pokemonSprite} emoji="⚡" />
+                                            )}
+                                            {profile.animal_favorito && (
+                                                <FavoriteChip label="Animal favorito" value={profile.animal_favorito} emoji={getAnimalEmoji(profile.animal_favorito)} />
+                                            )}
+                                            {profile.equipo_futbol && (
+                                                <FavoriteChip label="Equipo de fútbol" value={profile.equipo_futbol} imageSrc={teamBadge} emoji="⚽" />
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
+}
+
+/* ─────────────────────────────────────────────
     COMPONENTE PRINCIPAL
 ───────────────────────────────────────────── */
 export default function Level() {
@@ -315,6 +627,8 @@ export default function Level() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+    // discord_id del usuario cuyo perfil se muestra en la ventana emergente
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -611,7 +925,8 @@ export default function Level() {
                                                     filteredRanking.map((user, i) => (
                                                         <tr
                                                             key={user.id}
-                                                            style={{ borderBottom: i < filteredRanking.length - 1 ? "1px solid rgba(224,220,211,0.5)" : "none", transition: "background 0.2s ease" }}
+                                                            onClick={() => setSelectedUserId(user.id)}
+                                                            style={{ borderBottom: i < filteredRanking.length - 1 ? "1px solid rgba(224,220,211,0.5)" : "none", transition: "background 0.2s ease", cursor: "pointer" }}
                                                             onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = "rgba(151,180,224,0.06)"}
                                                             onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = "transparent"}
                                                         >
@@ -678,6 +993,9 @@ export default function Level() {
                 </div>
             </main>
             <Footer />
+
+            {/* Ventana emergente con el perfil del ciudadano seleccionado */}
+            <UserProfileModal userId={selectedUserId} onClose={() => setSelectedUserId(null)} />
         </div>
     );
 }
