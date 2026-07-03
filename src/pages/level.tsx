@@ -454,6 +454,15 @@ function UserProfileModal({ userId, onClose }: { userId: string | null; onClose:
         const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
         const columns = "username,avatar_url,insta,tiktok,x_twitter,cantante_favorito,cantante_imagen,pokemon_favorito,animal_favorito,equipo_futbol";
 
+        // Diagnóstico: si falta alguna de las dos variables de entorno, la petición
+        // fallará (401) sin que salte un error de red visible en consola.
+        if (!supabaseUrl || !supabaseAnonKey) {
+            console.error("[UserProfileModal] Faltan variables de entorno de Supabase:", {
+                VITE_SUPABASE_URL: supabaseUrl,
+                VITE_SUPABASE_ANON_KEY: supabaseAnonKey ? "(definida)" : supabaseAnonKey,
+            });
+        }
+
         fetch(`${supabaseUrl}/rest/v1/usuarios?discord_id=eq.${userId}&select=${columns}`, {
             signal: controller.signal,
             headers: {
@@ -461,26 +470,51 @@ function UserProfileModal({ userId, onClose }: { userId: string | null; onClose:
                 Authorization: `Bearer ${supabaseAnonKey}`,
             },
         })
-            .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-            .then((rows: UserProfile[]) => {
-                if (Array.isArray(rows) && rows[0]) setProfile(rows[0]);
-                else setError(true);
+            .then(async r => {
+                if (!r.ok) {
+                    const body = await r.text().catch(() => "");
+                    throw new Error(`HTTP ${r.status} — ${body}`);
+                }
+                return r.json();
             })
-            .catch(err => { if (err.name !== "AbortError") setError(true); })
+            .then((rows: UserProfile[]) => {
+                if (Array.isArray(rows) && rows[0]) {
+                    setProfile(rows[0]);
+                } else {
+                    console.warn(`[UserProfileModal] Sin filas para discord_id=${userId}. Revisa RLS/permiso SELECT en la tabla usuarios o si el id existe.`);
+                    setError(true);
+                }
+            })
+            .catch(err => {
+                if (err.name !== "AbortError") {
+                    console.error("[UserProfileModal] Error al cargar el perfil:", err);
+                    setError(true);
+                }
+            })
             .finally(() => setLoading(false));
 
         return () => controller.abort();
     }, [userId]);
 
-    // Buscar el escudo del equipo de fútbol favorito (TheSportsDB, API pública gratuita)
+    // Buscar el escudo del equipo de fútbol favorito.
+    // Nota: TheSportsDB retiró su clave de prueba gratuita "3" (ahora exige
+    // clave de pago, o la clave "123" que solo permite buscar "Arsenal"),
+    // así que usamos la API pública de Wikipedia (sin clave, sin registro),
+    // que devuelve la imagen principal del artículo del club — normalmente
+    // el escudo — a través de su thumbnail.
     useEffect(() => {
         if (!profile?.equipo_futbol) { setTeamBadge(null); return; }
         const controller = new AbortController();
 
-        fetch(`https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(profile.equipo_futbol)}`, { signal: controller.signal })
-            .then(r => r.json())
-            .then(d => setTeamBadge(d?.teams?.[0]?.strTeamBadge ?? null))
-            .catch(() => setTeamBadge(null));
+        fetch(`https://es.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(profile.equipo_futbol.trim())}`, { signal: controller.signal })
+            .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+            .then(d => setTeamBadge(d?.thumbnail?.source ?? d?.originalimage?.source ?? null))
+            .catch(err => {
+                if (err.name !== "AbortError") {
+                    console.warn(`[UserProfileModal] No se encontró escudo para "${profile.equipo_futbol}":`, err);
+                }
+                setTeamBadge(null);
+            });
 
         return () => controller.abort();
     }, [profile?.equipo_futbol]);
