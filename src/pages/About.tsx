@@ -59,112 +59,116 @@ export default function About() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
+    <div className="min-h-screen flex flex-col bg-background text-foreground antialiased selection:bg-accent/20">
       <Header />
 
-      <main className="flex-1">
-        <section className="section-spacious">
-          <div className="container mx-auto max-w-4xl">
+      <main className="flex-1 py-16 md:py-24 px-4">
+        <div className="max-w-5xl mx-auto">
 
-            {/* Hero */}
-            <motion.div {...fadeUp(0)}>
-              <span className="text-xs font-mono tracking-[0.3em] uppercase text-accent/70 mb-4 block">
-                Reino del Pan · Fundación
-              </span>
-              <h1 className="display-font text-5xl sm:text-6xl font-semibold leading-tight">
-                Acerca del<br />Reino del Pan
-              </h1>
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-foreground/75">
-                Una nación soberana e independiente nacida con la visión de crear una sociedad
-                basada en la paz, la sostenibilidad y la excelencia. Nuestra identidad está
-                profundamente ligada a la tierra, el trabajo artesanal y la búsqueda constante
-                de la armonía.
-              </p>
-            </motion.div>
+          {/* Hero */}
+          <motion.div {...fadeUp(0)} className="text-center md:text-left">
+            <span className="text-xs font-mono tracking-[0.4em] uppercase text-accent font-semibold mb-5 block">
+              Reino del Pan · Fundación
+            </span>
+            <h1 className="display-font text-5xl sm:text-6xl md:text-7xl font-semibold leading-tight tracking-tight text-foreground">
+              Acerca del<br />Reino del Pan
+            </h1>
+            <p className="mt-8 max-w-3xl text-lg md:text-xl leading-relaxed text-foreground/80 font-medium mx-auto md:mx-0">
+              Una nación soberana e independiente nacida con la visión de crear una sociedad
+              basada en la paz, la sostenibilidad y la excelencia. Nuestra identidad está
+              profundamente ligada a la tierra, el trabajo artesanal y la búsqueda constante
+              de la armonía.
+            </p>
+          </motion.div>
 
-            {/* Divisor */}
-            <motion.div
-              {...fadeUp(0.15)}
-              className="mt-12 flex items-center gap-4"
-            >
-              <div className="h-px flex-1 bg-border/50" />
-              <span className="text-accent/40 text-xs font-mono tracking-widest uppercase">
-                valores fundacionales
-              </span>
-              <div className="h-px flex-1 bg-border/50" />
-            </motion.div>
+          {/* Divisor */}
+          <motion.div
+            {...fadeUp(0.15)}
+            className="mt-16 mb-20 flex items-center gap-4"
+          >
+            <div className="h-px flex-1 bg-border/40" />
+            <span className="text-accent/50 text-xs font-mono tracking-widest uppercase font-semibold">
+              valores fundacionales
+            </span>
+            <div className="h-px flex-1 bg-border/40" />
+          </motion.div>
 
-            {/* Misión & Visión — Cards Transparentes con Logo de fondo */}
-            <motion.div {...fadeUp(0.2)} className="mt-10">
-              <div className="grid gap-6 sm:grid-cols-2">
-                {MISSION_VISION.map(({ id, title, label, body }) => (
+          {/* Misión & Visión — Cards con Efecto Iluminado Suave */}
+          <motion.div {...fadeUp(0.2)}>
+            <div className="grid gap-6 md:gap-8 sm:grid-cols-2">
+              {MISSION_VISION.map(({ id, title, label, body }) => (
+                <div
+                  key={id}
+                  className="relative group overflow-hidden rounded-3xl border border-border/40 bg-card/10 backdrop-blur-sm p-8 flex flex-col justify-between min-h-[260px] shadow-sm hover:shadow-lg hover:shadow-accent/5 hover:border-accent/30 transition-all duration-300"
+                >
+                  {/* Marca de agua de fondo mejorada */}
                   <div
-                    key={id}
-                    className="relative overflow-hidden rounded-xl border border-border/40 bg-transparent px-6 py-8 flex flex-col justify-between min-h-[220px]"
-                  >
-                    {/* Contenedor del Logo en marca de agua de fondo */}
-                    <div
-                      className="absolute inset-0 pointer-events-none bg-center bg-no-repeat bg-contain opacity-[0.06] mix-blend-luminosity scale-75"
-                      style={{ backgroundImage: "url('/logo.png')" }}
-                    />
+                    className="absolute inset-0 pointer-events-none bg-center bg-no-repeat bg-contain opacity-[0.05] group-hover:opacity-[0.08] mix-blend-luminosity scale-90 group-hover:scale-100 transition-all duration-500"
+                    style={{ backgroundImage: "url('/logo.png')" }}
+                  />
 
-                    {/* Contenido de la Card */}
-                    <div className="relative z-10">
-                      <span className="text-xs font-mono tracking-[0.25em] uppercase text-accent/60 block mb-2">
-                        {label}
-                      </span>
-                      <h2 className="display-font text-2xl font-semibold text-foreground mb-3">
-                        {title}
-                      </h2>
-                      <p className="text-foreground/80 leading-relaxed text-sm">
-                        {body}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
+                  {/* Efecto de 'Glow' suave en el borde inferior */}
+                  <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-            {/* Pilares */}
-            <motion.div {...fadeUp(0.35)} className="mt-16">
-              <h2 className="display-font text-3xl font-semibold mb-8">
-                Los cuatro pilares
-              </h2>
-              <div className="grid gap-5 sm:grid-cols-2">
-                {PILLARS.map(({ icon, title, body }, idx) => (
-                  <motion.div
-                    key={title}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.45, delay: 0.4 + idx * 0.08 }}
-                    className="flex gap-4 p-4 rounded-xl border border-border/50 bg-background/40 hover:border-accent/30 hover:bg-accent/5 transition-all duration-200"
-                  >
-                    <span className="text-2xl mt-0.5 flex-shrink-0" aria-hidden="true">
-                      {icon}
+                  {/* Contenido de la Card */}
+                  <div className="relative z-10 flex flex-col h-full">
+                    <span className="text-xs font-mono tracking-[0.3em] uppercase text-accent font-semibold block mb-3">
+                      {label}
                     </span>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-1">{title}</h3>
-                      <p className="text-sm text-foreground/60 leading-6">{body}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
+                    <h2 className="display-font text-3xl md:text-4xl font-semibold text-foreground mb-4 leading-snug">
+                      {title}
+                    </h2>
+                    <p className="text-foreground/80 leading-relaxed text-base mt-auto">
+                      {body}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
 
-            {/* Cita de cierre */}
-            <motion.blockquote
-              {...fadeUp(0.6)}
-              className="mt-16 border-l-2 border-accent/50 pl-6 py-2"
-            >
-              <p className="text-xl leading-8 text-foreground/80 italic display-font">
-                "Ubicado en el corazón de Europa, el Reino del Pan no es solo un territorio físico,
-                sino una comunidad global de individuos que comparten los mismos valores de respeto,
-                diversidad y progreso."
-              </p>
-            </motion.blockquote>
+          {/* Pilares — Modernizados con Efecto de Resplandor al Hover */}
+          <motion.div {...fadeUp(0.35)} className="mt-20 md:mt-24">
+            <h2 className="display-font text-4xl font-semibold mb-12 tracking-tight text-foreground text-center">
+              Los cuatro pilares
+            </h2>
+            <div className="grid gap-6 sm:grid-cols-2">
+              {PILLARS.map(({ icon, title, body }, idx) => (
+                <motion.div
+                  key={title}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: 0.4 + idx * 0.08 }}
+                  className="relative flex group gap-5 p-6 md:p-7 rounded-2xl border border-border/50 bg-background/40 hover:border-accent/40 hover:bg-accent/[0.03] transition-all duration-300 backdrop-blur-sm"
+                >
+                  {/* Efecto Glow Difuminado de fondo en Hover */}
+                  <div className="absolute inset-0 rounded-2xl bg-accent/10 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300 pointer-events-none" aria-hidden="true" />
 
-          </div>
-        </section>
+                  <span className="text-3xl mt-1 flex-shrink-0 relative z-10" aria-hidden="true">
+                    {icon}
+                  </span>
+                  <div className="relative z-10">
+                    <h3 className="font-semibold text-lg text-foreground mb-1.5 group-hover:text-accent transition-colors duration-200">{title}</h3>
+                    <p className="text-sm md:text-base text-foreground/70 leading-relaxed">{body}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Cita de cierre */}
+          <motion.blockquote
+            {...fadeUp(0.6)}
+            className="mt-20 md:mt-24 border-l-2 md:border-l-4 border-accent/50 pl-8 py-3 max-w-4xl mx-auto"
+          >
+            <p className="text-2xl md:text-3xl leading-relaxed text-foreground/80 italic display-font font-medium tracking-wide">
+              "Ubicado en el corazón de Europa, el Reino del Pan no es solo un territorio físico,
+              sino una comunidad global de individuos que comparten los mismos valores de respeto,
+              diversidad y progreso."
+            </p>
+          </motion.blockquote>
+
+        </div>
       </main>
 
       <Footer />

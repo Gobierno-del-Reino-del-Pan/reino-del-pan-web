@@ -22,7 +22,6 @@ interface DiscordMember {
 }
 
 // --- CONFIGURACIÓN DE VARIABLES DE ENTORNO (FUERA DEL COMPONENTE) ---
-// Al estar aquí fuera, no causan que el useEffect se vuelva loco en cada renderizado.
 const SERVER_ID = String(import.meta.env.VITE_GUILD_ID || "1381359904731693056");
 
 const ROLES = {
@@ -46,7 +45,6 @@ export default function PKMN() {
   const [totalTrainersCount, setTotalTrainersCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Helper para transformar el formato nativo de Discord a tu interfaz limpia
   const mapDiscordMember = (member: DiscordGuildMember): DiscordMember => {
     const { id, username, global_name, avatar } = member.user;
     const avatarUrl = avatar
@@ -62,7 +60,6 @@ export default function PKMN() {
   };
 
   useEffect(() => {
-    // Al no depender de variables internas replicadas, se ejecuta una sola vez de forma segura
     fetch(`/api/roles`)
       .then(r => {
         if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
@@ -74,17 +71,14 @@ export default function PKMN() {
           return;
         }
 
-        // 1. Filtrar Líderes de Gimnasio
         const gymLeaders = allMembers
           .filter(m => m.roles.includes(ROLES.GIMNASIO))
           .map(mapDiscordMember);
 
-        // 2. Filtrar Alto Mando
         const elite4Members = allMembers
           .filter(m => m.roles.includes(ROLES.ALTO_MANDO))
           .map(mapDiscordMember);
 
-        // 3. Contar entrenadores totales unificados
         const totalTrainers = allMembers.filter(m =>
           m.roles.includes(ROLES.ENTRENADORES_REGISTRADOS) || m.roles.includes(ROLES.ALTO_MANDO)
         ).length;
@@ -97,7 +91,7 @@ export default function PKMN() {
         console.error("Error crítico conectando con el Proxy de Discord:", err);
       })
       .finally(() => setLoading(false));
-  }, []); // Array de dependencias vacío para evitar bucles infinitos
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground overflow-hidden">
@@ -118,6 +112,28 @@ export default function PKMN() {
               <p className="mt-4 max-w-2xl text-[15px] sm:text-base text-foreground/70 leading-relaxed">
                 Bienvenido a la delegación oficial de la Liga Pokémon del Reino del Pan. Un ecosistema soberano donde la estrategia, la constancia y la convivencia armónica definen a los mejores entrenadores del territorio.
               </p>
+
+              {/* ENLACE / BOTÓN A LA POKÉDEX REGIONAL */}
+              <div className="mt-6">
+                <a href="/PKMN/pokedex">
+                  <motion.button
+                    whileHover={{ scale: 1.03, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="inline-flex items-center gap-3 px-5 py-3 rounded-xl border border-accent/30 bg-accent/10 hover:bg-accent/20 transition-colors shadow-sm shadow-accent/5 group"
+                  >
+                    <img
+                      src="/pkmn/pokedex.png"
+                      alt="Pokédex Logo"
+                      className="w-6 h-6 object-contain group-hover:rotate-12 transition-transform duration-300"
+                      onError={(e) => { (e.target as HTMLImageElement).src = "https://via.placeholder.com/24" }}
+                    />
+                    <span className="font-mono text-xs uppercase tracking-wider font-bold text-foreground">
+                      Consultar Pokédex Regional
+                    </span>
+                    <span className="text-accent text-xs group-hover:translate-x-1 transition-transform">→</span>
+                  </motion.button>
+                </a>
+              </div>
             </motion.div>
 
             {/* Marcadores / Contadores Dinámicos */}
@@ -248,8 +264,6 @@ export default function PKMN() {
                 <div className="px-6 py-3 bg-accent/5 border-t border-accent/10 text-[11px] text-accent/70 font-mono">Asignación: Infraestructuras de Combate Gubernamentales</div>
               </motion.div>
 
-              &nbsp;&nbsp;
-              {/*NOTA SIMPLE */}
               {/* Tarjeta 3: Popplio */}
               <motion.div {...fadeUp(0.42)} className="col-span-1 md:col-span-2 rounded-2xl border border-blue-500/20 bg-gradient-to-r from-card/40 via-blue-950/[0.02] to-card/40 overflow-hidden flex flex-col justify-between shadow-md">
                 <div className="p-6 sm:p-8 flex flex-col md:flex-row gap-6 md:items-center">
@@ -278,10 +292,8 @@ export default function PKMN() {
               </motion.div>
             </div>
 
-            &nbsp;&nbsp;
-
             {/* Tarjeta 4: Sprigatito */}
-            <motion.div {...fadeUp(0.42)} className="col-span-1 md:col-span-2 rounded-2xl border border-green-500/20 bg-gradient-to-r from-card/40 via-green-950/[0.02] to-card/40 overflow-hidden flex flex-col justify-between shadow-md">
+            <motion.div {...fadeUp(0.42)} className="col-span-1 md:col-span-2 rounded-2xl border border-green-500/20 bg-gradient-to-r from-card/40 via-green-950/[0.02] to-card/40 overflow-hidden flex flex-col justify-between shadow-md mt-6">
               <div className="p-6 sm:p-8 flex flex-col md:flex-row gap-6 md:items-center">
                 <div className="w-full md:w-44 flex flex-col items-center justify-center bg-background/50 border border-border/80 rounded-xl p-4 shadow-sm shrink-0 gap-3">
                   <div className="w-24 h-24 flex items-center justify-center">
@@ -312,10 +324,8 @@ export default function PKMN() {
               </div>
             </motion.div>
 
-            &nbsp;&nbsp;
-
             {/* Tarjeta 5: Cyndaquil */}
-            <motion.div {...fadeUp(0.42)} className="col-span-1 md:col-span-2 rounded-2xl border border-orange-500/20 bg-gradient-to-r from-card/40 via-orange-950/[0.02] to-card/40 overflow-hidden flex flex-col justify-between shadow-md">
+            <motion.div {...fadeUp(0.42)} className="col-span-1 md:col-span-2 rounded-2xl border border-orange-500/20 bg-gradient-to-r from-card/40 via-orange-950/[0.02] to-card/40 overflow-hidden flex flex-col justify-between shadow-md mt-6">
               <div className="p-6 sm:p-8 flex flex-col md:flex-row gap-6 md:items-center">
                 <div className="w-full md:w-44 flex flex-col items-center justify-center bg-background/50 border border-border/80 rounded-xl p-4 shadow-sm shrink-0 gap-3">
                   <div className="w-24 h-24 flex items-center justify-center">
@@ -346,29 +356,19 @@ export default function PKMN() {
               </div>
             </motion.div>
 
-            &nbsp;&nbsp;
-
             {/* Tarjeta: HACKED BY LA MAFIA DEL PAN ♠️ */}
             <motion.div
               {...fadeUp(0.42)}
-              className="col-span-1 md:col-span-2 rounded-2xl border border-amber-600/30 bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 overflow-hidden flex flex-col justify-between shadow-lg relative"
+              className="col-span-1 md:col-span-2 rounded-2xl border border-amber-600/30 bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 overflow-hidden flex flex-col justify-between shadow-lg relative mt-6"
             >
-              {/* Código de terminal sutil en el fondo */}
               <div className="absolute top-2 right-4 text-[9px] text-amber-500/20 font-mono hidden sm:block select-none pointer-events-none tracking-wider">
                 STATUS: INTRUSION_DETECTED // OVR_044
               </div>
 
               <div className="p-6 sm:p-8 flex flex-col md:flex-row gap-6 md:items-center">
-
-                {/* Contenedor del Espécimen Izquierda */}
                 <div className="w-full md:w-44 flex flex-col items-center justify-center shrink-0 gap-3">
-
-                  {/* Celda de contención de la silueta */}
                   <div className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 shadow-md relative overflow-hidden flex flex-col items-center justify-center">
-                    {/* Rejilla de escaneo minimalista */}
                     <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(217,119,6,0.02)_50%,transparent_50%)] bg-[length:100%_4px] pointer-events-none"></div>
-
-                    {/* Silueta con destello Ámbar industrial */}
                     <div className="w-24 h-24 flex items-center justify-center bg-zinc-950 border border-amber-500/10 rounded-lg relative group">
                       <img
                         src="/pkmn/zercorr.png"
@@ -378,15 +378,12 @@ export default function PKMN() {
                       />
                     </div>
                   </div>
-
-                  {/* Doble Tipo (Ahora FUERA del contenedor de la silueta y uno encima del otro) */}
                   <div className="flex flex-col gap-1 w-full items-center justify-center mt-1">
                     <img src="/pkmn/tipos/electrico.png" alt="Tipo Eléctrico" className="h-5 w-auto object-contain grayscale opacity-80" />
                     <img src="/pkmn/tipos/acero.png" alt="Tipo Acero" className="h-5 w-auto object-contain grayscale opacity-80" />
                   </div>
                 </div>
 
-                {/* Textos de la Terminal de Hackeo */}
                 <div className="space-y-3 flex-1 text-center md:text-left">
                   <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
                     <span className="text-[10px] font-mono tracking-widest text-amber-500 uppercase font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
@@ -407,7 +404,6 @@ export default function PKMN() {
                 </div>
               </div>
 
-              {/* Footer */}
               <div className="px-6 py-3 bg-zinc-900/40 border-t border-zinc-900 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] font-mono">
                 <span className="flex items-center gap-1.5 text-amber-500/80">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>

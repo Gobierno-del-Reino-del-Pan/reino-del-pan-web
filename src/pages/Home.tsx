@@ -20,16 +20,17 @@ interface RegionWeather {
 }
 
 const NEWS_ITEMS = [
-  "Muy pronto los ciudadanos en proceso de regularización podrán solicitar su TPIE",
-  "Corelia realizará una declaración institucional para informar sobre la situación de LaLiga Paniense",
-  "Laboral Panian Bank entrará muy pronto en funcionamiento"
+  "El sistema de generación de DPIs está totalmente operativo",
+  "LaMiga Paniense sigue avanzando a pasos agigantados, proximamente, el gobierno nombrará presidente de LaMiga Paniense",
+  "Se está implementando la Pokédex de la Región, muy pronto disponible",
+  "El 23 de julio se celebrará el primer año del nacimiento del Reino"
 ];
 
 const STATS_ITEMS = [
-  { stat: "Casi 1 Año", title: "Desde su fundación", desc: "Iniciado como una visión en 2025, ahora es un estado consolidado." },
-  { stat: "5400+", title: "Solicitudes de DPI", desc: "Ciudadanos digitales registrados y activos en nuestra plataforma global." },
+  { stat: "Casi 1 Año", title: "Desde su fundación", desc: "Iniciado como una visión el 23 de julio de 2025, ahora es un estado consolidado." },
+  { stat: "500+", title: "Solicitudes de DPI", desc: "Ciudadanos digitales registrados y activos en nuestra plataforma global." },
   { stat: "100%", title: "Por la Libertad", desc: "Compromiso total con la libertad y la resiliencia de nuestro pueblo." },
-  { stat: "50+", title: "Países conectados", desc: "Una comunidad diplomática que cruza borders internacionales." },
+  { stat: "50+", title: "Países conectados", desc: "Una comunidad diplomática que cruza fronteras internacionales." },
 ];
 
 const LOCAL_NEWS_FALLBACK = {
@@ -61,10 +62,10 @@ export default function Home() {
   const regionesConfig: RegionWeather[] = [
     { id: "baguette", region: "Baguette 🥖", ciudad: "Pantopía", lat: 37.3828, lon: -5.9732, bgGradient: "from-amber-500/20 via-orange-600/10 to-transparent" },
     { id: "pimbo", region: "Pimbo 🍞", ciudad: "Pimbolandia", lat: 40.9688, lon: -5.6639, bgGradient: "from-blue-400/10 via-slate-500/5 to-transparent" },
-    { id: "pretzel", region: "Pretzel 🥨", ciudad: "Pretzel", lat: 39.4698, lon: -0.3763, bgGradient: "from-sky-400/15 via-blue-500/5 to-transparent" },
-    { id: "croissant", region: "Croissant 🥐", ciudad: "Croissant", lat: 43.4832, lon: -1.5586, bgGradient: "from-indigo-500/15 via-slate-600/10 to-transparent" },
-    { id: "singluten", region: "Sin Glúten 🌾", ciudad: "Sin Glúten", lat: 34.0522, lon: -118.2437, bgGradient: "from-zinc-400/20 via-neutral-700/5 to-transparent" },
-    { id: "panplano", region: "Pan Plano/Arepa 🫓", ciudad: "Arepada", lat: -34.6037, lon: -58.3816, bgGradient: " from-red-600/15 via-blue-900/10 to-transparent" }
+    { id: "pretzel", region: "Pretzel 🥨", ciudad: "Pretzelopolis", lat: 39.4698, lon: -0.3763, bgGradient: "from-sky-400/15 via-blue-500/5 to-transparent" },
+    { id: "croissant", region: "Croissant 🥐", ciudad: "Vila Croissant", lat: 43.4832, lon: -1.5586, bgGradient: "from-indigo-500/15 via-slate-600/10 to-transparent" },
+    { id: "singluten", region: "Sin Glúten 🌾", ciudad: "ChinPan", lat: 34.0522, lon: -118.2437, bgGradient: "from-zinc-400/20 via-neutral-700/5 to-transparent" },
+    { id: "panplano", region: "Pan Plano/Arepa 🫓", ciudad: "Arepa", lat: -34.6037, lon: -58.3816, bgGradient: " from-red-600/15 via-blue-900/10 to-transparent" }
 
 
 

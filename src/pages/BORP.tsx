@@ -77,18 +77,21 @@ export default function Borp() {
             <Header />
 
             {/* ── CABECERA INSTITUCIONAL CON LOGO OFICIAL ── */}
-            <header className="w-full bg-card border-b border-border shadow-sm py-8">
-                <div className="container flex flex-col md:flex-row items-center justify-between gap-6">
+            <header className="w-full bg-card border-b border-border shadow-sm py-6">
+                <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-6">
                     <div className="flex items-center gap-5">
-                        {/* Logo oficial integrado deshabilitando arrastre y usando el contenedor estricto */}
                         <img
                             src="/borp/borp.jpg"
                             alt="Logo BORP"
-                            className="h-16 md:h-20 w-auto object-contain"
+                            className="h-16 md:h-20 w-auto object-contain pointer-events-none select-none"
                         />
-
+                        <div className="h-10 w-[1px] bg-border hidden md:block" />
+                        <div className="hidden md:block">
+                            <h1 className="text-sm font-mono font-bold uppercase tracking-wider text-foreground">Boletín Oficial</h1>
+                            <p className="text-[11px] font-mono text-muted-foreground">Reino del Pan</p>
+                        </div>
                     </div>
-                    <div className="text-left md:text-right font-mono text-xs text-muted-foreground bg-secondary border border-border px-5 py-3 rounded-xl shadow-inner">
+                    <div className="text-left md:text-right font-mono text-xs text-muted-foreground bg-secondary/60 border border-border px-5 py-3 rounded-xl shadow-inner w-full md:w-auto">
                         <p className="font-bold text-foreground">Diario Oficial del Estado</p>
                         <p className="mt-1 text-[11px]">Sección de Consulta Legislativa</p>
                     </div>
@@ -96,59 +99,60 @@ export default function Borp() {
             </header>
 
             {/* ── CONTENIDO EN GRID PRINCIPAL ── */}
-            <main className="flex-1 container py-12 grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] gap-8">
+            <main className="flex-1 container mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] gap-8">
 
                 {/* PANEL IZQUIERDO: DECRETOS RECIENTES */}
-                <section className="bg-card rounded-xl border border-border p-6 sm:p-8 shadow-sm flex flex-col">
-                    <div className="border-b border-border pb-4 mb-6">
-                        <h2 className="text-2xl text-primary font-normal tracking-wide flex items-center gap-3">
-                            <span className="w-2.5 h-2.5 bg-accent rounded-full shadow-sm"></span>
-                            Sumario de Disposiciones Recientes
-                        </h2>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Extracto informativo de normativas soberanas de obligada aplicación y conocimiento general.
-                        </p>
-                    </div>
+                <section className="bg-card rounded-2xl border border-border p-6 sm:p-8 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div className="border-b border-border pb-4 mb-6">
+                            <h2 className="text-xl md:text-2xl text-foreground font-bold tracking-tight flex items-center gap-3">
+                                <span className="w-2.5 h-2.5 bg-primary rounded-full shadow-sm"></span>
+                                Sumario de Disposiciones Recientes
+                            </h2>
+                            <p className="text-xs text-muted-foreground mt-1.5">
+                                Extracto informativo de normativas soberanas de obligada aplicación y conocimiento general.
+                            </p>
+                        </div>
 
-                    <div className="flex flex-col gap-6">
-                        {DECRETOS_RECIENTES.map((dec) => (
-                            <article
-                                key={dec.id}
-                                className="p-5 rounded-xl bg-secondary/40 border border-border/60 hover:bg-secondary/70 transition-colors duration-200 flex flex-col gap-3 group"
-                            >
-                                <div className="flex justify-between items-start gap-4 flex-wrap text-xs">
-                                    <span className="font-mono font-bold text-primary bg-accent/20 border border-accent/30 px-3 py-0.5 rounded-full">
-                                        {dec.seccion}
-                                    </span>
-                                    <span className="text-muted-foreground font-medium">{dec.fecha}</span>
-                                </div>
+                        <div className="flex flex-col gap-4">
+                            {DECRETOS_RECIENTES.map((dec) => (
+                                <article
+                                    key={dec.id}
+                                    className="p-5 rounded-xl bg-secondary/20 border border-border/80 border-l-4 border-l-primary hover:bg-secondary/40 transition-colors duration-200 flex flex-col gap-3 group"
+                                >
+                                    <div className="flex justify-between items-center gap-4 flex-wrap text-[11px]">
+                                        <span className="font-mono font-bold text-primary bg-primary/10 border border-primary/20 px-2.5 py-0.5 rounded-md">
+                                            {dec.seccion}
+                                        </span>
+                                        <span className="text-muted-foreground font-mono">{dec.fecha}</span>
+                                    </div>
 
-                                {/* Marcado como legible para el usuario final */}
-                                <h3 className="text-lg text-foreground leading-snug font-normal can-select">
-                                    {dec.titulo}
-                                </h3>
+                                    <h3 className="text-base font-medium text-foreground leading-snug can-select">
+                                        {dec.titulo}
+                                    </h3>
 
-                                <div className="flex justify-between items-center gap-4 pt-3 border-t border-border text-xs text-muted-foreground">
-                                    <span className="font-medium italic can-select">{dec.organo}</span>
-                                    <span className="font-mono text-[11px] bg-muted text-muted-foreground px-2 py-0.5 rounded font-semibold">
-                                        {dec.id}
-                                    </span>
-                                </div>
-                            </article>
-                        ))}
+                                    <div className="flex justify-between items-center gap-4 pt-3 border-t border-border/60 text-[11px] text-muted-foreground">
+                                        <span className="font-sans font-medium italic can-select">{dec.organo}</span>
+                                        <span className="font-mono text-[10px] bg-secondary border border-border px-2 py-0.5 rounded font-bold">
+                                            {dec.id}
+                                        </span>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
                     </div>
                 </section>
 
                 {/* PANEL DERECHO: ACCESO DIRECTO PDF Y BUSCADOR */}
-                <aside className="flex flex-col gap-8">
+                <aside className="flex flex-col gap-6">
 
                     {/* CONTROL DE LOS ÚLTIMOS 3 PDF PUBLICADOS */}
-                    <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
-                        <h2 className="text-xl text-primary font-normal tracking-wide border-b border-border pb-3 mb-4">
-                            Últimos Diarios Íntegros
+                    <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
+                        <h2 className="text-md font-mono font-bold uppercase tracking-wider text-muted-foreground border-b border-border pb-3 mb-4 flex items-center gap-2">
+                            <span>📂</span> Últimos Diarios Íntegros
                         </h2>
                         <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-                            Descarga directa del documento oficial completo en formato inalterable PDF de los tres últimos boletines.
+                            Descarga directa del documento oficial completo en formato inalterable PDF de los tres últimos boletines emitidos.
                         </p>
 
                         <div className="flex flex-col gap-3">
@@ -158,21 +162,21 @@ export default function Borp() {
                                     href={`/borp/BORP-${num}.pdf`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center justify-between p-4 rounded-xl border border-border bg-secondary/30 hover:bg-primary hover:text-white hover:border-primary transition-all duration-200 group shadow-sm"
+                                    className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-secondary/30 hover:bg-primary transition-all duration-200 group shadow-sm"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <span className="text-2xl group-hover:scale-110 transition-transform">📄</span>
+                                        <span className="text-xl group-hover:scale-110 transition-transform duration-200">📄</span>
                                         <div>
-                                            <h4 className="text-[15px] font-bold text-foreground group-hover:text-white transition-colors">
+                                            <h4 className="text-xs font-bold text-foreground group-hover:text-white transition-colors duration-150">
                                                 Boletín Oficial BORP-{num}
                                             </h4>
-                                            <p className="text-[11px] text-muted-foreground group-hover:text-accent font-mono mt-0.5 transition-colors">
+                                            <p className="text-[10px] text-muted-foreground font-mono mt-0.5 group-hover:text-white/80 transition-colors duration-150">
                                                 Archivo PDF Oficial
                                             </p>
                                         </div>
                                     </div>
-                                    <span className="text-xs font-mono font-bold bg-muted text-muted-foreground px-3 py-1 rounded-lg group-hover:bg-white/20 group-hover:text-white transition-all">
-                                        Abrir
+                                    <span className="text-[10px] font-mono font-bold bg-secondary text-muted-foreground px-2.5 py-1 rounded-lg border border-border group-hover:bg-white/20 group-hover:text-white group-hover:border-transparent transition-all duration-150">
+                                        Abrir →
                                     </span>
                                 </a>
                             ))}
@@ -180,9 +184,9 @@ export default function Borp() {
                     </div>
 
                     {/* BUSCADOR HISTÓRICO INTEGRAL */}
-                    <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
-                        <h2 className="text-xl text-primary font-normal tracking-wide border-b border-border pb-3 mb-4">
-                            Buscador del Archivo
+                    <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
+                        <h2 className="text-md font-mono font-bold uppercase tracking-wider text-muted-foreground border-b border-border pb-3 mb-4 flex items-center gap-2">
+                            <span>🔍</span> Buscador del Archivo
                         </h2>
                         <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
                             Introduce el número secuencial del diario de la nación que deseas auditar para saltar directamente a su almacenamiento.
@@ -190,7 +194,7 @@ export default function Borp() {
 
                         <form onSubmit={handleSearch} className="flex flex-col gap-3">
                             <div className="relative flex items-center">
-                                <span className="absolute left-4 font-mono text-xs font-bold text-muted-foreground/80 pointer-events-none">
+                                <span className="absolute left-4 font-mono text-xs font-black text-muted-foreground/60 pointer-events-none tracking-tight">
                                     BORP -
                                 </span>
                                 <input
@@ -199,12 +203,12 @@ export default function Borp() {
                                     placeholder="Ej: 1"
                                     value={searchId}
                                     onChange={(e) => setSearchId(e.target.value)}
-                                    className="w-full pl-16 pr-4 py-3 bg-input border border-border rounded-xl text-sm font-mono text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary shadow-inner transition-all"
+                                    className="w-full pl-16 pr-4 py-3 bg-secondary/40 border border-border rounded-xl text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary shadow-inner transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />
                             </div>
                             <button
                                 type="submit"
-                                className="w-full py-3 bg-primary text-white rounded-xl text-xs font-bold uppercase tracking-[0.18em] hover:bg-primary/95 transition-all shadow-md active:scale-95"
+                                className="w-full py-2.5 bg-primary text-white rounded-xl text-[11px] font-mono font-bold uppercase tracking-widest hover:bg-primary/90 transition-all shadow-sm active:scale-[0.98]"
                             >
                                 Localizar Boletín
                             </button>

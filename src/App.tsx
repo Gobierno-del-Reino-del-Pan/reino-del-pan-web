@@ -24,6 +24,7 @@ import PanelDeControl from "./pages/TVP/PanelDeControl.tsx";
 import Consorcio from "./pages/Consorcio/consorcio";
 import Maps from "./pages/Maps";
 import BORP from "./pages/BORP";
+import PKMNpokedex from "./pages/PKMN/pokedex.tsx";
 
 
 
@@ -49,7 +50,7 @@ function App() {
         <Route path="/consorcio" component={Consorcio} />
         <Route path="/maps" component={Maps} />
         <Route path="/borp" component={BORP} />
-
+        <Route path="/pkmn/pokedex" component={PKMNpokedex} />
 
         <Route path="/tvp" component={TVP} />
         <Route path="/tvp/paneldecontrol" component={PanelDeControl} />

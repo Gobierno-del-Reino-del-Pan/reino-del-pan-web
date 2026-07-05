@@ -55,14 +55,13 @@ export default function LaLigaPaniense() {
                 </div>
             </header>
 
-            {/* PANEL DE ESCUDOS EN BLANCO */}
+            {/* PANEL DE ESCUDOS */}
             <section className="bg-slate-950 py-8 px-4 border-b border-slate-900">
                 <div className="max-w-7xl mx-auto">
-                    {/* Grid responsivo: cambia los números si tienes más o menos equipos */}
                     <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-6 items-center justify-items-center">
                         {[
                             "Martini City F.C.png",
-                            "barcelona.png",
+                            "Club Atlético Baguette.png",
                             "atletico.png",
                             "valencia.png",
                             "sevilla.png",
@@ -71,10 +70,12 @@ export default function LaLigaPaniense() {
                             "athletic.png",
                             "girona.png",
                             "villarreal.png"
-                            // ... Añade aquí todos los nombres exactos de tus archivos de la carpeta
                         ].map((archivo, index) => {
-                            // Extraemos el nombre del equipo quitando la extensión para el atributo 'alt'
                             const nombreEquipo = archivo.split('.')[0];
+
+                            {/* Si es el Atlético Baguette, dejamos el filtro vacío; si no, aplicamos el blanqueador */ }
+                            const esBaguette = archivo === "Club Atlético Baguette.png";
+                            const clasesFiltro = esBaguette ? "" : "filter brightness-0 invert";
 
                             return (
                                 <div
@@ -85,9 +86,7 @@ export default function LaLigaPaniense() {
                                     <img
                                         src={`/LALIGA/Equipos/${archivo}`}
                                         alt={`Escudo de ${nombreEquipo}`}
-                                        // 'brightness-0 invert' hace la magia del blanco puro.
-                                        // 'opacity-60 hover:opacity-100' le da un toque interactivo muy pro.
-                                        className="h-12 w-12 object-contain filter brightness-0 invert opacity-60 group-hover:opacity-100 group-hover:scale-110 transition duration-200"
+                                        className={`h-12 w-12 object-contain opacity-60 group-hover:opacity-100 group-hover:scale-110 transition duration-200 ${clasesFiltro}`}
                                     />
                                 </div>
                             );
@@ -150,7 +149,7 @@ export default function LaLigaPaniense() {
                                     Movimientos clave antes del cierre de registros
                                 </h3>
                                 <p className="text-sm text-slate-400 leading-relaxed mb-4">
-                                    Los principales clubes de la Primera División apuran sus opciones en el mercado. El Real Pania busca un delantero, mientras que el Atlético Sur refuerza su defensa.
+                                    Los principales clubes de la Primera División apuran sus opciones en el mercado. El Martini City F.C. busca un delantero, mientras que el Atlético Baguette refuerza su defensa.
                                 </p>
                                 <a href="#" className="inline-flex items-center text-sm font-bold text-red-500 hover:text-red-400 transition">
                                     Leer más
@@ -187,7 +186,7 @@ export default function LaLigaPaniense() {
                                 <span className="text-red-500 font-black">24 PTS</span>
                             </div>
                             <div className="flex justify-between items-center p-3 hover:bg-slate-800 rounded-lg transition">
-                                <span>2. Atlético Sur</span>
+                                <span>2. Club Atlético Baguette</span>
                                 <span className="text-slate-400">21 PTS</span>
                             </div>
                             <div className="flex justify-between items-center p-3 hover:bg-slate-800 rounded-lg transition">
@@ -217,7 +216,7 @@ export default function LaLigaPaniense() {
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {[
-                            { date: "SÁB 23.05 - 18:00", home: "Real Pania FC", away: "Atlético Sur" },
+                            { date: "SÁB 23.05 - 18:00", home: "Club Atlético Baguette", away: "Martini City F.C." },
                             { date: "SÁB 23.05 - 20:30", home: "Sporting Capital", away: "Unión Marítima" },
                             { date: "DOM 24.05 - 16:00", home: "Deportivo Norte", away: "CF Valles" },
                         ].map((match, i) => (
@@ -249,7 +248,6 @@ export default function LaLigaPaniense() {
                 <div className="max-w-7xl mx-auto">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
 
-                        {/* Sección: Juego Limpio y Reglamento */}
                         <div>
                             <h4 className="font-black text-white text-sm uppercase tracking-wider mb-4 font-laliga-title">Compromiso</h4>
                             <ul className="space-y-2 text-xs">
@@ -258,7 +256,6 @@ export default function LaLigaPaniense() {
                             </ul>
                         </div>
 
-                        {/* Institución */}
                         <div>
                             <h4 className="font-black text-white text-sm uppercase tracking-wider mb-4 font-laliga-title">Institución</h4>
                             <ul className="space-y-2 text-xs">
@@ -266,7 +263,6 @@ export default function LaLigaPaniense() {
                             </ul>
                         </div>
 
-                        {/* Legal */}
                         <div>
                             <h4 className="font-black text-white text-sm uppercase tracking-wider mb-4 font-laliga-title">Legal</h4>
                             <ul className="space-y-2 text-xs">
@@ -275,7 +271,6 @@ export default function LaLigaPaniense() {
                             </ul>
                         </div>
 
-                        {/* Comunidad */}
                         <div>
                             <h4 className="font-black text-white text-sm uppercase tracking-wider mb-4 font-laliga-title">Comunidad</h4>
                             <ul className="space-y-2 text-xs">
