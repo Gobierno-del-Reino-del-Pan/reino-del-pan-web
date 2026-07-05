@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState, useCallback } from "react";
+import { useMemo, useEffect, useState, useCallback, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, GeoJSON } from "react-leaflet";
 import L, { type PathOptions } from "leaflet";
 import type { Feature, FeatureCollection, Geometry } from "geojson";
@@ -8,7 +8,7 @@ import { supabase } from "../lib/supabaseClient";
 
 import "leaflet/dist/leaflet.css";
 
-// Fix para los iconos de Leaflet en entornos como Vite/Webpack
+// Fix base por si se necesitan marcadores nativos en algún momento (SSR/Vite)
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
 const DefaultIcon = L.icon({
@@ -80,7 +80,7 @@ const REGIONES: Region[] = [
     },
     {
         nombre: "Pan Plano/Arepa",
-        archivo: "Pan Plano-Arepa",
+        archivo: "Pan Plano-Arepa", // Mapea exactamente al nombre de tu archivo .png
         color: "#f87171",
         colorBorde: "#b91c1c",
         emoji: "🫔",
@@ -100,7 +100,7 @@ const REGIONES: Region[] = [
 const REGION_MAP = Object.fromEntries(REGIONES.map((r) => [r.nombre, r]));
 
 // ─────────────────────────────────────────────
-// GEOJSON (Coordenadas en formato [longitud, latitud])
+// GEOJSON (Coordenadas correctas en [longitud, latitud])
 // ─────────────────────────────────────────────
 const REGIONES_GEOJSON: FeatureCollection = {
     type: "FeatureCollection",
@@ -189,15 +189,24 @@ const REGIONES_GEOJSON: FeatureCollection = {
 };
 
 // ─────────────────────────────────────────────
-// HELPER: ICONO DE MARCADOR
+// HELPER: ICONO DE BANDERA EXCLUSIVO
 // ─────────────────────────────────────────────
-const obtenerIcono = (nombreIcono: string, tipo: string) =>
-    L.icon({
-        iconUrl: tipo === "capital" ? "/MAPS/capital.png" : `/MAPS/${nombreIcono}.png`,
-        iconSize: tipo === "capital" ? [42, 42] : [32, 32],
-        iconAnchor: tipo === "capital" ? [21, 42] : [16, 32],
-        popupAnchor: [0, -32],
+const obtenerIconoBandera = (nombreRegion: string, tipo: string) => {
+    const region = REGION_MAP[nombreRegion];
+    const nombreArchivo = region?.archivo ?? region?.nombre ?? "default";
+
+    // Las capitales tienen una bandera ligeramente más grande para destacar
+    const ancho = tipo === "capital" ? 44 : 32;
+    const alto = tipo === "capital" ? 28 : 20;
+
+    return L.icon({
+        iconUrl: `/Maps/${nombreArchivo}.png`,
+        iconSize: [ancho, alto],
+        iconAnchor: [ancho / 2, alto], // La base de la bandera apunta al punto exacto
+        popupAnchor: [0, -alto],
+        className: "bandera-marcador"
     });
+};
 
 // ─────────────────────────────────────────────
 // COMPONENTE PRINCIPAL
@@ -207,6 +216,9 @@ export default function TerritorialDivisions() {
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [regionActiva, setRegionActiva] = useState<string | null>(null);
+
+    // Referencia al GeoJSON para poder modificar sus estilos sin re-montar el componente
+    const geoJsonRef = useRef<L.GeoJSON>(null);
 
     // ── Supabase ─────────────────────────────
     useEffect(() => {
@@ -221,16 +233,15 @@ export default function TerritorialDivisions() {
             } catch (err: any) {
                 console.error("Error cargando puntos:", err);
                 setError("Mostrando datos de demostración geolocalizados.");
-
                 setPuntos([
-                    { id: "1", nombre: "Pan-Dorra la Vella", region: "Pimbo", latitud: 42.5063, longitud: 1.5218, tipo: "capital", icono: "capital" },
-                    { id: "2", nombre: "Núcleo Sabadell", region: "Pimbo", latitud: 41.5462, longitud: 2.1086, tipo: "ciudad", icono: "molino" },
-                    { id: "3", nombre: "Bastión de Badalona", region: "Pimbo", latitud: 41.4501, longitud: 2.2474, tipo: "ciudad", icono: "castillo" },
-                    { id: "4", nombre: "Puerto de Tarraco Paniense", region: "Pimbo", latitud: 41.1189, longitud: 1.2445, tipo: "ciudad", icono: "puerto" },
-                    { id: "5", nombre: "Canillo Crujiente", region: "Pretzel", latitud: 42.5670, longitud: 1.5990, tipo: "capital", icono: "capital" },
-                    { id: "6", nombre: "Fortaleza de Baguette-sur-Ariège", region: "Baguette", latitud: 42.9200, longitud: 1.6050, tipo: "capital", icono: "capital" },
-                    { id: "7", nombre: "Bastión de Bayona", region: "Croissant", latitud: 43.4929, longitud: -1.4748, tipo: "capital", icono: "capital" },
-                    { id: "8", nombre: "Santuario sin TACC", region: "Sin Glúten", latitud: 42.0520, longitud: 3.2190, tipo: "capital", icono: "capital" },
+                    { id: "1", nombre: "Pan-Dorra la Vella", region: "Pimbo", latitud: 42.5063, longitud: 1.5218, tipo: "capital", icono: "" },
+                    { id: "2", nombre: "Núcleo Sabadell", region: "Pimbo", latitud: 41.5462, longitud: 2.1086, tipo: "ciudad", icono: "" },
+                    { id: "3", nombre: "Bastión de Badalona", region: "Pimbo", latitud: 41.4501, longitud: 2.2474, tipo: "ciudad", icono: "" },
+                    { id: "4", nombre: "Puerto de Tarraco Paniense", region: "Pimbo", latitud: 41.1189, longitud: 1.2445, tipo: "ciudad", icono: "" },
+                    { id: "5", nombre: "Canillo Crujiente", region: "Pretzel", latitud: 42.5670, longitud: 1.5990, tipo: "capital", icono: "" },
+                    { id: "6", nombre: "Fortaleza de Baguette-sur-Ariège", region: "Baguette", latitud: 42.9200, longitud: 1.6050, tipo: "capital", icono: "" },
+                    { id: "7", nombre: "Bastión de Bayona", region: "Croissant", latitud: 43.4929, longitud: -1.4748, tipo: "capital", icono: "" },
+                    { id: "8", nombre: "Santuario sin TACC", region: "Sin Glúten", latitud: 42.0520, longitud: 3.2190, tipo: "capital", icono: "" },
                 ]);
             } finally {
                 setCargando(false);
@@ -239,7 +250,7 @@ export default function TerritorialDivisions() {
         fetchPuntos();
     }, []);
 
-    // ── Estilo GeoJSON ────────────────────────
+    // ── Estilo Dinámico GeoJSON ───────────────
     const estiloRegion = useCallback(
         (feature?: Feature<Geometry>): PathOptions => {
             const nombre = feature?.properties?.region as string;
@@ -256,7 +267,15 @@ export default function TerritorialDivisions() {
         [regionActiva]
     );
 
-    // ── Eventos GeoJSON ───────────────────────
+    // Aplicar los nuevos estilos a la capa cuando cambia regionActiva 
+    // sin re-renderizar todo el componente GeoJSON
+    useEffect(() => {
+        if (geoJsonRef.current) {
+            geoJsonRef.current.setStyle(estiloRegion);
+        }
+    }, [regionActiva, estiloRegion]);
+
+    // ── Eventos GeoJSON (Hover sin bugs) ──────
     const onEachRegion = useCallback(
         (feature: Feature<Geometry>, layer: L.Layer) => {
             const nombre = feature.properties?.region as string;
@@ -264,17 +283,16 @@ export default function TerritorialDivisions() {
 
             layer.on({
                 mouseover: (e) => {
-                    // Resaltado visual local sin disparar re-render completo del mapa
                     const target = e.target as L.Path;
-                    target.setStyle({ fillOpacity: 0.60, weight: 3.5 });
+                    target.setStyle({ fillOpacity: 0.65, weight: 3.5 });
                 },
                 mouseout: (e) => {
-                    // Restaurar estilo base (respetando si está seleccionada)
-                    const target = e.target as L.Path;
-                    target.setStyle(estiloRegion(feature));
+                    // resetStyle revierte automáticamente al estilo dictado por estiloRegion actual
+                    if (geoJsonRef.current) {
+                        geoJsonRef.current.resetStyle(e.target as L.Path);
+                    }
                 },
                 click: () => {
-                    // La selección real ocurre al hacer clic
                     setRegionActiva((prev) => (prev === nombre ? null : nombre));
                 },
             });
@@ -284,7 +302,7 @@ export default function TerritorialDivisions() {
                 { permanent: true, direction: "center", className: "region-tooltip" }
             );
         },
-        [estiloRegion]
+        [] // Importante: Sin dependencias para que Leaflet no acumule listeners
     );
 
     const puntosFiltrados = useMemo(
@@ -368,16 +386,13 @@ export default function TerritorialDivisions() {
 
                     <MapContainer center={mapCenter} zoom={7} style={{ height: "100%", width: "100%" }}>
                         <TileLayer
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                         />
 
-                        {/* 
-                            Usamos regionActiva como key para forzar el refresco de estilos 
-                            solo cuando cambia la SELECCIÓN, no en cada hover.
-                        */}
+                        {/* El GeoJSON ahora usa la referencia para actualizar estilos sin desmontarse */}
                         <GeoJSON
-                            key={regionActiva ?? "all"}
+                            ref={geoJsonRef}
                             data={REGIONES_GEOJSON}
                             style={estiloRegion}
                             onEachFeature={onEachRegion}
@@ -387,7 +402,7 @@ export default function TerritorialDivisions() {
                             <Marker
                                 key={punto.id}
                                 position={[punto.latitud, punto.longitud]}
-                                icon={obtenerIcono(punto.icono, punto.tipo)}
+                                icon={obtenerIconoBandera(punto.region, punto.tipo)}
                             >
                                 <Popup>
                                     <div className="text-left p-1 min-w-[160px]" style={{ color: "#1e293b" }}>
@@ -428,6 +443,17 @@ export default function TerritorialDivisions() {
                             border-radius: 10px;
                             box-shadow: 0 4px 20px rgba(0,0,0,0.4);
                         }
+                        .bandera-marcador {
+                            object-fit: cover;
+                            border-radius: 4px;
+                            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+                            border: 1px solid rgba(255,255,255,0.25);
+                            transition: transform 0.2s ease;
+                        }
+                        .bandera-marcador:hover {
+                            transform: scale(1.15);
+                            z-index: 1000 !important;
+                        }
                     `}</style>
                 </div>
 
@@ -438,20 +464,23 @@ export default function TerritorialDivisions() {
                             {REGION_MAP[regionActiva]?.emoji} Puntos en <span className="text-foreground">{regionActiva}</span>
                         </h3>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                            {puntosFiltrados.map((p) => (
-                                <div key={p.id} className="flex items-start gap-2 p-3 rounded-lg bg-card border border-border text-left">
-                                    <img
-                                        src={p.tipo === "capital" ? "/MAPS/capital.png" : `/MAPS/${p.icono}.png`}
-                                        alt={p.icono}
-                                        className="w-7 h-7 object-contain shrink-0 mt-0.5"
-                                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                                    />
-                                    <div>
-                                        <p className="text-xs font-semibold leading-tight text-foreground">{p.nombre}</p>
-                                        <p className="text-[10px] text-muted-foreground mt-0.5 capitalize">{p.tipo}</p>
+                            {puntosFiltrados.map((p) => {
+                                const archivoBandera = REGION_MAP[p.region]?.archivo ?? p.region;
+                                return (
+                                    <div key={p.id} className="flex items-start gap-2 p-3 rounded-lg bg-card border border-border text-left hover:bg-muted/50 transition-colors">
+                                        <img
+                                            src={`/Maps/${archivoBandera}.png`}
+                                            alt={`Bandera de ${p.region}`}
+                                            className="w-8 h-5 object-cover rounded-sm border shadow-sm shrink-0 mt-0.5"
+                                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                                        />
+                                        <div>
+                                            <p className="text-xs font-semibold leading-tight text-foreground">{p.nombre}</p>
+                                            <p className="text-[10px] text-muted-foreground mt-0.5 capitalize">{p.tipo}</p>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 )}
@@ -468,7 +497,7 @@ export default function TerritorialDivisions() {
                             <button
                                 key={region.nombre}
                                 onClick={() => setRegionActiva((prev) => prev === region.nombre ? null : region.nombre)}
-                                className="flex flex-col items-center p-5 bg-card rounded-lg border transition-all hover:scale-105 focus:outline-none focus-visible:ring-2 text-left"
+                                className="flex flex-col items-center p-5 bg-card rounded-lg border transition-all hover:-translate-y-1 focus:outline-none focus-visible:ring-2 text-left"
                                 style={{
                                     borderColor: regionActiva === region.nombre ? region.color : "var(--border)",
                                     boxShadow: regionActiva === region.nombre ? `0 0 14px ${region.color}55` : undefined,
@@ -479,7 +508,7 @@ export default function TerritorialDivisions() {
                                     style={{ borderColor: region.colorBorde + "55", backgroundColor: region.color + "15" }}
                                 >
                                     <img
-                                        src={`/MAPS/${region.archivo ?? region.nombre}.png`}
+                                        src={`/Maps/${region.archivo ?? region.nombre}.png`}
                                         alt={`Bandera de ${region.nombre}`}
                                         className="w-full h-full object-cover pointer-events-none"
                                         onError={(e) => {

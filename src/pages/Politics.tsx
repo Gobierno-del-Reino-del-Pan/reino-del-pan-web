@@ -2,7 +2,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 
 import { motion, Variants } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 
@@ -19,7 +19,7 @@ interface Party {
   lider_id?: string;
   lider_username?: string;
   lider_avatar_url?: string;
-  miembros?: string[];
+  miembros?: any[];
   logo_url?: string;
   color_hex?: string;
   activo?: boolean;
@@ -72,10 +72,12 @@ export default function PoliticsPage() {
   }, []);
 
 
-  const totalMembers = parties.reduce((sum, p) => {
-    const miembros = Array.isArray(p.miembros) ? p.miembros : [];
-    return sum + miembros.length;
-  }, 0);
+  const totalMembers = useMemo(() => {
+    return parties.reduce((sum, p) => {
+      const miembros = Array.isArray(p.miembros) ? p.miembros : [];
+      return sum + miembros.length;
+    }, 0);
+  }, [parties]);
 
 
   const containerVariants: Variants = {
@@ -171,7 +173,7 @@ export default function PoliticsPage() {
 
 
           {/* ========================================================================= */}
-          {/* ESTADOS AUXILIARES (CARGA Y ERROR)                                        */}
+          {/* ESTADOS AUXILIARES (CARGA Y ERROR)                                       */}
           {/* ========================================================================= */}
           {loading && (
             <div className="text-center text-foreground/50 py-24 text-xl font-medium tracking-wide animate-pulse">
@@ -193,7 +195,6 @@ export default function PoliticsPage() {
             <>
               {/* SECCIÓN 1: Líderes de la Cámara */}
               <section>
-                {/* Añadido space-y-3 para separar título de subtítulo, y mb-10 para separar del grid */}
                 <div className="border-b border-border/60 pb-5 mb-10 space-y-3">
                   <h2 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
                     <span>👑</span> Líderes de la Cámara
@@ -252,7 +253,6 @@ export default function PoliticsPage() {
 
               {/* SECCIÓN 2: Fuerza Electoral y Afiliados */}
               <section>
-                {/* Añadido space-y-3 para separar título de subtítulo, y mb-10 para separar del grid */}
                 <div className="border-b border-border/60 pb-5 mb-10 space-y-3">
                   <h2 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
                     <span>📊</span> Fuerza Electoral y Afiliados
@@ -357,7 +357,6 @@ export default function PoliticsPage() {
 
               {/* SECCIÓN 3: Directorio de Doctrina y Bloques */}
               <section>
-                {/* Añadido space-y-3 para separar título de subtítulo, y mb-10 para separar del grid */}
                 <div className="border-b border-border/60 pb-5 mb-10 space-y-3">
                   <h2 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
                     <span>📖</span> Directorio de Doctrina y Bloques

@@ -107,7 +107,7 @@ export default function DPI() {
             </h2>
 
             <p className="text-foreground/70 mb-10 text-sm md:text-base leading-relaxed max-w-xl mx-auto">
-              El proceso de solicitud toma menos de **10 minutos**. Solo necesitarás una
+              El proceso de solicitud toma menos de 10 minutos. Solo necesitarás una
               identificación válida y una fotografía reciente en formato digital.
             </p>
 
