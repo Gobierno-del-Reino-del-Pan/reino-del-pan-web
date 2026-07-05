@@ -272,13 +272,14 @@ export default function Header() {
 
             <button
               onClick={() => { setMobileOpen(v => !v); }}
-              className="lg:hidden flex flex-col justify-center items-center w-10 h-10 rounded-full border border-white/25 bg-white/15 backdrop-blur-md hover:bg-white/25 transition relative z-50 cursor-pointer shadow-[0_0_0_1px_rgba(255,255,255,0.1)_inset]"
+              className="lg:hidden flex flex-col justify-center items-center w-10 h-10 rounded-full border border-neutral-300 bg-white/20 backdrop-blur-md hover:bg-white/30 transition relative z-50 cursor-pointer shadow-[0_0_0_1px_rgba(255,255,255,0.1)_inset]"
               aria-label="Menú"
             >
               <div className="w-5 h-3.5 flex flex-col justify-between relative">
-                <span className={`block w-5 h-0.5 rounded-full transition-all duration-300 ${mobileOpen ? "bg-white rotate-45 translate-y-1.5" : "bg-white"}`} />
-                <span className={`block w-5 h-0.5 rounded-full transition-all duration-300 ${mobileOpen ? "opacity-0 scale-0" : "bg-white"}`} />
-                <span className={`block w-5 h-0.5 rounded-full transition-all duration-300 ${mobileOpen ? "bg-white -rotate-45 -translate-y-1.5" : "bg-white"}`} />
+                {/* CAMBIO: Barras del menú hamburguesa en negro/oscuro */}
+                <span className={`block w-5 h-0.5 rounded-full transition-all duration-300 ${mobileOpen ? "bg-foreground rotate-45 translate-y-1.5" : "bg-foreground"}`} />
+                <span className={`block w-5 h-0.5 rounded-full transition-all duration-300 ${mobileOpen ? "opacity-0 scale-0" : "bg-foreground"}`} />
+                <span className={`block w-5 h-0.5 rounded-full transition-all duration-300 ${mobileOpen ? "bg-foreground -rotate-45 -translate-y-1.5" : "bg-foreground"}`} />
               </div>
             </button>
           </div>
@@ -300,7 +301,7 @@ export default function Header() {
                     key={item.href}
                     href={item.href}
                     className={`relative flex items-center px-4 py-3 rounded-xl text-[11px] font-bold uppercase tracking-[0.18em] transition-all duration-200 ${isActive
-                      ? "text-neutral-900 bg-white/70 font-black shadow-[0_0_0_1px_rgba(255,255,255,0.6)_inset]"
+                      ? "text-accent bg-accent/10 font-black shadow-[0_0_0_1px_rgba(var(--accent-rgb),0.2)_inset]"
                       : "text-neutral-700 hover:text-neutral-950 hover:bg-white/40"
                       }`}
                   >
@@ -322,7 +323,7 @@ export default function Header() {
                     key={subItem.href}
                     href={subItem.href}
                     className={`relative flex items-center pl-8 pr-4 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-[0.18em] transition-all duration-200 ${isSubActive
-                      ? "text-neutral-900 bg-white/70 font-black shadow-[0_0_0_1px_rgba(255,255,255,0.6)_inset]"
+                      ? "text-accent bg-accent/10 font-black shadow-[0_0_0_1px_rgba(var(--accent-rgb),0.2)_inset]"
                       : "text-neutral-900 bg-white/40 hover:bg-white/55 border border-white/30 shadow-sm mb-1"
                       }`}
                   >
