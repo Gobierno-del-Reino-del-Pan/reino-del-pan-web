@@ -103,11 +103,59 @@ export default function Header() {
 
   return (
     <>
+      {/* Estilos aislados para el efecto de hackeo/glitch */}
+      <style>{`
+        @keyframes mafiaGlitch {
+          0% {
+            text-shadow: 1.5px 0 #ef4444, -1.5px 0 #06b6d4;
+            transform: translate(0, 0);
+          }
+          15% {
+            text-shadow: -1.5px 0 #ef4444, 1.5px 0 #06b6d4;
+            transform: translate(-1px, 0.5px);
+          }
+          30% {
+            text-shadow: 1.5px 0 #eab308, -1.5px 0 #ef4444;
+            transform: translate(0.5px, -0.5px);
+          }
+          45% {
+            text-shadow: -1.5px 0 #06b6d4, 1.5px 0 #eab308;
+            transform: translate(-0.5px, -1px);
+          }
+          60% {
+            text-shadow: 2px 0 #ef4444, -2px 0 #06b6d4;
+            transform: translate(1px, 1px);
+          }
+          75% {
+            text-shadow: -1px 0 #ef4444, 1px 0 #eab308;
+            transform: translate(-1px, -0.5px);
+          }
+          100% {
+            text-shadow: 1.5px 0 #ef4444, -1.5px 0 #06b6d4;
+            transform: translate(0, 0);
+          }
+        }
+
+        .mafia-hacker-link {
+          position: relative;
+          transition: all 0.2s ease-in-out;
+        }
+
+        .mafia-hacker-link:hover {
+          animation: mafiaGlitch 0.25s linear infinite;
+          color: #ffffff !important;
+          border-color: rgba(239, 68, 68, 0.4) !important;
+          background: rgba(239, 68, 68, 0.08) !important;
+          box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+        }
+      `}</style>
+
       <header className="sticky top-0 z-50 border-b border-white/10 bg-gradient-to-b from-white/10 via-background/60 to-background/70 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_1px_0_rgba(255,255,255,0.08)_inset,0_8px_30px_-10px_rgba(0,0,0,0.4)] transition-all duration-300">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
 
         <div className="container mx-auto flex items-center justify-between gap-4 py-3.5 px-4 sm:px-6">
 
+          {/* Logo del Reino del Pan */}
           <Link href="/" className="flex items-center gap-3 shrink-0 group">
             <div className="relative">
               <img
@@ -123,6 +171,7 @@ export default function Header() {
             </div>
           </Link>
 
+          {/* Navegación Principal Desktop */}
           <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
             {allNavItems.map((item) => {
               const isActive = item.href === "/"
@@ -146,6 +195,7 @@ export default function Header() {
               );
             })}
 
+            {/* Menú Desplegable "Otros" */}
             <div className="relative" ref={otrosRef}>
               <button
                 onClick={() => setOtrosOpen(v => !v)}
@@ -180,8 +230,20 @@ export default function Header() {
                 </div>
               )}
             </div>
+
+            {/* ENLACE MOVIDO: La Pica de La Mafia del Pan justo al lado de Otros */}
+            <a
+              href="https://www.mafiadepan.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mafia-hacker-link flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.18em] text-red-400/90 border border-red-500/20 bg-red-500/5 rounded-full cursor-pointer whitespace-nowrap"
+            >
+              <span className="text-sm leading-none text-red-500 select-none">♠</span>
+              <span>La Mafia</span>
+            </a>
           </nav>
 
+          {/* Bloque de Usuario / Login / Menú hamburguesa */}
           <div className="flex items-center gap-3">
             {loading ? (
               <div className="w-8 h-8 rounded-full border border-white/15 bg-white/10 backdrop-blur-md animate-pulse" />
@@ -276,7 +338,6 @@ export default function Header() {
               aria-label="Menú"
             >
               <div className="w-5 h-3.5 flex flex-col justify-between relative">
-                {/* CAMBIO: Barras del menú hamburguesa en negro/oscuro */}
                 <span className={`block w-5 h-0.5 rounded-full transition-all duration-300 ${mobileOpen ? "bg-foreground rotate-45 translate-y-1.5" : "bg-foreground"}`} />
                 <span className={`block w-5 h-0.5 rounded-full transition-all duration-300 ${mobileOpen ? "opacity-0 scale-0" : "bg-foreground"}`} />
                 <span className={`block w-5 h-0.5 rounded-full transition-all duration-300 ${mobileOpen ? "bg-foreground -rotate-45 -translate-y-1.5" : "bg-foreground"}`} />
@@ -286,6 +347,7 @@ export default function Header() {
         </div>
       </header>
 
+      {/* Menú Mobile */}
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-40 pt-[69px]">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={() => { setMobileOpen(false); }} />
@@ -335,10 +397,20 @@ export default function Header() {
                 );
               })}
 
+              {/* Botón rápido para La Mafia en el menú móvil debajo de "Otros" */}
+              <a
+                href="https://www.mafiadepan.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mafia-hacker-link mt-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.18em] text-red-500 border border-red-500/20 bg-red-500/5 shadow-sm"
+              >
+                <span>♠ LA MAFIA DEL PAN</span>
+              </a>
+
               {user && (
                 <button
                   onClick={() => { window.location.href = "/auth/logout"; }}
-                  className="mt-2 flex items-center justify-center gap-2 px-4 py-3 rounded-full text-[11px] font-bold uppercase tracking-[0.18em] border border-red-300/50 bg-red-50/60 backdrop-blur-md text-red-600 hover:bg-red-100/70 transition-all duration-200 cursor-pointer shadow-sm"
+                  className="mt-3 flex items-center justify-center gap-2 px-4 py-3 rounded-full text-[11px] font-bold uppercase tracking-[0.18em] border border-red-300/50 bg-red-50/60 backdrop-blur-md text-red-600 hover:bg-red-100/70 transition-all duration-200 cursor-pointer shadow-sm"
                 >
                   Cerrar Sesión
                 </button>
