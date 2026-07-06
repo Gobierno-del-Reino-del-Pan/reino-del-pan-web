@@ -4,6 +4,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { supabase } from "../lib/supabaseClient";
 
+
 // ── INTERFACES Y CONFIGURACIONES ESTÁTICAS ──────────────────────────
 
 interface RegionWeather {
@@ -630,6 +631,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+
 
       <Footer />
 
