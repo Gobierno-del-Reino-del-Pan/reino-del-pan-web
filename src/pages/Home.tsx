@@ -32,7 +32,7 @@ interface SupabaseNewsItem {
 
 const NEWS_ITEMS = [
   "El sistema de generación de DPIs está totalmente operativo",
-  "LaMiga Paniense sigue avanzando a pasos agigantados, próximamente el gobierno nombrará presidente de LaMiga Paniense",
+  "LaMiga Paniense sigue advancing a pasos agigantados, próximamente el gobierno nombrará presidente de LaMiga Paniense",
   "Se está implementando la Pokédex de la Región, muy pronto disponible",
   "El 23 de julio se celebrará el primer año del nacimiento del Reino"
 ];
@@ -58,7 +58,22 @@ const LOCAL_NEWS_FALLBACK = {
   ]
 };
 
-// Sacado fuera del componente para evitar recreación de arrays e hilos de memoria redundantes
+const FIESTAS_TEXTS = [
+  "Y yo me voy con mi peña. María, Alberto, Manolo",
+  "El color con el que transmites tu caminar",
+  "Santa Brígida nos ilumina a este reino",
+  "Y era un domingo en la tarde, fui a los coches de choque",
+  "Valdrá la pena",
+  "Hazlo, SÍ O SÍ. El 23J declárate a tu crush",
+  "Yo diría que disparaste a cada una de mis emociones",
+  "Prepara las copas, el DJ está cerca...",
+  "Vivir solo cuesta la vida...",
+  "Vamos, a ver si lo pillas, el 23J nos vemos y te la pillo",
+  "Espero que esto no lo veas tú",
+  "Vamos, a ver si lo pillas, el 23J nos vemos y te la pillo",
+
+];
+
 const REGIONES_CONFIG: RegionWeather[] = [
   { id: "baguette", region: "Baguette 🥖", ciudad: "Pantopía", lat: 37.3828, lon: -5.9732, bgGradient: "from-amber-500/20 via-orange-600/10 to-transparent" },
   { id: "pimbo", region: "Pimbo 🍞", ciudad: "Pimbolandia", lat: 40.9688, lon: -5.6639, bgGradient: "from-blue-400/10 via-slate-500/5 to-transparent" },
@@ -83,6 +98,7 @@ const getWeatherStatus = (code: number) => {
 export default function Home() {
   const news = useMemo(() => NEWS_ITEMS, []);
   const stats = useMemo(() => STATS_ITEMS, []);
+  const fiestaTexts = useMemo(() => FIESTAS_TEXTS, []);
 
   const [mainNews, setMainNews] = useState(LOCAL_NEWS_FALLBACK.main);
   const [secondaryNews, setSecondaryNews] = useState(LOCAL_NEWS_FALLBACK.secondary);
@@ -372,7 +388,7 @@ export default function Home() {
               </h3>
               <p className="mt-4 text-[14px] sm:text-base text-neutral-700 leading-relaxed font-normal">
                 El Gobierno del Reino del Pan y Laboral Kutxa han alcanzado un acuerdo para la creación de Laboral Panian Bank.
-                Una nueva entidad financiera que impulsará el ahorro, la inversión y el crecimiento económico del país.
+                Una nueva entidad identidad financiera que impulsará el ahorro, la inversión y el crecimiento económico del país.
                 El futuro de la banca paniense comienza hoy.
               </p>
             </div>
@@ -392,7 +408,7 @@ export default function Home() {
                   Tercer Inicial Revelado
                 </h3>
                 <p className="mt-4 text-[14px] sm:text-base text-neutral-700 leading-relaxed font-normal">
-                  Cyndaquil es oficialmente el tercer inicial anunciado para el ecosistema del Reino. Su naturaleza y capacidades marcarán el inicio de una nueva era de exploración.
+                  Cyndaquil es officially el tercer inicial anunciado para el ecosistema del Reino. Su naturaleza y capacidades marcarán el inicio de una nueva era de exploración.
                 </p>
               </div>
               <div className="mt-8 sm:mt-0">
@@ -488,14 +504,201 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── NUEVA SECCIÓN: FIESTAS PATRONALES CON SERPENTINAS 3D Y EFECTOS ESPECIALES ── */}
+      <section className="w-full px-4 sm:px-6 py-24 mt-20 bg-[#07080c] relative overflow-hidden select-none border-t border-white/5">
+
+        {/* Efecto de luces de fondo (Ambience) */}
+        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-96 h-96 bg-accent/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/3 right-1/4 -translate-y-1/2 w-96 h-96 bg-amber-500/10 rounded-full blur-[120px] pointer-events-none" />
+
+        <div className="container mx-auto max-w-7xl relative">
+          <div className="text-center mb-16">
+            <span className="text-xs uppercase tracking-[0.4em] text-accent font-bold block mb-3 animate-pulse">
+              🎉 ¡VIVE LA TRADICIÓN! 🎉
+            </span>
+            <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight drop-shadow-md">
+              Fiesta Nacional del Reino
+            </h2>
+            <br />
+            <p className="text-sm text-white/40 mt-6 max-w-md mx-auto font-medium">
+              Siente la música, la peña y la energía de una celebración soberana única.
+            </p>
+          </div>
+
+          {/* CONTENEDOR 3D PRINCIPAL */}
+          <div className="relative min-h-[700px] lg:min-h-[550px] flex flex-col lg:flex-row justify-center items-center gap-16 lg:gap-32 bg-[#0e1017]/60 backdrop-blur-md p-8 sm:p-12 md:p-16 rounded-[40px] border border-white/5 overflow-hidden shadow-2xl">
+
+            {/* ── CAPA Z-0: SERPENTINAS POR DETRÁS ── */}
+            <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+              {fiestaTexts[9] && (
+                <div className="absolute top-[12%] left-[-2%] bg-gradient-to-r from-accent to-orange-500 text-accent-foreground text-xs font-black tracking-widest uppercase px-6 py-3 rounded-full shadow-lg border border-white/10 transform animate-serpentina-back-1 whitespace-nowrap">
+                  🎗️ {fiestaTexts[9]}
+                </div>
+              )}
+              {fiestaTexts[2] && (
+                <div className="absolute bottom-[25%] right-[-5%] bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-black tracking-widest uppercase px-6 py-3 rounded-full shadow-lg border border-white/10 transform animate-serpentina-back-2 whitespace-nowrap">
+                  ✨ {fiestaTexts[2]}
+                </div>
+              )}
+              {fiestaTexts[4] && (
+                <div className="absolute top-[45%] left-[5%] bg-gradient-to-r from-neutral-800 to-neutral-950 text-white/90 text-xs font-bold tracking-widest uppercase px-5 py-2.5 rounded-full shadow-md border border-white/5 transform animate-serpentina-back-3 whitespace-nowrap">
+                  ⚡ {fiestaTexts[4]}
+                </div>
+              )}
+            </div>
+
+            {/* ── CAPA Z-10: CARTEL DE LA IZQUIERDA ── */}
+            <div className="z-10 relative group perspective-1000 transform hover:scale-[1.03] transition-all duration-500">
+              <div className="absolute -inset-1 bg-gradient-to-r from-accent to-amber-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500" />
+              <img
+                src="/anunciosgov/cartel1.jpg"
+                alt="Cartel Fiestas Patronales 1"
+                className="max-h-[400px] sm:max-h-[460px] w-auto rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] border border-white/10 relative z-10 transform lg:-rotate-2 group-hover:rotate-0 transition-transform duration-500"
+              />
+            </div>
+
+            {/* ── CAPA Z-20: SERPENTINAS INTERMEDIAS (CRUZAN POR DELANTE DEL CARTEL 1 Y DETRÁS DEL CARTEL 2) ── */}
+            <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+              {fiestaTexts[1] && (
+                <div className="absolute top-[35%] left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 via-orange-500 to-yellow-400 text-neutral-950 text-sm sm:text-base font-black tracking-wider uppercase px-8 py-3.5 rounded-xl shadow-[0_15px_35px_rgba(0,0,0,0.5)] transform animate-serpentina-mid-1 whitespace-nowrap border-y-2 border-white/20">
+                  🔥 {fiestaTexts[1]} 🔥
+                </div>
+              )}
+              {fiestaTexts[5] && (
+                <div className="absolute bottom-[38%] left-[15%] bg-gradient-to-r from-rose-600 to-red-500 text-white text-xs sm:text-sm font-extrabold tracking-widest uppercase px-6 py-3 rounded-xl shadow-xl transform animate-serpentina-mid-2 whitespace-nowrap">
+                  💘 {fiestaTexts[5]}
+                </div>
+              )}
+              {fiestaTexts[8] && (
+                <div className="absolute top-[15%] right-[8%] bg-gradient-to-r from-purple-600 via-pink-600 to-accent text-white text-xs font-black tracking-widest uppercase px-6 py-3 rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.6)] transform animate-serpentina-front-2 whitespace-nowrap pointer-events-auto hover:scale-110 transition-transform cursor-pointer">
+                  🎯 {fiestaTexts[8]}
+                </div>
+              )}
+            </div>
+
+            {/* ── CAPA Z-30: CARTEL DE LA DERECHA ── */}
+            <div className="z-30 relative group perspective-1000 transform hover:scale-[1.03] transition-all duration-500">
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-accent rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500" />
+              <img
+                src="/anunciosgov/cartel2.jpg"
+                alt="Cartel Fiestas Patronales 2"
+                className="max-h-[400px] sm:max-h-[460px] w-auto rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] border border-white/10 relative z-10 transform lg:rotate-2 group-hover:rotate-0 transition-transform duration-500"
+              />
+            </div>
+
+            {/* ── CAPA Z-40: SERPENTINAS POR DELANTE DE TODO ── */}
+            <div className="absolute inset-0 z-40 pointer-events-none overflow-hidden">
+              {fiestaTexts[3] && (
+                <div className="absolute bottom-[10%] left-[25%] bg-gradient-to-r from-emerald-400 to-teal-500 text-neutral-950 text-xs sm:text-sm font-black tracking-widest uppercase px-6 py-3.5 rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.6)] transform animate-serpentina-front-1 whitespace-nowrap pointer-events-auto hover:scale-110 transition-transform cursor-pointer">
+                  🚗 {fiestaTexts[3]}
+                </div>
+              )}
+              {fiestaTexts[6] && (
+                <div className="absolute top-[15%] right-[8%] bg-gradient-to-r from-purple-600 via-pink-600 to-accent text-white text-xs font-black tracking-widest uppercase px-6 py-3 rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.6)] transform animate-serpentina-front-2 whitespace-nowrap pointer-events-auto hover:scale-110 transition-transform cursor-pointer">
+                  🎯 {fiestaTexts[6]}
+                </div>
+              )}
+              {fiestaTexts[0] && (
+                <div className="absolute top-[12%] left-[-2%] bg-gradient-to-r from-accent to-orange-500 text-accent-foreground text-xs font-black tracking-widest uppercase px-6 py-3 rounded-full shadow-lg border border-white/10 transform animate-serpentina-back-1 whitespace-nowrap">
+                  🎗️ {fiestaTexts[0]}
+                </div>
+              )}
+
+            </div>
+
+            {/* ── CAPA Z-50: FUEGOS ARTIFICIALES DE TEXTO (DISPARADOR AUTOMÁTICO SI SUPERA LAS 10 FRASES) ── */}
+            {fiestaTexts.length > 10 && (
+              <div className="absolute inset-0 z-50 pointer-events-none">
+                {fiestaTexts.slice(10).map((extraText, index) => (
+                  <div
+                    key={index}
+                    className="absolute text-center animate-firework-explosion"
+                    style={{
+                      left: `${20 + (index * 25) % 60}%`,
+                      top: `${30 + (index * 20) % 50}%`,
+                      animationDelay: `${index * 2}s`
+                    }}
+                  >
+                    <span className="text-xs sm:text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-accent to-pink-500 tracking-widest block uppercase whitespace-nowrap drop-shadow-[0_0_15px_rgba(255,77,0,0.8)]">
+                      💥 {extraText} 💥
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+          </div>
+        </div>
+      </section>
+
       <Footer />
 
       <style dangerouslySetInnerHTML={{
         __html: `
-        @keyframes marquee {
-          0% { transform: translate3d(0, 0, 0); }
-          100% { transform: translate3d(-50%, 0, 0); }
+        
+        /* ── ANIMACIONES SERPENTINAS (FIESTAS PATRONALES) ── */
+        
+        /* Capa trasera 1: Ondulación curva lenta de izquierda a derecha */
+        @keyframes serpentina-back-1 {
+          0%, 100% { transform: translate(0, 0) rotate(-4deg); }
+          33% { transform: translate(15px, -10px) rotate(-1deg); }
+          66% { transform: translate(-10px, 15px) rotate(-6deg); }
         }
+        /* Capa trasera 2: Movimiento diagonal opuesto */
+        @keyframes serpentina-back-2 {
+          0%, 100% { transform: translate(0, 0) rotate(5deg); }
+          50% { transform: translate(-25px, -15px) rotate(9deg); }
+        }
+        /* Capa trasera 3: Vaivén sutil */
+        @keyframes serpentina-back-3 {
+          0%, 100% { transform: translate(0, 0) rotate(-2deg); }
+          50% { transform: translate(20px, 5px) rotate(2deg); }
+        }
+
+        /* Capa Media 1: Cruza el centro con balanceo de balance festivo */
+        @keyframes serpentina-mid-1 {
+          0%, 100% { transform: translate(-50%, -50%) rotate(4deg) scale(1); }
+          50% { transform: translate(-48%, -54%) rotate(-2deg) scale(1.03); }
+        }
+        /* Capa Media 2: Trayectoria de flote flotante */
+        @keyframes serpentina-mid-2 {
+          0%, 100% { transform: translateY(0) rotate(-8deg); }
+          50% { transform: translateY(-20px) rotate(-4deg); }
+        }
+
+        /* Capa Delantera 1: Gran vaivén por el frente (Simula flotar muy cerca de la pantalla) */
+        @keyframes serpentina-front-1 {
+          0%, 100% { transform: translate(0, 0) rotate(-3deg) scale(1); filter: drop-shadow(0 15px 20px rgba(0,0,0,0.6)); }
+          50% { transform: translate(-15px, -25px) rotate(3deg) scale(1.05); filter: drop-shadow(0 30px 30px rgba(0,0,0,0.8)); }
+        }
+        /* Capa Delantera 2: Movimiento curvo orgánico descendente */
+        @keyframes serpentina-front-2 {
+          0%, 100% { transform: translate(0, 0) rotate(6deg) scale(1); }
+          50% { transform: translate(25px, 20px) rotate(2deg) scale(1.04); }
+        }
+
+        /* Ejecución de tiempos descompasados para naturalidad */
+        .animate-serpentina-back-1 { animation: serpentina-back-1 7s ease-in-out infinite; }
+        .animate-serpentina-back-2 { animation: serpentina-back-2 8s ease-in-out infinite; }
+        .animate-serpentina-back-3 { animation: serpentina-back-3 6s ease-in-out infinite; }
+        .animate-serpentina-mid-1 { animation: serpentina-mid-1 5.5s ease-in-out infinite; }
+        .animate-serpentina-mid-2 { animation: serpentina-mid-2 6.5s ease-in-out infinite; }
+        .animate-serpentina-front-1 { animation: serpentina-front-1 5s ease-in-out infinite; }
+        .animate-serpentina-front-2 { animation: serpentina-front-2 7.5s ease-in-out infinite; }
+
+        /* ── ANIMACIÓN EFECTO FUEGO ARTIFICIAL (TEXT EXPLOSION) ── */
+        @keyframes firework-explosion {
+          0% { transform: scale(0.3) translateY(40px); opacity: 0; filter: blur(5px); }
+          10% { opacity: 1; filter: blur(0px); }
+          40% { transform: scale(1.1) translateY(-20px); opacity: 1; }
+          60% { transform: scale(1) translateY(0px); opacity: 1; filter: drop-shadow(0 0 20px rgba(255,200,0,1)); }
+          85%, 100% { transform: scale(0.8) translateY(15px); opacity: 0; filter: blur(8px); }
+        }
+        .animate-firework-explosion { 
+          animation: firework-explosion 6s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+          will-change: transform, opacity;
+        }
+
         @font-face {
             font-family: 'TVP-Heading';
             src: url('/TVP/TVP.ttf') format('truetype');
