@@ -162,20 +162,23 @@ export default function Borp() {
                                     href={`/borp/BORP-${num}.pdf`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-secondary/30 hover:bg-primary transition-all duration-200 group shadow-sm"
+                                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border bg-secondary/30 hover:bg-primary transition-all duration-200 group shadow-sm gap-4"
                                 >
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xl group-hover:scale-110 transition-transform duration-200">📄</span>
-                                        <div>
-                                            <h4 className="text-xs font-bold text-foreground group-hover:text-white transition-colors duration-150">
+                                    <div className="flex items-start gap-3 w-full sm:min-w-0">
+                                        <span className="text-xl group-hover:scale-110 transition-transform duration-200 flex-shrink-0 mt-0.5 sm:mt-0">📄</span>
+
+                                        {/* Cambiado a grid con un gap vertical explícito que fuerza la separación */}
+                                        <div className="grid grid-cols-1 gap-y-1 w-full">
+                                            <h4 className="text-xs font-bold text-foreground group-hover:text-primary-foreground transition-colors duration-150 block leading-normal">
                                                 Boletín Oficial BORP-{num}
                                             </h4>
-                                            <p className="text-[10px] text-muted-foreground font-mono mt-0.5 group-hover:text-white/80 transition-colors duration-150">
-                                                Archivo PDF Oficial
+                                            <p className="text-[10px] text-muted-foreground font-mono group-hover:text-primary-foreground/80 transition-colors duration-150 block leading-normal">
+
                                             </p>
                                         </div>
                                     </div>
-                                    <span className="text-[10px] font-mono font-bold bg-secondary text-muted-foreground px-2.5 py-1 rounded-lg border border-border group-hover:bg-white/20 group-hover:text-white group-hover:border-transparent transition-all duration-150">
+
+                                    <span className="text-[10px] font-mono font-bold bg-secondary text-muted-foreground px-2.5 py-2 sm:py-1 rounded-lg border border-border group-hover:bg-primary-foreground group-hover:text-primary group-hover:border-transparent transition-all duration-150 flex-shrink-0 text-center w-full sm:w-auto">
                                         Abrir →
                                     </span>
                                 </a>

@@ -409,7 +409,7 @@ export default function Home() {
                   Tercer Inicial Revelado
                 </h3>
                 <p className="mt-4 text-[14px] sm:text-base text-neutral-700 leading-relaxed font-normal">
-                  Cyndaquil es officially el tercer inicial anunciado para el ecosistema del Reino. Su naturaleza y capacidades marcarán el inicio de una nueva era de exploración.
+                  Cyndaquil es oficialmente el tercer inicial anunciado para el ecosistema del Reino. Su naturaleza y capacidades marcarán el inicio de una nueva era de exploración.
                 </p>
               </div>
               <div className="mt-8 sm:mt-0">
