@@ -31,6 +31,8 @@ interface SupabaseNewsItem {
   created_at: string;
 }
 
+
+
 const NEWS_ITEMS = [
   "El sistema de generación de DPIs está totalmente operativo",
   "LaMiga Paniense sigue advancing a pasos agigantados, próximamente el gobierno nombrará presidente de LaMiga Paniense",
@@ -714,6 +716,27 @@ export default function Home() {
         .font-tvp-head { font-family: 'TVP-Heading', sans-serif; }
         .font-tvp-text { font-family: 'TVP-Text', sans-serif; }
       `}} />
+
+      <style>{`
+  @keyframes marquee {
+    0% {
+      transform: translate3d(0, 0, 0);
+    }
+    100% {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+
+  .custom-marquee {
+    animation: marquee 35s linear infinite !important;
+  }
+
+  /* Por si acaso el hover de Tailwind no te funciona, aseguramos el pause aquí: */
+  .custom-marquee:hover {
+    animation-play-state: paused !important;
+  }
+`}</style>
+
     </div>
   );
 }
