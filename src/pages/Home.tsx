@@ -37,7 +37,8 @@ const NEWS_ITEMS = [
   "El sistema de generación de DPIs está totalmente operativo",
   "LaMiga Paniense sigue advancing a pasos agigantados, próximamente el gobierno nombrará presidente de LaMiga Paniense",
   "Se está implementando la Pokédex de la Región, muy pronto disponible",
-  "El 23 de julio se celebrará el primer año del nacimiento del Reino"
+  "El 23 de julio se celebrará el primer año del nacimiento del Reino",
+  "Muy pronto no habrá disponibilidad de DPIs"
 ];
 
 const STATS_ITEMS = [
