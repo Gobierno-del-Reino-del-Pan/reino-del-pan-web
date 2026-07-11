@@ -93,7 +93,7 @@ export default function Gobierno() {
                     Actualmente no existe un gobierno formalmente estructurado ni un gabinete en funciones dentro del Reino del Pan. Sin embargo, se mantiene un <strong>gobierno provisional</strong> encargado de la administración y supervisión del orden general.
                   </p>
                   <p>
-                    Este se encuentra formado por los <strong>Moderadores y Vigilantes</strong>, quienes velan por el cumplimiento de las leyes y el funcionamiento básico del sistema bajo la autoridad de <strong>Martini</strong>, coordinador general provisional.
+                    Este se encuentra formado por los <strong>Moderadores y Vigilantes</strong>, quienes velan por el cumplimiento de las leyes y el funcionamiento básico del sistema bajo la autoridad de <strong>Martini</strong>, el actual <strong>Director de Reformas y Coordinador del Estado</strong>.
                   </p>
                 </div>
               </div>

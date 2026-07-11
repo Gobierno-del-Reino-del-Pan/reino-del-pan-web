@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { supabase } from "../lib/supabaseClient";
+import { AgendaStatCard } from "../components/AgendaStatCard";
 
 
 // ── INTERFACES Y CONFIGURACIONES ESTÁTICAS ──────────────────────────
@@ -45,8 +46,9 @@ const STATS_ITEMS = [
   { stat: "Casi 1 Año", title: "Desde su fundación", desc: "Iniciado como una visión el 23 de julio de 2025, ahora es un estado consolidado." },
   { stat: "500+", title: "Solicitudes de DPI", desc: "Ciudadanos digitales registrados y activos en nuestra plataforma global." },
   { stat: "100%", title: "Por la Libertad", desc: "Compromiso total con la libertad y la resiliencia de nuestro pueblo." },
-  { stat: "50+", title: "Países conectados", desc: "Una comunidad diplomática que cruza fronteras internacionales." },
+  { stat: "Proximamente", title: "Comunicado del Director de Reformas", desc: "Lanzará una comunicación institucional a través del BORP." }
 ];
+
 
 const LOCAL_NEWS_FALLBACK = {
   main: {
