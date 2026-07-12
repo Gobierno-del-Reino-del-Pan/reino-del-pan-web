@@ -25,6 +25,7 @@ import Consorcio from "./pages/Consorcio/consorcio";
 import Maps from "./pages/Maps";
 import BORP from "./pages/BORP";
 import PKMNpokedex from "./pages/PKMN/pokedex.tsx";
+import Tarjetas from "./pages/TarjetasExclusivas.tsx";
 
 
 
@@ -51,6 +52,8 @@ function App() {
         <Route path="/maps" component={Maps} />
         <Route path="/borp" component={BORP} />
         <Route path="/pkmn/pokedex" component={PKMNpokedex} />
+        <Route path="/tarjetas" component={Tarjetas} />
+
 
         <Route path="/tvp" component={TVP} />
         <Route path="/tvp/paneldecontrol" component={PanelDeControl} />
