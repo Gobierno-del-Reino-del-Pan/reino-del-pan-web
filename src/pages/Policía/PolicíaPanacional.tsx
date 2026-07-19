@@ -190,7 +190,7 @@ export default function PoliciaNacional() {
 
                             <div className="rounded-xl border border-border bg-card p-4 sm:p-5 space-y-5 shadow-sm">
                                 <div className="text-center border-b border-border/60 pb-4">
-                                    <p className="text-3xl sm:text-4xl font-black text-foreground tracking-tight">1129</p>
+                                    <p className="text-3xl sm:text-4xl font-black text-foreground tracking-tight">1143</p>
                                     <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider font-semibold mt-1 font-subtitle">
                                         Detenidos Totales (Año Actual)
                                     </p>
