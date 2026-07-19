@@ -27,12 +27,18 @@ const SOCIALS = [
   }
 ];
 
+const IMPORTANT_LINKS = [
+  { label: "Ministerio de Economía, Comercio y Empresa", href: "https://mineco.duckdns.org/", isExternal: true },
+  { label: "Ministerio de Transformación Digital", href: "https://mitd.duckdns.org/", isExternal: true },
+  { label: "Enciclopan", href: "https://enciclopan.duckdns.org/", isExternal: true },
+  { label: "Policía Nacional del Pan", href: "/policia", isExternal: false },
+];
+
 const LEGAL_LINKS = [
   { label: "Política de Privacidad", href: "/privacy" },
   { label: "Términos y Condiciones", href: "/terms" },
 ];
 
-// Foco visible consistente para navegación por teclado
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
@@ -51,7 +57,7 @@ export default function Footer() {
 
   return (
     <footer className="relative bg-background border-t border-accent/10 py-16 overflow-hidden">
-      {/* Efecto de Iluminación Ambiental (Ambient Glow) — sin cambios */}
+      {/* Efecto de Iluminación Ambiental */}
       <div className="absolute top-0 left-1/3 w-[600px] h-[250px] bg-gradient-to-tr from-accent/15 via-accent/5 to-transparent blur-[100px] rounded-full pointer-events-none transform -translate-y-20 select-none" />
       <div className="absolute bottom-0 right-10 w-[300px] h-[200px] bg-foreground/3 blur-[80px] rounded-full pointer-events-none select-none" />
 
@@ -85,15 +91,40 @@ export default function Footer() {
               </div>
             </div>
             <p className="text-[13px] text-foreground/55 leading-relaxed font-light">
-              Infraestructura digital y registro institucional oficial. Coordinando el desarrollo tecnológico, legal y administrativo del ecosistema.
+              Infraestructura digital y registro institutional oficial. Coordinando el desarrollo tecnológico, legal y administrativo del ecosistema.
             </p>
           </motion.div>
 
-          {/* Bloque de Enlaces y Redes Alineados a la Derecha */}
+          {/* Bloque de Enlaces y Redes Alineados */}
           <motion.div
             {...fadeUp}
             className="flex flex-wrap gap-x-16 gap-y-10 justify-between md:justify-end w-full md:w-auto"
           >
+            {/* Enlaces Importantes */}
+            <nav aria-label="Enlaces importantes" className="flex flex-col gap-3 max-w-[260px] min-w-[200px]">
+              <p className="text-[11px] uppercase tracking-[0.25em] font-bold text-foreground/35">
+                Enlaces Importantes
+              </p>
+              <ul className="flex flex-col gap-2 items-start">
+                {IMPORTANT_LINKS.map((link) => (
+                  <li key={link.href}>
+                    <a
+                      href={link.href}
+                      target={link.isExternal ? "_blank" : undefined}
+                      rel={link.isExternal ? "noopener noreferrer" : undefined}
+                      className={`relative text-[13px] text-foreground/60 hover:text-foreground transition-colors duration-200 py-0.5 group rounded-sm block ${FOCUS_RING}`}
+                    >
+                      {link.label}
+                      <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-accent transition-all duration-300 group-hover:w-full" />
+                    </a>
+                  </li>
+                ))}
+                <li className="text-[11px] italic text-foreground/30 pt-1 select-none">
+                  Más en el futuro...
+                </li>
+              </ul>
+            </nav>
+
             {/* Comunidad */}
             <div className="flex flex-col gap-4 min-w-[140px]">
               <p className="text-[11px] uppercase tracking-[0.25em] font-bold text-foreground/35">
@@ -146,7 +177,7 @@ export default function Footer() {
           </motion.div>
         </div>
 
-        {/* Cierre inferior de una sola línea limpio */}
+        {/* Cierre inferior */}
         <div className="border-t border-accent/5 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[11px] tracking-wide text-foreground/40 font-medium text-center sm:text-left">
             Reino del Pan © {new Date().getFullYear()} • Todos los derechos reservados.

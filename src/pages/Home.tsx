@@ -65,19 +65,7 @@ const LOCAL_NEWS_FALLBACK = {
 };
 
 const FIESTAS_TEXTS = [
-  "Y yo me voy con mi peña. María, Alberto, Manolo",
-  "El color con el que transmites tu caminar",
-  "Santa Brígida nos ilumina a este reino",
-  "Y era un domingo en la tarde, fui a los coches de choque",
-  "Valdrá la pena",
-  "Hazlo, SÍ O SÍ. El 23J declárate a tu crush",
-  "Yo diría que disparaste a cada una de mis emociones",
-  "Prepara las copas, el DJ está cerca...",
-  "Vivir solo cuesta la vida...",
-  "Vamos, a ver si lo pillas, el 23J nos vemos y te la pillo",
-  "Espero que esto no lo veas tú",
-  "Vamos, a ver si lo pillas, el 23J nos vemos y te la pillo",
-
+  ""
 ];
 
 const REGIONES_CONFIG: RegionWeather[] = [
@@ -612,26 +600,6 @@ export default function Home() {
 
             </div>
 
-            {/* ── CAPA Z-50: FUEGOS ARTIFICIALES DE TEXTO (DISPARADOR AUTOMÁTICO SI SUPERA LAS 10 FRASES) ── */}
-            {fiestaTexts.length > 10 && (
-              <div className="absolute inset-0 z-50 pointer-events-none">
-                {fiestaTexts.slice(10).map((extraText, index) => (
-                  <div
-                    key={index}
-                    className="absolute text-center animate-firework-explosion"
-                    style={{
-                      left: `${20 + (index * 25) % 60}%`,
-                      top: `${30 + (index * 20) % 50}%`,
-                      animationDelay: `${index * 2}s`
-                    }}
-                  >
-                    <span className="text-xs sm:text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-accent to-pink-500 tracking-widest block uppercase whitespace-nowrap drop-shadow-[0_0_15px_rgba(255,77,0,0.8)]">
-                      💥 {extraText} 💥
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
 
           </div>
         </div>
@@ -643,70 +611,7 @@ export default function Home() {
       <style dangerouslySetInnerHTML={{
         __html: `
         
-        /* ── ANIMACIONES SERPENTINAS (FIESTAS PATRONALES) ── */
-        
-        /* Capa trasera 1: Ondulación curva lenta de izquierda a derecha */
-        @keyframes serpentina-back-1 {
-          0%, 100% { transform: translate(0, 0) rotate(-4deg); }
-          33% { transform: translate(15px, -10px) rotate(-1deg); }
-          66% { transform: translate(-10px, 15px) rotate(-6deg); }
-        }
-        /* Capa trasera 2: Movimiento diagonal opuesto */
-        @keyframes serpentina-back-2 {
-          0%, 100% { transform: translate(0, 0) rotate(5deg); }
-          50% { transform: translate(-25px, -15px) rotate(9deg); }
-        }
-        /* Capa trasera 3: Vaivén sutil */
-        @keyframes serpentina-back-3 {
-          0%, 100% { transform: translate(0, 0) rotate(-2deg); }
-          50% { transform: translate(20px, 5px) rotate(2deg); }
-        }
-
-        /* Capa Media 1: Cruza el centro con balanceo de balance festivo */
-        @keyframes serpentina-mid-1 {
-          0%, 100% { transform: translate(-50%, -50%) rotate(4deg) scale(1); }
-          50% { transform: translate(-48%, -54%) rotate(-2deg) scale(1.03); }
-        }
-        /* Capa Media 2: Trayectoria de flote flotante */
-        @keyframes serpentina-mid-2 {
-          0%, 100% { transform: translateY(0) rotate(-8deg); }
-          50% { transform: translateY(-20px) rotate(-4deg); }
-        }
-
-        /* Capa Delantera 1: Gran vaivén por el frente (Simula flotar muy cerca de la pantalla) */
-        @keyframes serpentina-front-1 {
-          0%, 100% { transform: translate(0, 0) rotate(-3deg) scale(1); filter: drop-shadow(0 15px 20px rgba(0,0,0,0.6)); }
-          50% { transform: translate(-15px, -25px) rotate(3deg) scale(1.05); filter: drop-shadow(0 30px 30px rgba(0,0,0,0.8)); }
-        }
-        /* Capa Delantera 2: Movimiento curvo orgánico descendente */
-        @keyframes serpentina-front-2 {
-          0%, 100% { transform: translate(0, 0) rotate(6deg) scale(1); }
-          50% { transform: translate(25px, 20px) rotate(2deg) scale(1.04); }
-        }
-
-        /* Ejecución de tiempos descompasados para naturalidad */
-        .animate-serpentina-back-1 { animation: serpentina-back-1 7s ease-in-out infinite; }
-        .animate-serpentina-back-2 { animation: serpentina-back-2 8s ease-in-out infinite; }
-        .animate-serpentina-back-3 { animation: serpentina-back-3 6s ease-in-out infinite; }
-        .animate-serpentina-mid-1 { animation: serpentina-mid-1 5.5s ease-in-out infinite; }
-        .animate-serpentina-mid-2 { animation: serpentina-mid-2 6.5s ease-in-out infinite; }
-        .animate-serpentina-front-1 { animation: serpentina-front-1 5s ease-in-out infinite; }
-        .animate-serpentina-front-2 { animation: serpentina-front-2 7.5s ease-in-out infinite; }
-
-        /* ── ANIMACIÓN EFECTO FUEGO ARTIFICIAL (TEXT EXPLOSION) ── */
-        @keyframes firework-explosion {
-          0% { transform: scale(0.3) translateY(40px); opacity: 0; filter: blur(5px); }
-          10% { opacity: 1; filter: blur(0px); }
-          40% { transform: scale(1.1) translateY(-20px); opacity: 1; }
-          60% { transform: scale(1) translateY(0px); opacity: 1; filter: drop-shadow(0 0 20px rgba(255,200,0,1)); }
-          85%, 100% { transform: scale(0.8) translateY(15px); opacity: 0; filter: blur(8px); }
-        }
-        .animate-firework-explosion { 
-          animation: firework-explosion 6s cubic-bezier(0.25, 1, 0.5, 1) infinite;
-          will-change: transform, opacity;
-        }
-
-        @font-face {
+                @font-face {
             font-family: 'TVP-Heading';
             src: url('/TVP/TVP.ttf') format('truetype');
             font-weight: bold;

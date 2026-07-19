@@ -1,4 +1,3 @@
-import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
@@ -95,7 +94,80 @@ export default function PKMN() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground overflow-hidden">
-      <Header />
+
+      {/* 1. Franja de Web Oficial del Gobierno - FUENTE INTER EXPLICITA */}
+      <div className="bg-zinc-900 border-b border-border/40 py-1.5 px-4 text-[10px] md:text-xs text-zinc-400 font-sans relative z-50">
+        <div className="max-w-7xl mx-auto flex items-center justify-center gap-2.5 text-center">
+          <img
+            src="/flag.png"
+            alt="Bandera del Reino del Pan"
+            className="h-3 w-5 opacity-90 object-cover rounded-[1px]"
+          />
+          <span className="font-semibold tracking-wider uppercase">
+            Web oficial del Gobierno del Reino del Pan · Ministerio de Desregulación y Pokémon
+          </span>
+        </div>
+      </div>
+
+      {/* 2. HEADER ULTRA OPTIMIZADO (CENTRADO Y ENGRANDEDIDO con Botón de Regreso y Pokédex) */}
+      <header className="w-full border-b border-border/40 bg-card/10 backdrop-blur-xl sticky top-0 z-50 font-sans overflow-hidden">
+        {/* Efecto sutil de haz de luz superior en el fondo */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-[1px] bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
+
+        <div className="container mx-auto max-w-5xl px-4 sm:px-6 h-20 flex items-center justify-between relative">
+
+          {/* BOTÓN REGRESAR A LA PRINCIPAL */}
+          <div className="flex items-center absolute left-4 sm:left-6">
+            <a
+              href="/"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border/60 bg-background/40 hover:bg-background/80 hover:border-foreground/20 transition-all group font-mono text-[11px] uppercase tracking-wider text-foreground/80"
+            >
+              <span className="text-accent transition-transform group-hover:-translate-x-0.5">←</span>
+              <span>Inicio</span>
+            </a>
+          </div>
+
+          {/* Bloque Central de Identidad (Engrandecido y Centrado Absoluto) */}
+          <div className="mx-auto text-center flex flex-col items-center justify-center gap-0.5 group select-none">
+            <span className="text-2xl sm:text-3xl font-black tracking-tight display-font text-foreground transition-transform duration-300 group-hover:scale-[1.02]">
+              Pokémon{" "}
+              <span className="relative text-transparent bg-clip-text bg-gradient-to-r from-accent via-amber-500 to-red-500 drop-shadow-[0_2px_10px_rgba(245,158,11,0.15)]">
+                Pania
+              </span>
+            </span>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <div className="h-[1px] w-4 bg-gradient-to-r from-transparent to-border/60" />
+              <div className="h-[1px] w-4 bg-gradient-to-l from-transparent to-border/60" />
+            </div>
+          </div>
+
+          {/* BOTÓN POKÉDEX TRASLADADO AL HEADER */}
+          <div className="flex items-center absolute right-4 sm:right-6">
+            <a href="/PKMN/pokedex">
+              <motion.button
+                whileHover={{ scale: 1.03, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className="inline-flex items-center gap-3 px-4 py-2 rounded-xl border border-accent/30 bg-accent/10 hover:bg-accent/20 transition-colors shadow-sm shadow-accent/5 group"
+              >
+                <img
+                  src="/pkmn/pokedex.png"
+                  alt="Pokédex Logo"
+                  className="w-5 h-5 object-contain group-hover:rotate-12 transition-transform duration-300"
+                  onError={(e) => { (e.target as HTMLImageElement).src = "https://via.placeholder.com/24" }}
+                />
+                <span className="font-mono text-[11px] uppercase tracking-wider font-bold text-foreground hidden sm:inline">
+                  Consultar Pokédex Regional
+                </span>
+                <span className="font-mono text-[11px] uppercase tracking-wider font-bold text-foreground sm:hidden">
+                  Pokédex
+                </span>
+                <span className="text-accent text-xs group-hover:translate-x-1 transition-transform">→</span>
+              </motion.button>
+            </a>
+          </div>
+
+        </div>
+      </header>
 
       <main className="flex-1">
         <section className="section-spacious relative">
@@ -112,28 +184,6 @@ export default function PKMN() {
               <p className="mt-4 max-w-2xl text-[15px] sm:text-base text-foreground/70 leading-relaxed">
                 Bienvenido a la delegación oficial de la Liga Pokémon del Reino del Pan. Un ecosistema soberano donde la estrategia, la constancia y la convivencia armónica definen a los mejores entrenadores del territorio.
               </p>
-
-              {/* ENLACE / BOTÓN A LA POKÉDEX REGIONAL */}
-              <div className="mt-6">
-                <a href="/PKMN/pokedex">
-                  <motion.button
-                    whileHover={{ scale: 1.03, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="inline-flex items-center gap-3 px-5 py-3 rounded-xl border border-accent/30 bg-accent/10 hover:bg-accent/20 transition-colors shadow-sm shadow-accent/5 group"
-                  >
-                    <img
-                      src="/pkmn/pokedex.png"
-                      alt="Pokédex Logo"
-                      className="w-6 h-6 object-contain group-hover:rotate-12 transition-transform duration-300"
-                      onError={(e) => { (e.target as HTMLImageElement).src = "https://via.placeholder.com/24" }}
-                    />
-                    <span className="font-mono text-xs uppercase tracking-wider font-bold text-foreground">
-                      Consultar Pokédex Regional
-                    </span>
-                    <span className="text-accent text-xs group-hover:translate-x-1 transition-transform">→</span>
-                  </motion.button>
-                </a>
-              </div>
             </motion.div>
 
             {/* Marcadores / Contadores Dinámicos */}
@@ -346,12 +396,12 @@ export default function PKMN() {
                   </div>
                   <h3 className="text-2xl font-black display-font text-foreground tracking-tight">Informe Biológico: Cyndaquil</h3>
                   <p className="text-sm text-foreground/80 leading-relaxed max-w-3xl">
-                    Es tímido y suele estar acurrucado. Se protege soltando llamas por el lomo; cuando está enfadado, estas son fieras e infernales para intimidar a sus rivales, pero si está cansado sólo consigue echar algunas chispas. Los Cyndaquil del Reino del Pan han podido mantener su ADN de Hisui.
+                    Es tímido y suele estar acurrucado. Se protege soltando llamas por el lomo; cuando está enfadado, estas son fieras e infernales para intimidar a sus rivales, pero si está cansado sólo consigo echar algunas chispas. Los Cyndaquil del Reino del Pan han podido mantener su ADN de Hisui.
                   </p>
                 </div>
               </div>
               <div className="px-6 py-3 bg-orange-500/[0.02] border-t border-orange-500/10 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-orange-400/80 font-mono">
-                <span>Registro: Área Volcánica Paniense</span>
+                <span>Registro: Area Volcánica Paniense</span>
                 <span className="text-[10px] text-foreground/40">Especie Verificada por el Laboratorio Central ★</span>
               </div>
             </motion.div>
@@ -371,7 +421,7 @@ export default function PKMN() {
                     <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(217,119,6,0.02)_50%,transparent_50%)] bg-[length:100%_4px] pointer-events-none"></div>
                     <div className="w-24 h-24 flex items-center justify-center bg-zinc-950 border border-amber-500/10 rounded-lg relative group">
                       <img
-                        src="/pkmn/zercorr.png"
+                        src="/pkmn/vector.png"
                         alt="PROYECTO: ZREL_M-02"
                         className="w-full h-full object-contain brightness-0 drop-shadow-[0_0_12px_rgba(217,119,6,0.25)] scale-105 transition-transform duration-300 group-hover:scale-110"
                         onError={(e) => { (e.target as HTMLImageElement).src = "https://via.placeholder.com/150/09090b/ffffff?text=SILUETA" }}
@@ -379,7 +429,7 @@ export default function PKMN() {
                     </div>
                   </div>
                   <div className="flex flex-col gap-1 w-full items-center justify-center mt-1">
-                    <img src="/pkmn/tipos/electrico.png" alt="Tipo Eléctrico" className="h-5 w-auto object-contain grayscale opacity-80" />
+                    <img src="/pkmn/tipos/psiquico.png" alt="Tipo Psíquico" className="h-5 w-auto object-contain grayscale opacity-80" />
                     <img src="/pkmn/tipos/acero.png" alt="Tipo Acero" className="h-5 w-auto object-contain grayscale opacity-80" />
                   </div>
                 </div>
@@ -424,8 +474,11 @@ export default function PKMN() {
                   <p className="text-xs text-foreground/50 leading-relaxed mt-0.5">Muy pronto se anunciará de manera oficial el Profesor Pokémon gubernamental y los especímenes iniciales restantes asignados a la región.</p>
                 </div>
               </div>
-              <div className="w-full sm:w-auto text-center font-mono text-[10px] uppercase bg-border/40 text-foreground/60 px-3 py-1.5 rounded-lg border border-border/50">Clasificado por el Estado</div>
+              <div className="w-full sm:w-auto text-center font-mono text-[10px] uppercase bg-border/40 text-foreground/60 px-3 py-1.5 rounded-md border border-border">
+                Código de Acceso Requerido
+              </div>
             </motion.div>
+
           </div>
         </section>
       </main>

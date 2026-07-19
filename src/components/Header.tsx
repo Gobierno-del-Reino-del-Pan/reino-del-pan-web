@@ -3,19 +3,26 @@ import { useEffect, useState, useRef, useMemo } from "react";
 
 const navItems = [
   { href: "/", label: "Inicio" },
-  { href: "/about", label: "Acerca de" },
+  { href: "/gobierno", label: "Gobierno" },
+  { href: "/borp", label: "Boletín" },
   { href: "/level", label: "Niveles" },
-  { href: "/dpi", label: "DPI" },
-  { href: "/borp", label: "BORP" },
+  { href: "/policia", label: "DPI - CNP" },
 ];
 
-const otrosItems = [
-  { href: "/Politics", label: "Política" },
-  { href: "/gobierno", label: "Gobierno" },
+// REORGANIZACIÓN: Dividimos "Otros" en Comunidad e Info/Utilidades
+const comunidadItems = [
+  { href: "/Politics", label: "Grupos Políticos" },
+  { href: "https://www.mafiadepan.com/", label: "La Mafia", isExternal: true },
   { href: "/pkmn", label: "PKMN" },
+  { href: "/turismo", label: "Turismo" },
+  { href: "/seleccion", label: "Selección" },
+];
+
+const infoItems = [
   { href: "/donations", label: "Donaciones" },
   { href: "/laliga", label: "LA MiGA" },
   { href: "/tvp", label: "TVP" },
+  { href: "/about", label: "Acerca de" },
 ];
 
 interface DiscordUser {
@@ -33,11 +40,16 @@ export default function Header() {
   const [user, setUser] = useState<DiscordUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [otrosOpen, setOtrosOpen] = useState(false);
+
+  // Estados independientes para cada menú nuevo
+  const [comunidadOpen, setComunidadOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
-  const otrosRef = useRef<HTMLDivElement>(null);
+  // Refs independientes para detectar clics fuera de los menús
+  const comunidadRef = useRef<HTMLDivElement>(null);
+  const infoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -62,8 +74,11 @@ export default function Header() {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuOpen(false);
       }
-      if (otrosRef.current && !otrosRef.current.contains(e.target as Node)) {
-        setOtrosOpen(false);
+      if (comunidadRef.current && !comunidadRef.current.contains(e.target as Node)) {
+        setComunidadOpen(false);
+      }
+      if (infoRef.current && !infoRef.current.contains(e.target as Node)) {
+        setInfoOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClick);
@@ -72,7 +87,8 @@ export default function Header() {
 
   useEffect(() => {
     setMobileOpen(false);
-    setOtrosOpen(false);
+    setComunidadOpen(false);
+    setInfoOpen(false);
   }, [location]);
 
   const esReportero = useMemo(() => {
@@ -97,53 +113,31 @@ export default function Header() {
     return items;
   }, [user]);
 
-  const isOtrosActive = useMemo(() => {
-    return otrosItems.some(item => location.toLowerCase().startsWith(item.href.toLowerCase()));
+  // Helpers para comprobar si alguno de los subelementos está activo
+  const isComunidadActive = useMemo(() => {
+    return comunidadItems.some(item => !item.isExternal && location.toLowerCase().startsWith(item.href.toLowerCase()));
   }, [location]);
 
+  const isInfoActive = useMemo(() => {
+    return infoItems.some(item => location.toLowerCase().startsWith(item.href.toLowerCase()));
+  }, [location]);
   return (
     <>
       {/* Estilos aislados para el efecto de hackeo/glitch */}
       <style>{`
         @keyframes mafiaGlitch {
-          0% {
-            text-shadow: 1.5px 0 #ef4444, -1.5px 0 #06b6d4;
-            transform: translate(0, 0);
-          }
-          15% {
-            text-shadow: -1.5px 0 #ef4444, 1.5px 0 #06b6d4;
-            transform: translate(-1px, 0.5px);
-          }
-          30% {
-            text-shadow: 1.5px 0 #eab308, -1.5px 0 #ef4444;
-            transform: translate(0.5px, -0.5px);
-          }
-          45% {
-            text-shadow: -1.5px 0 #06b6d4, 1.5px 0 #eab308;
-            transform: translate(-0.5px, -1px);
-          }
-          60% {
-            text-shadow: 2px 0 #ef4444, -2px 0 #06b6d4;
-            transform: translate(1px, 1px);
-          }
-          75% {
-            text-shadow: -1px 0 #ef4444, 1px 0 #eab308;
-            transform: translate(-1px, -0.5px);
-          }
-          100% {
-            text-shadow: 1.5px 0 #ef4444, -1.5px 0 #06b6d4;
-            transform: translate(0, 0);
-          }
+          0% { text-shadow: 1.5px 0 #ef4444, -1.5px 0 #06b6d4; transform: translate(0, 0); }
+          15% { text-shadow: -1.5px 0 #ef4444, 1.5px 0 #06b6d4; transform: translate(-1px, 0.5px); }
+          30% { text-shadow: 1.5px 0 #eab308, -1.5px 0 #ef4444; transform: translate(0.5px, -0.5px); }
+          45% { text-shadow: -1.5px 0 #06b6d4, 1.5px 0 #eab308; transform: translate(-0.5px, -1px); }
+          60% { text-shadow: 2px 0 #ef4444, -2px 0 #06b6d4; transform: translate(1px, 1px); }
+          75% { text-shadow: -1px 0 #ef4444, 1px 0 #eab308; transform: translate(-1px, -0.5px); }
+          100% { text-shadow: 1.5px 0 #ef4444, -1.5px 0 #06b6d4; transform: translate(0, 0); }
         }
-
-        .mafia-hacker-link {
-          position: relative;
-          transition: all 0.2s ease-in-out;
-        }
-
+        .mafia-hacker-link { position: relative; transition: all 0.2s ease-in-out; }
         .mafia-hacker-link:hover {
           animation: mafiaGlitch 0.25s linear infinite;
-          color: #ffffff !important;
+          color: #ef4444 !important;
           border-color: rgba(239, 68, 68, 0.4) !important;
           background: rgba(239, 68, 68, 0.08) !important;
           box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
@@ -195,24 +189,37 @@ export default function Header() {
               );
             })}
 
-            {/* Menú Desplegable "Otros" */}
-            <div className="relative" ref={otrosRef}>
+            {/* Menú 1: "Comunidad" */}
+            <div className="relative" ref={comunidadRef}>
               <button
-                onClick={() => setOtrosOpen(v => !v)}
-                className={`px-3 py-1.5 uppercase tracking-[0.18em] text-[11px] font-bold transition-all duration-300 whitespace-nowrap rounded-full flex items-center gap-1 cursor-pointer backdrop-blur-md ${isOtrosActive
+                onClick={() => { setComunidadOpen(v => !v); setInfoOpen(false); }}
+                className={`px-3 py-1.5 uppercase tracking-[0.18em] text-[11px] font-bold transition-all duration-300 whitespace-nowrap rounded-full flex items-center gap-1 cursor-pointer backdrop-blur-md ${isComunidadActive
                   ? "text-background bg-accent/90 font-extrabold shadow-[0_0_20px_rgba(212,175,55,0.35),0_0_0_1px_rgba(255,255,255,0.2)_inset]"
                   : "text-accent bg-accent/10 hover:bg-accent/20 shadow-[0_0_0_1px_rgba(255,255,255,0.06)_inset]"
                   }`}
               >
-                Otros
-                <svg className={`w-3 h-3 transition-transform duration-200 ${otrosOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                Comunidad
+                <svg className={`w-3 h-3 transition-transform duration-200 ${comunidadOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
 
-              {otrosOpen && (
+              {comunidadOpen && (
                 <div className="absolute left-0 mt-2 w-44 rounded-2xl border border-white/20 bg-white/70 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_12px_40px_-8px_rgba(0,0,0,0.25)] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                  {otrosItems.map((subItem) => {
+                  {comunidadItems.map((subItem) => {
+                    if (subItem.isExternal) {
+                      return (
+                        <a
+                          key={subItem.href}
+                          href={subItem.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full block px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-neutral-800 hover:bg-white/40 mafia-hacker-link"
+                        >
+                          ♠ {subItem.label}
+                        </a>
+                      );
+                    }
                     const isSubActive = location.toLowerCase().startsWith(subItem.href.toLowerCase());
                     return (
                       <Link
@@ -231,16 +238,47 @@ export default function Header() {
               )}
             </div>
 
-            {/* ENLACE MOVIDO: La Pica de La Mafia del Pan justo al lado de Otros */}
-            <a
-              href="https://www.mafiadepan.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mafia-hacker-link flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.18em] text-red-400/90 border border-red-500/20 bg-red-500/5 rounded-full cursor-pointer whitespace-nowrap"
-            >
-              <span className="text-sm leading-none text-red-500 select-none">♠</span>
-              <span>La Mafia</span>
-            </a>
+            {/* Menú 2: "Info" */}
+            <div className="relative" ref={infoRef}>
+              <button
+                onClick={() => { setInfoOpen(v => !v); setComunidadOpen(false); }}
+                style={{
+                  // Manejo dinámico de estilos usando el color solicitado
+                  backgroundColor: isInfoActive ? '#B16F16' : 'rgba(177, 111, 22, 0.1)',
+                  color: isInfoActive ? '#000000' : '#B16F16',
+                  boxShadow: isInfoActive
+                    ? '0 0 20px rgba(177, 111, 22, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.2)'
+                    : 'inset 0 0 0 1px rgba(255, 255, 255, 0.06)'
+                }}
+                className={`px-3 py-1.5 uppercase tracking-[0.18em] text-[11px] font-bold transition-all duration-300 whitespace-nowrap rounded-full flex items-center gap-1 cursor-pointer backdrop-blur-md ${isInfoActive ? "font-extrabold" : "hover:bg-[rgba(177,111,22,0.2)]"
+                  }`}
+              >
+                Info
+                <svg className={`w-3 h-3 transition-transform duration-200 ${infoOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {infoOpen && (
+                <div className="absolute left-0 mt-2 w-44 rounded-2xl border border-white/20 bg-white/70 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_12px_40px_-8px_rgba(0,0,0,0.25)] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                  {infoItems.map((subItem) => {
+                    const isSubActive = location.toLowerCase().startsWith(subItem.href.toLowerCase());
+                    return (
+                      <Link
+                        key={subItem.href}
+                        href={subItem.href}
+                        className={`w-full block px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] transition duration-200 ${isSubActive
+                          ? "text-black bg-white/60 font-black"
+                          : "text-neutral-800 hover:text-neutral-950 hover:bg-white/40"
+                          }`}
+                      >
+                        {subItem.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </nav>
 
           {/* Bloque de Usuario / Login / Menú hamburguesa */}
@@ -375,10 +413,24 @@ export default function Header() {
                 );
               })}
 
+              {/* Sección Móvil: Comunidad */}
               <div className="h-px bg-white/40 my-2" />
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500 px-4 mb-1">Otros apartados</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500 px-4 mb-1">Comunidad</p>
 
-              {otrosItems.map((subItem) => {
+              {comunidadItems.map((subItem) => {
+                if (subItem.isExternal) {
+                  return (
+                    <a
+                      key={subItem.href}
+                      href={subItem.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="relative flex items-center pl-8 pr-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-[0.18em] text-neutral-900 bg-white/40 hover:bg-white/55 border border-white/30 shadow-sm mb-1 mafia-hacker-link"
+                    >
+                      <span className="flex-1">♠ {subItem.label}</span>
+                    </a>
+                  );
+                }
                 const isSubActive = location.toLowerCase().startsWith(subItem.href.toLowerCase());
                 return (
                   <Link
@@ -397,15 +449,28 @@ export default function Header() {
                 );
               })}
 
-              {/* Botón rápido para La Mafia en el menú móvil debajo de "Otros" */}
-              <a
-                href="https://www.mafiadepan.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mafia-hacker-link mt-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.18em] text-red-500 border border-red-500/20 bg-red-500/5 shadow-sm"
-              >
-                <span>♠ LA MAFIA DEL PAN</span>
-              </a>
+              {/* Sección Móvil: Info */}
+              <div className="h-px bg-white/40 my-2" />
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500 px-4 mb-1">Información</p>
+
+              {infoItems.map((subItem) => {
+                const isSubActive = location.toLowerCase().startsWith(subItem.href.toLowerCase());
+                return (
+                  <Link
+                    key={subItem.href}
+                    href={subItem.href}
+                    className={`relative flex items-center pl-8 pr-4 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-[0.18em] transition-all duration-200 ${isSubActive
+                      ? "text-accent bg-accent/10 font-black shadow-[0_0_0_1px_rgba(var(--accent-rgb),0.2)_inset]"
+                      : "text-neutral-900 bg-white/40 hover:bg-white/55 border border-white/30 shadow-sm mb-1"
+                      }`}
+                  >
+                    <span className="flex-1">🔸 {subItem.label}</span>
+                    {isSubActive && (
+                      <span className="absolute left-4 top-2.5 bottom-2.5 w-1 bg-accent rounded-full" />
+                    )}
+                  </Link>
+                );
+              })}
 
               {user && (
                 <button

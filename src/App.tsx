@@ -26,6 +26,10 @@ import Maps from "./pages/Maps";
 import BORP from "./pages/BORP";
 import PKMNpokedex from "./pages/PKMN/pokedex.tsx";
 import Tarjetas from "./pages/TarjetasExclusivas.tsx";
+import Policía from "./pages/Policía/PolicíaPanacional.tsx";
+import Turismo from "./pages/Otros/VisitPan.tsx";
+import Patrimonio from "./pages/Otros/Patrimonio.tsx";
+import Selección from "./pages/Otros/SelecciónPaniense.tsx"
 
 
 
@@ -45,6 +49,7 @@ function App() {
         <Route path="/LALIGA/CSD" component={CSD} />
         <Route path="/LALIGA/juego-limpio" component={JuegoLimpio} />
         <Route path="/LALIGA/reglamento" component={Reglamento} />
+        <Route path="/seleccion" component={Selección} />
 
         <Route path="/lpb" component={LPB} />
         <Route path="/level" component={Level} />
@@ -53,7 +58,9 @@ function App() {
         <Route path="/borp" component={BORP} />
         <Route path="/pkmn/pokedex" component={PKMNpokedex} />
         <Route path="/tarjetas" component={Tarjetas} />
-
+        <Route path="/policia" component={Policía} />
+        <Route path="/turismo" component={Turismo} />
+        <Route path="/patrimonio-panacional" component={Patrimonio} />
 
         <Route path="/tvp" component={TVP} />
         <Route path="/tvp/paneldecontrol" component={PanelDeControl} />
