@@ -6,7 +6,7 @@ const navItems = [
   { href: "/gobierno", label: "Gobierno" },
   { href: "/borp", label: "Boletín" },
   { href: "/level", label: "Niveles" },
-  { href: "/policia", label: "DPI - CNP" },
+  { href: "/policia", label: "DPI - CPNP" },
 ];
 
 // REORGANIZACIÓN: Dividimos "Otros" en Comunidad e Info/Utilidades
