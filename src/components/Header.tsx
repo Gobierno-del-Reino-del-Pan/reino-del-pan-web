@@ -15,7 +15,7 @@ const comunidadItems = [
   { href: "https://www.mafiadepan.com/", label: "La Mafia", isExternal: true },
   { href: "/pkmn", label: "PKMN" },
   { href: "/turismo", label: "Turismo" },
-  { href: "/seleccion", label: "Selección" },
+
 ];
 
 const infoItems = [
