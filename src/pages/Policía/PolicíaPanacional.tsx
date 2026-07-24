@@ -149,17 +149,17 @@ export default function PoliciaNacional() {
                                 <article className="p-4 sm:p-5 rounded-xl border border-border/50 bg-card/40 hover:bg-card/70 transition space-y-2">
                                     <span className="text-[10px] uppercase font-bold tracking-wider text-polnac-brand font-subtitle">Operaciones</span>
                                     <h4 className="text-base md:text-lg font-bold text-foreground font-subtitle">
-                                        Desarticulada una red clandestina de contrabando de levadura industrial
+                                        Desarticulada una red clandestina de contrabando de levadura integral.
                                     </h4>
                                     <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed font-normal">
-                                        Agentes de la POLNAC incautaron más de tres toneladas de materia prima no registrada en los límites del distrito norte. Cuatro sospechosos han sido puestos a disposición judicial.
+                                        Agentes del CPNP incautaron más de tres toneladas de materia prima no registrada en los límites del distrito norte de Baguette. Cuatro sospechosos han sido puestos a disposición judicial.
                                     </p>
                                 </article>
 
                                 <article className="p-4 sm:p-5 rounded-xl border border-border/50 bg-card/40 hover:bg-card/70 transition space-y-2">
                                     <span className="text-[10px] uppercase font-bold tracking-wider text-polnac-brand font-subtitle">Seguridad Vial</span>
                                     <h4 className="text-base md:text-lg font-bold text-foreground font-subtitle">
-                                        Nuevos controles de velocidad en las rutas de distribución de harinas
+                                        Nuevos controles de velocidad en las rutas de distribución.
                                     </h4>
                                     <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed font-normal">
                                         Con el fin de garantizar la integridad de las cargas críticas, se desplegarán patrullas estáticas automatizadas durante los horarios de alta congestión logística.
@@ -169,7 +169,7 @@ export default function PoliciaNacional() {
                                 <article className="p-4 sm:p-5 rounded-xl border border-border/50 bg-card/40 hover:bg-card/70 transition space-y-2">
                                     <span className="text-[10px] uppercase font-bold tracking-wider text-polnac-brand font-subtitle">Institucional</span>
                                     <h4 className="text-base md:text-lg font-bold text-foreground font-subtitle">
-                                        Convocatoria abierta para la escala básica de Inspectores del Horno
+                                        Convocatoria abierta para la escala básica de Inspectores de Policía.
                                     </h4>
                                     <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed font-normal">
                                         Se habilitan los plazos de inscripción oficiales para el ingreso en la academia nacional. Los aspirantes deberán superar los exámenes físicos y de control de calidad.

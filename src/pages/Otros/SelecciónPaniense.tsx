@@ -200,6 +200,23 @@ export default function SeleccionPanienseWeb() {
                     flex-direction: column;
                 }
 
+                /* BANNER EN CONSTRUCCIÓN */
+                .pan-construction-banner {
+                    background-color: var(--pan-wine);
+                    color: #ffffff;
+                    text-align: center;
+                    padding: 0.6rem 1rem;
+                    font-family: 'Cinzel', serif;
+                    font-size: 0.85rem;
+                    font-weight: 700;
+                    letter-spacing: 0.1em;
+                    border-bottom: 2px solid var(--pan-gold);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.5rem;
+                }
+
                 .pan-page { 
                     display: flex; 
                     flex-direction: column; 
@@ -331,7 +348,7 @@ export default function SeleccionPanienseWeb() {
                         display: none !important; 
                     }
                     .pan-btn-back {
-                        display: none !important; /* Ocultado del header en móvil para meterlo dentro del desplegable */
+                        display: none !important;
                     }
                     .pan-menu-toggle { 
                         display: flex !important; 
@@ -416,7 +433,7 @@ export default function SeleccionPanienseWeb() {
                     font-family: 'Cinzel', serif;
                     font-size: clamp(2rem, 4.5vw, 3rem);
                     color: var(--pan-ink);
-                    line-height: 1.45; /* Mayor separación de frases */
+                    line-height: 1.45;
                     margin-bottom: 1.8rem;
                     font-weight: 900;
                 }
@@ -429,7 +446,7 @@ export default function SeleccionPanienseWeb() {
                 .pan-hero-text p { 
                     color: var(--pan-ink-muted); 
                     font-size: 1.05rem; 
-                    line-height: 1.85; /* Más separación entre frases de descripción */
+                    line-height: 1.85;
                     max-width: 50ch; 
                 }
 
@@ -769,191 +786,17 @@ export default function SeleccionPanienseWeb() {
                 
                 .pan-footer p { 
                     margin: 0; 
-                    font-size: 0.85rem; 
-                    letter-spacing: 0.05em; 
-                    font-weight: 500;
-                    line-height: 1.7;
                 }
             `}</style>
 
-            <div className="pan-page">
-                {/* HEADER */}
-                <header className="pan-header">
-                    <div className="pan-header-content">
-                        <div className="pan-brand">
-                            <img src={PAN_CREST_PATH} alt="Escudo Selección Paniense" className="pan-logo-main" />
-                            <div className="pan-title-container">
-                                <h1>Selección Paniense</h1>
-                            </div>
-                        </div>
+            {/* AVISO DE SITIO EN CONSTRUCCIÓN */}
+            <div className="pan-construction-banner">
+                🚧 SITIO WEB EN CONSTRUCCIÓN — PRÓXIMAMENTE 🚧
+            </div>
 
-                        {/* Menú de Escritorio */}
-                        <div className="pan-right-nav">
-                            <nav className="pan-nav">
-                                {navLinks.map((link) => <a key={link} href="#">{link}</a>)}
-                            </nav>
 
-                            {/* Botón Volver Principal */}
-                            <a href="/" className="pan-btn-back">
-                                <span>← Volver a la Web</span>
-                            </a>
-                        </div>
 
-                        {/* Botón hamburguesa móvil */}
-                        <button
-                            className="pan-menu-toggle"
-                            onClick={() => setIsMenuOpen((v) => !v)}
-                            aria-label="Abrir menú"
-                            aria-expanded={isMenuOpen}
-                        >
-                            {isMenuOpen ? "✕" : "☰"}
-                        </button>
-                    </div>
-
-                    {/* Menú desplegable móvil */}
-                    {isMenuOpen && (
-                        <nav className="pan-mobile-nav">
-                            {navLinks.map((link) => <a key={link} href="#">{link}</a>)}
-                            <a href="/" className="pan-btn-back-mobile">
-                                ← Volver a la Web Principal
-                            </a>
-                        </nav>
-                    )}
-                </header>
-
-                {/* HERO */}
-                <section className="pan-hero">
-                    <div className="pan-hero-grid">
-                        <div className="pan-hero-text">
-                            <span className="pan-eyebrow">Federación Paniense de Fútbol</span>
-                            <h2>Orgullo y tradición en el <em>Reino del Pan</em></h2>
-                            <p>
-                                Panel institucional interactivo conectado de forma segura con los marcadores
-                                recientes y los escudos oficiales de las selecciones del mundo.
-                            </p>
-                        </div>
-                        <div className="pan-next-match">
-                            <img src={PAN_CREST_PATH} alt="Reino del Pan" />
-                            <div>
-                                <span className="pan-tag">Compromiso Actual</span>
-                                <h4>Reino del Pan vs Portugal</h4>
-                                <p>Estadio del Trigo · Marcador Editable</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* FILTROS */}
-                <div className="pan-filters">
-                    <input
-                        type="text"
-                        placeholder="Buscar selección real..."
-                        className="pan-input-search"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        aria-label="Buscar selección"
-                    />
-                    <div className="pan-pill-group">
-                        {["TODOS", "UEFA", "CONMEBOL", "INTER"].map((c) => (
-                            <button
-                                key={c}
-                                className={`pan-btn-pill ${selectedConfederation === c ? "active" : ""}`}
-                                onClick={() => setSelectedConfederation(c)}
-                            >
-                                {c}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* CONTENIDO PRINCIPAL */}
-                <div className="pan-grid-partidos">
-                    {cargando ? (
-                        <div className="pan-state-box">
-                            <div className="pan-spinner" />
-                            <span>Buscando partidos y marcadores recientes a través de pasarela segura...</span>
-                        </div>
-                    ) : (
-                        <>
-                            {errorAPI && (
-                                <div className="pan-state-box" style={{ gridColumn: "1 / -1", color: "var(--pan-wine)" }}>
-                                    <span>Nota: No se pudieron sincronizar los partidos debido a políticas del servidor externo ({errorAPI}).</span>
-                                    <button className="pan-retry-btn" onClick={obtenerPartidosRecientes} style={{ marginTop: "1rem" }}>Reintentar conexión</button>
-                                </div>
-                            )}
-
-                            {resultadosFiltrados.map((partido) => (
-                                <div className={`pan-card ${partido.ficticio ? "pan-card-featured" : ""}`} key={partido.id}>
-
-                                    {/* EQUIPO LOCAL */}
-                                    <div className="pan-team-row">
-                                        <div className="pan-team-info">
-                                            {partido.logoL ? (
-                                                <>
-                                                    <img
-                                                        src={partido.logoL}
-                                                        alt={partido.local}
-                                                        className="pan-escudo-api"
-                                                        onError={handleImageError}
-                                                    />
-                                                    <div className="pan-escudo-fallback">{partido.local.substring(0, 2).toUpperCase()}</div>
-                                                </>
-                                            ) : (
-                                                <div className="pan-escudo-fallback" style={{ display: 'flex' }}>{partido.local.substring(0, 2).toUpperCase()}</div>
-                                            )}
-                                            <span className="pan-team-name">{partido.local}</span>
-                                        </div>
-                                        {partido.ficticio ? (
-                                            <div className="pan-score-controls">
-                                                <button className="pan-btn-inc" onClick={() => setGolesPan(Math.max(0, golesPan - 1))} aria-label="Restar gol local">–</button>
-                                                <span className="pan-marcador">{partido.golesL}</span>
-                                                <button className="pan-btn-inc" onClick={() => setGolesPan(golesPan + 1)} aria-label="Sumar gol local">+</button>
-                                            </div>
-                                        ) : (
-                                            <span className="pan-marcador">{partido.golesL !== null ? partido.golesL : "0"}</span>
-                                        )}
-                                    </div>
-
-                                    {/* EQUIPO VISITANTE */}
-                                    <div className="pan-team-row">
-                                        <div className="pan-team-info">
-                                            {partido.logoV ? (
-                                                <>
-                                                    <img
-                                                        src={partido.logoV}
-                                                        alt={partido.visitante}
-                                                        className="pan-escudo-api"
-                                                        onError={handleImageError}
-                                                    />
-                                                    <div className="pan-escudo-fallback">{partido.visitante.substring(0, 2).toUpperCase()}</div>
-                                                </>
-                                            ) : (
-                                                <div className="pan-escudo-fallback" style={{ display: 'flex' }}>{partido.visitante.substring(0, 2).toUpperCase()}</div>
-                                            )}
-                                            <span className="pan-team-name">{partido.visitante}</span>
-                                        </div>
-                                        {partido.ficticio ? (
-                                            <div className="pan-score-controls">
-                                                <button className="pan-btn-inc" onClick={() => setGolesRival(Math.max(0, golesRival - 1))} aria-label="Restar gol visitante">–</button>
-                                                <span className="pan-marcador">{partido.golesV}</span>
-                                                <button className="pan-btn-inc" onClick={() => setGolesRival(golesRival + 1)} aria-label="Sumar gol visitante">+</button>
-                                            </div>
-                                        ) : (
-                                            <span className="pan-marcador">{partido.golesV !== null ? partido.golesV : "0"}</span>
-                                        )}
-                                    </div>
-
-                                    {/* META INFO */}
-                                    <div className="pan-card-meta">
-                                        <span className="pan-conf-seal">{partido.conf}</span>
-                                        <span>{partido.fecha}</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </>
-                    )}
-                </div>
-
+            <div>
                 {/* FOOTER */}
                 <footer className="pan-footer">
                     <div className="pan-sponsors-container">

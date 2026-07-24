@@ -3,7 +3,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 
 // Constante que simula el número del ÚLTIMO boletín publicado en el sistema.
-const ULTIMO_BOLETIN_ID = 4;
+const ULTIMO_BOLETIN_ID = 5;
 
 interface DecretoReciente {
     id: string;
