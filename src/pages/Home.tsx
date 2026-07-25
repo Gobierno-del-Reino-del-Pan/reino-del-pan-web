@@ -1,10 +1,9 @@
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { supabase } from "../lib/supabaseClient";
 import { AgendaStatCard } from "../components/AgendaStatCard";
-
 
 // ── INTERFACES Y CONFIGURACIONES ESTÁTICAS ──────────────────────────
 
@@ -32,23 +31,18 @@ interface SupabaseNewsItem {
   created_at: string;
 }
 
-
-
 const NEWS_ITEMS = [
   "El sistema de generación de DPIs está totalmente operativo",
-  "LaMiga Paniense sigue advancing a pasos agigantados, próximamente el gobierno nombrará presidente de LaMiga Paniense",
-  "Se está implementando la Pokédex de la Región, muy pronto disponible",
-  "El 23 de julio se celebrará el primer año del nacimiento del Reino",
-  "Muy pronto no habrá disponibilidad de DPIs"
+  "Se abre la convocatoria para tres grandes concursos de diseño: los billetes de Panedas, la identidad visual de TVP y la línea evolutiva de un Pokémon",
+  "FELIZ PRIMER AÑO DEL REINO DEL PAN, A POR EL SEGUNDO"
 ];
 
 const STATS_ITEMS = [
-  { stat: "Casi 1 Año", title: "Desde su fundación", desc: "Iniciado como una visión el 23 de julio de 2025, ahora es un estado consolidado." },
+  { stat: "Más de 1 Año", title: "Desde su fundación", desc: "Iniciado como una visión el 23 de julio de 2025, ahora es un estado consolidado." },
   { stat: "500+", title: "Solicitudes de DPI", desc: "Ciudadanos digitales registrados y activos en nuestra plataforma global." },
   { stat: "100%", title: "Por la Libertad", desc: "Compromiso total con la libertad y la resiliencia de nuestro pueblo." },
   { stat: "Proximamente", title: "Comunicado del Director de Reformas", desc: "Lanzará una comunicación institucional a través del BORP." }
 ];
-
 
 const LOCAL_NEWS_FALLBACK = {
   main: {
@@ -63,10 +57,6 @@ const LOCAL_NEWS_FALLBACK = {
     { id: "n2", category: "INFO", title: "Conectando con la parrilla de TVP Play...", time: "En línea", img: "https://images.unsplash.com/photo-1518063319789-7217e6706b04?q=80&w=400&auto=format&fit=crop" }
   ]
 };
-
-const FIESTAS_TEXTS = [
-  ""
-];
 
 const REGIONES_CONFIG: RegionWeather[] = [
   { id: "baguette", region: "Baguette 🥖", ciudad: "Pantopía", lat: 37.3828, lon: -5.9732, bgGradient: "from-amber-500/20 via-orange-600/10 to-transparent" },
@@ -90,10 +80,6 @@ const getWeatherStatus = (code: number) => {
 // ── COMPONENTE PRINCIPAL ─────────────────────────────────────────────
 
 export default function Home() {
-  const news = useMemo(() => NEWS_ITEMS, []);
-  const stats = useMemo(() => STATS_ITEMS, []);
-  const fiestaTexts = useMemo(() => FIESTAS_TEXTS, []);
-
   const [mainNews, setMainNews] = useState(LOCAL_NEWS_FALLBACK.main);
   const [secondaryNews, setSecondaryNews] = useState(LOCAL_NEWS_FALLBACK.secondary);
 
@@ -109,8 +95,9 @@ export default function Home() {
 
         const { data, error } = await supabase
           .from('tvp_news')
-          .select('*')
-          .order('created_at', { ascending: false });
+          .select('id, type, category, title, summary, time_label, img_url')
+          .order('created_at', { ascending: false })
+          .limit(15);
 
         if (error) throw error;
 
@@ -146,22 +133,26 @@ export default function Home() {
 
     const fetchWeather = async () => {
       try {
-        const promesas = REGIONES_CONFIG.map(async (reg) => {
-          const url = `https://api.open-meteo.com/v1/forecast?latitude=${reg.lat}&longitude=${reg.lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
-          const res = await fetch(url);
-          const data = await res.json();
-          const infoClima = getWeatherStatus(data.current.weather_code);
+        const lats = REGIONES_CONFIG.map(r => r.lat).join(',');
+        const lons = REGIONES_CONFIG.map(r => r.lon).join(',');
+
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        const resultados = REGIONES_CONFIG.map((reg, index) => {
+          const locationData = data[index];
+          const infoClima = getWeatherStatus(locationData.current.weather_code);
 
           return {
             ...reg,
-            temp: `${Math.round(data.current.temperature_2m)}°C`,
+            temp: `${Math.round(locationData.current.temperature_2m)}°C`,
             clima: infoClima.texto,
             icon: infoClima.icon,
-            maxMin: `Máx: ${Math.round(data.daily.temperature_2m_max[0])}° Mín: ${Math.round(data.daily.temperature_2m_min[0])}°`,
+            maxMin: `Máx: ${Math.round(locationData.daily.temperature_2m_max[0])}° Mín: ${Math.round(locationData.daily.temperature_2m_min[0])}°`,
           };
         });
 
-        const resultados = await Promise.all(promesas);
         if (isMounted) {
           setWeatherData(resultados);
           setWeatherLoading(false);
@@ -198,7 +189,7 @@ export default function Home() {
       >
         <div className="w-max flex whitespace-nowrap gap-12 animate-[marquee_35s_linear_infinite] hover:[animation-play-state:paused] cursor-pointer will-change-transform [transform:translateZ(0)]">
           <div className="flex shrink-0 items-center gap-12">
-            {news.map((item, index) => (
+            {NEWS_ITEMS.map((item, index) => (
               <div key={`news-1-${index}`} className="flex items-center gap-4 text-xs font-mono uppercase tracking-[0.2em]">
                 <span className="text-[9px] bg-accent-foreground/20 px-2 py-0.5 rounded-full" aria-hidden="true">★</span>
                 <span>{item}</span>
@@ -207,7 +198,7 @@ export default function Home() {
           </div>
 
           <div className="flex shrink-0 items-center gap-12" aria-hidden="true">
-            {news.map((item, index) => (
+            {NEWS_ITEMS.map((item, index) => (
               <div key={`news-2-${index}`} className="flex items-center gap-4 text-xs font-mono uppercase tracking-[0.2em]">
                 <span className="text-[9px] bg-accent-foreground/20 px-2 py-0.5 rounded-full">★</span>
                 <span>{item}</span>
@@ -225,6 +216,7 @@ export default function Home() {
             loop
             muted
             playsInline
+            poster="/videos/hero-poster.jpg"
             className="w-full h-full object-cover object-center scale-[1.01] brightness-[0.85] contrast-[1.05]"
           >
             <source src="/videos/hero.mp4" type="video/mp4" />
@@ -271,7 +263,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {stats.map(({ stat, title, desc }) => (
+            {STATS_ITEMS.map(({ stat, title, desc }) => (
               <section
                 key={stat}
                 className="rounded-[30px] border border-white/10 bg-black/50 backdrop-blur-md p-6 transition-all duration-300 hover:-translate-y-1 hover:border-accent/60 hover:bg-black/60 shadow-lg group"
@@ -296,6 +288,7 @@ export default function Home() {
         <img
           src="/anunciosgov/seguimosavanzando.jpg"
           alt="Anuncio Institucional: Seguimos Avanzando"
+          loading="lazy"
           className="w-full h-auto block"
         />
       </section>
@@ -360,6 +353,7 @@ export default function Home() {
         </div>
       </section>
 
+
       {/* ── SECCIÓN: CONTENEDOR INTEGRADO CON FONDO BLANCO AZULADO (#CDCCD4) ── */}
       <section className="w-full px-4 sm:px-6 py-16 lg:py-24 bg-[#CDCCD4]">
         <div className="container mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -374,6 +368,7 @@ export default function Home() {
                 <img
                   src="/LK.png"
                   alt="Laboral Kutxa"
+                  loading="lazy"
                   className="h-6 w-auto object-contain opacity-90 group-hover:opacity-100 transition-opacity mix-blend-multiply"
                 />
               </div>
@@ -413,11 +408,92 @@ export default function Home() {
               <img
                 src="/pkmn/cyndaquil.png"
                 alt="cyndaquil inicial"
+                loading="lazy"
                 className="max-h-[180px] sm:max-h-[220px] w-auto object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.06)] group-hover:scale-105 transition-transform duration-300"
               />
             </div>
           </div>
 
+        </div>
+      </section>
+      {/* ── SECCIÓN: CONCURSOS OFICIALES ── */}
+      <section className="w-full px-4 sm:px-6 py-24 mt-8 bg-[#07080c] relative overflow-hidden select-none border-t border-white/5">
+        {/* Ambience Lighting */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-72 bg-accent/5 rounded-full blur-[140px] pointer-events-none" />
+
+        <div className="container mx-auto max-w-7xl relative z-10">
+          <div className="text-center mb-16">
+            <span className="text-xs uppercase tracking-[0.4em] text-accent font-bold block mb-3 animate-pulse">
+              Convocatorias Abiertas
+            </span>
+            <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight drop-shadow-md">
+              Concursos del Reino
+            </h2>
+            <p className="text-sm text-white/40 mt-6 max-w-2xl mx-auto font-medium">
+              Participa activamente en la construcción de la identidad de nuestra nación. Inscríbete en las convocatorias oficiales, aporta tus ideas y deja tu huella en el ecosistema digital del Reino del Pan.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+            {/* Concurso 1: Paneda */}
+            <Link href="/concursos/paneda" className="group block">
+              <div className="bg-[#0e1017] rounded-3xl p-8 sm:p-10 border border-white/5 hover:border-amber-500/40 transition-all duration-300 shadow-xl hover:shadow-amber-500/10 h-full flex flex-col hover:-translate-y-1 relative overflow-hidden">
+                <div className="absolute -right-10 -top-10 w-40 h-40 bg-amber-500/5 rounded-full blur-[40px] group-hover:bg-amber-500/10 transition-colors"></div>
+                <div className="w-14 h-14 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center text-3xl mb-8 group-hover:scale-110 group-hover:rotate-6 transition-transform relative z-10">
+                  🪙
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 group-hover:text-amber-400 transition-colors relative z-10">
+                  Diseño de la Paneda
+                </h3>
+                <p className="text-sm text-white/50 leading-relaxed flex-1 relative z-10">
+                  Da forma a nuestra economía soberana. Diseña los billetes oficiales y la identidad visual que respaldará nuestras finanzas.
+                </p>
+                <div className="mt-8 flex items-center text-xs font-black uppercase tracking-[0.15em] text-amber-500 relative z-10">
+                  Ver bases y participar <span className="ml-2 group-hover:translate-x-1.5 transition-transform">→</span>
+                </div>
+              </div>
+            </Link>
+
+            {/* Concurso 2: Línea Evolutiva */}
+            <Link href="/concursos/lineapoke" className="group block">
+              <div className="bg-[#0e1017] rounded-3xl p-8 sm:p-10 border border-white/5 hover:border-blue-500/40 transition-all duration-300 shadow-xl hover:shadow-blue-500/10 h-full flex flex-col hover:-translate-y-1 relative overflow-hidden">
+                <div className="absolute -right-10 -top-10 w-40 h-40 bg-blue-500/5 rounded-full blur-[40px] group-hover:bg-blue-500/10 transition-colors"></div>
+                <div className="w-14 h-14 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center text-3xl mb-8 group-hover:scale-110 group-hover:-rotate-6 transition-transform relative z-10">
+                  🧬
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 group-hover:text-blue-400 transition-colors relative z-10">
+                  Línea Evolutiva
+                </h3>
+                <p className="text-sm text-white/50 leading-relaxed flex-1 relative z-10">
+                  Expande la biodiversidad de nuestras fronteras. Conceptualiza y crea una nueva línea evolutiva completa para el ecosistema.
+                </p>
+                <div className="mt-8 flex items-center text-xs font-black uppercase tracking-[0.15em] text-blue-500 relative z-10">
+                  Ver bases y participar <span className="ml-2 group-hover:translate-x-1.5 transition-transform">→</span>
+                </div>
+              </div>
+            </Link>
+
+            {/* Concurso 3: Imagen TVP */}
+            <Link href="/concursos/imagentvp" className="group block">
+              <div className="bg-[#0e1017] rounded-3xl p-8 sm:p-10 border border-white/5 hover:border-[#ff4d00]/40 transition-all duration-300 shadow-xl hover:shadow-[#ff4d00]/10 h-full flex flex-col hover:-translate-y-1 relative overflow-hidden">
+                <div className="absolute -right-10 -top-10 w-40 h-40 bg-[#ff4d00]/5 rounded-full blur-[40px] group-hover:bg-[#ff4d00]/10 transition-colors"></div>
+                <div className="w-14 h-14 bg-[#ff4d00]/10 text-[#ff4d00] rounded-2xl flex items-center justify-center text-3xl mb-8 group-hover:scale-110 group-hover:rotate-6 transition-transform relative z-10">
+                  📺
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 group-hover:text-[#ff4d00] transition-colors relative z-10">
+                  Imagen Visual TVP
+                </h3>
+                <p className="text-sm text-white/50 leading-relaxed flex-1 relative z-10">
+                  Lidera la revolución de nuestros medios. Renueva la identidad corporativa y el paquete gráfico de los programas oficiales.
+                </p>
+                <div className="mt-8 flex items-center text-xs font-black uppercase tracking-[0.15em] text-[#ff4d00] relative z-10">
+                  Ver bases y participar <span className="ml-2 group-hover:translate-x-1.5 transition-transform">→</span>
+                </div>
+              </div>
+            </Link>
+
+          </div>
         </div>
       </section>
 
@@ -428,7 +504,7 @@ export default function Home() {
           {/* Header del Módulo TVP */}
           <div className="flex items-center justify-between border-b border-white/10 pb-6">
             <div className="flex items-center gap-4">
-              <img src="/TVP/TVP.png" alt="TVP" className="h-7 md:h-8 object-contain select-none" />
+              <img src="/TVP/TVP.png" alt="TVP" loading="lazy" className="h-7 md:h-8 object-contain select-none" />
               <div className="h-5 w-[1px] bg-white/20"></div>
               <h3 className="font-tvp-head text-base md:text-xl font-bold tracking-widest uppercase text-white flex items-center gap-2">
                 <span className="w-2.5 h-2.5 bg-[#ff4d00] rounded-full animate-ping"></span>
@@ -450,7 +526,7 @@ export default function Home() {
               className="lg:col-span-2 group cursor-pointer bg-[#0e1017] rounded-2xl overflow-hidden border border-white/5 hover:border-[#ff4d00]/30 transition-all duration-300 shadow-xl flex flex-col justify-between"
             >
               <div className="relative w-full aspect-video overflow-hidden">
-                <img src={mainNews.img} alt={mainNews.title} className="w-full h-full object-cover group-hover:scale-[1.015] transition-transform duration-500" />
+                <img src={mainNews.img} alt={mainNews.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-[1.015] transition-transform duration-500" />
                 <span className="absolute top-4 left-4 bg-[#ff4d00] text-black text-[10px] sm:text-xs font-black px-4 py-2 rounded font-tvp-head tracking-[0.2em] uppercase shadow-md">
                   {mainNews.category}
                 </span>
@@ -478,7 +554,7 @@ export default function Home() {
                   className="group cursor-pointer bg-[#0e1017] rounded-2xl overflow-hidden border border-white/5 hover:border-[#ff4d00]/20 transition-all duration-300 shadow-md flex flex-col h-full justify-between"
                 >
                   <div className="relative w-full aspect-video overflow-hidden shrink-0">
-                    <img src={sn.img} alt={sn.title} className="w-full h-full object-cover group-hover:scale-[1.015] transition-transform duration-500" />
+                    <img src={sn.img} alt={sn.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-[1.015] transition-transform duration-500" />
                     <span className="absolute top-3 left-3 bg-[#0a0b10]/95 backdrop-blur text-white text-[9px] font-bold px-3 py-1.5 rounded tracking-[0.2em] uppercase font-tvp-head border border-white/5">
                       {sn.category}
                     </span>
@@ -498,120 +574,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── NUEVA SECCIÓN: FIESTAS PATRONALES CON SERPENTINAS 3D Y EFECTOS ESPECIALES ── */}
-      <section className="w-full px-4 sm:px-6 py-24 mt-20 bg-[#07080c] relative overflow-hidden select-none border-t border-white/5">
-
-        {/* Efecto de luces de fondo (Ambience) */}
-        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-96 h-96 bg-accent/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute top-1/3 right-1/4 -translate-y-1/2 w-96 h-96 bg-amber-500/10 rounded-full blur-[120px] pointer-events-none" />
-
-        <div className="container mx-auto max-w-7xl relative">
-          <div className="text-center mb-16">
-            <span className="text-xs uppercase tracking-[0.4em] text-accent font-bold block mb-3 animate-pulse">
-              🎉 ¡VIVE LA TRADICIÓN! 🎉
-            </span>
-            <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight drop-shadow-md">
-              Fiesta Nacional del Reino
-            </h2>
-            <br />
-            <p className="text-sm text-white/40 mt-6 max-w-md mx-auto font-medium">
-              Siente la música, la peña y la energía de una celebración soberana única.
-            </p>
-          </div>
-
-          {/* CONTENEDOR 3D PRINCIPAL */}
-          <div className="relative min-h-[700px] lg:min-h-[550px] flex flex-col lg:flex-row justify-center items-center gap-16 lg:gap-32 bg-[#0e1017]/60 backdrop-blur-md p-8 sm:p-12 md:p-16 rounded-[40px] border border-white/5 overflow-hidden shadow-2xl">
-
-            {/* ── CAPA Z-0: SERPENTINAS POR DETRÁS ── */}
-            <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-              {fiestaTexts[9] && (
-                <div className="absolute top-[12%] left-[-2%] bg-gradient-to-r from-accent to-orange-500 text-accent-foreground text-xs font-black tracking-widest uppercase px-6 py-3 rounded-full shadow-lg border border-white/10 transform animate-serpentina-back-1 whitespace-nowrap">
-                  🎗️ {fiestaTexts[9]}
-                </div>
-              )}
-              {fiestaTexts[2] && (
-                <div className="absolute bottom-[25%] right-[-5%] bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-black tracking-widest uppercase px-6 py-3 rounded-full shadow-lg border border-white/10 transform animate-serpentina-back-2 whitespace-nowrap">
-                  ✨ {fiestaTexts[2]}
-                </div>
-              )}
-              {fiestaTexts[4] && (
-                <div className="absolute top-[45%] left-[5%] bg-gradient-to-r from-neutral-800 to-neutral-950 text-white/90 text-xs font-bold tracking-widest uppercase px-5 py-2.5 rounded-full shadow-md border border-white/5 transform animate-serpentina-back-3 whitespace-nowrap">
-                  ⚡ {fiestaTexts[4]}
-                </div>
-              )}
-            </div>
-
-            {/* ── CAPA Z-10: CARTEL DE LA IZQUIERDA ── */}
-            <div className="z-10 relative group perspective-1000 transform hover:scale-[1.03] transition-all duration-500">
-              <div className="absolute -inset-1 bg-gradient-to-r from-accent to-amber-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500" />
-              <img
-                src="/anunciosgov/cartel1.jpg"
-                alt="Cartel Fiestas Patronales 1"
-                className="max-h-[400px] sm:max-h-[460px] w-auto rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] border border-white/10 relative z-10 transform lg:-rotate-2 group-hover:rotate-0 transition-transform duration-500"
-              />
-            </div>
-
-            {/* ── CAPA Z-20: SERPENTINAS INTERMEDIAS (CRUZAN POR DELANTE DEL CARTEL 1 Y DETRÁS DEL CARTEL 2) ── */}
-            <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
-              {fiestaTexts[1] && (
-                <div className="absolute top-[35%] left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 via-orange-500 to-yellow-400 text-neutral-950 text-sm sm:text-base font-black tracking-wider uppercase px-8 py-3.5 rounded-xl shadow-[0_15px_35px_rgba(0,0,0,0.5)] transform animate-serpentina-mid-1 whitespace-nowrap border-y-2 border-white/20">
-                  🔥 {fiestaTexts[1]} 🔥
-                </div>
-              )}
-              {fiestaTexts[5] && (
-                <div className="absolute bottom-[38%] left-[15%] bg-gradient-to-r from-rose-600 to-red-500 text-white text-xs sm:text-sm font-extrabold tracking-widest uppercase px-6 py-3 rounded-xl shadow-xl transform animate-serpentina-mid-2 whitespace-nowrap">
-                  💘 {fiestaTexts[5]}
-                </div>
-              )}
-              {fiestaTexts[8] && (
-                <div className="absolute top-[15%] right-[8%] bg-gradient-to-r from-purple-600 via-pink-600 to-accent text-white text-xs font-black tracking-widest uppercase px-6 py-3 rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.6)] transform animate-serpentina-front-2 whitespace-nowrap pointer-events-auto hover:scale-110 transition-transform cursor-pointer">
-                  🎯 {fiestaTexts[8]}
-                </div>
-              )}
-            </div>
-
-            {/* ── CAPA Z-30: CARTEL DE LA DERECHA ── */}
-            <div className="z-30 relative group perspective-1000 transform hover:scale-[1.03] transition-all duration-500">
-              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-accent rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500" />
-              <img
-                src="/anunciosgov/cartel2.jpg"
-                alt="Cartel Fiestas Patronales 2"
-                className="max-h-[400px] sm:max-h-[460px] w-auto rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] border border-white/10 relative z-10 transform lg:rotate-2 group-hover:rotate-0 transition-transform duration-500"
-              />
-            </div>
-
-            {/* ── CAPA Z-40: SERPENTINAS POR DELANTE DE TODO ── */}
-            <div className="absolute inset-0 z-40 pointer-events-none overflow-hidden">
-              {fiestaTexts[3] && (
-                <div className="absolute bottom-[10%] left-[25%] bg-gradient-to-r from-emerald-400 to-teal-500 text-neutral-950 text-xs sm:text-sm font-black tracking-widest uppercase px-6 py-3.5 rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.6)] transform animate-serpentina-front-1 whitespace-nowrap pointer-events-auto hover:scale-110 transition-transform cursor-pointer">
-                  🚗 {fiestaTexts[3]}
-                </div>
-              )}
-              {fiestaTexts[6] && (
-                <div className="absolute top-[15%] right-[8%] bg-gradient-to-r from-purple-600 via-pink-600 to-accent text-white text-xs font-black tracking-widest uppercase px-6 py-3 rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.6)] transform animate-serpentina-front-2 whitespace-nowrap pointer-events-auto hover:scale-110 transition-transform cursor-pointer">
-                  🎯 {fiestaTexts[6]}
-                </div>
-              )}
-              {fiestaTexts[0] && (
-                <div className="absolute top-[12%] left-[-2%] bg-gradient-to-r from-accent to-orange-500 text-accent-foreground text-xs font-black tracking-widest uppercase px-6 py-3 rounded-full shadow-lg border border-white/10 transform animate-serpentina-back-1 whitespace-nowrap">
-                  🎗️ {fiestaTexts[0]}
-                </div>
-              )}
-
-            </div>
-
-
-          </div>
-        </div>
-      </section>
-
-
       <Footer />
 
       <style dangerouslySetInnerHTML={{
         __html: `
-        
-                @font-face {
+        @font-face {
             font-family: 'TVP-Heading';
             src: url('/TVP/TVP.ttf') format('truetype');
             font-weight: bold;
@@ -626,25 +593,23 @@ export default function Home() {
       `}} />
 
       <style>{`
-  @keyframes marquee {
-    0% {
-      transform: translate3d(0, 0, 0);
-    }
-    100% {
-      transform: translate3d(-50%, 0, 0);
-    }
-  }
+        @keyframes marquee {
+          0% {
+            transform: translate3d(0, 0, 0);
+          }
+          100% {
+            transform: translate3d(-50%, 0, 0);
+          }
+        }
 
-  .custom-marquee {
-    animation: marquee 35s linear infinite !important;
-  }
+        .custom-marquee {
+          animation: marquee 35s linear infinite !important;
+        }
 
-  /* Por si acaso el hover de Tailwind no te funciona, aseguramos el pause aquí: */
-  .custom-marquee:hover {
-    animation-play-state: paused !important;
-  }
-`}</style>
-
+        .custom-marquee:hover {
+          animation-play-state: paused !important;
+        }
+      `}</style>
     </div>
   );
 }

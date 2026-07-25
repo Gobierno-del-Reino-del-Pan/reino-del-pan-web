@@ -30,6 +30,7 @@ import Policía from "./pages/Policía/PolicíaPanacional.tsx";
 import Turismo from "./pages/Otros/VisitPan.tsx";
 import Patrimonio from "./pages/Otros/Patrimonio.tsx";
 import Selección from "./pages/Otros/SelecciónPaniense.tsx"
+import PanedaContest from "./pages/concursos/PanedaContest.tsx";
 
 
 
@@ -50,7 +51,7 @@ function App() {
         <Route path="/LALIGA/juego-limpio" component={JuegoLimpio} />
         <Route path="/LALIGA/reglamento" component={Reglamento} />
         <Route path="/seleccion" component={Selección} />
-
+        <Route path="/concursos/paneda" component={PanedaContest} />
         <Route path="/lpb" component={LPB} />
         <Route path="/level" component={Level} />
         <Route path="/consorcio" component={Consorcio} />
