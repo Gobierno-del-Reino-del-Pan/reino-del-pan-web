@@ -31,6 +31,8 @@ import Turismo from "./pages/Otros/VisitPan.tsx";
 import Patrimonio from "./pages/Otros/Patrimonio.tsx";
 import Selección from "./pages/Otros/SelecciónPaniense.tsx"
 import PanedaContest from "./pages/concursos/PanedaContest.tsx";
+import PKMNCContest from "./pages/concursos/PKMNContest.tsx";
+import tvpContest from "./pages/concursos/tvpContest.tsx";
 
 
 
@@ -52,6 +54,8 @@ function App() {
         <Route path="/LALIGA/reglamento" component={Reglamento} />
         <Route path="/seleccion" component={Selección} />
         <Route path="/concursos/paneda" component={PanedaContest} />
+        <Route path="/concursos/lineapoke" component={PKMNCContest} />
+        <Route path="/concursos/imagentvp" component={tvpContest} />
         <Route path="/lpb" component={LPB} />
         <Route path="/level" component={Level} />
         <Route path="/consorcio" component={Consorcio} />
