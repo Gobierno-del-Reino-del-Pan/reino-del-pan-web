@@ -570,9 +570,9 @@ export default function Home() {
               <div className="flex items-center justify-between mb-6">
                 <span className="text-xs uppercase tracking-[0.2em] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  Top 50 Spotify • Reino del Pan
+                  Top 50 • Reino del Pan
                 </span>
-                <span className="text-xs text-white/40 font-mono">TOP 3 Más Escuchadas</span>
+                <span className="text-xs text-white/40 font-mono">TOP 3 + 🔊</span>
               </div>
 
               <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight mb-4 flex items-center gap-2">
@@ -618,7 +618,7 @@ export default function Home() {
                         </span>
                       ) : (
                         <span className="text-xs font-mono text-white/40">
-                          Reproducir
+                          ▶?
                         </span>
                       )}
                     </div>
@@ -673,7 +673,7 @@ export default function Home() {
                         : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10"
                         }`}
                     >
-                      {playFullSong ? "Modo: Completa" : "Modo: Recorte"}
+                      {playFullSong ? "🔀" : "✂️"}
                     </button>
                   )}
 
@@ -685,9 +685,6 @@ export default function Home() {
                       className="w-5 h-3.5 object-cover rounded shadow-sm"
                       onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
-                    <span className="text-[10px] font-mono uppercase text-white/60 font-bold hidden sm:inline">
-                      Pan
-                    </span>
                   </div>
                 </div>
               </div>
