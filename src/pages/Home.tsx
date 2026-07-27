@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { supabase } from "../lib/supabaseClient";
-import { AgendaStatCard } from "../components/AgendaStatCard";
+import * as musicMetadata from "music-metadata-browser";
 
 // ── INTERFACES Y CONFIGURACIONES ESTÁTICAS ──────────────────────────
 
@@ -30,6 +30,46 @@ interface SupabaseNewsItem {
   img_url: string;
   created_at: string;
 }
+
+interface MarketQuote {
+  price: number;
+  change: number;
+}
+
+interface MarketData {
+  ibex: MarketQuote;
+  nikkei: MarketQuote;
+  panex: MarketQuote;
+  loading: boolean;
+}
+
+interface Song {
+  id: number;
+  title: string;
+  artist: string;
+  src: string;
+  cover: string | null;
+  startTime?: number; // En segundos
+  endTime?: number;   // En segundos
+}
+
+// Configuración base de rutas e intervalos de reproducción
+const SONGS_FILES = [
+  {
+    id: 1,
+    src: "/canciones/1.mp3",
+    startTime: 30, // Minuto/segundo de inicio
+    endTime: 90,   // Minuto/segundo de fin
+  },
+  {
+    id: 2,
+    src: "/canciones/2.mp3",
+  },
+  {
+    id: 3,
+    src: "/canciones/3.mp3",
+  },
+];
 
 const NEWS_ITEMS = [
   "El sistema de generación de DPIs está totalmente operativo",
@@ -86,6 +126,230 @@ export default function Home() {
   const [weatherData, setWeatherData] = useState<RegionWeather[]>([]);
   const [weatherLoading, setWeatherLoading] = useState<boolean>(true);
 
+  // Estados de Canciones y Música
+  const [songs, setSongs] = useState<Song[]>([
+    { id: 1, title: "Cargando canción 1...", artist: "Cargando...", src: "/canciones/1.mp3", cover: null, startTime: 30, endTime: 190 },
+    { id: 2, title: "Cargando canción 2...", artist: "Cargando...", src: "/canciones/2.m4a", cover: null },
+    { id: 3, title: "Cargando canción 3...", artist: "Cargando...", src: "/canciones/3.mp3", cover: null },
+  ]);
+
+  const [currentSong, setCurrentSong] = useState<Song>(songs[0]);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const [markets, setMarkets] = useState<MarketData>({
+    ibex: { price: 11420.50, change: +0.45 },
+    nikkei: { price: 38820.10, change: -0.12 },
+    panex: { price: 11420.50 + 2019, change: +0.45 },
+    loading: true
+  });
+
+  // Configuración de metadatos y fallbacks
+  const METADATA_TIMEOUT_MS = 100;
+
+  const SONGS_FILES = [
+    {
+      id: 1,
+      src: "/canciones/1.mp3",
+      startTime: 30,
+      endTime: 190,
+      fallbackTitle: "Sin Explicacion3s",
+      fallbackArtist: "Dellafuente",
+      fallbackCover: "/canciones/1.jpg",
+      timeoutMs: 2000,
+    },
+    {
+      id: 2,
+      src: "/canciones/2.m4a",
+      fallbackTitle: "Perro",
+      fallbackArtist: "Bad Gyal y Victor Mendivil",
+      fallbackCover: "/canciones/2.avif",
+    },
+    {
+      id: 3,
+      src: "/canciones/3.mp3",
+      fallbackTitle: "Conexión",
+      fallbackArtist: "Cano y JC Reyes",
+      fallbackCover: "/canciones/3.jpg",
+    },
+  ];
+
+  // Lectura de metadatos con Timeout y Fallback personalizado
+  useEffect(() => {
+    async function loadAudioMetadata() {
+      const loadedSongs = await Promise.all(
+        SONGS_FILES.map(async (file) => {
+          const timeoutMs = file.timeoutMs || METADATA_TIMEOUT_MS;
+
+          // Promesa de timeout
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error(`Timeout de ${timeoutMs}ms al leer metadatos`)), timeoutMs)
+          );
+
+          // Estructura por defecto con tus fallbacks
+          const fallbackData = {
+            id: file.id,
+            title: file.fallbackTitle || `Pista ${file.id}`,
+            artist: file.fallbackArtist || "Reino del Pan",
+            src: file.src,
+            cover: file.fallbackCover || null,
+            startTime: file.startTime,
+            endTime: file.endTime,
+          };
+
+          try {
+            const metadata = await Promise.race([
+              musicMetadata.fetchFromUrl(file.src),
+              timeoutPromise
+            ]);
+
+            const { title, artist, picture } = metadata.common;
+
+            let coverUrl: string | null = null;
+            if (picture && picture.length > 0) {
+              const pic = picture[0];
+              const uint8Array = new Uint8Array(pic.data);
+              const blob = new Blob([uint8Array], { type: pic.format });
+              coverUrl = URL.createObjectURL(blob);
+            }
+
+            return {
+              ...fallbackData,
+              title: title || fallbackData.title,
+              artist: artist || fallbackData.artist,
+              cover: coverUrl || fallbackData.cover,
+            };
+          } catch (error) {
+            console.warn(`Aplicado fallback para ${file.src}:`, error);
+            return fallbackData;
+          }
+        })
+      );
+
+      setSongs(loadedSongs);
+
+      // Sincronizar la canción actual si es la que estaba cargando para actualizar el título/carátula en pantalla
+      setCurrentSong((prev) => {
+        const updated = loadedSongs.find((s) => s.id === prev.id);
+        return updated || loadedSongs[0];
+      });
+    }
+
+    loadAudioMetadata();
+  }, []);
+
+  // Control de reproducción de audio
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (currentSong.startTime !== undefined) {
+      audio.currentTime = currentSong.startTime;
+    }
+
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => setIsPlaying(true))
+        .catch(() => setIsPlaying(false));
+    }
+  }, [currentSong.id]); // Solo se ejecuta si cambia de ID de canción (evita reinicios al refrescar metadatos)
+
+
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+  // Estados adicionales para la barra de progreso y reproducción completa
+  const [currentTime, setCurrentTime] = useState<number>(0);
+  const [duration, setDuration] = useState<number>(0);
+  const [playFullSong, PlayFullSong] = useState<boolean>(false);
+
+  // Formateador de segundos a mm:ss
+  const formatTime = (time: number) => {
+    if (isNaN(time)) return "0:00";
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+  };
+
+  // Handler al cambiar la barra de progreso
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTime = parseFloat(e.target.value);
+    if (audioRef.current) {
+      audioRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+    }
+  };
+
+  // Obtenemos la duración total cuando se carga el archivo de audio
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+    }
+  };
+
+  // Actualización del manejador del tiempo del reproductor
+  const handleTimeUpdate = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    setCurrentTime(audio.currentTime);
+
+    // Si no está activado el modo "Reproducir Completa", se aplica el corte
+    if (!playFullSong && currentSong.id === 1 && currentSong.endTime !== undefined) {
+      if (audio.currentTime >= currentSong.endTime) {
+        audio.pause();
+        setIsPlaying(false);
+      }
+    }
+  };
+
+  // Obtener datos bursátiles
+  useEffect(() => {
+    async function fetchMarkets() {
+      try {
+        const res = await fetch("https://query1.finance.yahoo.com/v7/finance/quote?symbols=^IBEX,^N225");
+        const data = await res.json();
+        const quotes = data?.quoteResponse?.result;
+
+        if (quotes && quotes.length >= 2) {
+          const ibexQuote = quotes.find((q: any) => q.symbol === "^IBEX");
+          const nikkeiQuote = quotes.find((q: any) => q.symbol === "^N225");
+
+          const ibexPrice = ibexQuote?.regularMarketPrice || 11420.50;
+          const ibexChange = ibexQuote?.regularMarketChangePercent || 0.45;
+          const nikkeiPrice = nikkeiQuote?.regularMarketPrice || 38820.10;
+          const nikkeiChange = nikkeiQuote?.regularMarketChangePercent || -0.12;
+
+          setMarkets({
+            ibex: { price: ibexPrice, change: ibexChange },
+            nikkei: { price: nikkeiPrice, change: nikkeiChange },
+            panex: { price: ibexPrice + 2019, change: ibexChange },
+            loading: false
+          });
+        } else {
+          setMarkets(prev => ({ ...prev, loading: false }));
+        }
+      } catch (err) {
+        console.warn("Usando estimación de bolsa en vivo:", err);
+        setMarkets(prev => ({ ...prev, loading: false }));
+      }
+    }
+
+    fetchMarkets();
+    const marketInterval = setInterval(fetchMarkets, 60000);
+    return () => clearInterval(marketInterval);
+  }, []);
+
+  // Carga de Supabase y Clima
   useEffect(() => {
     let isMounted = true;
 
@@ -283,6 +547,232 @@ export default function Home() {
         </div>
       </main>
 
+      {/* ── MÚSICA & BOLSAS DE VALORES ── */}
+      <section className="w-full bg-[#0b0c10] border-t border-b border-white/10 py-12 px-4 sm:px-6">
+        <div className="container mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+
+          {/* LADO IZQUIERDO: TOP 50 REINO DEL PAN (SPOTIFY STYLE) */}
+          <div className="bg-[#12141d] rounded-3xl p-6 sm:p-8 border border-white/10 flex flex-col justify-between shadow-2xl relative overflow-hidden">
+            <audio
+              ref={audioRef}
+              src={currentSong.src}
+              onTimeUpdate={handleTimeUpdate}
+              onLoadedMetadata={handleLoadedMetadata}
+              onCanPlay={() => {
+                // Intenta la autorreproducción en cuanto el audio esté listo
+                if (audioRef.current && !isPlaying) {
+                  audioRef.current.play().then(() => setIsPlaying(true)).catch(() => { });
+                }
+              }}
+            />
+
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <span className="text-xs uppercase tracking-[0.2em] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Top 50 Spotify • Reino del Pan
+                </span>
+                <span className="text-xs text-white/40 font-mono">TOP 3 Más Escuchadas</span>
+              </div>
+
+              <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight mb-4 flex items-center gap-2">
+                <span>Éxitos en Pantopía</span>
+              </h3>
+
+              {/* Lista de Canciones */}
+              <div className="space-y-3">
+                {songs.map((song) => {
+                  const isSelected = currentSong.id === song.id;
+                  return (
+                    <div
+                      key={song.id}
+                      onClick={() => {
+                        setCurrentSong(song);
+                        setIsPlaying(true);
+                      }}
+                      className={`flex items-center justify-between p-3.5 rounded-2xl cursor-pointer transition-all duration-200 border ${isSelected
+                        ? "bg-emerald-500/10 border-emerald-500/40 text-white"
+                        : "bg-white/5 border-transparent text-white/70 hover:bg-white/10 hover:text-white"
+                        }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <span className="font-mono text-sm font-bold opacity-60 w-4 text-center">
+                          #{song.id}
+                        </span>
+                        <div className="w-10 h-10 rounded-xl bg-neutral-800 overflow-hidden flex items-center justify-center shrink-0 border border-white/10">
+                          {song.cover ? (
+                            <img src={song.cover} alt={song.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-base">🎵</span>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold leading-tight">{song.title}</p>
+                          <p className="text-xs opacity-60 mt-0.5">{song.artist}</p>
+                        </div>
+                      </div>
+
+                      {isSelected && isPlaying ? (
+                        <span className="text-xs font-mono text-emerald-400 font-bold animate-pulse">
+                          Sonando ▶
+                        </span>
+                      ) : (
+                        <span className="text-xs font-mono text-white/40">
+                          Reproducir
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Controles del Reproductor + Barra de Progresión */}
+            <div className="mt-6 pt-4 border-t border-white/10 space-y-3">
+              {/* Línea de Progresión */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-[11px] font-mono text-white/50">
+                  <span>{formatTime(currentTime)}</span>
+                  <span>{formatTime(duration)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max={duration || 100}
+                  value={currentTime}
+                  onChange={handleSeek}
+                  className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-400"
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={togglePlay}
+                    className="w-11 h-11 rounded-full bg-emerald-500 text-black font-bold flex items-center justify-center hover:bg-emerald-400 transition-transform active:scale-95 shadow-lg shadow-emerald-500/20 shrink-0"
+                  >
+                    {isPlaying ? "⏸" : "▶"}
+                  </button>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white leading-tight truncate">
+                      {currentSong.title}
+                    </p>
+                    <p className="text-[11px] text-white/50 truncate">
+                      {currentSong.artist}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {/* Botón Opción Canción Completa / Recorte */}
+                  {currentSong.startTime !== undefined && (
+                    <button
+                      onClick={() => PlayFullSong(!playFullSong)}
+                      className={`text-[10px] font-mono px-2.5 py-1 rounded-xl border transition-all ${playFullSong
+                        ? "bg-amber-500/20 border-amber-500/40 text-amber-300 font-bold"
+                        : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10"
+                        }`}
+                    >
+                      {playFullSong ? "Modo: Completa" : "Modo: Recorte"}
+                    </button>
+                  )}
+
+                  {/* Bandera del Reino del Pan */}
+                  <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-2 py-1 rounded-xl shrink-0">
+                    <img
+                      src="/flag.png"
+                      alt="Bandera del Reino del Pan"
+                      className="w-5 h-3.5 object-cover rounded shadow-sm"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                    <span className="text-[10px] font-mono uppercase text-white/60 font-bold hidden sm:inline">
+                      Pan
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* LADO DERECHO: MERCADOS EN TIEMPO REAL */}
+          <div className="bg-[#12141d] rounded-3xl p-6 sm:p-8 border border-white/10 flex flex-col justify-between shadow-2xl">
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <span className="text-xs uppercase tracking-[0.3em] text-blue-400 font-bold bg-blue-500/10 border border-blue-500/20 px-3.5 py-1.5 rounded-full flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping"></span>
+                  Mercados Financieros
+                </span>
+                <span className="text-xs text-white/40 font-mono">En tiempo real</span>
+              </div>
+
+              <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight mb-6">
+                Índices Bursátiles
+              </h3>
+
+              {/* Grid de Cotizaciones */}
+              <div className="space-y-4">
+                {/* PANEX 75 */}
+                <div className="bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border border-amber-500/40 rounded-2xl p-4 flex items-center justify-between shadow-lg relative overflow-hidden">
+                  <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-20 h-20 bg-amber-500/10 rounded-full blur-xl pointer-events-none"></div>
+                  <div>
+                    <span className="text-xs text-amber-400 uppercase font-mono tracking-wider font-bold">
+                      Reino del Pan ★
+                    </span>
+                    <h4 className="text-base font-black text-amber-300">PANEX 75</h4>
+                  </div>
+                  <div className="text-right z-10">
+                    <p className="text-xl font-mono font-black text-amber-400">
+                      {markets.panex.price.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                    <span className={`text-xs font-mono font-bold ${markets.panex.change >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                      {markets.panex.change >= 0 ? "+" : ""}{markets.panex.change.toFixed(2)}%
+                    </span>
+                  </div>
+                </div>
+
+                {/* IBEX 35 */}
+                <div className="bg-white/5 border border-white/5 rounded-2xl p-4 flex items-center justify-between hover:border-white/10 transition-colors">
+                  <div>
+                    <span className="text-xs text-white/50 uppercase font-mono tracking-wider">España</span>
+                    <h4 className="text-base font-bold text-white">IBEX 35</h4>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-mono font-bold text-white">
+                      {markets.ibex.price.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                    <span className={`text-xs font-mono font-bold ${markets.ibex.change >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                      {markets.ibex.change >= 0 ? "+" : ""}{markets.ibex.change.toFixed(2)}%
+                    </span>
+                  </div>
+                </div>
+
+                {/* NIKKEI 225 */}
+                <div className="bg-white/5 border border-white/5 rounded-2xl p-4 flex items-center justify-between hover:border-white/10 transition-colors">
+                  <div>
+                    <span className="text-xs text-white/50 uppercase font-mono tracking-wider">Japón</span>
+                    <h4 className="text-base font-bold text-white">Nikkei 225</h4>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-mono font-bold text-white">
+                      {markets.nikkei.price.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                    <span className={`text-xs font-mono font-bold ${markets.nikkei.change >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                      {markets.nikkei.change >= 0 ? "+" : ""}{markets.nikkei.change.toFixed(2)}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-white/10 flex justify-between items-center text-[11px] text-white/40">
+              <span>Sincronizado con bolsa central</span>
+              <span className="font-mono">Actualizado hace instantes</span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
       {/* ── SECCIÓN: ANUNCIO INSTITUCIONAL COMPLETO ── */}
       <section className="w-full">
         <img
@@ -353,7 +843,6 @@ export default function Home() {
         </div>
       </section>
 
-
       {/* ── SECCIÓN: CONTENEDOR INTEGRADO CON FONDO BLANCO AZULADO (#CDCCD4) ── */}
       <section className="w-full px-4 sm:px-6 py-16 lg:py-24 bg-[#CDCCD4]">
         <div className="container mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -416,9 +905,9 @@ export default function Home() {
 
         </div>
       </section>
+
       {/* ── SECCIÓN: CONCURSOS OFICIALES ── */}
       <section className="w-full px-4 sm:px-6 py-24 mt-8 bg-[#07080c] relative overflow-hidden select-none border-t border-white/5">
-        {/* Ambience Lighting */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-72 bg-accent/5 rounded-full blur-[140px] pointer-events-none" />
 
         <div className="container mx-auto max-w-7xl relative z-10">
@@ -497,7 +986,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── SECCIÓN: TARJETA TVP NOTICIAS (EXTRAÍDA DE SUPABASE) ── */}
+      {/* ── SECCIÓN: TARJETA TVP NOTICIAS ── */}
       <section className="w-full px-4 sm:px-6 mt-8 max-w-7xl mx-auto z-10">
         <div className="w-full bg-[#07080c] text-white rounded-3xl overflow-hidden border border-white/5 p-6 sm:p-8 md:p-10 shadow-2xl flex flex-col gap-10 font-tvp-text selection:bg-[#ff4d00]">
 
@@ -578,38 +1067,38 @@ export default function Home() {
 
       <style dangerouslySetInnerHTML={{
         __html: `
-        @font-face {
-            font-family: 'TVP-Heading';
-            src: url('/TVP/TVP.ttf') format('truetype');
-            font-weight: bold;
-        }
-        @font-face {
-            font-family: 'TVP-Text';
-            src: url('/TVP/TVPtext.ttf') format('truetype');
-            font-weight: normal;
-        }
-        .font-tvp-head { font-family: 'TVP-Heading', sans-serif; }
-        .font-tvp-text { font-family: 'TVP-Text', sans-serif; }
-      `}} />
+      @font-face {
+          font-family: 'TVP-Heading';
+          src: url('/TVP/TVP.ttf') format('truetype');
+          font-weight: bold;
+      }
+      @font-face {
+          font-family: 'TVP-Text';
+          src: url('/TVP/TVPtext.ttf') format('truetype');
+          font-weight: normal;
+      }
+      .font-tvp-head { font-family: 'TVP-Heading', sans-serif; }
+      .font-tvp-text { font-family: 'TVP-Text', sans-serif; }
+    `}} />
 
       <style>{`
-        @keyframes marquee {
-          0% {
-            transform: translate3d(0, 0, 0);
-          }
-          100% {
-            transform: translate3d(-50%, 0, 0);
-          }
+      @keyframes marquee {
+        0% {
+          transform: translate3d(0, 0, 0);
         }
+        100% {
+          transform: translate3d(-50%, 0, 0);
+        }
+      }
 
-        .custom-marquee {
-          animation: marquee 35s linear infinite !important;
-        }
+      .custom-marquee {
+        animation: marquee 35s linear infinite !important;
+      }
 
-        .custom-marquee:hover {
-          animation-play-state: paused !important;
-        }
-      `}</style>
+      .custom-marquee:hover {
+        animation-play-state: paused !important;
+      }
+    `}</style>
     </div>
   );
 }
