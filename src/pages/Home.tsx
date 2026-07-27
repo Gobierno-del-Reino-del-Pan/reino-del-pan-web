@@ -614,7 +614,7 @@ export default function Home() {
 
                       {isSelected && isPlaying ? (
                         <span className="text-xs font-mono text-emerald-400 font-bold animate-pulse">
-                          Sonando ▶
+                          ▶
                         </span>
                       ) : (
                         <span className="text-xs font-mono text-white/40">
