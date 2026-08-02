@@ -25,7 +25,6 @@ import Consorcio from "./pages/Consorcio/consorcio";
 import Maps from "./pages/Maps";
 import BORP from "./pages/BORP";
 import PKMNpokedex from "./pages/PKMN/pokedex.tsx";
-import Tarjetas from "./pages/TarjetasExclusivas.tsx";
 import Policía from "./pages/Policía/PolicíaPanacional.tsx";
 import Turismo from "./pages/Otros/VisitPan.tsx";
 import Patrimonio from "./pages/Otros/Patrimonio.tsx";
@@ -62,7 +61,6 @@ function App() {
         <Route path="/maps" component={Maps} />
         <Route path="/borp" component={BORP} />
         <Route path="/pkmn/pokedex" component={PKMNpokedex} />
-        <Route path="/tarjetas" component={Tarjetas} />
         <Route path="/policia" component={Policía} />
         <Route path="/turismo" component={Turismo} />
         <Route path="/patrimonio-panacional" component={Patrimonio} />

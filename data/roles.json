@@ -77,6 +77,97 @@
         "descripcion": "Son personas que se encargan de capturar, criar, entrenar y cuidar de dichas criaturas. Lucha.",
         "imagen": "/roles/pokeball.png",
         "discord_role_id": "1508081112230920402"
+      },
+      {
+        "id": "rol_director_reformas",
+        "nombre": "Director de Reformas",
+        "descripcion": "Ostenta el cargo de la presidencia y se encarga de las reformas",
+        "imagen": "/roles/gobierno.png",
+        "discord_role_id": "1525567587944235130"
+      },
+      {
+        "id": "rol_secretario_comunicacion",
+        "nombre": "Secretario de Comunicación y Portavoz de la Dirección",
+        "descripcion": "Ostenta el cargo de Sec. de Comunicación y Portavoz de la Dirección",
+        "imagen": "/roles/gobierno.png",
+        "discord_role_id": "1528432674077937664"
+      },
+      {
+        "id": "rol_ministro_desregulacion",
+        "nombre": "Ministro de Desregulación y Pokémon",
+        "descripcion": "Ostenta el cargo de M. de Desregulación y Pokémon",
+        "imagen": "/roles/gobierno.png",
+        "discord_role_id": "1525566559660277883"
+      },
+      {
+        "id": "rol_ministro_cultura",
+        "nombre": "Ministro de Cultura, Música y Deportes",
+        "descripcion": "Ostenta el cargo de M. de Cultura, Música y Deportes",
+        "imagen": "/roles/gobierno.png",
+        "discord_role_id": "1525922710696230972"
+      },
+      {
+        "id": "rol_ministro_industria",
+        "nombre": "Ministro de Industria y Turismo",
+        "descripcion": "Ostenta el cargo de M. de Industria y Turismo",
+        "imagen": "/roles/gobierno.png",
+        "discord_role_id": "1528432433584803970"
+      },
+      {
+        "id": "rol_ministro_seguridad",
+        "nombre": "Ministro de Seguridad Social y Migraciones",
+        "descripcion": "Ostenta el cargo de M. de Seguridad Social y Migraciones",
+        "imagen": "/roles/gobierno.png",
+        "discord_role_id": "1533157446246338802"
+      },
+      {
+        "id": "rol_ministro_economia",
+        "nombre": "Ministro de Economía, Comercio y Empresa",
+        "descripcion": "Ostenta el cargo de M. de Economía, Comercio y Empresa",
+        "imagen": "/roles/gobierno.png",
+        "discord_role_id": "1525915723963043913"
+      },
+      {
+        "id": "rol_ministro_territorial",
+        "nombre": "Ministro de Política Territorial y Cohesión Democrática",
+        "descripcion": "Ostenta el cargo de M. de Política Territorial y Cohesión Democrática",
+        "imagen": "/roles/gobierno.png",
+        "discord_role_id": "1525567188835111092"
+      },
+      {
+        "id": "rol_ministro_interior",
+        "nombre": "Ministro del Interior y Defensa",
+        "descripcion": "Ostenta el cargo de M. de Interior y Defensa",
+        "imagen": "/roles/gobierno.png",
+        "discord_role_id": "1525567958431305800"
+      },
+      {
+        "id": "rol_ministro_exteriores",
+        "nombre": "Ministro de Asuntos Exteriores y Cooperación Internacional",
+        "descripcion": "Ostenta el cargo de M. de Asuntos Exteriores y Cooperación Internacional",
+        "imagen": "/roles/gobierno.png",
+        "discord_role_id": "1525920559618326578"
+      },
+      {
+        "id": "rol_ministra_transformacion",
+        "nombre": "Ministra para la Transformación del Estado y Medio Ambiente",
+        "descripcion": "Ostenta el cargo de M. para la Transformación del Estado y Medio Ambiente",
+        "imagen": "/roles/gobierno.png",
+        "discord_role_id": "1525922496334004285"
+      },
+      {
+        "id": "rol_ministra_perreria",
+        "nombre": "Ministra para la Perrería del Estado, Trabajo y Libertades",
+        "descripcion": "Ostenta el cargo de M. para la Perrería del Estado, Trabajo y Libertades",
+        "imagen": "/roles/gobierno.png",
+        "discord_role_id": "1525916066562441279"
+      },
+      {
+        "id": "rol_ministra_sanidad",
+        "nombre": "Ministra de Sanidad",
+        "descripcion": "Ostenta el cargo de M. de Sanidad",
+        "imagen": "/roles/gobierno.png",
+        "discord_role_id": "1525883507102978240"
       }
     ],
     "regiones": [
