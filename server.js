@@ -1048,6 +1048,80 @@ app.get("/api/electoral/partidos/:siglas", async (req, res) => {
   }
 });
 
+// ── ENDPOINTS ELECTORALES ADAPTADOS A ELECTA.TSX ───────────────────────────
+
+/**
+ * GET /api/electoral/procesos-abiertos
+ * Alias para que Electa.tsx reciba un Array directo de procesos abiertos
+ */
+app.get("/api/electoral/procesos-abiertos", async (req, res) => {
+  try {
+    const { data: procesos, error } = await supabase
+      .from("electa_procesos_electorales")
+      .select("*")
+      .eq("estado", "abierto")
+      .order("fecha_inicio", { ascending: false });
+
+    if (error) throw error;
+    // Retornamos directamente el Array para que d.length y Array.isArray() funcionen en el cliente
+    return res.json(procesos || []);
+  } catch (err) {
+    console.error("[GET /api/electoral/procesos-abiertos]", err);
+    return res.status(500).json({ error: "Error al obtener procesos abiertos." });
+  }
+});
+
+/**
+ * GET /api/electoral/comprobar-voto
+ * Comprueba si el usuario autenticado ya ha votado en un proceso
+ */
+app.get("/api/electoral/comprobar-voto", requireAuth, async (req, res) => {
+  try {
+    const voterId = req.user.id;
+    const { proceso_id } = req.query;
+
+    if (!proceso_id) {
+      return res.status(400).json({ error: "Falta el parámetro proceso_id" });
+    }
+
+    const { data: voto, error } = await supabase
+      .from("electa_votos")
+      .select("id")
+      .eq("proceso_id", proceso_id)
+      .eq("voter_id", voterId)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    return res.json({ haVotado: !!voto });
+  } catch (err) {
+    console.error("[GET /api/electoral/comprobar-voto]", err);
+    return res.json({ haVotado: false });
+  }
+});
+
+/**
+ * GET /api/electoral/candidaturas
+ * Retorna las candidaturas de un proceso en formato Array
+ */
+app.get("/api/electoral/candidaturas", async (req, res) => {
+  try {
+    const { proceso_id } = req.query;
+    if (!proceso_id) return res.json([]);
+
+    const { data: candidaturas, error } = await supabase
+      .from("electa_candidaturas")
+      .select("*")
+      .eq("proceso_id", proceso_id);
+
+    if (error) throw error;
+    return res.json(candidaturas || []);
+  } catch (err) {
+    console.error("[GET /api/electoral/candidaturas]", err);
+    return res.status(500).json({ error: "Error al obtener candidaturas." });
+  }
+});
+
 app.get("/health", (_req, res) => res.json({ status: "OK" }));
 
 function escHtml(str) {
