@@ -163,8 +163,9 @@ app.use(cookieParser());
 
 // Solo servir estáticos si NO estamos en Vercel (por ejemplo, en desarrollo local con node server.js)
 if (!process.env.VERCEL) {
-  const staticFolder = path.resolve(__dirname, "dist", "public");
-  app.use(express.static(staticFolder));
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, "dist", "public", "index.html"));
+  });
 }
 
 function getIP(req) {
