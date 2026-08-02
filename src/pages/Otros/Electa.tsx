@@ -45,7 +45,7 @@ interface Candidatura {
     candidato_user_id: string;
     vicepresidente_user_id?: string;
     region_id?: string;
-    candidatos: CandidatosJson[];
+    candidatos?: CandidatosJson[];
     votos_totales: number;
     votos_por_region?: Record<string, number>;
 }
@@ -59,7 +59,6 @@ const REGIONES_NOMBRES: Record<string, string> = {
     PANPLANO: "Pan Plano/Arepa 🫓",
 };
 
-// Asignación predeterminada de escaños a repartir por región (Ajustable según el censo)
 const ESCAÑOS_POR_REGION: Record<string, number> = {
     BAGUETTE: 5,
     PIMBO: 5,
@@ -131,16 +130,26 @@ export default function Electa() {
         setVotoSeleccionado(null);
         setMensajeForm(null);
 
+        // Comprobar si el usuario ya ha votado en este proceso
         fetch(`/api/electoral/comprobar-voto?proceso_id=${procesoSeleccionado.id}`)
             .then((res) => res.json())
-            .then((d) => setYaVoto(d.haVotado))
+            .then((d) => setYaVoto(!!d.haVotado))
             .catch(() => setYaVoto(false));
 
+        // Cargar candidaturas si no es un referéndum
         if (procesoSeleccionado.tipo !== "referendum") {
             fetch(`/api/electoral/candidaturas?proceso_id=${procesoSeleccionado.id}`)
                 .then((res) => res.json())
-                .then((data) => setCandidaturas(data))
+                .then((data) => {
+                    if (Array.isArray(data)) {
+                        setCandidaturas(data);
+                    } else {
+                        setCandidaturas([]);
+                    }
+                })
                 .catch((err) => console.error("Error al cargar candidaturas:", err));
+        } else {
+            setCandidaturas([]);
         }
     }, [procesoSeleccionado]);
 
@@ -151,7 +160,6 @@ export default function Electa() {
         const totalVotosGlobales = candidaturas.reduce((acc, c) => acc + (c.votos_totales || 0), 0);
         const regionesKeys = Object.keys(REGIONES_NOMBRES);
 
-        // Calcular distribución de escaños por D'Hondt en cada región
         const escañosPorRegionYPartido: Record<string, Record<string, number>> = {};
         const escañosTotalesPartido: Record<string, number> = {};
 
@@ -162,7 +170,6 @@ export default function Electa() {
             escañosPorRegionYPartido[regKey] = {};
             candidaturas.forEach((c) => (escañosPorRegionYPartido[regKey][c.id] = 0));
 
-            // Array de cocientes para D'Hondt
             const cocientes: { candidaturaId: string; valor: number }[] = [];
 
             candidaturas.forEach((cand) => {
@@ -175,10 +182,8 @@ export default function Electa() {
                 }
             });
 
-            // Ordenar cocientes de mayor a menor
             cocientes.sort((a, b) => b.valor - a.valor);
 
-            // Asignar los escaños de la región
             for (let i = 0; i < numEscañosRegion; i++) {
                 if (cocientes[i] && cocientes[i].valor > 0) {
                     const candWinner = cocientes[i].candidaturaId;
@@ -203,13 +208,15 @@ export default function Electa() {
         setMensajeForm(null);
 
         try {
+            // Se envía según lo configurado en server.js
+            const bodyPayload = procesoSeleccionado.tipo === "referendum"
+                ? { proceso_id: procesoSeleccionado.id, opcion: votoSeleccionado }
+                : { proceso_id: procesoSeleccionado.id, candidatura_id: votoSeleccionado };
+
             const res = await fetch("/api/electoral/votar", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    proceso_id: procesoSeleccionado.id,
-                    opcion: votoSeleccionado,
-                }),
+                body: JSON.stringify(bodyPayload),
             });
 
             const data = await res.json();
@@ -217,6 +224,12 @@ export default function Electa() {
             if (res.ok) {
                 setYaVoto(true);
                 setMensajeForm({ tipo: "ok", texto: "¡Tu voto ha sido emitido e inscrito en las urnas con éxito!" });
+
+                // Recargar candidaturas para reflejar los votos actualizados
+                if (procesoSeleccionado.tipo !== "referendum") {
+                    const updatedCands = await fetch(`/api/electoral/candidaturas?proceso_id=${procesoSeleccionado.id}`).then(r => r.json());
+                    if (Array.isArray(updatedCands)) setCandidaturas(updatedCands);
+                }
             } else {
                 setMensajeForm({ tipo: "error", texto: data.message || "No se pudo emitir el voto." });
             }
@@ -289,7 +302,7 @@ export default function Electa() {
                         <div className="text-5xl">📋</div>
                         <h1 className="text-2xl font-bold">Padrón Electoral no Registrado</h1>
                         <p className="text-foreground/60 text-sm leading-relaxed">
-                            Hola <strong className="text-foreground">{user.username}</strong>, para votar en el sistema **Electa** necesitas contar con tu Documento Personal de Identificación (DPI).
+                            Hola <strong className="text-foreground">{user.username}</strong>, para votar en el sistema <strong>Electa</strong> necesitas contar con tu Documento Personal de Identificación (DPI).
                         </p>
                         <div className="space-y-3">
                             <Link
@@ -387,8 +400,8 @@ export default function Electa() {
                                             key={p.id}
                                             onClick={() => setProcesoSeleccionado(p)}
                                             className={`p-4 rounded-xl border text-left transition-all duration-200 ${isSelected
-                                                    ? "border-accent bg-accent/10 shadow-sm"
-                                                    : "border-border bg-card hover:border-accent/40"
+                                                ? "border-accent bg-accent/10 shadow-sm"
+                                                : "border-border bg-card hover:border-accent/40"
                                                 }`}
                                         >
                                             <span className="text-[10px] font-bold uppercase tracking-wider text-accent block mb-1">
@@ -448,8 +461,8 @@ export default function Electa() {
                                                     key={op.id}
                                                     onClick={() => setVotoSeleccionado(op.id)}
                                                     className={`p-4 rounded-xl border font-bold text-sm transition-all ${op.color} ${votoSeleccionado === op.id
-                                                            ? "border-accent bg-accent/20 ring-2 ring-accent"
-                                                            : "border-border bg-background/50"
+                                                        ? "border-accent bg-accent/20 ring-2 ring-accent"
+                                                        : "border-border bg-background/50"
                                                         }`}
                                                 >
                                                     {op.label}
@@ -457,7 +470,6 @@ export default function Electa() {
                                             ))}
                                         </div>
                                     ) : (
-                                        /* Lista de Candidaturas con Partido y Candidatos */
                                         <div className="space-y-3">
                                             <p className="text-xs text-foreground/60 font-medium">Selecciona la candidatura de tu elección:</p>
                                             {candidaturas.length === 0 ? (
@@ -473,8 +485,8 @@ export default function Electa() {
                                                                 key={c.id}
                                                                 onClick={() => setVotoSeleccionado(c.id)}
                                                                 className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${isSelected
-                                                                        ? "border-accent bg-accent/15 ring-1 ring-accent"
-                                                                        : "border-border bg-background/40 hover:border-accent/40"
+                                                                    ? "border-accent bg-accent/15 ring-1 ring-accent"
+                                                                    : "border-border bg-background/40 hover:border-accent/40"
                                                                     }`}
                                                             >
                                                                 <div className="space-y-1">
@@ -498,10 +510,8 @@ export default function Electa() {
                                                         );
                                                     })}
                                                 </div>
-
                                             )}
                                         </div>
-
                                     )}
 
                                     {/* Botón de Emisión */}
@@ -562,7 +572,7 @@ export default function Electa() {
 
                             {/* Resumen Global por Partido */}
                             <div className="space-y-3">
-                                <h4 className="text-xs uppercase tracking-wider font-semibold text-accent">Resumen de Escaños Globals</h4>
+                                <h4 className="text-xs uppercase tracking-wider font-semibold text-accent">Resumen de Escaños Globales</h4>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                                     {candidaturas.map((c) => {
                                         const votos = c.votos_totales || 0;
