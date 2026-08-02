@@ -1151,12 +1151,14 @@ app.get("/api/roles", async (req, res) => {
   }
 });
 
-// ✅ SOLUCIÓN:
 if (!process.env.VERCEL) {
   const staticFolder = path.resolve(__dirname, "dist", "public");
+
+  // Servir archivos estáticos del build
   app.use(express.static(staticFolder));
 
-  app.get('*', (req, res) => {
+  // Fallback para SPA (index.html)
+  app.get("*", (req, res) => {
     res.sendFile(path.join(staticFolder, "index.html"));
   });
 }
