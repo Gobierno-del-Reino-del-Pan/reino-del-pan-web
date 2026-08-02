@@ -32,6 +32,7 @@ import Selección from "./pages/Otros/SelecciónPaniense.tsx"
 import PanedaContest from "./pages/concursos/PanedaContest.tsx";
 import PKMNCContest from "./pages/concursos/PKMNContest.tsx";
 import tvpContest from "./pages/concursos/tvpContest.tsx";
+import Elecciones from "./pages/Otros/Electa.tsx";
 
 
 
@@ -45,7 +46,7 @@ function App() {
         <Route path="/Politics" component={Politics} />
         <Route path="/donations" component={Donations} />
         <Route path="/pkmn" component={PKMN} />
-
+        <Route path="/electa" component={Elecciones} />
 
         <Route path="/laliga" component={LaLiga} />
         <Route path="/LALIGA/CSD" component={CSD} />
@@ -65,6 +66,7 @@ function App() {
         <Route path="/turismo" component={Turismo} />
         <Route path="/patrimonio-panacional" component={Patrimonio} />
 
+        <Route path="/elecciones" component={Elecciones} />
         <Route path="/tvp" component={TVP} />
         <Route path="/tvp/paneldecontrol" component={PanelDeControl} />
         <Route path="/dpi" component={DPI} />
