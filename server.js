@@ -1151,9 +1151,15 @@ app.get("/api/roles", async (req, res) => {
   }
 });
 
-app.get("*", (_req, res) => {
-  res.sendFile(path.join(staticFolder, "index.html"));
-});
+// ✅ SOLUCIÓN:
+if (!process.env.VERCEL) {
+  const staticFolder = path.resolve(__dirname, "dist", "public");
+  app.use(express.static(staticFolder));
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(staticFolder, "index.html"));
+  });
+}
 
 export default app;
 
