@@ -155,14 +155,17 @@ async function getNextDPINumber() {
 // ── Express ───────────────────────────────────────────────────────────────────
 const app = express();
 const port = process.env.PORT || 3344;
-const staticFolder = path.resolve(__dirname, "dist", "public");
 
 app.set('trust proxy', 1);
 
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 
-app.use(express.static(staticFolder));
+// Solo servir estáticos si NO estamos en Vercel (por ejemplo, en desarrollo local con node server.js)
+if (!process.env.VERCEL) {
+  const staticFolder = path.resolve(__dirname, "dist", "public");
+  app.use(express.static(staticFolder));
+}
 
 function getIP(req) {
   return (
