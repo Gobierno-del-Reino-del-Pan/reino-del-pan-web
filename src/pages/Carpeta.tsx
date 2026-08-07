@@ -39,7 +39,14 @@ interface Hijo {
   tipo: "adoptivo" | "creado";
 }
 
-// ── INTERFAZ EXTENDIDA CON LAS PROPIEDADES DE NIVEL ──
+// ── ECONOMÍA Y DATOS ADICIONALES DE USUARIO ──
+interface EconomyData {
+  cash: number;
+  bank: number;
+  total_earned?: number;
+  total_spent?: number;
+}
+
 interface DiscordUser {
   id: string;
   username: string;
@@ -50,10 +57,72 @@ interface DiscordUser {
   roles: Rol[];
   matrimonio: Matrimonio | null;
   hijos: Hijo[];
-  level?: number;      // 🆕 Añadido
-  xp?: number;         // 🆕 Añadido
-  total_xp?: number;   // 🆕 Añadido
-  messages?: number;   // 🆕 Añadido
+  level?: number;
+  xp?: number;
+  total_xp?: number;
+  messages?: number;
+
+  // 🆕 Nuevos campos integrados
+  economy?: EconomyData | null;
+  puntos_elo?: string | number | null; // Puntos Base (PB)
+  pokemon_favorito?: string | null;
+  cantante_favorito?: string | null;
+  cantante_imagen?: string | null;
+  animal_favorito?: string | null;
+  equipo_futbol?: string | null;
+  insta?: string | null;
+  tiktok?: string | null;
+  x_twitter?: string | null;
+}
+
+// ── COMPONENTE PARA EL POKÉMON FAVORITO (Estilo Pokémon Home vía PokéAPI) ──
+function PokemonDisplay({ pokemonName }: { pokemonName: string }) {
+  const [spriteUrl, setSpriteUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!pokemonName) return;
+
+    const formattedName = pokemonName.trim().toLowerCase().replace(/\s+/g, "-");
+    fetch(`https://pokeapi.co/api/v2/pokemon/${formattedName}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Pokémon no encontrado");
+        return res.json();
+      })
+      .then((data) => {
+        // Sprite estilo Pokémon Home
+        const homeSprite = data?.sprites?.other?.home?.front_default
+          || data?.sprites?.other?.["official-artwork"]?.front_default
+          || data?.sprites?.front_default;
+        setSpriteUrl(homeSprite);
+      })
+      .catch(() => {
+        setSpriteUrl(null);
+      })
+      .finally(() => setLoading(false));
+  }, [pokemonName]);
+
+  return (
+    <div className="flex items-center gap-3 bg-background/40 p-3 rounded-xl border border-border">
+      <div className="w-12 h-12 flex items-center justify-center bg-accent/10 rounded-lg overflow-hidden">
+        {loading ? (
+          <div className="w-4 h-4 border-2 border-accent/40 border-t-accent rounded-full animate-spin" />
+        ) : spriteUrl ? (
+          <img
+            src={spriteUrl}
+            alt={pokemonName}
+            className="w-12 h-12 object-contain drop-shadow-md transition-transform hover:scale-110"
+          />
+        ) : (
+          <span className="text-xl">🐾</span>
+        )}
+      </div>
+      <div>
+        <p className="text-[10px] uppercase tracking-wider text-foreground/50">Pokémon Favorito</p>
+        <p className="text-sm font-semibold capitalize text-foreground">{pokemonName}</p>
+      </div>
+    </div>
+  );
 }
 
 function RolIcono({ rol }: { rol: Rol }) {
@@ -74,9 +143,7 @@ function RolIcono({ rol }: { rol: Rol }) {
 
 function RolCard({ rol }: { rol: Rol }) {
   return (
-    <div
-      className="group flex items-start gap-4 p-4 rounded-xl border border-border bg-background/40 hover:border-accent/40 hover:bg-accent/5 transition-all duration-200"
-    >
+    <div className="group flex items-start gap-4 p-4 rounded-xl border border-border bg-background/40 hover:border-accent/40 hover:bg-accent/5 transition-all duration-200">
       <RolIcono rol={rol} />
       <div className="flex-1">
         <h3 className="font-semibold text-foreground flex items-center gap-2">
@@ -108,7 +175,7 @@ function RolSeccion({ titulo, roles }: { titulo: string; roles: Rol[] }) {
       </div>
       <div className="px-6 py-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {roles.map(rol => (
+          {roles.map((rol) => (
             <RolCard key={rol.discord_role_id} rol={rol} />
           ))}
         </div>
@@ -134,14 +201,14 @@ export default function Carpeta() {
 
   useEffect(() => {
     fetch("/api/me")
-      .then(r => {
+      .then((r) => {
         if (r.status === 401) {
           window.location.href = "/auth/discord";
           return null;
         }
         return r.json();
       })
-      .then(d => {
+      .then((d) => {
         if (!d) return;
         if (!d.user) {
           navigate("/");
@@ -262,7 +329,7 @@ export default function Carpeta() {
 
   const dpi = user.dpi;
   const nombreCompleto = `${dpi.nombre} ${dpi.apellidos}`.toLowerCase()
-    .replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
+    .replace(/(^\w{1})|(\s+\w{1})/g, (letter) => letter.toUpperCase());
 
   const rolesPorCategoria: Record<string, Rol[]> = {};
   for (const rol of user.roles) {
@@ -308,11 +375,9 @@ export default function Carpeta() {
                 {user.level ?? 0}
               </span>
 
-              {/* Opcional: Una pequeña barra de progreso discreta usando tus puntos de XP */}
               {user.xp !== undefined && (
                 <div className="w-full mt-1 space-y-1">
                   <div className="w-full h-1 bg-[var(--border)] rounded-full overflow-hidden">
-                    {/* Aquí puedes meter tu lógica matemática de nivel, por ahora calcula sobre un estándar de 1000xp por nivel */}
                     <div
                       className="h-full bg-[var(--primary)] transition-all duration-500"
                       style={{ width: `${Math.min(((user.xp ?? 0) % 1000) / 10, 100)}%` }}
@@ -326,8 +391,126 @@ export default function Carpeta() {
             </div>
           </motion.div>
 
+          {/* 🆕 MÓDULO: Finanzas y Puntos Base (PB) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+          >
+            {/* Laboral Panian Bank */}
+            <div className="p-5 rounded-2xl border border-border bg-card flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <img
+                  src="/LaboralBank/LPB.png"
+                  alt="Laboral Panian Bank"
+                  className="w-10 h-10 object-contain"
+                  onError={(e) => {
+                    // Fallback en caso de fallo de carga de la imagen
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-foreground/50">
+                    Laboral Panian Bank
+                  </p>
+                  <p className="text-lg font-bold font-mono text-emerald-400">
+                    {user.economy?.bank ?? 0} <span className="font-sans">Ᵽ</span>
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-[9px] uppercase text-foreground/40 font-mono">Efectivo</p>
+                <p className="text-xs font-mono text-foreground/70">
+                  {user.economy?.cash ?? 0} Ᵽ
+                </p>
+              </div>
+            </div>
+
+            {/* Puntos Base (PB) */}
+            <div className="p-5 rounded-2xl border border-border bg-card flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 font-bold text-lg">
+                PB
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-foreground/50">
+                  Puntos Base Ciudadanía
+                </p>
+                <p className="text-lg font-bold font-mono text-amber-400">
+                  {user.puntos_elo ?? 0} <span className="text-xs font-normal text-foreground/60">PB</span>
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* 🆕 MÓDULO: Información Personal Extra & Pokémon Favorito */}
+          {(user.pokemon_favorito || user.cantante_favorito || user.equipo_futbol || user.animal_favorito) && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-6 rounded-2xl border border-border bg-card space-y-4"
+            >
+              <p className="text-xs uppercase tracking-[0.3em] text-accent font-medium border-b border-border pb-2">
+                Detalles del Ciudadano
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Pokémon Favorito en estilo Home */}
+                {user.pokemon_favorito && (
+                  <PokemonDisplay pokemonName={user.pokemon_favorito} />
+                )}
+
+                {/* Cantante Favorito */}
+                {user.cantante_favorito && (
+                  <div className="flex items-center gap-3 bg-background/40 p-3 rounded-xl border border-border">
+                    {user.cantante_imagen ? (
+                      <img
+                        src={user.cantante_imagen}
+                        alt={user.cantante_favorito}
+                        className="w-12 h-12 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 flex items-center justify-center bg-purple-500/10 text-purple-400 rounded-lg text-xl">
+                        🎤
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-foreground/50">Cantante Favorito</p>
+                      <p className="text-sm font-semibold text-foreground">{user.cantante_favorito}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Equipo de Fútbol */}
+                {user.equipo_futbol && (
+                  <div className="flex items-center gap-3 bg-background/40 p-3 rounded-xl border border-border">
+                    <div className="w-12 h-12 flex items-center justify-center bg-blue-500/10 text-blue-400 rounded-lg text-xl">
+                      ⚽
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-foreground/50">Equipo de Fútbol</p>
+                      <p className="text-sm font-semibold text-foreground">{user.equipo_futbol}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Animal Favorito */}
+                {user.animal_favorito && (
+                  <div className="flex items-center gap-3 bg-background/40 p-3 rounded-xl border border-border">
+                    <div className="w-12 h-12 flex items-center justify-center bg-emerald-500/10 text-emerald-400 rounded-lg text-xl">
+                      🌿
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-foreground/50">Animal Favorito</p>
+                      <p className="text-sm font-semibold text-foreground">{user.animal_favorito}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
           {/* MÓDULO: Relaciones Familiares (Matrimonio e Hijos) */}
-          {(user.matrimonio || user.hijos?.length > 0) && (
+          {(user.matrimonio || (user.hijos && user.hijos.length > 0)) && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -394,7 +577,7 @@ export default function Carpeta() {
               <div className="px-6 py-4 border-b border-border">
                 <p className="text-xs uppercase tracking-[0.3em] text-accent font-medium">Mi profesión</p>
               </div>
-              <div className="px-6 py-5 text-center py-6">
+              <div className="px-6 py-5 text-center">
                 <p className="text-foreground/40 text-sm">Aún no tienes una profesión asignada.</p>
               </div>
             </div>
