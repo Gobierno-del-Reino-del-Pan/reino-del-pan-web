@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { motion } from "framer-motion";
+import { supabase } from "../lib/supabaseClient"; // 👈 Importa tu cliente de Supabase
 
 interface DPIData {
   dpi_number: string;
@@ -39,12 +40,22 @@ interface Hijo {
   tipo: "adoptivo" | "creado";
 }
 
-// ── ECONOMÍA Y DATOS ADICIONALES DE USUARIO ──
+// ── ECONOMÍA Y DATOS DE SUPABASE ──
 interface EconomyData {
   cash: number;
   bank: number;
-  total_earned?: number;
-  total_spent?: number;
+}
+
+interface UsuarioData {
+  puntos_elo?: string | number | null; // Puntos Base (PB)
+  pokemon_favorito?: string | null;
+  cantante_favorito?: string | null;
+  cantante_imagen?: string | null;
+  animal_favorito?: string | null;
+  equipo_futbol?: string | null;
+  insta?: string | null;
+  tiktok?: string | null;
+  x_twitter?: string | null;
 }
 
 interface DiscordUser {
@@ -62,17 +73,14 @@ interface DiscordUser {
   total_xp?: number;
   messages?: number;
 
-  // 🆕 Nuevos campos integrados
+  // Campos cargados desde Supabase
   economy?: EconomyData | null;
-  puntos_elo?: string | number | null; // Puntos Base (PB)
+  puntos_elo?: string | number | null;
   pokemon_favorito?: string | null;
   cantante_favorito?: string | null;
   cantante_imagen?: string | null;
   animal_favorito?: string | null;
   equipo_futbol?: string | null;
-  insta?: string | null;
-  tiktok?: string | null;
-  x_twitter?: string | null;
 }
 
 // ── COMPONENTE PARA EL POKÉMON FAVORITO (Estilo Pokémon Home vía PokéAPI) ──
@@ -91,9 +99,10 @@ function PokemonDisplay({ pokemonName }: { pokemonName: string }) {
       })
       .then((data) => {
         // Sprite estilo Pokémon Home
-        const homeSprite = data?.sprites?.other?.home?.front_default
-          || data?.sprites?.other?.["official-artwork"]?.front_default
-          || data?.sprites?.front_default;
+        const homeSprite =
+          data?.sprites?.other?.home?.front_default ||
+          data?.sprites?.other?.["official-artwork"]?.front_default ||
+          data?.sprites?.front_default;
         setSpriteUrl(homeSprite);
       })
       .catch(() => {
@@ -200,24 +209,58 @@ export default function Carpeta() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/me")
-      .then((r) => {
-        if (r.status === 401) {
+    async function loadUserData() {
+      try {
+        const res = await fetch("/api/me");
+        if (res.status === 401) {
           window.location.href = "/auth/discord";
-          return null;
+          return;
         }
-        return r.json();
-      })
-      .then((d) => {
-        if (!d) return;
-        if (!d.user) {
+        const d = await res.json();
+        if (!d || !d.user) {
           navigate("/");
           return;
         }
-        setUser(d.user);
-      })
-      .catch(() => navigate("/"))
-      .finally(() => setLoading(false));
+
+        const baseUser: DiscordUser = d.user;
+
+        // ⚡ CONSULTA A SUPABASE PARA DATOS DE ECONOMÍA Y USUARIOS
+        const discordId = baseUser.id;
+
+        // 1. Obtener banco y efectivo de public.users_economy
+        const { data: economyData } = await supabase
+          .from("users_economy")
+          .select("cash, bank")
+          .eq("id", discordId)
+          .maybeSingle();
+
+        // 2. Obtener puntos_elo, pokémon favorito, etc. de public.usuarios
+        const { data: usuarioData } = await supabase
+          .from("usuarios")
+          .select("puntos_elo, pokemon_favorito, cantante_favorito, cantante_imagen, animal_favorito, equipo_futbol")
+          .eq("discord_id", discordId)
+          .maybeSingle();
+
+        // Asignar los datos recopilados de Supabase al usuario
+        setUser({
+          ...baseUser,
+          economy: economyData ? { cash: Number(economyData.cash) || 0, bank: Number(economyData.bank) || 0 } : null,
+          puntos_elo: usuarioData?.puntos_elo ?? 0,
+          pokemon_favorito: usuarioData?.pokemon_favorito ?? null,
+          cantante_favorito: usuarioData?.cantante_favorito ?? null,
+          cantante_imagen: usuarioData?.cantante_imagen ?? null,
+          animal_favorito: usuarioData?.animal_favorito ?? null,
+          equipo_futbol: usuarioData?.equipo_futbol ?? null,
+        });
+      } catch (err) {
+        console.error("Error al cargar datos:", err);
+        navigate("/");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadUserData();
   }, [navigate]);
 
   const handleLogout = () => {
@@ -391,7 +434,7 @@ export default function Carpeta() {
             </div>
           </motion.div>
 
-          {/* 🆕 MÓDULO: Finanzas y Puntos Base (PB) */}
+          {/* MÓDULO: Finanzas y Puntos Base (PB) */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -405,8 +448,7 @@ export default function Carpeta() {
                   alt="Laboral Panian Bank"
                   className="w-10 h-10 object-contain"
                   onError={(e) => {
-                    // Fallback en caso de fallo de carga de la imagen
-                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.style.display = "none";
                   }}
                 />
                 <div>
@@ -442,7 +484,7 @@ export default function Carpeta() {
             </div>
           </motion.div>
 
-          {/* 🆕 MÓDULO: Información Personal Extra & Pokémon Favorito */}
+          {/* MÓDULO: Información Personal Extra & Pokémon Favorito */}
           {(user.pokemon_favorito || user.cantante_favorito || user.equipo_futbol || user.animal_favorito) && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
