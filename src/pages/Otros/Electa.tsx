@@ -73,6 +73,9 @@ export default function Electa() {
     const [user, setUser] = useState<DiscordUser | null>(null);
     const [loading, setLoading] = useState(true);
 
+    // Estado para la alerta modal tipo macOS / iOS
+    const [showMaintenanceModal, setShowMaintenanceModal] = useState(true);
+
     // Estados del módulo Electoral
     const [procesos, setProcesos] = useState<ProcesoElectoral[]>([]);
     const [procesoSeleccionado, setProcesoSeleccionado] = useState<ProcesoElectoral | null>(null);
@@ -323,8 +326,57 @@ export default function Electa() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col bg-background text-foreground">
+        <div className="min-h-screen flex flex-col bg-background text-foreground relative">
             <Header />
+
+            {/* 🍎 MODAL ADVERTENCIA TIPO MAC / IPHONE */}
+            <AnimatePresence>
+                {showMaintenanceModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 10 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                            transition={{ type: "spring", duration: 0.4, bounce: 0.15 }}
+                            className="w-full max-w-[320px] rounded-[22px] bg-[rgba(250,250,250,0.85)] dark:bg-[rgba(30,30,30,0.85)] backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-2xl text-center overflow-hidden font-[-apple-system,BlinkMacSystemFont,'Segoe_UI',Roboto,sans-serif]"
+                        >
+                            <div className="p-6 space-y-3">
+                                {/* Icono de Alerta / Mantenimiento macOS */}
+                                <div className="w-12 h-12 mx-auto flex items-center justify-center rounded-full bg-amber-500/10 text-amber-500 text-2xl">
+                                    ⚠️
+                                </div>
+                                <h3 className="text-[17px] font-semibold tracking-tight text-slate-900 dark:text-white leading-snug">
+                                    Aviso del Sistema
+                                </h3>
+                                <p className="text-[13px] text-slate-600 dark:text-neutral-300 leading-relaxed font-normal">
+                                    El sistema electa está en mantenimiento y solo puede ver el frontend. Tiene dos opciones: Ver electa o Volver a su perfil (/carpeta).
+                                </p>
+                            </div>
+
+                            {/* Botones estilo iOS / macOS Alert */}
+                            <div className="border-t border-slate-300/60 dark:border-neutral-700/60 flex flex-col">
+                                <button
+                                    onClick={() => setShowMaintenanceModal(false)}
+                                    className="w-full py-3 text-[15px] font-medium text-blue-600 dark:text-blue-400 active:bg-slate-200/50 dark:active:bg-neutral-700/50 transition-colors border-b border-slate-300/60 dark:border-neutral-700/60"
+                                >
+                                    Ver electa
+                                </button>
+                                <button
+                                    onClick={() => navigate("/carpeta")}
+                                    className="w-full py-3 text-[15px] font-semibold text-blue-600 dark:text-blue-400 active:bg-slate-200/50 dark:active:bg-neutral-700/50 transition-colors"
+                                >
+                                    Volver a su perfil (/carpeta)
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <main className="flex-1 py-12 px-4 md:px-0">
                 <div className="container mx-auto max-w-4xl space-y-8">
