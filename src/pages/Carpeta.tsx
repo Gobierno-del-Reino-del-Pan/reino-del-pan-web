@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { motion } from "framer-motion";
-import { supabase } from "../lib/supabaseClient"; // 👈 Importa tu cliente de Supabase
+import { supabase } from "../lib/supabaseClient";
 
 interface DPIData {
   dpi_number: string;
@@ -40,22 +40,9 @@ interface Hijo {
   tipo: "adoptivo" | "creado";
 }
 
-// ── ECONOMÍA Y DATOS DE SUPABASE ──
 interface EconomyData {
   cash: number;
   bank: number;
-}
-
-interface UsuarioData {
-  puntos_elo?: string | number | null; // Puntos Base (PB)
-  pokemon_favorito?: string | null;
-  cantante_favorito?: string | null;
-  cantante_imagen?: string | null;
-  animal_favorito?: string | null;
-  equipo_futbol?: string | null;
-  insta?: string | null;
-  tiktok?: string | null;
-  x_twitter?: string | null;
 }
 
 interface DiscordUser {
@@ -73,18 +60,21 @@ interface DiscordUser {
   total_xp?: number;
   messages?: number;
 
-  // Campos cargados desde Supabase
   economy?: EconomyData | null;
   puntos_elo?: string | number | null;
   pokemon_favorito?: string | null;
-  cantante_favorito?: string | null;
-  cantante_imagen?: string | null;
-  animal_favorito?: string | null;
-  equipo_futbol?: string | null;
 }
 
-// ── COMPONENTE PARA EL POKÉMON FAVORITO (Estilo Pokémon Home vía PokéAPI) ──
-function PokemonDisplay({ pokemonName }: { pokemonName: string }) {
+// ── HELPER PARA PARSEAR PUNTOS BASE (PB) ──
+function parsePuntosElo(rawVal: string | number | null | undefined): string {
+  if (rawVal === null || rawVal === undefined) return "0";
+  const strVal = String(rawVal);
+  // Si contiene comas (ej. "1000,1000,1,216,0,0"), toma solo el primer valor
+  return strVal.split(",")[0].trim() || "0";
+}
+
+// ── COMPONENTE PARA EL POKÉMON FAVORITO ──
+function PokemonAvatar({ pokemonName }: { pokemonName: string }) {
   const [spriteUrl, setSpriteUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -98,37 +88,37 @@ function PokemonDisplay({ pokemonName }: { pokemonName: string }) {
         return res.json();
       })
       .then((data) => {
-        // Sprite estilo Pokémon Home
         const homeSprite =
           data?.sprites?.other?.home?.front_default ||
           data?.sprites?.other?.["official-artwork"]?.front_default ||
           data?.sprites?.front_default;
         setSpriteUrl(homeSprite);
       })
-      .catch(() => {
-        setSpriteUrl(null);
-      })
+      .catch(() => setSpriteUrl(null))
       .finally(() => setLoading(false));
   }, [pokemonName]);
 
   return (
-    <div className="flex items-center gap-3 bg-background/40 p-3 rounded-xl border border-border">
-      <div className="w-12 h-12 flex items-center justify-center bg-accent/10 rounded-lg overflow-hidden">
+    <div
+      className="flex items-center gap-2 bg-[var(--accent)]/5 border border-[var(--border)] rounded-xl px-3 py-2"
+      title={`Pokémon favorito: ${pokemonName}`}
+    >
+      <div className="w-10 h-10 flex items-center justify-center bg-accent/10 rounded-lg overflow-hidden">
         {loading ? (
           <div className="w-4 h-4 border-2 border-accent/40 border-t-accent rounded-full animate-spin" />
         ) : spriteUrl ? (
           <img
             src={spriteUrl}
             alt={pokemonName}
-            className="w-12 h-12 object-contain drop-shadow-md transition-transform hover:scale-110"
+            className="w-10 h-10 object-contain drop-shadow-md transition-transform hover:scale-110"
           />
         ) : (
-          <span className="text-xl">🐾</span>
+          <span className="text-lg">🐾</span>
         )}
       </div>
-      <div>
-        <p className="text-[10px] uppercase tracking-wider text-foreground/50">Pokémon Favorito</p>
-        <p className="text-sm font-semibold capitalize text-foreground">{pokemonName}</p>
+      <div className="hidden sm:block text-left">
+        <p className="text-[9px] uppercase tracking-wider text-foreground/50">Pokémon</p>
+        <p className="text-xs font-semibold capitalize text-foreground">{pokemonName}</p>
       </div>
     </div>
   );
@@ -223,34 +213,25 @@ export default function Carpeta() {
         }
 
         const baseUser: DiscordUser = d.user;
-
-        // ⚡ CONSULTA A SUPABASE PARA DATOS DE ECONOMÍA Y USUARIOS
         const discordId = baseUser.id;
 
-        // 1. Obtener banco y efectivo de public.users_economy
         const { data: economyData } = await supabase
           .from("users_economy")
           .select("cash, bank")
           .eq("id", discordId)
           .maybeSingle();
 
-        // 2. Obtener puntos_elo, pokémon favorito, etc. de public.usuarios
         const { data: usuarioData } = await supabase
           .from("usuarios")
-          .select("puntos_elo, pokemon_favorito, cantante_favorito, cantante_imagen, animal_favorito, equipo_futbol")
+          .select("puntos_elo, pokemon_favorito")
           .eq("discord_id", discordId)
           .maybeSingle();
 
-        // Asignar los datos recopilados de Supabase al usuario
         setUser({
           ...baseUser,
           economy: economyData ? { cash: Number(economyData.cash) || 0, bank: Number(economyData.bank) || 0 } : null,
           puntos_elo: usuarioData?.puntos_elo ?? 0,
           pokemon_favorito: usuarioData?.pokemon_favorito ?? null,
-          cantante_favorito: usuarioData?.cantante_favorito ?? null,
-          cantante_imagen: usuarioData?.cantante_imagen ?? null,
-          animal_favorito: usuarioData?.animal_favorito ?? null,
-          equipo_futbol: usuarioData?.equipo_futbol ?? null,
         });
       } catch (err) {
         console.error("Error al cargar datos:", err);
@@ -409,28 +390,34 @@ export default function Carpeta() {
               </div>
             </div>
 
-            {/* LADO DERECHO: Nivel del Ciudadano */}
-            <div className="flex flex-col items-center justify-center bg-[var(--accent)]/5 border border-[var(--border)] rounded-xl px-5 py-3.5 min-w-[120px] text-center sm:text-right sm:items-end gap-1">
-              <span className="text-[10px] uppercase tracking-[0.25em] text-[var(--muted-foreground)] font-medium font-[var(--body-font)]">
-                Nivel
-              </span>
-              <span className="text-4xl font-normal text-[var(--primary)] leading-none font-[var(--display-font)]">
-                {user.level ?? 0}
-              </span>
-
-              {user.xp !== undefined && (
-                <div className="w-full mt-1 space-y-1">
-                  <div className="w-full h-1 bg-[var(--border)] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[var(--primary)] transition-all duration-500"
-                      style={{ width: `${Math.min(((user.xp ?? 0) % 1000) / 10, 100)}%` }}
-                    />
-                  </div>
-                  <p className="text-[8px] font-mono tracking-widest text-[var(--muted-foreground)] opacity-70">
-                    {user.xp} XP
-                  </p>
-                </div>
+            {/* LADO DERECHO: Pokémon Favorito + Nivel del Ciudadano */}
+            <div className="flex items-center gap-3">
+              {user.pokemon_favorito && (
+                <PokemonAvatar pokemonName={user.pokemon_favorito} />
               )}
+
+              <div className="flex flex-col items-center justify-center bg-[var(--accent)]/5 border border-[var(--border)] rounded-xl px-5 py-3.5 min-w-[120px] text-center sm:text-right sm:items-end gap-1">
+                <span className="text-[10px] uppercase tracking-[0.25em] text-[var(--muted-foreground)] font-medium font-[var(--body-font)]">
+                  Nivel
+                </span>
+                <span className="text-4xl font-normal text-[var(--primary)] leading-none font-[var(--display-font)]">
+                  {user.level ?? 0}
+                </span>
+
+                {user.xp !== undefined && (
+                  <div className="w-full mt-1 space-y-1">
+                    <div className="w-full h-1 bg-[var(--border)] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[var(--primary)] transition-all duration-500"
+                        style={{ width: `${Math.min(((user.xp ?? 0) % 1000) / 10, 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-[8px] font-mono tracking-widest text-[var(--muted-foreground)] opacity-70">
+                      {user.xp} XP
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </motion.div>
 
@@ -478,78 +465,11 @@ export default function Carpeta() {
                   Puntos Base Ciudadanía
                 </p>
                 <p className="text-lg font-bold font-mono text-amber-400">
-                  {user.puntos_elo ?? 0} <span className="text-xs font-normal text-foreground/60">PB</span>
+                  {parsePuntosElo(user.puntos_elo)} <span className="text-xs font-normal text-foreground/60">PB</span>
                 </p>
               </div>
             </div>
           </motion.div>
-
-          {/* MÓDULO: Información Personal Extra & Pokémon Favorito */}
-          {(user.pokemon_favorito || user.cantante_favorito || user.equipo_futbol || user.animal_favorito) && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-6 rounded-2xl border border-border bg-card space-y-4"
-            >
-              <p className="text-xs uppercase tracking-[0.3em] text-accent font-medium border-b border-border pb-2">
-                Detalles del Ciudadano
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Pokémon Favorito en estilo Home */}
-                {user.pokemon_favorito && (
-                  <PokemonDisplay pokemonName={user.pokemon_favorito} />
-                )}
-
-                {/* Cantante Favorito */}
-                {user.cantante_favorito && (
-                  <div className="flex items-center gap-3 bg-background/40 p-3 rounded-xl border border-border">
-                    {user.cantante_imagen ? (
-                      <img
-                        src={user.cantante_imagen}
-                        alt={user.cantante_favorito}
-                        className="w-12 h-12 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 flex items-center justify-center bg-purple-500/10 text-purple-400 rounded-lg text-xl">
-                        🎤
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider text-foreground/50">Cantante Favorito</p>
-                      <p className="text-sm font-semibold text-foreground">{user.cantante_favorito}</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Equipo de Fútbol */}
-                {user.equipo_futbol && (
-                  <div className="flex items-center gap-3 bg-background/40 p-3 rounded-xl border border-border">
-                    <div className="w-12 h-12 flex items-center justify-center bg-blue-500/10 text-blue-400 rounded-lg text-xl">
-                      ⚽
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider text-foreground/50">Equipo de Fútbol</p>
-                      <p className="text-sm font-semibold text-foreground">{user.equipo_futbol}</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Animal Favorito */}
-                {user.animal_favorito && (
-                  <div className="flex items-center gap-3 bg-background/40 p-3 rounded-xl border border-border">
-                    <div className="w-12 h-12 flex items-center justify-center bg-emerald-500/10 text-emerald-400 rounded-lg text-xl">
-                      🌿
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider text-foreground/50">Animal Favorito</p>
-                      <p className="text-sm font-semibold text-foreground">{user.animal_favorito}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
 
           {/* MÓDULO: Relaciones Familiares (Matrimonio e Hijos) */}
           {(user.matrimonio || (user.hijos && user.hijos.length > 0)) && (
