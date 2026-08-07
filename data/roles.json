@@ -285,7 +285,7 @@
     "servicios": [
       {
         "id": "rol_abono_transporte",
-        "nombre": "Tarjeta de Transporte del Consorcio de Transportes de Pan",
+        "nombre": "Tarjeta de Transporte del Consorcio",
         "imagen": "/roles/consorcio.png",
         "discord_role_id": "1515829072209510603"
       }
