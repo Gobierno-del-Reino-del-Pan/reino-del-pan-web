@@ -33,6 +33,7 @@ import PanedaContest from "./pages/concursos/PanedaContest.tsx";
 import PKMNCContest from "./pages/concursos/PKMNContest.tsx";
 import tvpContest from "./pages/concursos/tvpContest.tsx";
 import Elecciones from "./pages/Otros/Electa.tsx";
+import Alertas from "./pages/Alerta.tsx"
 
 
 
@@ -65,7 +66,7 @@ function App() {
         <Route path="/policia" component={Policía} />
         <Route path="/turismo" component={Turismo} />
         <Route path="/patrimonio-panacional" component={Patrimonio} />
-
+        <Route path="alertas" component={Alertas} />
         <Route path="/elecciones" component={Elecciones} />
         <Route path="/tvp" component={TVP} />
         <Route path="/tvp/paneldecontrol" component={PanelDeControl} />

@@ -81,7 +81,7 @@ const STATS_ITEMS = [
   { stat: "Más de 1 Año", title: "Desde su fundación", desc: "Iniciado como una visión el 23 de julio de 2025, ahora es un estado consolidado." },
   { stat: "500+", title: "Solicitudes de DPI", desc: "Ciudadanos digitales registrados y activos en nuestra plataforma global." },
   { stat: "100%", title: "Por la Libertad", desc: "Compromiso total con la libertad y la resiliencia de nuestro pueblo." },
-  { stat: "Proximamente", title: "Comunicado del Director de Reformas", desc: "Lanzará una comunicación institucional a través del BORP." }
+  { stat: "⚠️", title: "Última Hora", desc: "Las fronteras estarán cerradas hasta nuevo aviso." }
 ];
 
 const LOCAL_NEWS_FALLBACK = {
