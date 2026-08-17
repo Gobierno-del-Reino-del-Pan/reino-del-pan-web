@@ -1,9 +1,41 @@
 import json
+import logging
+import re
 from pathlib import Path
 from typing import Any
 
 import discord
 from discord import app_commands
+
+
+logger = logging.getLogger(__name__)
+CUSTOM_EMOJI_RE = re.compile(r"^<a?:([A-Za-z0-9_]+):(\d+)>$")
+
+
+def _parse_select_emoji(raw_emoji: str | None):
+    """Convierte emojis Unicode, formato Discord o IDs en un valor válido."""
+    if not raw_emoji:
+        return None
+
+    value = raw_emoji.strip()
+    match = CUSTOM_EMOJI_RE.fullmatch(value)
+    if match:
+        animated = value.startswith("<a:")
+        return discord.PartialEmoji(
+            name=match.group(1),
+            id=int(match.group(2)),
+            animated=animated,
+        )
+
+    # Permite usar temporalmente solo el ID en roles.json. El nombre real es
+    # preferible, pero este valor evita que todo el menú falle por una entrada.
+    if value.isdigit():
+        return discord.PartialEmoji(name="emoji", id=int(value))
+
+    # Emojis Unicode como 🩺, 🪖 o 📚 se pasan directamente.
+    if value.startswith("<"):
+        raise ValueError(f"Formato de emoji personalizado no válido: {value}")
+    return value
 from discord.ext import commands
 
 
@@ -42,15 +74,26 @@ JOB_BY_ID = {job["id"]: job for job in JOBS}
 
 class EmpleoSelect(discord.ui.Select):
     def __init__(self):
-        options = [
-            discord.SelectOption(
-                label=job["name"][:100],
-                value=job["id"],
-                description=job["description"][:100] or "Solicitar este empleo",
-                emoji=job["emoji"] if job["emoji"] else None,
+        options = []
+        for job in JOBS[:25]:
+            try:
+                emoji = _parse_select_emoji(job.get("emoji"))
+            except ValueError:
+                logger.warning(
+                    "Emoji inválido para el empleo %s; se usará 💼",
+                    job.get("id"),
+                    exc_info=True,
+                )
+                emoji = "💼"
+
+            options.append(
+                discord.SelectOption(
+                    label=job["name"][:100],
+                    value=job["id"],
+                    description=job["description"][:100] or "Solicitar este empleo",
+                    emoji=emoji,
+                )
             )
-            for job in JOBS[:25]
-        ]
         super().__init__(
             custom_id="empleos:seleccion",
             placeholder="Selecciona tu empleo...",
@@ -205,7 +248,14 @@ class EmpleosCog(commands.Cog):
         if isinstance(error, app_commands.MissingRole):
             message = "🚫 Solo la administración puede publicar el menú de empleos."
         else:
-            message = "⚠️ No se pudo publicar el menú de empleos."
+            logger.error(
+                "Error publicando el menú de empleos",
+                exc_info=(type(error), error, error.__traceback__),
+            )
+            message = (
+                "⚠️ No se pudo publicar el menú de empleos. "
+                f"Causa: `{type(error).__name__}`. Revisa la consola del bot para más detalles."
+            )
         if interaction.response.is_done():
             await interaction.followup.send(message, ephemeral=True)
         else:
