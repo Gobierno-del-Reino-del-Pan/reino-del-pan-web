@@ -1,813 +1,158 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ArrowRight, ChevronDown, ChevronUp, ExternalLink, Menu, RefreshCw, Search, Shield, Trophy, X } from "lucide-react";
 
-/**
- * RUTA OBLIGATORIA MANDADA POR EL USUARIO
- */
-const PAN_CREST_PATH = "public/Otros/EscudoSelección.png";
+type Confederation = "UEFA" | "CONMEBOL" | "INTER";
+type MatchStatus = "finished" | "live" | "scheduled";
 
-// Token de football-data.org.
-const API_TOKEN = "9426f43277cb4a23b10c660dd7e9bf9b";
-
-// Competiciones internacionales activas para traer partidos reales y recientes
-const COMPETICIONES_SELECCIONES = ["WC", "EC"];
-
-const PAISES_UEFA = ["spain", "france", "germany", "england", "italy", "portugal", "netherlands", "belgium", "croatia", "switzerland", "poland", "denmark", "serbia", "scotland", "austria", "wales", "ukraine", "turkey", "norway", "sweden"];
-const PAISES_CONMEBOL = ["argentina", "brazil", "uruguay", "colombia", "ecuador", "chile", "paraguay", "peru", "venezuela", "bolivia"];
-
-interface APIEquipo {
-    name: string;
-    crest: string;
-}
-
-interface APIPartidoReal {
-    id: number;
-    homeTeam: APIEquipo;
-    awayTeam: APIEquipo;
-    score: { fullTime: { home: number | null; away: number | null } };
-    utcDate: string;
-    status: string;
-    competition: { name: string; code: string };
-}
-
-interface PartidoProcesado {
+interface Match {
     id: string | number;
-    local: string;
-    visitante: string;
-    golesL: number | null;
-    golesV: number | null;
-    fecha: string;
-    conf: "UEFA" | "CONMEBOL" | "INTER";
-    logoL: string | null;
-    logoV: string | null;
-    ficticio: boolean;
+    home: string;
+    away: string;
+    homeGoals: number | null;
+    awayGoals: number | null;
+    date: string;
+    competition: string;
+    confederation: Confederation;
+    homeCrest?: string | null;
+    awayCrest?: string | null;
+    status: MatchStatus;
+    local?: boolean;
 }
 
-function inferConfederacion(nombrePais: string): "UEFA" | "CONMEBOL" | "INTER" {
-    const n = nombrePais.toLowerCase();
-    if (PAISES_UEFA.some((p) => n.includes(p))) return "UEFA";
-    if (PAISES_CONMEBOL.some((p) => n.includes(p))) return "CONMEBOL";
-    return "INTER";
+const CREST = "/Otros/EscudoSelección.png";
+const PORTUGAL_CREST = "https://crests.football-data.org/765.svg";
+const FALLBACK_MATCHES: Match[] = [
+    { id: "pan-match", home: "Reino del Pan", away: "Portugal", homeGoals: 3, awayGoals: 2, date: "2026-06-20T19:45:00.000Z", competition: "Amistoso internacional", confederation: "INTER", homeCrest: CREST, awayCrest: PORTUGAL_CREST, status: "finished", local: true },
+    { id: "pan-arg-2026", home: "Reino del Pan", away: "Argentina", homeGoals: null, awayGoals: null, date: "2026-09-12T20:00:00.000Z", competition: "Ventana internacional", confederation: "CONMEBOL", homeCrest: CREST, status: "scheduled", local: true },
+    { id: "pan-esp-2026", home: "España", away: "Reino del Pan", homeGoals: null, awayGoals: null, date: "2026-10-08T18:30:00.000Z", competition: "Ventana internacional", confederation: "UEFA", awayCrest: CREST, status: "scheduled", local: true },
+];
+
+const confederations: Array<{ id: "TODOS" | Confederation; label: string }> = [
+    { id: "TODOS", label: "Todos" },
+    { id: "UEFA", label: "UEFA" },
+    { id: "CONMEBOL", label: "CONMEBOL" },
+    { id: "INTER", label: "Intercontinental" },
+];
+
+function initials(name: string) {
+    return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
 }
 
-function formatearFecha(iso: string): string {
-    return new Date(iso).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" });
+function formatDate(value: string) {
+    if (/^\d{1,2}\s/.test(value)) return value;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function Crest({ src, team }: { src?: string | null; team: string }) {
+    const [broken, setBroken] = useState(!src);
+    return broken ? <span className="team-crest team-crest-fallback" aria-hidden="true">{initials(team)}</span> : <img className="team-crest" src={src!} alt={`Escudo de ${team}`} onError={() => setBroken(true)} />;
+}
+
+function ScoreControl({ value, onChange, label }: { value: number; onChange: (value: number) => void; label: string }) {
+    return <div className="score-control" aria-label={label}>
+        <button type="button" className="score-button" aria-label={`Reducir ${label}`} onClick={() => onChange(Math.max(0, value - 1))}>−</button>
+        <strong aria-live="polite">{value}</strong>
+        <button type="button" className="score-button" aria-label={`Aumentar ${label}`} onClick={() => onChange(Math.min(99, value + 1))}>+</button>
+    </div>;
+}
+
+function MatchCard({ match, onHomeScore, onAwayScore }: { match: Match; onHomeScore?: (value: number) => void; onAwayScore?: (value: number) => void }) {
+    const editable = match.id === "pan-match" && onHomeScore && onAwayScore;
+    const result = match.homeGoals !== null && match.awayGoals !== null ? match.homeGoals === match.awayGoals ? "Empate" : match.homeGoals > match.awayGoals ? "Victoria local" : "Victoria visitante" : "Pendiente";
+    return <article className={`match-card ${match.local ? "match-card-featured" : ""}`}>
+        <div className="match-card-top"><span className={`status-chip status-${match.status}`}>{match.status === "finished" ? "Finalizado" : match.status === "live" ? "En directo" : "Próximo"}</span><span>{match.competition}</span></div>
+        <div className="teams">
+            <div className="team"><Crest src={match.homeCrest} team={match.home} /><span title={match.home}>{match.home}</span></div>
+            {editable ? <ScoreControl value={match.homeGoals ?? 0} onChange={onHomeScore} label="goles del Reino del Pan" /> : <strong className="match-score">{match.homeGoals ?? "—"}</strong>}
+        </div>
+        <div className="teams">
+            <div className="team"><Crest src={match.awayCrest} team={match.away} /><span title={match.away}>{match.away}</span></div>
+            {editable ? <ScoreControl value={match.awayGoals ?? 0} onChange={onAwayScore} label="goles del rival" /> : <strong className="match-score">{match.awayGoals ?? "—"}</strong>}
+        </div>
+        <div className="match-card-bottom"><span>{formatDate(match.date)}</span><span className="conf-badge">{match.confederation}</span></div>
+        <span className="sr-only">Resultado: {result}</span>
+    </article>;
 }
 
 export default function SeleccionPanienseWeb() {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [selectedConfederation, setSelectedConfederation] = useState("TODOS");
-    const [searchQuery, setSearchQuery] = useState("");
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [selectedConfederation, setSelectedConfederation] = useState<"TODOS" | Confederation>("TODOS");
+    const [query, setQuery] = useState("");
+    const [matches, setMatches] = useState<Match[]>(FALLBACK_MATCHES);
+    const [loading, setLoading] = useState(true);
+    const [usingFallback, setUsingFallback] = useState(false);
+    const [apiError, setApiError] = useState<string | null>(null);
+    const [panGoals, setPanGoals] = useState(3);
+    const [rivalGoals, setRivalGoals] = useState(2);
 
-    const [partidosAPI, setPartidosAPI] = useState<PartidoProcesado[]>([]);
-    const [cargando, setCargando] = useState(true);
-    const [errorAPI, setErrorAPI] = useState<string | null>(null);
-
-    // Marcador editable del amistoso de la Selección Paniense
-    const [golesPan, setGolesPan] = useState(3);
-    const [golesRival, setGolesRival] = useState(2);
-
-    const obtenerPartidosRecientes = useCallback(async () => {
-        setCargando(true);
-        setErrorAPI(null);
+    useEffect(() => {
         try {
-            const respuestas = await Promise.all(
-                COMPETICIONES_SELECCIONES.map((codigo) => {
-                    const urlOriginal = `https://api.football-data.org/v4/competitions/${codigo}/matches?status=FINISHED`;
-                    const urlConProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(urlOriginal)}`;
-
-                    return fetch(urlConProxy)
-                        .then((res) => {
-                            if (res.ok) return res.json();
-                            throw new Error(`${codigo}: HTTP ${res.status}`);
-                        })
-                        .then((wrapper) => {
-                            const datosReales = JSON.parse(wrapper.contents);
-                            return datosReales;
-                        });
-                })
-            );
-
-            const todos: APIPartidoReal[] = respuestas.flatMap((d) => (Array.isArray(d?.matches) ? d.matches : []));
-
-            if (todos.length === 0) {
-                throw new Error("La API no devolvió partidos activos actuales.");
-            }
-
-            const vistos = new Set<number>();
-            const procesados: PartidoProcesado[] = todos
-                .filter((m) => {
-                    if (vistos.has(m.id)) return false;
-                    vistos.add(m.id);
-                    return true;
-                })
-                .sort((a, b) => new Date(b.utcDate).getTime() - new Date(a.utcDate).getTime())
-                .slice(0, 15)
-                .map((m) => ({
-                    id: m.id,
-                    local: m.homeTeam?.name ?? "Equipo local",
-                    visitante: m.awayTeam?.name ?? "Equipo visitante",
-                    golesL: m.score?.fullTime?.home ?? 0,
-                    golesV: m.score?.fullTime?.away ?? 0,
-                    fecha: formatearFecha(m.utcDate),
-                    conf: inferConfederacion(`${m.homeTeam?.name ?? ""} ${m.awayTeam?.name ?? ""}`),
-                    logoL: m.homeTeam?.crest || null,
-                    logoV: m.awayTeam?.crest || null,
-                    ficticio: false,
-                }));
-
-            setPartidosAPI(procesados);
-        } catch (e) {
-            setPartidosAPI([]);
-            setErrorAPI(e instanceof Error ? e.message : "Error de CORS o conexión con el servidor");
-        } finally {
-            setCargando(false);
-        }
+            const saved = JSON.parse(localStorage.getItem("paniense-score") || "null");
+            if (Number.isInteger(saved?.home) && saved.home >= 0 && saved.home <= 99) setPanGoals(saved.home);
+            if (Number.isInteger(saved?.away) && saved.away >= 0 && saved.away <= 99) setRivalGoals(saved.away);
+        } catch { /* El marcador por defecto sigue siendo válido. */ }
     }, []);
 
     useEffect(() => {
-        obtenerPartidosRecientes();
-    }, [obtenerPartidosRecientes]);
+        localStorage.setItem("paniense-score", JSON.stringify({ home: panGoals, away: rivalGoals }));
+    }, [panGoals, rivalGoals]);
 
-    const resultadosFiltrados = useMemo(() => {
-        const partidoPan: PartidoProcesado = {
-            id: "pan-match",
-            local: "Reino del Pan",
-            visitante: "Portugal",
-            golesL: golesPan,
-            golesV: golesRival,
-            fecha: "Amistoso Real",
-            conf: "INTER",
-            logoL: PAN_CREST_PATH,
-            logoV: "https://crests.football-data.org/765.svg",
-            ficticio: true,
-        };
+    const loadMatches = useCallback(async (signal?: AbortSignal) => {
+        setLoading(true); setApiError(null);
+        try {
+            const response = await fetch("/api/seleccion/partidos", { signal, headers: { Accept: "application/json" } });
+            if (!response.ok) throw new Error(`Servidor respondió ${response.status}`);
+            const data = await response.json();
+            if (!Array.isArray(data.matches) || data.matches.length === 0) throw new Error("No hay partidos disponibles");
+            setMatches(data.matches); setUsingFallback(false);
+        } catch (error) {
+            if ((error as Error).name === "AbortError") return;
+            setMatches(FALLBACK_MATCHES); setUsingFallback(true); setApiError("No se pudo actualizar la agenda en este momento.");
+        } finally { setLoading(false); }
+    }, []);
 
-        return [partidoPan, ...partidosAPI].filter((p) => {
-            const cumpleConf = selectedConfederation === "TODOS" || p.conf === selectedConfederation;
-            const q = searchQuery.toLowerCase();
-            const cumpleBusqueda = p.local.toLowerCase().includes(q) || p.visitante.toLowerCase().includes(q);
-            return cumpleConf && cumpleBusqueda;
+    useEffect(() => { const controller = new AbortController(); void loadMatches(controller.signal); return () => controller.abort(); }, [loadMatches]);
+
+    const filteredMatches = useMemo(() => {
+        const localMatch = { ...FALLBACK_MATCHES[0], homeGoals: panGoals, awayGoals: rivalGoals };
+        const source = [localMatch, ...matches.filter((match) => match.id !== "pan-match")];
+        const normalized = query.trim().toLocaleLowerCase("es");
+        return source.filter((match) => {
+            const matchesConf = selectedConfederation === "TODOS" || match.confederation === selectedConfederation;
+            const matchesQuery = !normalized || `${match.home} ${match.away} ${match.competition}`.toLocaleLowerCase("es").includes(normalized);
+            return matchesConf && matchesQuery;
         });
-    }, [partidosAPI, selectedConfederation, searchQuery, golesPan, golesRival]);
+    }, [matches, panGoals, rivalGoals, query, selectedConfederation]);
 
-    const navLinks = [""];
-
-    const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-        const target = e.target as HTMLImageElement;
-        target.style.display = "none";
-        const fallback = target.nextElementSibling as HTMLDivElement;
-        if (fallback) {
-            fallback.style.display = "flex";
-        }
-    };
-
-    return (
-        <div className="pan-app-container">
-            <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-
-                :root {
-                    --pan-cream: #FBF7F0;
-                    --pan-cream-soft: #F5EEE2;
-                    --pan-ink: #1C1612;
-                    --pan-ink-muted: #665E53;
-                    --pan-wine: #7A0F17;
-                    --pan-wine-dark: #4A050A;
-                    --pan-gold: #C98A2B;
-                    --pan-gold-light: #E9B458;
-                    --pan-line: #E6DBC8;
-                    --pan-radius: 12px;
-                    --pan-shadow: 0 8px 30px rgba(36, 28, 22, 0.05);
-                    --pan-shadow-hover: 0 16px 35px rgba(122, 15, 23, 0.12);
-                }
-
-                * { 
-                    box-sizing: border-box; 
-                    margin: 0; 
-                    padding: 0;
-                }
-
-                body {
-                    background-color: var(--pan-cream);
-                }
-
-                .pan-app-container {
-                    font-family: 'Plus Jakarta Sans', sans-serif;
-                    background-color: var(--pan-cream);
-                    color: var(--pan-ink);
-                    min-height: 100vh;
-                    display: flex;
-                    flex-direction: column;
-                }
-
-                /* BANNER EN CONSTRUCCIÓN */
-                .pan-construction-banner {
-                    background-color: var(--pan-wine);
-                    color: #ffffff;
-                    text-align: center;
-                    padding: 0.6rem 1rem;
-                    font-family: 'Cinzel', serif;
-                    font-size: 0.85rem;
-                    font-weight: 700;
-                    letter-spacing: 0.1em;
-                    border-bottom: 2px solid var(--pan-gold);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 0.5rem;
-                }
-
-                .pan-page { 
-                    display: flex; 
-                    flex-direction: column; 
-                    width: 100%; 
-                    min-height: 100vh; 
-                }
-
-                /* HEADER & RESPONSIVE NAVIGATION */
-                .pan-header {
-                    position: sticky;
-                    top: 0;
-                    z-index: 1000;
-                    background: rgba(251, 247, 240, 0.95);
-                    backdrop-filter: blur(12px);
-                    border-bottom: 2px solid var(--pan-line);
-                    padding: 1.2rem 2rem;
-                }
-                
-                .pan-header-content {
-                    max-width: 1200px;
-                    margin: 0 auto;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-                
-                .pan-brand { 
-                    display: flex; 
-                    align-items: center; 
-                    gap: 1.2rem; 
-                }
-                
-                .pan-logo-main { 
-                    height: 52px; 
-                    width: 52px; 
-                    object-fit: contain; 
-                }
-                
-                .pan-title-container h1 {
-                    font-family: 'Cinzel', serif;
-                    font-size: 1.25rem;
-                    font-weight: 900;
-                    color: var(--pan-wine);
-                    letter-spacing: 0.05em;
-                    text-transform: uppercase;
-                    line-height: 1.4;
-                }
-                
-                .pan-title-container p {
-                    font-family: 'Cinzel', serif;
-                    font-size: 0.7rem;
-                    color: var(--pan-gold);
-                    font-weight: 700;
-                    letter-spacing: 0.25em;
-                    text-transform: uppercase;
-                    margin-top: 5px;
-                    line-height: 1.3;
-                }
-
-                .pan-right-nav {
-                    display: flex;
-                    align-items: center;
-                    gap: 2.5rem;
-                }
-
-                .pan-nav { 
-                    display: flex; 
-                    gap: 2.2rem; 
-                }
-                
-                .pan-nav a {
-                    font-size: 0.88rem;
-                    font-weight: 700;
-                    color: var(--pan-ink);
-                    text-decoration: none;
-                    text-transform: uppercase;
-                    letter-spacing: 0.05em;
-                    transition: color 0.2s ease;
-                }
-                
-                .pan-nav a:hover { 
-                    color: var(--pan-wine); 
-                }
-
-                /* BOTÓN VOLVER WEB PRINCIPAL */
-                .pan-btn-back {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                    padding: 0.6rem 1.2rem;
-                    border: 2px solid var(--pan-wine);
-                    border-radius: 8px;
-                    background: transparent;
-                    color: var(--pan-wine);
-                    font-size: 0.82rem;
-                    font-weight: 700;
-                    text-transform: uppercase;
-                    letter-spacing: 0.05em;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                    text-decoration: none;
-                }
-
-                .pan-btn-back:hover {
-                    background: var(--pan-wine);
-                    color: #ffffff;
-                }
-
-                .pan-menu-toggle {
-                    display: none !important;
-                    align-items: center;
-                    justify-content: center;
-                    width: 42px;
-                    height: 42px;
-                    border-radius: 8px;
-                    border: 2px solid var(--pan-line);
-                    background: transparent;
-                    color: var(--pan-wine);
-                    font-size: 1.3rem;
-                    cursor: pointer;
-                }
-
-                .pan-mobile-nav {
-                    display: none !important;
-                }
-
-                @media (max-width: 980px) {
-                    .pan-nav { 
-                        display: none !important; 
-                    }
-                    .pan-btn-back {
-                        display: none !important;
-                    }
-                    .pan-menu-toggle { 
-                        display: flex !important; 
-                    }
-                    .pan-mobile-nav {
-                        display: flex !important;
-                        flex-direction: column;
-                        gap: 1.4rem;
-                        padding: 1.5rem 0 1rem 0;
-                        border-top: 1px solid var(--pan-line);
-                        margin-top: 1rem;
-                    }
-                    .pan-mobile-nav a { 
-                        color: var(--pan-ink); 
-                        text-decoration: none; 
-                        font-weight: 700; 
-                        font-size: 1rem;
-                        text-transform: uppercase;
-                        padding: 0.2rem 0;
-                    }
-                    .pan-mobile-nav .pan-btn-back-mobile {
-                        display: inline-flex;
-                        justify-content: center;
-                        align-items: center;
-                        margin-top: 0.5rem;
-                        padding: 0.8rem;
-                        border: 2px solid var(--pan-wine);
-                        border-radius: 8px;
-                        color: var(--pan-wine);
-                        text-decoration: none;
-                        font-weight: 700;
-                        text-transform: uppercase;
-                        font-size: 0.9rem;
-                        text-align: center;
-                    }
-                }
-
-                /* HERO SECTION */
-                .pan-hero {
-                    background: linear-gradient(180deg, var(--pan-cream-soft) 0%, var(--pan-cream) 100%);
-                    border-bottom: 1px solid var(--pan-line);
-                    padding: 5rem 2rem;
-                }
-                
-                .pan-hero-grid {
-                    max-width: 1200px;
-                    margin: 0 auto;
-                    display: grid;
-                    grid-template-columns: 1.3fr 1fr;
-                    gap: 4rem;
-                    align-items: center;
-                }
-                
-                @media (max-width: 768px) { 
-                    .pan-hero-grid { 
-                        grid-template-columns: 1fr; 
-                        gap: 3rem; 
-                    } 
-                }
-
-                .pan-eyebrow {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 0.6rem;
-                    font-family: 'Cinzel', serif;
-                    font-size: 0.75rem;
-                    letter-spacing: 0.2em;
-                    text-transform: uppercase;
-                    color: var(--pan-gold);
-                    margin-bottom: 1.8rem;
-                    font-weight: 700;
-                }
-                
-                .pan-eyebrow::before { 
-                    content: ""; 
-                    width: 30px; 
-                    height: 2px; 
-                    background: var(--pan-gold); 
-                }
-
-                .pan-hero-text h2 {
-                    font-family: 'Cinzel', serif;
-                    font-size: clamp(2rem, 4.5vw, 3rem);
-                    color: var(--pan-ink);
-                    line-height: 1.45;
-                    margin-bottom: 1.8rem;
-                    font-weight: 900;
-                }
-                
-                .pan-hero-text h2 em { 
-                    color: var(--pan-wine); 
-                    font-style: normal; 
-                }
-                
-                .pan-hero-text p { 
-                    color: var(--pan-ink-muted); 
-                    font-size: 1.05rem; 
-                    line-height: 1.85;
-                    max-width: 50ch; 
-                }
-
-                .pan-next-match {
-                    background: #ffffff;
-                    border: 2px solid var(--pan-gold);
-                    padding: 2rem;
-                    border-radius: var(--pan-radius);
-                    box-shadow: var(--pan-shadow);
-                    display: flex;
-                    align-items: center;
-                    gap: 1.5rem;
-                    position: relative;
-                }
-                
-                .pan-next-match::after {
-                    content: 'EN VIVO';
-                    position: absolute;
-                    top: -12px;
-                    right: 20px;
-                    background: var(--pan-wine);
-                    color: white;
-                    font-size: 0.65rem;
-                    font-weight: 700;
-                    padding: 0.2rem 0.6rem;
-                    border-radius: 4px;
-                    letter-spacing: 0.1em;
-                }
-
-                .pan-next-match img { 
-                    width: 60px; 
-                    height: 60px; 
-                    object-fit: contain; 
-                }
-                
-                .pan-next-match .pan-tag {
-                    font-size: 0.7rem;
-                    color: var(--pan-gold);
-                    font-weight: 800;
-                    letter-spacing: 0.15em;
-                    text-transform: uppercase;
-                    margin-bottom: 0.5rem;
-                    display: inline-block;
-                    line-height: 1.3;
-                }
-                
-                .pan-next-match h4 { 
-                    font-family: 'Cinzel', serif; 
-                    margin-bottom: 0.5rem; 
-                    font-size: 1.2rem; 
-                    color: var(--pan-ink);
-                    line-height: 1.4;
-                }
-                
-                .pan-next-match p { 
-                    font-size: 0.85rem; 
-                    color: var(--pan-ink-muted); 
-                    line-height: 1.5;
-                }
-
-                /* FILTROS */
-                .pan-filters {
-                    max-width: 1200px;
-                    margin: 4rem auto 0;
-                    padding: 0 2rem;
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 1.5rem;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-                
-                .pan-input-search {
-                    padding: 0.8rem 1.2rem;
-                    border: 2px solid var(--pan-line);
-                    border-radius: 8px;
-                    background: #ffffff;
-                    font-size: 0.9rem;
-                    width: 100%;
-                    max-width: 320px;
-                    font-family: inherit;
-                    color: var(--pan-ink);
-                    font-weight: 500;
-                }
-                
-                .pan-input-search:focus {
-                    outline: none;
-                    border-color: var(--pan-wine);
-                }
-                
-                .pan-pill-group { 
-                    display: flex; 
-                    gap: 0.6rem; 
-                    flex-wrap: wrap; 
-                }
-                
-                .pan-btn-pill {
-                    padding: 0.5rem 1.2rem;
-                    border-radius: 30px;
-                    border: 2px solid var(--pan-line);
-                    background: #ffffff;
-                    font-family: 'Cinzel', serif;
-                    font-size: 0.75rem;
-                    font-weight: 900;
-                    letter-spacing: 0.05em;
-                    color: var(--pan-ink);
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                }
-                
-                .pan-btn-pill:hover { 
-                    border-color: var(--pan-wine); 
-                    color: var(--pan-wine);
-                }
-                
-                .pan-btn-pill.active { 
-                    background: var(--pan-wine); 
-                    color: #ffffff; 
-                    border-color: var(--pan-wine); 
-                }
-
-                /* PARTIDOS Y MARCADORES */
-                .pan-grid-partidos {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-                    gap: 2rem;
-                    max-width: 1200px;
-                    margin: 3rem auto 5rem;
-                    padding: 0 2rem;
-                }
-                
-                .pan-card {
-                    background: #ffffff;
-                    border: 2px solid var(--pan-line);
-                    border-radius: var(--pan-radius);
-                    padding: 1.8rem;
-                    box-shadow: var(--pan-shadow);
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: space-between;
-                    transition: all 0.25s ease;
-                }
-                
-                .pan-card:hover { 
-                    transform: translateY(-4px); 
-                    border-color: var(--pan-wine); 
-                    box-shadow: var(--pan-shadow-hover); 
-                }
-                
-                .pan-card.pan-card-featured { 
-                    border-color: var(--pan-gold); 
-                    background: linear-gradient(180deg, #ffffff 0%, var(--pan-cream-soft) 100%); 
-                }
-
-                .pan-team-row { 
-                    display: flex; 
-                    justify-content: space-between; 
-                    align-items: center; 
-                    gap: 1fr; 
-                    padding: 0.8rem 0;
-                }
-                
-                .pan-team-info { 
-                    display: flex; 
-                    align-items: center; 
-                    gap: 1rem; 
-                    min-width: 0; 
-                }
-                
-                .pan-escudo-api {
-                    width: 38px; 
-                    height: 38px; 
-                    object-fit: contain; 
-                    flex-shrink: 0;
-                }
-                
-                .pan-escudo-fallback {
-                    width: 38px;
-                    height: 38px;
-                    background: var(--pan-wine);
-                    color: white;
-                    border-radius: 50%;
-                    display: none;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 0.8rem;
-                    font-weight: 700;
-                    font-family: 'Cinzel', serif;
-                    flex-shrink: 0;
-                }
-                
-                .pan-team-name { 
-                    font-family: 'Cinzel', serif; 
-                    font-size: 0.95rem; 
-                    font-weight: 900; 
-                    overflow: hidden; 
-                    text-overflow: ellipsis; 
-                    white-space: nowrap; 
-                    color: var(--pan-ink);
-                    line-height: 1.4;
-                }
-                
-                .pan-marcador {
-                    background: var(--pan-ink);
-                    color: white;
-                    padding: 0.4rem 0.85rem;
-                    border-radius: 6px;
-                    font-weight: 700;
-                    font-size: 1.05rem;
-                    min-width: 40px;
-                    text-align: center;
-                    flex-shrink: 0;
-                    font-family: monospace;
-                }
-                
-                .pan-card-featured .pan-marcador {
-                    background: var(--pan-wine);
-                }
-                
-                .pan-score-controls { 
-                    display: flex; 
-                    align-items: center; 
-                    gap: 0.5rem; 
-                    flex-shrink: 0; 
-                }
-                
-                .pan-btn-inc {
-                    background: #ffffff;
-                    border: 1px solid var(--pan-line);
-                    width: 28px; 
-                    height: 28px;
-                    border-radius: 50%;
-                    cursor: pointer;
-                    font-weight: bold;
-                    color: var(--pan-wine);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-                
-                .pan-btn-inc:hover { 
-                    background: var(--pan-wine); 
-                    color: #fff; 
-                    border-color: var(--pan-wine); 
-                }
-
-                .pan-card-meta {
-                    display: flex; 
-                    justify-content: space-between; 
-                    align-items: center;
-                    padding-top: 1.2rem; 
-                    margin-top: 1.2rem;
-                    border-top: 2px solid var(--pan-cream-soft);
-                    font-size: 0.78rem; 
-                    color: var(--pan-ink-muted);
-                    font-weight: 600;
-                    line-height: 1.5;
-                }
-                
-                .pan-conf-seal {
-                    font-weight: 800; 
-                    color: var(--pan-gold);
-                    letter-spacing: 0.05em;
-                    border: 1px solid var(--pan-gold);
-                    border-radius: 4px;
-                    padding: 0.15rem 0.45rem;
-                    font-size: 0.65rem;
-                }
-
-                .pan-state-box {
-                    grid-column: 1 / -1;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 1.2rem;
-                    text-align: center;
-                    padding: 6rem 2rem;
-                    color: var(--pan-ink-muted);
-                    font-weight: 600;
-                    line-height: 1.7;
-                }
-                
-                .pan-spinner {
-                    width: 36px; 
-                    height: 36px;
-                    border-radius: 50%;
-                    border: 4px solid var(--pan-line);
-                    border-top-color: var(--pan-wine);
-                    animation: pan-spin 1s linear infinite;
-                }
-                
-                @keyframes pan-spin { 
-                    to { transform: rotate(360deg); } 
-                }
-
-                /* FOOTER CON PATROCINADORES */
-                .pan-footer {
-                    background: var(--pan-ink);
-                    color: #B5AEA5;
-                    padding: 4rem 2rem;
-                    margin-top: auto;
-                    border-top: 4px solid var(--pan-gold);
-                    text-align: center;
-                }
-                
-                .pan-footer-logo { 
-                    height: 55px; 
-                    margin-bottom: 2rem; 
-                    object-fit: contain;
-                }
-                
-                .pan-sponsors-container {
-                    max-width: 650px;
-                    margin: 0 auto 2.5rem auto;
-                    padding-bottom: 2rem;
-                    border-bottom: 1px solid #332A22;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    gap: 3rem;
-                    flex-wrap: wrap;
-                }
-                
-                .pan-sponsor-img {
-                    height: 32px;
-                    object-fit: contain;
-                    opacity: 0.5;
-                    filter: grayscale(100%) brightness(140%);
-                    transition: all 0.2s ease;
-                }
-                
-                .pan-sponsor-img:hover {
-                    opacity: 0.95;
-                    filter: grayscale(0%) brightness(100%);
-                }
-                
-                .pan-footer p { 
-                    margin: 0; 
-                }
-            `}</style>
-
-            {/* AVISO DE SITIO EN CONSTRUCCIÓN */}
-            <div className="pan-construction-banner">
-                🚧 SITIO WEB EN CONSTRUCCIÓN — PRÓXIMAMENTE 🚧
-            </div>
-
-
-
-            <div>
-                {/* FOOTER */}
-                <footer className="pan-footer">
-                    <div className="pan-sponsors-container">
-                        <img src="public/Otros/patrocinadores/Amena.svg" alt="Sponsor 1" className="pan-sponsor-img" onError={(e) => { (e.target as HTMLElement).style.opacity = "0.2" }} />
-
-                    </div>
-
-                    <center><img src={PAN_CREST_PATH} alt="Reino del Pan" className="pan-footer-logo" />
-                        <p>© 2026 Federación Paniense de Fútbol. Todos los derechos reservados.</p></center>
-                </footer>
-            </div>
-        </div>
-    );
+    const wins = filteredMatches.filter((match) => match.homeGoals !== null && match.awayGoals !== null && match.homeGoals > match.awayGoals).length;
+    return <div className="selection-page">
+        <style>{styles}</style>
+        <a className="skip-link" href="#partidos">Ir al contenido principal</a>
+        <div className="construction-banner"><span className="live-dot" /> Federación Paniense de Fútbol <span>·</span> Portal de la selección</div>
+        <header className="site-header"><div className="header-inner">
+            <a href="/" className="brand" aria-label="Volver al Reino del Pan"><img src={CREST} alt="" /><span><b>SELECCIÓN<br />PANIENSE</b><small>Orgullo · Disciplina · Nación</small></span></a>
+            <nav id="main-nav" className={`main-nav ${menuOpen ? "is-open" : ""}`} aria-label="Navegación principal"><a href="#inicio" onClick={() => setMenuOpen(false)}>Inicio</a><a href="#partidos" onClick={() => setMenuOpen(false)}>Partidos</a><a href="#federacion" onClick={() => setMenuOpen(false)}>Federación</a><a href="/" className="back-link">Reino del Pan <ExternalLink size={14} /></a></nav>
+            <button type="button" className="menu-toggle" aria-expanded={menuOpen} aria-controls="main-nav" aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"} onClick={() => setMenuOpen((open) => !open)}>{menuOpen ? <X /> : <Menu />}</button>
+        </div></header>
+        <main id="inicio">
+            <section className="hero"><div className="hero-inner"><div className="hero-copy"><span className="eyebrow"><Trophy size={16} /> La selección nacional</span><h1>Una camiseta.<br /><em>Una nación.</em></h1><p>La casa oficial de la Selección Paniense. Sigue nuestros resultados, rivales y el camino hacia la próxima gran cita internacional.</p><a className="primary-cta" href="#partidos">Ver resultados <ArrowRight size={17} /></a></div><div className="hero-card"><div className="hero-card-glow" /><img src={CREST} alt="Escudo de la Selección Paniense" /><div><span>PRÓXIMO CAPÍTULO</span><strong>El fútbol nos une</strong><small>Desde 2026 · Federación Paniense</small></div></div></div></section>
+            <section className="content-section" id="partidos" aria-labelledby="matches-title"><div className="section-heading"><div><span className="eyebrow">Calendario y resultados</span><h2 id="matches-title">La ruta de la selección</h2></div><button className="refresh-button" type="button" onClick={() => void loadMatches()} disabled={loading}><RefreshCw size={16} className={loading ? "spin" : ""} /> {loading ? "Actualizando" : "Actualizar"}</button></div>
+                <div className="stat-strip"><div><Shield size={20} /><span><b>{filteredMatches.length}</b> partidos visibles</span></div><div><Trophy size={20} /><span><b>{wins}</b> victorias registradas</span></div><div className="data-note"><span className={usingFallback ? "warning-dot" : "success-dot"} />{usingFallback ? "Modo de respaldo" : "Datos sincronizados"}</div></div>
+                <div className="filters"><label className="search-box"><Search size={18} /><span className="sr-only">Buscar partido</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar selección o competición" /></label><div className="pills" role="group" aria-label="Filtrar por confederación">{confederations.map((conf) => <button key={conf.id} type="button" className={selectedConfederation === conf.id ? "pill active" : "pill"} aria-pressed={selectedConfederation === conf.id} onClick={() => setSelectedConfederation(conf.id)}>{conf.label}</button>)}</div></div>
+                {apiError && <div className="inline-alert" role="status">{apiError} Los datos locales de demostración siguen disponibles.</div>}
+                {loading && <div className="loading-state" role="status"><span className="loader" />Consultando el archivo internacional…</div>}
+                {!loading && filteredMatches.length === 0 && <div className="empty-state"><Search size={30} /><h3>No encontramos ese partido</h3><p>Prueba con otro equipo, competición o elimina los filtros.</p></div>}
+                {!loading && filteredMatches.length > 0 && <div className="matches-grid">{filteredMatches.map((match) => <MatchCard key={match.id} match={match} onHomeScore={match.id === "pan-match" ? setPanGoals : undefined} onAwayScore={match.id === "pan-match" ? setRivalGoals : undefined} />)}</div>}
+            </section>
+            <section className="federation-callout" id="federacion"><div><span className="eyebrow">La voz de la afición</span><h2>El próximo partido<br /><em>lo jugamos juntos.</em></h2><p>Información oficial, resultados contrastados y todo el pulso de la Federación Paniense de Fútbol.</p></div><div className="crest-seal"><img src={CREST} alt="" /><span>F.P.F.<br /><small>2026</small></span></div></section>
+        </main>
+        <footer className="site-footer"><img src={CREST} alt="Escudo de la Selección Paniense" /><div><b>SELECCIÓN PANIENSE</b><p>© 2026 Federación Paniense de Fútbol. Todos los derechos reservados.</p></div><a href="/">Volver al Reino del Pan <ChevronUp size={16} /></a></footer>
+    </div>;
 }
+
+const styles = `
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+:root{--wine:#79131d;--wine-dark:#3f0b11;--gold:#c88b35;--gold-light:#f1c976;--cream:#fcf8f1;--paper:#fffdf9;--ink:#211a16;--muted:#756b61;--line:#e9ddca;--shadow:0 20px 55px rgba(74,34,17,.09)}*{box-sizing:border-box}.selection-page{min-height:100vh;background:var(--cream);color:var(--ink);font-family:'Plus Jakarta Sans',sans-serif}.selection-page a{color:inherit}.skip-link{position:absolute;left:-999px}.skip-link:focus{left:1rem;top:1rem;z-index:20;background:#fff;padding:.8rem;border-radius:8px}.construction-banner{display:flex;justify-content:center;gap:.65rem;align-items:center;background:var(--wine-dark);color:#fff;padding:.65rem 1rem;font-size:.72rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}.live-dot,.success-dot,.warning-dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:#67d391}.warning-dot{background:#e5a33c}.site-header{position:sticky;top:0;z-index:10;background:rgba(252,248,241,.88);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}.header-inner{max-width:1180px;margin:auto;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between}.brand{display:flex;align-items:center;gap:.75rem;text-decoration:none}.brand img{width:46px;height:46px;object-fit:contain}.brand b,.site-footer b{font:900 .86rem/1.1 Cinzel,serif;letter-spacing:.12em;color:var(--wine)}.brand small{display:block;color:var(--gold);font-size:.55rem;font-weight:800;letter-spacing:.13em;margin-top:.35rem}.main-nav{display:flex;align-items:center;gap:2rem;font-size:.76rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.main-nav a{text-decoration:none}.main-nav a:hover{color:var(--wine)}.back-link{display:inline-flex;align-items:center;gap:.4rem;border:1px solid var(--wine);border-radius:999px;padding:.65rem 1rem;color:var(--wine)!important}.menu-toggle{display:none;border:1px solid var(--line);background:transparent;color:var(--wine);border-radius:9px;padding:.55rem}.hero{overflow:hidden;border-bottom:1px solid var(--line);background:radial-gradient(circle at 84% 32%,rgba(200,139,53,.16),transparent 25%),linear-gradient(120deg,#f5ecdf,var(--cream) 62%)}.hero-inner{max-width:1180px;margin:auto;padding:6rem 1.5rem;display:grid;grid-template-columns:1.1fr .9fr;gap:5rem;align-items:center}.eyebrow{display:inline-flex;align-items:center;gap:.5rem;color:var(--gold);font-size:.7rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase}.hero h1,.section-heading h2,.federation-callout h2{font:900 clamp(2.7rem,6vw,5.4rem)/1.05 Cinzel,serif;letter-spacing:-.04em;margin:1.2rem 0}.hero h1 em,.federation-callout em{font-style:normal;color:var(--wine)}.hero p{max-width:52ch;color:var(--muted);font-size:1.05rem;line-height:1.8}.primary-cta{display:inline-flex;align-items:center;gap:.65rem;margin-top:2rem;padding:.9rem 1.2rem;background:var(--wine);color:#fff!important;border-radius:8px;text-decoration:none;font-weight:800;font-size:.82rem;transition:transform .18s ease,background .18s ease}.primary-cta:hover{transform:translateY(-2px);background:var(--wine-dark)}.hero-card{position:relative;display:flex;align-items:center;gap:1.25rem;padding:2rem;border:1px solid rgba(200,139,53,.55);border-radius:18px;background:rgba(255,253,249,.75);box-shadow:var(--shadow);overflow:hidden}.hero-card-glow{position:absolute;width:190px;height:190px;background:var(--gold-light);opacity:.15;filter:blur(50px);right:-50px;top:-30px}.hero-card img{width:105px;height:105px;object-fit:contain;z-index:1}.hero-card div:not(.hero-card-glow){z-index:1}.hero-card span{display:block;color:var(--gold);font-size:.64rem;font-weight:800;letter-spacing:.16em}.hero-card strong{display:block;font:700 1.25rem Cinzel,serif;margin:.55rem 0}.hero-card small{color:var(--muted);font-size:.75rem}.content-section{max-width:1180px;margin:auto;padding:5rem 1.5rem}.section-heading{display:flex;align-items:end;justify-content:space-between;gap:1rem}.section-heading h2{font-size:clamp(2rem,4vw,3.4rem);margin:.7rem 0 0}.refresh-button{display:inline-flex;align-items:center;gap:.5rem;border:1px solid var(--line);background:var(--paper);color:var(--wine);padding:.7rem 1rem;border-radius:8px;font:700 .75rem 'Plus Jakarta Sans';cursor:pointer}.refresh-button:disabled{opacity:.55}.spin{animation:spin 1s linear infinite}.stat-strip{margin:2rem 0 2.2rem;padding:1rem 1.2rem;border-block:1px solid var(--line);display:flex;gap:2rem;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:.78rem}.stat-strip>div{display:flex;align-items:center;gap:.6rem}.stat-strip svg{color:var(--gold)}.stat-strip b{color:var(--ink)}.data-note{margin-left:auto;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em}.filters{display:flex;justify-content:space-between;gap:1rem;align-items:center;flex-wrap:wrap}.search-box{display:flex;align-items:center;gap:.55rem;border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:0 .8rem;min-width:min(100%,340px);color:var(--muted)}.search-box input{width:100%;border:0;outline:0;background:transparent;padding:.8rem 0;font:500 .8rem 'Plus Jakarta Sans'}.pills{display:flex;gap:.5rem;flex-wrap:wrap}.pill{border:1px solid var(--line);background:transparent;border-radius:999px;padding:.55rem .9rem;color:var(--muted);font:700 .7rem 'Plus Jakarta Sans';cursor:pointer}.pill.active,.pill:hover{background:var(--wine);color:#fff;border-color:var(--wine)}.inline-alert{margin-top:1.5rem;background:#fff7e7;color:#765120;border:1px solid #ead19d;border-radius:8px;padding:.8rem 1rem;font-size:.78rem}.matches-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin-top:2.3rem}.match-card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:1.2rem;box-shadow:0 5px 20px rgba(73,38,18,.04);transition:transform .2s ease,box-shadow .2s ease}.match-card:hover{transform:translateY(-3px);box-shadow:var(--shadow)}.match-card-featured{border:2px solid var(--gold);background:linear-gradient(160deg,#fffdf9,#f8eedf)}.match-card-top,.match-card-bottom{display:flex;justify-content:space-between;align-items:center;gap:.5rem;color:var(--muted);font-size:.65rem}.status-chip{border-radius:999px;padding:.3rem .55rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.status-finished{background:#edf7ef;color:#277541}.status-live{background:#fff0ed;color:var(--wine)}.status-scheduled{background:#eef2fa;color:#385277}.teams{display:flex;align-items:center;justify-content:space-between;gap:.8rem;margin-top:1.25rem}.team{display:flex;align-items:center;gap:.7rem;min-width:0;font:700 .88rem Cinzel,serif}.team span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.team-crest{width:34px;height:34px;object-fit:contain;flex:none}.team-crest-fallback{display:grid;place-items:center;border-radius:50%;background:var(--wine);color:white;font:800 .65rem 'Plus Jakarta Sans'}.match-score{min-width:31px;text-align:center;padding:.42rem .55rem;border-radius:6px;background:var(--ink);color:white;font-size:1rem}.match-card-featured .match-score,.match-card-featured .score-control strong{background:var(--wine)}.score-control{display:flex;align-items:center;gap:.3rem}.score-control strong{min-width:28px;text-align:center;padding:.35rem;border-radius:5px;background:var(--ink);color:#fff}.score-button{width:24px;height:24px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--wine);font-weight:800;cursor:pointer}.score-button:hover{background:var(--wine);color:#fff}.match-card-bottom{margin-top:1.35rem;padding-top:1rem;border-top:1px solid var(--line)}.conf-badge{color:var(--gold);font-weight:800;letter-spacing:.08em}.loading-state,.empty-state{text-align:center;padding:5rem 1rem;color:var(--muted);font-size:.85rem}.loader{display:block;width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--wine);border-radius:50%;margin:0 auto 1rem;animation:spin 1s linear infinite}.empty-state h3{font:700 1.2rem Cinzel,serif;color:var(--ink);margin:.8rem}.federation-callout{max-width:1180px;margin:0 auto 5rem;padding:3rem;border-radius:18px;background:var(--wine-dark);color:#fff;display:flex;justify-content:space-between;align-items:center;gap:2rem}.federation-callout .eyebrow{color:var(--gold-light)}.federation-callout h2{font-size:clamp(2rem,4vw,3.2rem);margin:.7rem 0}.federation-callout p{max-width:50ch;color:#d6c8bb;line-height:1.7;font-size:.9rem}.crest-seal{display:flex;align-items:center;gap:1rem;color:var(--gold-light);font:700 1rem Cinzel,serif}.crest-seal img{width:120px;height:120px;object-fit:contain}.crest-seal small{font-size:.7rem}.site-footer{padding:2rem max(1.5rem,calc((100% - 1180px)/2));background:#201914;color:#cbbfb2;display:flex;align-items:center;gap:1rem}.site-footer img{width:46px;height:46px;object-fit:contain}.site-footer b{color:var(--gold-light);font-size:.7rem}.site-footer p{font-size:.68rem;margin-top:.3rem}.site-footer a{margin-left:auto;display:flex;align-items:center;gap:.4rem;text-decoration:none;font-size:.7rem;font-weight:800;color:#fff}@keyframes spin{to{transform:rotate(360deg)}}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}@media(max-width:800px){.main-nav{display:none}.main-nav.is-open{display:flex;position:absolute;left:0;right:0;top:100%;background:var(--cream);border-bottom:1px solid var(--line);padding:1.2rem 1.5rem;align-items:stretch;flex-direction:column;gap:1rem}.menu-toggle{display:block}.hero-inner{grid-template-columns:1fr;gap:3rem;padding-block:4rem}.matches-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.federation-callout{margin-inline:1.5rem;padding:2rem}.crest-seal{display:none}}@media(max-width:560px){.construction-banner{font-size:.58rem;text-align:center}.hero h1{font-size:2.8rem}.matches-grid{grid-template-columns:1fr}.section-heading{align-items:start;flex-direction:column}.refresh-button{width:100%;justify-content:center}.stat-strip{gap:1rem}.data-note{margin-left:0}.federation-callout{margin-inline:0;border-radius:0}.site-footer{flex-wrap:wrap}.site-footer a{width:100%;margin-left:0;margin-top:.5rem}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+`;
