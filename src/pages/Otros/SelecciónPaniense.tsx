@@ -15,155 +15,155 @@ const PAISES_UEFA = ["spain", "france", "germany", "england", "italy", "portugal
 const PAISES_CONMEBOL = ["argentina", "brazil", "uruguay", "colombia", "ecuador", "chile", "paraguay", "peru", "venezuela", "bolivia"];
 
 interface APIEquipo {
-  name: string;
-  crest: string;
+    name: string;
+    crest: string;
 }
 
 interface APIPartidoReal {
-  id: number;
-  homeTeam: APIEquipo;
-  awayTeam: APIEquipo;
-  score: { fullTime: { home: number | null; away: number | null } };
-  utcDate: string;
-  status: string;
-  competition: { name: string; code: string };
+    id: number;
+    homeTeam: APIEquipo;
+    awayTeam: APIEquipo;
+    score: { fullTime: { home: number | null; away: number | null } };
+    utcDate: string;
+    status: string;
+    competition: { name: string; code: string };
 }
 
 interface PartidoProcesado {
-  id: string | number;
-  local: string;
-  visitante: string;
-  golesL: number | null;
-  golesV: number | null;
-  fecha: string;
-  conf: "UEFA" | "CONMEBOL" | "INTER";
-  logoL: string | null;
-  logoV: string | null;
-  ficticio: boolean;
+    id: string | number;
+    local: string;
+    visitante: string;
+    golesL: number | null;
+    golesV: number | null;
+    fecha: string;
+    conf: "UEFA" | "CONMEBOL" | "INTER";
+    logoL: string | null;
+    logoV: string | null;
+    ficticio: boolean;
 }
 
 function inferConfederacion(nombrePais: string): "UEFA" | "CONMEBOL" | "INTER" {
-  const n = nombrePais.toLowerCase();
-  if (PAISES_UEFA.some((p) => n.includes(p))) return "UEFA";
-  if (PAISES_CONMEBOL.some((p) => n.includes(p))) return "CONMEBOL";
-  return "INTER";
+    const n = nombrePais.toLowerCase();
+    if (PAISES_UEFA.some((p) => n.includes(p))) return "UEFA";
+    if (PAISES_CONMEBOL.some((p) => n.includes(p))) return "CONMEBOL";
+    return "INTER";
 }
 
 function formatearFecha(iso: string): string {
-  return new Date(iso).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" });
+    return new Date(iso).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" });
 }
 
 export default function SeleccionPanienseWeb() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [selectedConfederation, setSelectedConfederation] = useState("TODOS");
-  const [searchQuery, setSearchQuery] = useState("");
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [selectedConfederation, setSelectedConfederation] = useState("TODOS");
+    const [searchQuery, setSearchQuery] = useState("");
 
-  const [partidosAPI, setPartidosAPI] = useState<PartidoProcesado[]>([]);
-  const [cargando, setCargando] = useState(true);
-  const [errorAPI, setErrorAPI] = useState<string | null>(null);
+    const [partidosAPI, setPartidosAPI] = useState<PartidoProcesado[]>([]);
+    const [cargando, setCargando] = useState(true);
+    const [errorAPI, setErrorAPI] = useState<string | null>(null);
 
-  // Marcador editable del amistoso de la Selección Paniense
-  const [golesPan, setGolesPan] = useState(3);
-  const [golesRival, setGolesRival] = useState(2);
+    // Marcador editable del amistoso de la Selección Paniense
+    const [golesPan, setGolesPan] = useState(3);
+    const [golesRival, setGolesRival] = useState(2);
 
-  const obtenerPartidosRecientes = useCallback(async () => {
-    setCargando(true);
-    setErrorAPI(null);
-    try {
-      const respuestas = await Promise.all(
-        COMPETICIONES_SELECCIONES.map((codigo) => {
-          const urlOriginal = `https://api.football-data.org/v4/competitions/${codigo}/matches?status=FINISHED`;
-          const urlConProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(urlOriginal)}`;
+    const obtenerPartidosRecientes = useCallback(async () => {
+        setCargando(true);
+        setErrorAPI(null);
+        try {
+            const respuestas = await Promise.all(
+                COMPETICIONES_SELECCIONES.map((codigo) => {
+                    const urlOriginal = `https://api.football-data.org/v4/competitions/${codigo}/matches?status=FINISHED`;
+                    const urlConProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(urlOriginal)}`;
 
-          return fetch(urlConProxy)
-            .then((res) => {
-              if (res.ok) return res.json();
-              throw new Error(`${codigo}: HTTP ${res.status}`);
-            })
-            .then((wrapper) => {
-              const datosReales = JSON.parse(wrapper.contents);
-              return datosReales;
-            });
-        })
-      );
+                    return fetch(urlConProxy)
+                        .then((res) => {
+                            if (res.ok) return res.json();
+                            throw new Error(`${codigo}: HTTP ${res.status}`);
+                        })
+                        .then((wrapper) => {
+                            const datosReales = JSON.parse(wrapper.contents);
+                            return datosReales;
+                        });
+                })
+            );
 
-      const todos: APIPartidoReal[] = respuestas.flatMap((d) => (Array.isArray(d?.matches) ? d.matches : []));
+            const todos: APIPartidoReal[] = respuestas.flatMap((d) => (Array.isArray(d?.matches) ? d.matches : []));
 
-      if (todos.length === 0) {
-        throw new Error("La API no devolvió partidos activos actuales.");
-      }
+            if (todos.length === 0) {
+                throw new Error("La API no devolvió partidos activos actuales.");
+            }
 
-      const vistos = new Set<number>();
-      const procesados: PartidoProcesado[] = todos
-        .filter((m) => {
-          if (vistos.has(m.id)) return false;
-          vistos.add(m.id);
-          return true;
-        })
-        .sort((a, b) => new Date(b.utcDate).getTime() - new Date(a.utcDate).getTime())
-        .slice(0, 15)
-        .map((m) => ({
-          id: m.id,
-          local: m.homeTeam?.name ?? "Equipo local",
-          visitante: m.awayTeam?.name ?? "Equipo visitante",
-          golesL: m.score?.fullTime?.home ?? 0,
-          golesV: m.score?.fullTime?.away ?? 0,
-          fecha: formatearFecha(m.utcDate),
-          conf: inferConfederacion(`${m.homeTeam?.name ?? ""} ${m.awayTeam?.name ?? ""}`),
-          logoL: m.homeTeam?.crest || null,
-          logoV: m.awayTeam?.crest || null,
-          ficticio: false,
-        }));
+            const vistos = new Set<number>();
+            const procesados: PartidoProcesado[] = todos
+                .filter((m) => {
+                    if (vistos.has(m.id)) return false;
+                    vistos.add(m.id);
+                    return true;
+                })
+                .sort((a, b) => new Date(b.utcDate).getTime() - new Date(a.utcDate).getTime())
+                .slice(0, 15)
+                .map((m) => ({
+                    id: m.id,
+                    local: m.homeTeam?.name ?? "Equipo local",
+                    visitante: m.awayTeam?.name ?? "Equipo visitante",
+                    golesL: m.score?.fullTime?.home ?? 0,
+                    golesV: m.score?.fullTime?.away ?? 0,
+                    fecha: formatearFecha(m.utcDate),
+                    conf: inferConfederacion(`${m.homeTeam?.name ?? ""} ${m.awayTeam?.name ?? ""}`),
+                    logoL: m.homeTeam?.crest || null,
+                    logoV: m.awayTeam?.crest || null,
+                    ficticio: false,
+                }));
 
-      setPartidosAPI(procesados);
-    } catch (e) {
-      setPartidosAPI([]);
-      setErrorAPI(e instanceof Error ? e.message : "Error de CORS o conexión con el servidor");
-    } finally {
-      setCargando(false);
-    }
-  }, []);
+            setPartidosAPI(procesados);
+        } catch (e) {
+            setPartidosAPI([]);
+            setErrorAPI(e instanceof Error ? e.message : "Error de CORS o conexión con el servidor");
+        } finally {
+            setCargando(false);
+        }
+    }, []);
 
-  useEffect(() => {
-    obtenerPartidosRecientes();
-  }, [obtenerPartidosRecientes]);
+    useEffect(() => {
+        obtenerPartidosRecientes();
+    }, [obtenerPartidosRecientes]);
 
-  const resultadosFiltrados = useMemo(() => {
-    const partidoPan: PartidoProcesado = {
-      id: "pan-match",
-      local: "Reino del Pan",
-      visitante: "Portugal",
-      golesL: golesPan,
-      golesV: golesRival,
-      fecha: "Amistoso Real",
-      conf: "INTER",
-      logoL: PAN_CREST_PATH,
-      logoV: "https://crests.football-data.org/765.svg",
-      ficticio: true,
+    const resultadosFiltrados = useMemo(() => {
+        const partidoPan: PartidoProcesado = {
+            id: "pan-match",
+            local: "Reino del Pan",
+            visitante: "Portugal",
+            golesL: golesPan,
+            golesV: golesRival,
+            fecha: "Amistoso Real",
+            conf: "INTER",
+            logoL: PAN_CREST_PATH,
+            logoV: "https://crests.football-data.org/765.svg",
+            ficticio: true,
+        };
+
+        return [partidoPan, ...partidosAPI].filter((p) => {
+            const cumpleConf = selectedConfederation === "TODOS" || p.conf === selectedConfederation;
+            const q = searchQuery.toLowerCase();
+            const cumpleBusqueda = p.local.toLowerCase().includes(q) || p.visitante.toLowerCase().includes(q);
+            return cumpleConf && cumpleBusqueda;
+        });
+    }, [partidosAPI, selectedConfederation, searchQuery, golesPan, golesRival]);
+
+    const navLinks = [""];
+
+    const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+        const target = e.target as HTMLImageElement;
+        target.style.display = "none";
+        const fallback = target.nextElementSibling as HTMLDivElement;
+        if (fallback) {
+            fallback.style.display = "flex";
+        }
     };
 
-    return [partidoPan, ...partidosAPI].filter((p) => {
-      const cumpleConf = selectedConfederation === "TODOS" || p.conf === selectedConfederation;
-      const q = searchQuery.toLowerCase();
-      const cumpleBusqueda = p.local.toLowerCase().includes(q) || p.visitante.toLowerCase().includes(q);
-      return cumpleConf && cumpleBusqueda;
-    });
-  }, [partidosAPI, selectedConfederation, searchQuery, golesPan, golesRival]);
-
-  const navLinks = [""];
-
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    const target = e.target as HTMLImageElement;
-    target.style.display = "none";
-    const fallback = target.nextElementSibling as HTMLDivElement;
-    if (fallback) {
-      fallback.style.display = "flex";
-    }
-  };
-
-  return (
-    <div className="pan-app-container">
-      <style>{`
+    return (
+        <div className="pan-app-container">
+            <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
                 :root {
@@ -789,25 +789,25 @@ export default function SeleccionPanienseWeb() {
                 }
             `}</style>
 
-      {/* AVISO DE SITIO EN CONSTRUCCIÓN */}
-      <div className="pan-construction-banner">
-        🚧 SITIO WEB EN CONSTRUCCIÓN — PRÓXIMAMENTE 🚧
-      </div>
+            {/* AVISO DE SITIO EN CONSTRUCCIÓN */}
+            <div className="pan-construction-banner">
+                🚧 SITIO WEB EN CONSTRUCCIÓN — PRÓXIMAMENTE 🚧
+            </div>
 
 
 
-      <div>
-        {/* FOOTER */}
-        <footer className="pan-footer">
-          <div className="pan-sponsors-container">
-            <img src="public/Otros/patrocinadores/Amena.svg" alt="Sponsor 1" className="pan-sponsor-img" onError={(e) => { (e.target as HTMLElement).style.opacity = "0.2" }} />
+            <div>
+                {/* FOOTER */}
+                <footer className="pan-footer">
+                    <div className="pan-sponsors-container">
+                        <img src="public/Otros/patrocinadores/Amena.svg" alt="Sponsor 1" className="pan-sponsor-img" onError={(e) => { (e.target as HTMLElement).style.opacity = "0.2" }} />
 
-          </div>
+                    </div>
 
-          <center><img src={PAN_CREST_PATH} alt="Reino del Pan" className="pan-footer-logo" />
-            <p>© 2026 Federación Paniense de Fútbol. Todos los derechos reservados.</p></center>
-        </footer>
-      </div>
-    </div>
-  );
+                    <center><img src={PAN_CREST_PATH} alt="Reino del Pan" className="pan-footer-logo" />
+                        <p>© 2026 Federación Paniense de Fútbol. Todos los derechos reservados.</p></center>
+                </footer>
+            </div>
+        </div>
+    );
 }

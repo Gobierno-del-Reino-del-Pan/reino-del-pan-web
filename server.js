@@ -161,6 +161,13 @@ app.set('trust proxy', 1);
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 
+// Solo servir estáticos si NO estamos en Vercel (por ejemplo, en desarrollo local con node server.js)
+if (!process.env.VERCEL) {
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, "dist", "public", "index.html"));
+  });
+}
+
 function getIP(req) {
   return (
     req.headers["x-forwarded-for"]?.split(",")[0].trim() ||
@@ -1178,57 +1185,6 @@ function verifyHtml(d, roles = [], avatarUrl = "") {
   </div>
 </body></html>`;
 }
-
-// ── PROXY DE PARTIDOS DE LA SELECCIÓN ─────────────────────────────────────────
-app.get("/api/seleccion/partidos", async (_req, res) => {
-  const localPath = path.resolve(__dirname, "data", "seleccion.json");
-  let localMatches = [];
-
-  try {
-    const localData = JSON.parse(readFileSync(localPath, "utf-8"));
-    localMatches = Array.isArray(localData?.matches) ? localData.matches : [];
-  } catch (error) {
-    console.error("❌ No se pudo leer data/seleccion.json:", error);
-  }
-
-  const token = process.env.FOOTBALL_DATA_TOKEN?.trim();
-  if (!token) {
-    return res.json({ matches: localMatches, source: "local", updatedAt: new Date().toISOString() });
-  }
-
-  try {
-    const competitions = ["WC", "EC"];
-    const responses = await Promise.all(competitions.map(async (code) => {
-      const response = await fetch(`https://api.football-data.org/v4/competitions/${code}/matches?status=FINISHED`, {
-        headers: { "X-Auth-Token": token, Accept: "application/json" },
-      });
-      if (!response.ok) throw new Error(`Football Data ${code}: ${response.status}`);
-      return response.json();
-    }));
-
-    const externalMatches = responses.flatMap((data) => Array.isArray(data?.matches) ? data.matches : [])
-      .sort((a, b) => new Date(b.utcDate).getTime() - new Date(a.utcDate).getTime())
-      .slice(0, 18)
-      .map((match) => ({
-        id: `external-${match.id}`,
-        home: match.homeTeam?.name ?? "Equipo local",
-        away: match.awayTeam?.name ?? "Equipo visitante",
-        homeGoals: match.score?.fullTime?.home ?? null,
-        awayGoals: match.score?.fullTime?.away ?? null,
-        date: match.utcDate,
-        competition: match.competition?.name ?? "Competición internacional",
-        confederation: "INTER",
-        homeCrest: match.homeTeam?.crest ?? null,
-        awayCrest: match.awayTeam?.crest ?? null,
-        status: match.status === "FINISHED" ? "finished" : match.status === "IN_PLAY" ? "live" : "scheduled",
-      }));
-
-    return res.json({ matches: [...localMatches, ...externalMatches], source: "local+football-data", updatedAt: new Date().toISOString() });
-  } catch (error) {
-    console.warn("⚠️ Fuente externa no disponible; se usan los partidos locales:", error);
-    return res.json({ matches: localMatches, source: "local", warning: "Fuente externa no disponible", updatedAt: new Date().toISOString() });
-  }
-});
 
 // ── PROXY DE DISCORD ─────────────────────────────────────────────────────────────
 

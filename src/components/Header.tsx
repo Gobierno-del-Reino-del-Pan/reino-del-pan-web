@@ -350,18 +350,6 @@ export default function Header() {
                       <span>Electa. Elecciones</span>
                     </a>
 
-                    <a
-                      href={"/https://mineco.duckdns.org/lpb/cuenta"}
-                      className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-black/70 hover:text-accent hover:bg-white/40 transition duration-200 border-t border-black/5"
-                    >
-                      <img
-                        src="/LaboralBank/LPB.png"
-                        className="w-[1em] h-[1em] object-contain inline-block align-text-bottom"
-                        alt="LPB"
-                      />
-                      <span>Cta. Bancaria.</span>
-                    </a>
-
 
                     {esReportero && (
                       <Link
