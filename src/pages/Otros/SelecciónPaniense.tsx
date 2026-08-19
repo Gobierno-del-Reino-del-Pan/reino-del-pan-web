@@ -22,9 +22,9 @@ interface Match {
 const CREST = "/Otros/EscudoSelección.png";
 const PORTUGAL_CREST = "https://crests.football-data.org/765.svg";
 const FALLBACK_MATCHES: Match[] = [
-  { id: "pan-match", home: "Reino del Pan", away: "Portugal", homeGoals: 3, awayGoals: 2, date: "Amistoso internacional", competition: "Amistoso", confederation: "INTER", homeCrest: CREST, awayCrest: PORTUGAL_CREST, status: "finished", local: true },
-  { id: "demo-1", home: "España", away: "Italia", homeGoals: 2, awayGoals: 1, date: "18 jun 2026", competition: "Copa Mundial", confederation: "UEFA", status: "finished" },
-  { id: "demo-2", home: "Argentina", away: "Colombia", homeGoals: 1, awayGoals: 1, date: "17 jun 2026", competition: "Copa Mundial", confederation: "CONMEBOL", status: "finished" },
+  { id: "pan-match", home: "Reino del Pan", away: "Portugal", homeGoals: 3, awayGoals: 2, date: "2026-06-20T19:45:00.000Z", competition: "Amistoso internacional", confederation: "INTER", homeCrest: CREST, awayCrest: PORTUGAL_CREST, status: "finished", local: true },
+  { id: "pan-arg-2026", home: "Reino del Pan", away: "Argentina", homeGoals: null, awayGoals: null, date: "2026-09-12T20:00:00.000Z", competition: "Ventana internacional", confederation: "CONMEBOL", homeCrest: CREST, status: "scheduled", local: true },
+  { id: "pan-esp-2026", home: "España", away: "Reino del Pan", homeGoals: null, awayGoals: null, date: "2026-10-08T18:30:00.000Z", competition: "Ventana internacional", confederation: "UEFA", awayCrest: CREST, status: "scheduled", local: true },
 ];
 
 const confederations: Array<{ id: "TODOS" | Confederation; label: string }> = [
@@ -58,7 +58,7 @@ function ScoreControl({ value, onChange, label }: { value: number; onChange: (va
 }
 
 function MatchCard({ match, onHomeScore, onAwayScore }: { match: Match; onHomeScore?: (value: number) => void; onAwayScore?: (value: number) => void }) {
-  const editable = match.local && onHomeScore && onAwayScore;
+  const editable = match.id === "pan-match" && onHomeScore && onAwayScore;
   const result = match.homeGoals !== null && match.awayGoals !== null ? match.homeGoals === match.awayGoals ? "Empate" : match.homeGoals > match.awayGoals ? "Victoria local" : "Victoria visitante" : "Pendiente";
   return <article className={`match-card ${match.local ? "match-card-featured" : ""}`}>
     <div className="match-card-top"><span className={`status-chip status-${match.status}`}>{match.status === "finished" ? "Finalizado" : match.status === "live" ? "En directo" : "Próximo"}</span><span>{match.competition}</span></div>
@@ -85,6 +85,18 @@ export default function SeleccionPanienseWeb() {
   const [apiError, setApiError] = useState<string | null>(null);
   const [panGoals, setPanGoals] = useState(3);
   const [rivalGoals, setRivalGoals] = useState(2);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("paniense-score") || "null");
+      if (Number.isInteger(saved?.home) && saved.home >= 0 && saved.home <= 99) setPanGoals(saved.home);
+      if (Number.isInteger(saved?.away) && saved.away >= 0 && saved.away <= 99) setRivalGoals(saved.away);
+    } catch { /* El marcador por defecto sigue siendo válido. */ }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("paniense-score", JSON.stringify({ home: panGoals, away: rivalGoals }));
+  }, [panGoals, rivalGoals]);
 
   const loadMatches = useCallback(async (signal?: AbortSignal) => {
     setLoading(true); setApiError(null);
@@ -131,7 +143,7 @@ export default function SeleccionPanienseWeb() {
         {apiError && <div className="inline-alert" role="status">{apiError} Los datos locales de demostración siguen disponibles.</div>}
         {loading && <div className="loading-state" role="status"><span className="loader" />Consultando el archivo internacional…</div>}
         {!loading && filteredMatches.length === 0 && <div className="empty-state"><Search size={30} /><h3>No encontramos ese partido</h3><p>Prueba con otro equipo, competición o elimina los filtros.</p></div>}
-        {!loading && filteredMatches.length > 0 && <div className="matches-grid">{filteredMatches.map((match) => <MatchCard key={match.id} match={match} onHomeScore={match.local ? setPanGoals : undefined} onAwayScore={match.local ? setRivalGoals : undefined} />)}</div>}
+        {!loading && filteredMatches.length > 0 && <div className="matches-grid">{filteredMatches.map((match) => <MatchCard key={match.id} match={match} onHomeScore={match.id === "pan-match" ? setPanGoals : undefined} onAwayScore={match.id === "pan-match" ? setRivalGoals : undefined} />)}</div>}
       </section>
       <section className="federation-callout" id="federacion"><div><span className="eyebrow">La voz de la afición</span><h2>El próximo partido<br /><em>lo jugamos juntos.</em></h2><p>Información oficial, resultados contrastados y todo el pulso de la Federación Paniense de Fútbol.</p></div><div className="crest-seal"><img src={CREST} alt="" /><span>F.P.F.<br /><small>2026</small></span></div></section>
     </main>
