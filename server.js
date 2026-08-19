@@ -1186,6 +1186,47 @@ function verifyHtml(d, roles = [], avatarUrl = "") {
 </body></html>`;
 }
 
+// ── PROXY DE PARTIDOS DE LA SELECCIÓN ─────────────────────────────────────────
+app.get("/api/seleccion/partidos", async (_req, res) => {
+  const token = process.env.FOOTBALL_DATA_TOKEN;
+  if (!token) {
+    return res.status(503).json({ error: "La fuente deportiva no está configurada." });
+  }
+
+  try {
+    const competitions = ["WC", "EC"];
+    const responses = await Promise.all(competitions.map(async (code) => {
+      const response = await fetch(`https://api.football-data.org/v4/competitions/${code}/matches?status=FINISHED`, {
+        headers: { "X-Auth-Token": token.trim(), Accept: "application/json" },
+      });
+      if (!response.ok) throw new Error(`Football Data ${code}: ${response.status}`);
+      return response.json();
+    }));
+
+    const matches = responses.flatMap((data) => Array.isArray(data?.matches) ? data.matches : [])
+      .sort((a, b) => new Date(b.utcDate).getTime() - new Date(a.utcDate).getTime())
+      .slice(0, 18)
+      .map((match) => ({
+        id: match.id,
+        home: match.homeTeam?.name ?? "Equipo local",
+        away: match.awayTeam?.name ?? "Equipo visitante",
+        homeGoals: match.score?.fullTime?.home ?? null,
+        awayGoals: match.score?.fullTime?.away ?? null,
+        date: match.utcDate,
+        competition: match.competition?.name ?? "Competición internacional",
+        confederation: "INTER",
+        homeCrest: match.homeTeam?.crest ?? null,
+        awayCrest: match.awayTeam?.crest ?? null,
+        status: match.status === "FINISHED" ? "finished" : match.status === "IN_PLAY" ? "live" : "scheduled",
+      }));
+
+    return res.json({ matches, updatedAt: new Date().toISOString() });
+  } catch (error) {
+    console.error("❌ Error en el proxy /api/seleccion/partidos:", error);
+    return res.status(502).json({ error: "No se pudieron actualizar los partidos." });
+  }
+});
+
 // ── PROXY DE DISCORD ─────────────────────────────────────────────────────────────
 
 app.get("/api/roles", async (req, res) => {
