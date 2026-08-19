@@ -357,7 +357,7 @@ export default function Header() {
                       <img
                         src="/LaboralBank/LPB.png"
                         className="w-[1em] h-[1em] object-contain inline-block align-text-bottom"
-                        alt="logo Electa"
+                        alt="LPB"
                       />
                       <span>Cta. Bancaria.</span>
                     </a>
