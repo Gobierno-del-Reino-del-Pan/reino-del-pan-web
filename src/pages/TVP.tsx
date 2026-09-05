@@ -311,7 +311,6 @@ export default function TVPPortal() {
                                 En Directo
                             </span>
                             <h1 className="font-tvp-head text-xl md:text-3xl font-black tracking-wide text-white">
-                                Televisión Paniense (TVP 1)
                             </h1>
                         </div>
                         <span className="text-xs text-white/60 font-tvp-text">
