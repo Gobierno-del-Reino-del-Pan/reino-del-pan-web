@@ -1,15 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
-// 1. Importamos el cliente configurado con tus variables de entorno .env
 import { supabase } from "../lib/supabaseClient";
 
-// Interfaces para tipar estrictamente el contenido y evitar errores de compilación
 interface PlayItem {
     id: string;
     title: string;
     subtitle: string;
     img: string;
-    progress?: number; // Opcional, solo para "Seguir viendo"
+    progress?: number;
 }
 
 interface PlayCategory {
@@ -84,14 +82,20 @@ const LOCAL_NEWS_FALLBACK = {
 };
 
 export default function TVPPortal() {
-    const [activeTab, setActiveTab] = useState<'play' | 'noticias'>('play');
+    const [activeTab, setActiveTab] = useState<'play' | 'directo' | 'noticias'>('play');
     const [mainNews, setMainNews] = useState(LOCAL_NEWS_FALLBACK.main);
     const [secondaryNews, setSecondaryNews] = useState(LOCAL_NEWS_FALLBACK.secondary);
+    const [parentDomain, setParentDomain] = useState("localhost");
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            setParentDomain(window.location.hostname);
+        }
+    }, []);
 
     useEffect(() => {
         async function loadNewsFromSupabase() {
             try {
-                // 2. Evaluamos directamente el cliente de Supabase importado
                 if (supabase) {
                     const { data, error } = await supabase
                         .from('tvp_news')
@@ -142,6 +146,8 @@ export default function TVPPortal() {
     useEffect(() => {
         if (activeTab === 'play') {
             document.title = "TVP Play - Televisión Paniense Bajo Demanda";
+        } else if (activeTab === 'directo') {
+            document.title = "TVP En Directo - Emisión en Vivo";
         } else {
             document.title = "TVP Noticias - Última hora del Reino del Pan";
         }
@@ -190,7 +196,6 @@ export default function TVPPortal() {
 
             <header className="w-full bg-[#0a0b10]/95 backdrop-blur-xl border-b border-white/5 px-6 md:px-12 py-5 flex items-center justify-between sticky top-0 z-50 shadow-2xl">
                 <div className="flex items-center gap-6 md:gap-8">
-                    {/* Botón con el logo que redirige al inicio */}
                     <Link to="/">
                         <a className="transition-opacity hover:opacity-80 flex items-center">
                             <img src="/logo.png" alt="Inicio" className="h-8 object-contain select-none" />
@@ -211,13 +216,20 @@ export default function TVPPortal() {
                 <nav className="hidden md:flex items-center gap-12 text-sm font-bold tracking-widest">
                     <button
                         onClick={() => setActiveTab('play')}
-                        className={`transition-all duration-300 flex items-center gap-3.5 pb-2 border-b-2 uppercase font-tvp-head ${activeTab === 'play' ? 'text-[#ff4d00]' : 'text-white/60 hover:text-white border-transparent'}`}
+                        className={`transition-all duration-300 flex items-center gap-3.5 pb-2 border-b-2 uppercase font-tvp-head ${activeTab === 'play' ? 'text-[#ff4d00] border-[#ff4d00]' : 'text-white/60 hover:text-white border-transparent'}`}
                     >
                         TVP Play
                     </button>
                     <button
+                        onClick={() => setActiveTab('directo')}
+                        className={`transition-all duration-300 flex items-center gap-2 pb-2 border-b-2 uppercase font-tvp-head ${activeTab === 'directo' ? 'text-[#ff4d00] border-[#ff4d00]' : 'text-white/60 hover:text-white border-transparent'}`}
+                    >
+                        <span className="w-2 h-2 bg-[#ff4d00] rounded-full animate-pulse"></span>
+                        En Directo
+                    </button>
+                    <button
                         onClick={() => setActiveTab('noticias')}
-                        className={`transition-all duration-300 pb-2 border-b-2 uppercase font-tvp-head ${activeTab === 'noticias' ? 'text-[#ff4d00]' : 'text-white/60 hover:text-white border-transparent'}`}
+                        className={`transition-all duration-300 pb-2 border-b-2 uppercase font-tvp-head ${activeTab === 'noticias' ? 'text-[#ff4d00] border-[#ff4d00]' : 'text-white/60 hover:text-white border-transparent'}`}
                     >
                         TVP Noticias
                     </button>
@@ -287,6 +299,44 @@ export default function TVPPortal() {
                             </div>
                         ))}
                     </section>
+                </main>
+            )}
+
+            {activeTab === 'directo' && (
+                <main className="flex-1 flex flex-col w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-8 animate-in fade-in duration-500 gap-6">
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+                        <div className="flex items-center gap-3">
+                            <span className="flex items-center gap-2 bg-[#ff4d00] text-black text-xs font-black px-3 py-1.5 rounded uppercase tracking-widest font-tvp-head">
+                                <span className="w-2.5 h-2.5 bg-black rounded-full animate-ping"></span>
+                                En Directo
+                            </span>
+                            <h1 className="font-tvp-head text-xl md:text-3xl font-black tracking-wide text-white">
+                                Televisión Paniense (TVP 1)
+                            </h1>
+                        </div>
+                        <span className="text-xs text-white/60 font-tvp-text">
+                            Emisión Oficial en Vivo
+                        </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        <div className="lg:col-span-3 w-full bg-black rounded-xl overflow-hidden border border-white/10 shadow-2xl aspect-video">
+                            <iframe
+                                src={`https://player.twitch.tv/?channel=televisionpaniense&parent=${parentDomain}&autoplay=true`}
+                                className="w-full h-full border-0"
+                                allowFullScreen={true}
+                                title="TVP En Directo"
+                            />
+                        </div>
+
+                        <div className="lg:col-span-1 w-full h-[450px] lg:h-auto bg-[#0e1017] rounded-xl overflow-hidden border border-white/10 shadow-xl">
+                            <iframe
+                                src={`https://www.twitch.tv/embed/televisionpaniense/chat?parent=${parentDomain}`}
+                                className="w-full h-full border-0"
+                                title="Chat de TVP"
+                            />
+                        </div>
+                    </div>
                 </main>
             )}
 
@@ -423,6 +473,14 @@ export default function TVPPortal() {
                         <path d="M9.75 13.848V8.152a.25.25 0 0 1 .388-.21l4.8 2.848a.25.25 0 0 1 0 .42l-4.8 2.848a.25.25 0 0 1-.388-.21z" />
                     </svg>
                     <span className="text-[9px] font-black tracking-widest uppercase font-tvp-head leading-none">TVP PLAY</span>
+                </button>
+
+                <button onClick={() => setActiveTab('directo')} className={`flex flex-col items-center justify-center gap-1.5 ${activeTab === 'directo' ? 'text-[#ff4d00]' : 'text-white/45'}`}>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5.5 h-5.5">
+                        <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z" />
+                        <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    <span className="text-[9px] font-black tracking-widest uppercase font-tvp-head leading-none">DIRECTO</span>
                 </button>
 
                 <button onClick={() => setActiveTab('noticias')} className={`flex flex-col items-center justify-center gap-1.5 ${activeTab === 'noticias' ? 'text-[#ff4d00]' : 'text-white/45'}`}>
