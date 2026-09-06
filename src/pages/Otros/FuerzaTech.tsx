@@ -136,7 +136,7 @@ export default function FuerzaTechPaniense() {
                             <a href="#requisitos" className="text-zinc-300 hover:text-white transition">Requisitos</a>
                             <a href="#faq" className="text-zinc-300 hover:text-white transition">FAQ</a>
                             <a
-                                href="https://x.com"
+                                href="https://x.com/gov_pan"
                                 target="_blank"
                                 rel="noreferrer"
                                 className="text-zinc-400 hover:text-white transition text-xs tf-mono flex items-center gap-1.5 border border-zinc-800 px-3 py-1.5 rounded-full"
@@ -307,7 +307,7 @@ export default function FuerzaTechPaniense() {
                                     Postular Ahora
                                 </button>
                                 <a
-                                    href="https://x.com"
+                                    href="https://x.com/gov_pan"
                                     target="_blank"
                                     rel="noreferrer"
                                     className="text-xs font-bold uppercase tracking-wider text-black border-b-2 border-black pb-0.5 hover:opacity-75 transition"
@@ -487,7 +487,7 @@ export default function FuerzaTechPaniense() {
                         <a href="#programa" className="block hover:text-white transition">El Programa de 2 Años</a>
                         <a href="#requisitos" className="block hover:text-white transition">Elegibilidad y Proceso</a>
                         <a href="#faq" className="block hover:text-white transition">Preguntas Frecuentes</a>
-                        <a href="https://x.com" target="_blank" rel="noreferrer" className="block hover:text-white transition text-[#FF4D00]">Canal Oficial en X ↗</a>
+                        <a href="https://x.com/gov_pan" target="_blank" rel="noreferrer" className="block hover:text-white transition text-[#FF4D00]">Canal Oficial en X ↗</a>
                     </div>
 
                     {/* Legales y Transparencia */}
