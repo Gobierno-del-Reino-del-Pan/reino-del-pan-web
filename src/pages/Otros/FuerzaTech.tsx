@@ -25,7 +25,6 @@ export default function FuerzaTechPaniense() {
       background-position: center;
     }
 
-    /* Animación suave para acordeón */
     .tf-[#FF4D00] {
       color: #FF4D00;
     }
@@ -48,7 +47,7 @@ export default function FuerzaTechPaniense() {
         },
         {
             id: 'm-defensa',
-            code: 'MIN-[#FF4D00]-02',
+            code: 'MIN-DEF-02',
             title: 'Ministerio de Ciberdefensa y Transformación',
             summary: 'Protección de la soberanía digital e infraestructuras críticas nacionales.',
             description: 'Unidad de respuesta rápida ante ciberamenazas estatales. Desarrollo de defensas Zero-Trust, auditoría de firmware para telecomunicaciones públicas y fortificación de los servidores centrales de la Red Paniense.',
@@ -100,92 +99,97 @@ export default function FuerzaTechPaniense() {
             <style dangerouslySetInnerHTML={{ __html: customStyles }} />
 
             {/* ==========================================
-          1. HEADER / NAVBAR FLOTANTE
+          HEADER FIXED (ALERTA GUBERNAMENTAL + NAVBAR)
       ========================================== */}
-            <header className="fixed top-0 left-0 right-0 z-50 bg-[#0A0A0A]/80 backdrop-blur-md border-b border-zinc-800/60">
-                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <header className="fixed top-0 left-0 right-0 z-50">
 
-                    {/* Brand Logo (Estilo Tech Force Flag Symbol) */}
-                    <a href="#" className="flex items-center gap-3 group">
-                        <div className="w-9 h-6 flex flex-col justify-between py-0.5">
-                            <div className="flex gap-1 items-center">
-                                <span className="w-2.5 h-2.5 bg-white group-hover:bg-[#FF4D00] transition"></span>
-                                <span className="w-1.5 h-1 h-full bg-white/40"></span>
-                                <span className="w-full h-1 bg-white"></span>
-                            </div>
-                            <div className="w-full h-1 bg-white"></div>
-                            <div className="w-[#FF4D00] h-1 bg-[#FF4D00]"></div>
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-base font-extrabold tracking-tighter uppercase leading-none text-white">
-                                Fuerza Tech
-                            </span>
-                            <span className="text-[10px] tf-mono tracking-widest uppercase text-zinc-400 leading-none mt-0.5">
-                                Reino del Pan
-                            </span>
-                        </div>
-                    </a>
-
-                    {/* Nav Links Desktop */}
-                    <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-                        <a href="#programa" className="text-zinc-300 hover:text-white transition">El Programa</a>
-                        <a href="#ministerios" className="text-zinc-300 hover:text-white transition">Ministerios</a>
-                        <a href="#requisitos" className="text-zinc-300 hover:text-white transition">Requisitos</a>
-                        <a href="#faq" className="text-zinc-300 hover:text-white transition">FAQ</a>
-                        <a
-                            href="https://x.com"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-zinc-400 hover:text-white transition text-xs tf-mono flex items-center gap-1.5 border border-zinc-800 px-3 py-1.5 rounded-full"
-                        >
-                            <span>Síguenos en X</span>
-                            <span className="text-[10px]">↗</span>
-                        </a>
-                        <button
-                            onClick={() => setApplyModalOpen(true)}
-                            className="bg-white text-black font-semibold px-5 py-2.5 rounded-full text-xs uppercase tracking-wider hover:bg-[#FF4D00] hover:text-white transition-all transform hover:scale-105"
-                        >
-                            Postular ahora
-                        </button>
-                    </nav>
-
-                    {/* Toggle Menú Móvil */}
-                    <button
-                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        className="md:hidden text-zinc-300 hover:text-white p-2"
-                        aria-label="Abrir menú"
-                    >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            {mobileMenuOpen ? (
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            ) : (
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                            )}
-                        </svg>
-                    </button>
+                {/* 1. ALERTA / FRANJA DE WEB OFICIAL DEL GOBIERNO */}
+                <div className="bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 py-2 px-4 text-[10px] md:text-xs text-zinc-400 tf-mono">
+                    <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 md:gap-3 text-center">
+                        <img
+                            src="/flag.png"
+                            alt="Bandera del Reino del Pan"
+                            className="h-3 w-4 opacity-90 object-contain shrink-0"
+                        />
+                        <span className="font-semibold tracking-wider uppercase leading-tight">
+                            Web oficial del Gobierno del Reino del Pan · Ministerio de Transformación Digital.
+                        </span>
+                    </div>
                 </div>
 
-                {/* Menú Desplegable Móvil */}
-                {mobileMenuOpen && (
-                    <div className="md:hidden bg-[#0A0A0A] border-b border-zinc-800 px-6 py-6 flex flex-col gap-5">
-                        <a href="#programa" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-zinc-200">El Programa</a>
-                        <a href="#ministerios" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-zinc-200">Ministerios</a>
-                        <a href="#requisitos" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-zinc-200">Requisitos</a>
-                        <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-zinc-200">Preguntas Frecuentes</a>
+                {/* 2. NAVBAR PRINCIPAL CON LOGO PANTECH */}
+                <nav className="bg-[#0A0A0A]/80 backdrop-blur-md border-b border-zinc-800/60">
+                    <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+
+                        {/* Logo de la app (PanTech.png) */}
+                        <a href="#" className="flex items-center gap-3 group">
+                            <img
+                                src="/Otros/PanTech.png"
+                                alt="PanTech Logo"
+                                className="h-9 w-auto object-contain transition-transform group-hover:scale-105"
+                            />
+                        </a>
+
+                        {/* Nav Links Desktop */}
+                        <div className="hidden md:flex items-center gap-8 text-sm font-medium">
+                            <a href="#programa" className="text-zinc-300 hover:text-white transition">El Programa</a>
+                            <a href="#requisitos" className="text-zinc-300 hover:text-white transition">Requisitos</a>
+                            <a href="#faq" className="text-zinc-300 hover:text-white transition">FAQ</a>
+                            <a
+                                href="https://x.com"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-zinc-400 hover:text-white transition text-xs tf-mono flex items-center gap-1.5 border border-zinc-800 px-3 py-1.5 rounded-full"
+                            >
+                                <span>Síguenos en X</span>
+                                <span className="text-[10px]">↗</span>
+                            </a>
+                            <button
+                                onClick={() => setApplyModalOpen(true)}
+                                className="bg-white text-black font-semibold px-5 py-2.5 rounded-full text-xs uppercase tracking-wider hover:bg-[#FF4D00] hover:text-white transition-all transform hover:scale-105"
+                            >
+                                Postular ahora
+                            </button>
+                        </div>
+
+                        {/* Toggle Menú Móvil */}
                         <button
-                            onClick={() => { setMobileMenuOpen(false); setApplyModalOpen(true); }}
-                            className="bg-[#FF4D00] text-white font-bold py-3 rounded-lg uppercase tracking-wider text-sm"
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            className="md:hidden text-zinc-300 hover:text-white p-2"
+                            aria-label="Abrir menú"
                         >
-                            Postular ahora
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                {mobileMenuOpen ? (
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                ) : (
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                )}
+                            </svg>
                         </button>
                     </div>
-                )}
+
+                    {/* Menú Desplegable Móvil */}
+                    {mobileMenuOpen && (
+                        <div className="md:hidden bg-[#0A0A0A] border-b border-zinc-800 px-6 py-6 flex flex-col gap-5">
+                            <a href="#programa" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-zinc-200">El Programa</a>
+                            <a href="#ministerios" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-zinc-200">Ministerios</a>
+                            <a href="#requisitos" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-zinc-200">Requisitos</a>
+                            <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-zinc-200">Preguntas Frecuentes</a>
+                            <button
+                                onClick={() => { setMobileMenuOpen(false); setApplyModalOpen(true); }}
+                                className="bg-[#FF4D00] text-white font-bold py-3 rounded-lg uppercase tracking-wider text-sm"
+                            >
+                                Postular ahora
+                            </button>
+                        </div>
+                    )}
+                </nav>
             </header>
 
             {/* ==========================================
           2. HERO SECTION (Vista Satelital Nocturna + Título Gigante)
       ========================================== */}
-            <section className="tf-hero-bg pt-36 pb-24 md:pt-48 md:pb-36 min-h-screen flex flex-col justify-between border-b border-zinc-800/80 relative">
+            <section className="tf-hero-bg pt-44 pb-24 md:pt-56 md:pb-36 min-h-screen flex flex-col justify-between border-b border-zinc-800/80 relative">
                 <div className="max-w-7xl mx-auto px-6 w-full flex-1 flex flex-col justify-end">
 
                     <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-zinc-700/80 bg-black/60 backdrop-blur-md text-xs tf-mono text-zinc-300 w-fit mb-8">
@@ -226,7 +230,7 @@ export default function FuerzaTechPaniense() {
 
                         {/* Columna Izquierda - Título Fijo */}
                         <div className="lg:col-span-4">
-                            <div className="sticky top-28">
+                            <div className="sticky top-36">
                                 <span className="text-xs tf-mono text-[#FF4D00] uppercase tracking-widest block mb-3">// SOBRE EL PROGRAMA</span>
                                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight text-white leading-none">
                                     Fuerza Tech Paniense
@@ -276,7 +280,7 @@ export default function FuerzaTechPaniense() {
             </section>
 
             {/* ==========================================
-          4. SECCIÓN NARANJA NEÓN ("Responde al llamado" / Answer the call)
+          4. SECCIÓN NARANJA NEÓN ("Responde al llamado")
       ========================================== */}
             <section className="bg-[#FF4D00] text-black py-20 md:py-32 relative overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
@@ -314,7 +318,7 @@ export default function FuerzaTechPaniense() {
                             </div>
                         </div>
 
-                        {/* Arte de la Mascota CRT / Cyber-Engineer estilo Tech Force */}
+                        {/* Terminal de Misiones */}
                         <div className="lg:col-span-5 flex justify-center">
                             <div className="w-full max-w-md bg-black p-8 border-4 border-black shadow-2xl relative">
                                 <div className="tf-mono text-xs text-[#FF4D00] mb-4 flex justify-between border-b border-zinc-800 pb-2">
@@ -352,7 +356,7 @@ export default function FuerzaTechPaniense() {
             </section>
 
             {/* ==========================================
-          5. SECCIÓN MINISTERIOS / ÁREAS DE IMPACTO (Desplegable Acordeón)
+          5. SECCIÓN MINISTERIOS / ÁREAS DE IMPACTO
       ========================================== */}
             <section id="ministerios" className="py-24 md:py-36 bg-[#0A0A0A] border-b border-zinc-900">
                 <div className="max-w-7xl mx-auto px-6">
@@ -547,14 +551,11 @@ export default function FuerzaTechPaniense() {
                     <div className="md:col-span-5 flex flex-col justify-between space-y-6">
                         <div>
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="w-8 h-5 flex flex-col justify-between py-0.5">
-                                    <div className="w-full h-1 bg-white"></div>
-                                    <div className="w-full h-1 bg-white"></div>
-                                    <div className="w-full h-1 bg-[#FF4D00]"></div>
-                                </div>
-                                <span className="text-xl font-extrabold uppercase tracking-tighter text-white">
-                                    Fuerza Tech Paniense
-                                </span>
+                                <img
+                                    src="/Otros/PanTech.png"
+                                    alt="PanTech Logo"
+                                    className="h-8 w-auto object-contain"
+                                />
                             </div>
                             <p className="text-zinc-500 leading-relaxed max-w-sm text-xs">
                                 Iniciativa gubernamental para el reclutamiento de talento informático de vanguardia al servicio del Reino del Pan. Adscrita al Ministerio de Transformación Digital y Coordinación Cívica.
