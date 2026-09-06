@@ -172,7 +172,6 @@ export default function FuerzaTechPaniense() {
                     {mobileMenuOpen && (
                         <div className="md:hidden bg-[#0A0A0A] border-b border-zinc-800 px-6 py-6 flex flex-col gap-5">
                             <a href="#programa" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-zinc-200">El Programa</a>
-                            <a href="#ministerios" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-zinc-200">Ministerios</a>
                             <a href="#requisitos" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-zinc-200">Requisitos</a>
                             <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-zinc-200">Preguntas Frecuentes</a>
                             <button
@@ -355,91 +354,6 @@ export default function FuerzaTechPaniense() {
                 </div>
             </section>
 
-            {/* ==========================================
-          5. SECCIÓN MINISTERIOS / ÁREAS DE IMPACTO
-      ========================================== */}
-            <section id="ministerios" className="py-24 md:py-36 bg-[#0A0A0A] border-b border-zinc-900">
-                <div className="max-w-7xl mx-auto px-6">
-
-                    <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
-                        <div>
-                            <span className="text-xs tf-mono text-[#FF4D00] uppercase tracking-widest block mb-3">// DESTINOS TÉCNICOS</span>
-                            <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tight text-white">
-                                Ministerios e Impacto
-                            </h2>
-                        </div>
-                        <p className="text-zinc-400 text-sm max-w-md">
-                            Selecciona un ministerio para conocer los proyectos estratégicos, las arquitecturas utilizadas y las plazas abiertas.
-                        </p>
-                    </div>
-
-                    {/* Acordeón de Agencias */}
-                    <div className="space-y-4">
-                        {agencies.map((agency, index) => {
-                            const isOpen = activeAgency === index;
-                            return (
-                                <div
-                                    key={agency.id}
-                                    className={`border transition-all duration-300 ${isOpen ? 'border-[#FF4D00] bg-zinc-950' : 'border-zinc-800/80 bg-zinc-900/40 hover:border-zinc-700'
-                                        }`}
-                                >
-                                    <button
-                                        onClick={() => setActiveAgency(isOpen ? null : index)}
-                                        className="w-full p-6 md:p-8 text-left flex items-center justify-between gap-4"
-                                    >
-                                        <div className="flex flex-col sm:flex-row sm:items-center gap-4 md:gap-8">
-                                            <span className="text-xs tf-mono font-semibold text-[#FF4D00] bg-[#FF4D00]/10 border border-[#FF4D00]/20 px-3 py-1 w-fit">
-                                                {agency.code}
-                                            </span>
-                                            <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight">
-                                                {agency.title}
-                                            </h3>
-                                        </div>
-                                        <span className="text-2xl text-zinc-400 font-mono">
-                                            {isOpen ? '−' : '+'}
-                                        </span>
-                                    </button>
-
-                                    {isOpen && (
-                                        <div className="px-6 pb-8 md:px-8 md:pb-8 pt-2 border-t border-zinc-900 grid grid-cols-1 lg:grid-cols-12 gap-8">
-                                            <div className="lg:col-span-7 space-y-4 text-zinc-300 text-sm sm:text-base leading-relaxed">
-                                                <p className="font-medium text-white text-lg">{agency.summary}</p>
-                                                <p className="text-zinc-400">{agency.description}</p>
-                                                <div className="pt-4 border-t border-zinc-900">
-                                                    <span className="text-xs tf-mono uppercase text-zinc-500 block mb-2">Métrica de impacto social:</span>
-                                                    <p className="text-sm font-semibold text-[#FF4D00]">{agency.impact}</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="lg:col-span-5 bg-zinc-900 p-6 border border-zinc-800 flex flex-col justify-between">
-                                                <div>
-                                                    <span className="text-xs tf-mono uppercase text-zinc-400 block mb-3">// PERFILES BUSCADOS EN ESTA ÁREA</span>
-                                                    <ul className="space-y-2">
-                                                        {agency.roles.map((role, rIdx) => (
-                                                            <li key={rIdx} className="text-xs tf-mono text-zinc-200 flex items-center gap-2">
-                                                                <span className="w-1.5 h-1.5 bg-[#FF4D00]"></span>
-                                                                <span>{role}</span>
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-
-                                                <button
-                                                    onClick={() => setApplyModalOpen(true)}
-                                                    className="mt-6 w-full bg-white text-black hover:bg-[#FF4D00] hover:text-white transition font-bold text-xs uppercase tracking-wider py-3"
-                                                >
-                                                    Solicitar plaza en este ministerio
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                </div>
-            </section>
 
             {/* ==========================================
           6. SECCIÓN REQUISITOS Y PROCESO DE SELECCIÓN
