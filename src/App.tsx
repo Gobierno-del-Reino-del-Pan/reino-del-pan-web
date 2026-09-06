@@ -34,7 +34,7 @@ import PKMNCContest from "./pages/concursos/PKMNContest.tsx";
 import tvpContest from "./pages/concursos/tvpContest.tsx";
 import Elecciones from "./pages/Otros/Electa.tsx";
 import Alertas from "./pages/Alerta.tsx"
-
+import FuerzaTech from "./pages/Otros/FuerzaTech.tsx";
 
 
 function App() {
@@ -77,6 +77,7 @@ function App() {
         <Route path="/privacy" component={Privacy} />
         <Route path="/terms" component={Terms} />
         <Route path="/404" component={NotFound} />
+        <Route path="/FTech" component={FuerzaTech} />
         <Route component={NotFound} />
       </Switch>
     </div>
