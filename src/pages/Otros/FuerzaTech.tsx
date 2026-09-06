@@ -1,401 +1,655 @@
 import React, { useState } from 'react';
 
 export default function FuerzaTechPaniense() {
-    const [bannerOpen, setBannerOpen] = useState(false);
+    const [activeAgency, setActiveAgency] = useState<number | null>(0);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [applyModalOpen, setApplyModalOpen] = useState(false);
 
-    // Inyección de estilos con estética USWDS / TechForce.gov
+    // Estilos tipográficos y utilidades personalizadas de Tech Force
     const customStyles = `
-    @import url('https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Merriweather:wght@400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
 
-    .ftp-scope {
-      font-family: 'Public Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    .tf-scope {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    .ftp-scope .font-serif-gov {
-      font-family: 'Merriweather', Georgia, serif;
+    .tf-mono {
+      font-family: 'JetBrains Mono', monospace;
     }
 
-    /* Borde superior azul institucional para tarjetas / bloques estilo USWDS */
-    .ftp-border-top-accent {
-      border-top: 4px solid #005ea2;
+    /* Imagen de fondo satelital nocturna estilo Tech Force Hero */
+    .tf-hero-bg {
+      background-image: linear-gradient(180deg, rgba(10, 10, 10, 0.65) 0%, rgba(10, 10, 10, 0.95) 80%, #0A0A0A 100%), 
+                        url('https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=2069&auto=format&fit=crop');
+      background-size: cover;
+      background-position: center;
+    }
+
+    /* Animación suave para acordeón */
+    .tf-[#FF4D00] {
+      color: #FF4D00;
+    }
+    
+    .tf-bg-[#FF4D00] {
+      background-color: #FF4D00;
     }
   `;
 
+    // Datos de Ministerios / Áreas de Impacto
+    const agencies = [
+        {
+            id: 'm-hacienda',
+            code: 'MIN-HAC-01',
+            title: 'Ministerio de Hacienda y Finanzas Públicas',
+            summary: 'Administración de la infraestructura financiera crítica y sistemas fiscales del Reino.',
+            description: 'Los ingenieros destinados a Hacienda reconstruirán las pasarelas de tributación pública, optimizarán la detección de fraude mediante analítica predictiva de datos en tiempo real y desarrollarán APIs de conciliación bancaria estatal con cifrado cuántico.',
+            roles: ['Senior Backend Engineer (Go / Rust)', 'Data Architect', 'Distributed Systems Specialist'],
+            impact: 'Procesamiento de más de 4.000 millones de monedas panienses en transacciones anuales.'
+        },
+        {
+            id: 'm-defensa',
+            code: 'MIN-[#FF4D00]-02',
+            title: 'Ministerio de Ciberdefensa y Transformación',
+            summary: 'Protección de la soberanía digital e infraestructuras críticas nacionales.',
+            description: 'Unidad de respuesta rápida ante ciberamenazas estatales. Desarrollo de defensas Zero-Trust, auditoría de firmware para telecomunicaciones públicas y fortificación de los servidores centrales de la Red Paniense.',
+            roles: ['Cybersecurity Threat Hunter', 'Infrastructure DevSecOps', 'Kernel & Low-Level Engineer'],
+            impact: 'Protección de 120+ entidades gubernamentales conectadas a la red cibernética.'
+        },
+        {
+            id: 'm-presidencia',
+            code: 'MIN-PRE-03',
+            title: 'Presidencia y Sede Electrónica Única',
+            summary: 'Plataforma unificada de servicios e identidad digital para el ciudadano.',
+            description: 'Creación de la nueva identidad digital unificada PanID, simplificando trámites como empadronamiento, licencias y ayudas públicas a menos de 3 clics con estándar de accesibilidad AAA.',
+            roles: ['Principal Frontend Engineer (React/Next.js)', 'UX Research Lead', 'Accessibility Systems Lead'],
+            impact: 'Atención a más de 2.5 millones de usuarios con latencias inferiores a 50ms.'
+        },
+        {
+            id: 'm-fomento',
+            code: 'MIN-FOM-04',
+            title: 'Ministerio de Fomento e Infraestructura Geográfica',
+            summary: 'Sistemas cartográficos, sensores IoT urbanos y logística de movilidad.',
+            description: 'Implementación de plataformas GeoJSON masivas para el trazado de obras públicas, gestión en tiempo real del transporte interurbano e integración de datos geoespaciales con satélites de monitoreo agrícola.',
+            roles: ['GIS Software Engineer', 'IoT Stream Pipelines Specialist', 'Full-Stack Spatial Developer'],
+            impact: 'Cobertura del 100% del territorio del Reino del Pan en la malla digital.'
+        }
+    ];
+
+    // Preguntas frecuentes
+    const faqs = [
+        {
+            q: '¿Qué es el programa Fuerza Tech Paniense?',
+            a: 'Es una unidad de élite civil patrocinada por la Corona y el Gobierno del Reino del Pan que recluta a los mejores ingenieros, diseñadores y analistas de datos para resolver los desafíos tecnológicos más complejos del sector público durante una estancia estratégica de 2 años.'
+        },
+        {
+            q: '¿Cuál es la duración del compromiso y qué ocurre al finalizar?',
+            a: 'El programa principal dura 24 meses. Al completar el periodo, los participantes pueden optar por convertirse en funcionarios de carrera de la escala técnica del Estado, renovar su plaza de liderazgo o dar el salto a empresas tecnológicas aliadas de primer nivel.'
+        },
+        {
+            q: '¿Puedo trabajar de forma remota o híbrida?',
+            a: 'La mayoría de los proyectos permiten trabajo 100% remoto dentro del Reino del Pan o formato híbrido con estancias en la sede ministerial en la Capital Paniense o laboratorios regionales.'
+        },
+        {
+            q: '¿Cuáles son los requisitos mínimos de elegibilidad?',
+            a: 'Tener nacionalidad paniense o permiso de residencia de larga duración, experiencia acreditada en desarrollo de software, ciberseguridad o producto digital (de 2 a 8+ años según el rango) y superar la evaluación técnica de código y arquitectura.'
+        }
+    ];
+
     return (
-        <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 antialiased">
+        <div className="tf-scope min-h-screen bg-[#0A0A0A] text-white antialiased selection:bg-[#FF4D00] selection:text-black">
             <style dangerouslySetInnerHTML={{ __html: customStyles }} />
 
-            {/* Contenedor principal */}
-            <div className="ftp-scope flex-1 flex flex-col">
+            {/* ==========================================
+          1. HEADER / NAVBAR FLOTANTE
+      ========================================== */}
+            <header className="fixed top-0 left-0 right-0 z-50 bg-[#0A0A0A]/80 backdrop-blur-md border-b border-zinc-800/60">
+                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
 
-                {/* 1. USWDS OFFICIAL GOVERNMENT BANNER */}
-                <div className="bg-slate-100 border-b border-slate-200 text-xs text-slate-700 py-2 px-4 z-50">
-                    <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                            <img
-                                src="/flag.png"
-                                alt="Bandera del Reino del Pan"
-                                className="h-3.5 w-5 object-contain"
-                            />
-                            <span className="font-medium text-slate-800">
-                                Un sitio web oficial del Gobierno del Reino del Pan
+                    {/* Brand Logo (Estilo Tech Force Flag Symbol) */}
+                    <a href="#" className="flex items-center gap-3 group">
+                        <div className="w-9 h-6 flex flex-col justify-between py-0.5">
+                            <div className="flex gap-1 items-center">
+                                <span className="w-2.5 h-2.5 bg-white group-hover:bg-[#FF4D00] transition"></span>
+                                <span className="w-1.5 h-1 h-full bg-white/40"></span>
+                                <span className="w-full h-1 bg-white"></span>
+                            </div>
+                            <div className="w-full h-1 bg-white"></div>
+                            <div className="w-[#FF4D00] h-1 bg-[#FF4D00]"></div>
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-base font-extrabold tracking-tighter uppercase leading-none text-white">
+                                Fuerza Tech
+                            </span>
+                            <span className="text-[10px] tf-mono tracking-widest uppercase text-zinc-400 leading-none mt-0.5">
+                                Reino del Pan
                             </span>
                         </div>
-                        <button
-                            onClick={() => setBannerOpen(!bannerOpen)}
-                            className="text-[#005ea2] hover:underline font-medium text-[11px] flex items-center gap-1 focus:outline-none"
-                        >
-                            Así es como sabes que es oficial
-                            <svg
-                                className={`w-3 h-3 transition-transform ${bannerOpen ? 'rotate-180' : ''}`}
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </button>
-                    </div>
+                    </a>
 
-                    {/* Desplegable de explicación de seguridad/dominio gubernamental */}
-                    {bannerOpen && (
-                        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 pt-3 mt-2 border-t border-slate-200 text-slate-600 text-[11px]">
-                            <div className="flex gap-3">
-                                <div className="p-2 bg-slate-200 rounded-full h-fit text-slate-700">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <strong className="block font-semibold text-slate-800 mb-0.5">Los sitios web oficiales usan .pan.gov</strong>
-                                    Los sitios web oficiales del gobierno pertenecen a organizaciones oficiales del Reino del Pan.
-                                </div>
-                            </div>
-                            <div className="flex gap-3">
-                                <div className="p-2 bg-slate-200 rounded-full h-fit text-slate-700">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <strong className="block font-semibold text-slate-800 mb-0.5">Los sitios con HTTPS son seguros</strong>
-                                    El candado de seguridad (🔒) significa que te has conectado de forma segura al sitio oficial.
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    {/* Nav Links Desktop */}
+                    <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
+                        <a href="#programa" className="text-zinc-300 hover:text-white transition">El Programa</a>
+                        <a href="#ministerios" className="text-zinc-300 hover:text-white transition">Ministerios</a>
+                        <a href="#requisitos" className="text-zinc-300 hover:text-white transition">Requisitos</a>
+                        <a href="#faq" className="text-zinc-300 hover:text-white transition">FAQ</a>
+                        <a
+                            href="https://x.com"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-zinc-400 hover:text-white transition text-xs tf-mono flex items-center gap-1.5 border border-zinc-800 px-3 py-1.5 rounded-full"
+                        >
+                            <span>Síguenos en X</span>
+                            <span className="text-[10px]">↗</span>
+                        </a>
+                        <button
+                            onClick={() => setApplyModalOpen(true)}
+                            className="bg-white text-black font-semibold px-5 py-2.5 rounded-full text-xs uppercase tracking-wider hover:bg-[#FF4D00] hover:text-white transition-all transform hover:scale-105"
+                        >
+                            Postular ahora
+                        </button>
+                    </nav>
+
+                    {/* Toggle Menú Móvil */}
+                    <button
+                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        className="md:hidden text-zinc-300 hover:text-white p-2"
+                        aria-label="Abrir menú"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            {mobileMenuOpen ? (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            ) : (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                            )}
+                        </svg>
+                    </button>
                 </div>
 
-                {/* 2. HEADER OFICIAL TECHFORCE STYLE */}
-                <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
-                    <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-
-                        {/* Branding Institucional */}
-                        <a href="/" className="flex items-center gap-3 group">
-                            <img
-                                src="/Otros/PanTech.png"
-                                alt="Fuerza Tech Paniense Logo"
-                                className="h-10 w-auto object-contain"
-                            />
-                            <div className="border-l border-slate-300 pl-3 flex flex-col">
-                                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 leading-none mb-1">
-                                    Ministerio de Transformación Digital
-                                </span>
-                                <span className="font-bold text-lg md:text-xl text-slate-900 group-hover:text-[#005ea2] transition-colors leading-none">
-                                    Fuerza Tech Paniense
-                                </span>
-                            </div>
-                        </a>
-
-                        {/* Navegación estilo USWDS */}
-                        <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-700">
-                            <a href="#mision" className="hover:text-[#005ea2] hover:underline underline-offset-4 decoration-2">
-                                Nuestra Misión
-                            </a>
-                            <a href="#proyectos" className="hover:text-[#005ea2] hover:underline underline-offset-4 decoration-2">
-                                Proyectos y Software
-                            </a>
-                            <a href="#impacto" className="hover:text-[#005ea2] hover:underline underline-offset-4 decoration-2">
-                                Impacto
-                            </a>
-                            <a
-                                href="#unete"
-                                className="bg-[#005ea2] hover:bg-[#1a4480] text-white px-5 py-2.5 rounded-md font-bold transition shadow-sm"
-                            >
-                                Unirse a la Fuerza Tech
-                            </a>
-                        </nav>
-
-                    </div>
-                </header>
-
-                {/* 3. HERO SECTION - Estilo Tech Force / U.S. Digital Corps */}
-                <section className="bg-[#0f1e36] text-white py-16 md:py-24 relative overflow-hidden">
-                    <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
-
-                        <div className="lg:col-span-8 flex flex-col items-start gap-6">
-                            <span className="bg-[#005ea2] text-white text-xs font-bold uppercase tracking-widest px-3 py-1 rounded">
-                                Servicio Público Tecnológico
-                            </span>
-
-                            <h1 className="font-serif-gov text-3xl sm:text-4xl md:text-5xl font-bold leading-tight text-white">
-                                Construye tecnología de alto impacto para el Reino del Pan.
-                            </h1>
-
-                            <p className="text-slate-300 text-base md:text-lg leading-relaxed max-w-2xl">
-                                La Fuerza Tech Paniense es la unidad gubernamental de ingenieros de software, diseñadores de producto y especialistas en ciberdefensa dedicados a transformar la infraestructura pública digital.
-                            </p>
-
-                            <div className="flex flex-wrap gap-4 pt-2">
-                                <a
-                                    href="#unete"
-                                    className="bg-[#005ea2] hover:bg-[#1a4480] text-white font-bold px-6 py-3.5 rounded-md transition shadow-md text-sm uppercase tracking-wide"
-                                >
-                                    Convocatoria Abierta 2026
-                                </a>
-                                <a
-                                    href="#proyectos"
-                                    className="bg-transparent hover:bg-slate-800 text-white font-semibold px-6 py-3.5 rounded-md border border-slate-400 transition text-sm uppercase tracking-wide"
-                                >
-                                    Explorar Repositorios Públicos
-                                </a>
-                            </div>
-                        </div>
-
-                        {/* Módulo de métricas de impacto gubernamental */}
-                        <div className="lg:col-span-4 bg-slate-800/90 border border-slate-700 rounded-lg p-6 flex flex-col gap-6 shadow-xl">
-                            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 border-b border-slate-700 pb-3">
-                                Estado de la Infraestructura Digital
-                            </h3>
-
-                            <div className="space-y-4">
-                                <div>
-                                    <div className="text-2xl md:text-3xl font-extrabold text-white">99.98%</div>
-                                    <div className="text-xs text-slate-400">Disponibilidad de la Identidad Digital Paniense</div>
-                                </div>
-
-                                <div className="border-t border-slate-700/80 pt-3">
-                                    <div className="text-2xl md:text-3xl font-extrabold text-emerald-400">100%</div>
-                                    <div className="text-xs text-slate-400">Código Abierto en Sistemas de Sede Electrónica</div>
-                                </div>
-
-                                <div className="border-t border-slate-700/80 pt-3">
-                                    <div className="text-2xl md:text-3xl font-extrabold text-sky-400">+1.2M</div>
-                                    <div className="text-xs text-slate-400">Trámites procesados mensualmente sin interrupción</div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </section>
-
-                {/* 4. SECCIÓN DE ÁREAS DE TRABAJO (Ejes Tecnológicos) */}
-                <section id="mision" className="py-16 bg-white border-b border-slate-200">
-                    <div className="max-w-6xl mx-auto px-4">
-
-                        <div className="max-w-2xl mb-12">
-                            <h2 className="text-xs font-bold uppercase tracking-widest text-[#005ea2] mb-2">
-                                Nuestra Estrategia
-                            </h2>
-                            <h3 className="font-serif-gov text-2xl md:text-3xl font-bold text-slate-900">
-                                Pilar Tecnológico Institucional
-                            </h3>
-                            <p className="text-slate-600 text-sm md:text-base mt-3 leading-relaxed">
-                                Diseñamos y mantenemos las herramientas críticas que potencian a la administración pública y protegen la privacidad de los ciudadanos.
-                            </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-
-                            {/* Tarjeta 1 */}
-                            <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 ftp-border-top-accent flex flex-col justify-between shadow-sm hover:shadow-md transition">
-                                <div>
-                                    <h4 className="font-bold text-lg text-slate-900 mb-3">
-                                        Desarrollo de Software e Identidad
-                                    </h4>
-                                    <p className="text-slate-600 text-sm leading-relaxed mb-4">
-                                        Creación de componentes UI de accesibilidad universal (WCAG 2.1 AA) y sistemas centralizados de autenticación segura para los servicios del Reino.
-                                    </p>
-                                </div>
-                                <div className="text-xs font-semibold text-[#005ea2] uppercase tracking-wide">
-                                    Tecnologías: React · Next.js · TypeScript
-                                </div>
-                            </div>
-
-                            {/* Tarjeta 2 */}
-                            <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 ftp-border-top-accent flex flex-col justify-between shadow-sm hover:shadow-md transition">
-                                <div>
-                                    <h4 className="font-bold text-lg text-slate-900 mb-3">
-                                        Ciberdefensa e Infraestructura
-                                    </h4>
-                                    <p className="text-slate-600 text-sm leading-relaxed mb-4">
-                                        Protección proactiva de datos sensibles del Estado, auditoría continua de código y despliegues seguros en arquitectura Zero Trust.
-                                    </p>
-                                </div>
-                                <div className="text-xs font-semibold text-[#005ea2] uppercase tracking-wide">
-                                    Tecnologías: Rust · Cloudflare · Supabase
-                                </div>
-                            </div>
-
-                            {/* Tarjeta 3 */}
-                            <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 ftp-border-top-accent flex flex-col justify-between shadow-sm hover:shadow-md transition">
-                                <div>
-                                    <h4 className="font-bold text-lg text-slate-900 mb-3">
-                                        Ciencia de Datos y Geoportal
-                                    </h4>
-                                    <p className="text-slate-600 text-sm leading-relaxed mb-4">
-                                        Plataformas abiertas de cartografía, transporte público y análisis presupuestario en tiempo real para máxima transparencia gubernamental.
-                                    </p>
-                                </div>
-                                <div className="text-xs font-semibold text-[#005ea2] uppercase tracking-wide">
-                                    Tecnologías: Python · REST APIs · OpenData
-                                </div>
-                            </div>
-
-                        </div>
-
-                    </div>
-                </section>
-
-                {/* 5. SECCIÓN DE PROYECTOS DESTACADOS */}
-                <section id="proyectos" className="py-16 bg-slate-100 border-b border-slate-200">
-                    <div className="max-w-6xl mx-auto px-4">
-
-                        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
-                            <div>
-                                <h2 className="text-xs font-bold uppercase tracking-widest text-[#005ea2] mb-1">
-                                    Ecosistema Digital
-                                </h2>
-                                <h3 className="font-serif-gov text-2xl md:text-3xl font-bold text-slate-900">
-                                    Iniciativas de Código Abierto
-                                </h3>
-                            </div>
-                            <a
-                                href="#"
-                                className="text-sm font-bold text-[#005ea2] hover:underline flex items-center gap-1"
-                            >
-                                Ver todos los repositorios en GitHub ↗
-                            </a>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                            {/* Proyecto 1 */}
-                            <div className="bg-white border border-slate-200 p-6 rounded-lg shadow-sm">
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="bg-emerald-100 text-emerald-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase">
-                                        Producción
-                                    </span>
-                                    <span className="text-xs font-mono text-slate-500">v2.4.0</span>
-                                </div>
-                                <h4 className="font-bold text-xl text-slate-900 mb-2">
-                                    Sistema de Diseño PanUI
-                                </h4>
-                                <p className="text-slate-600 text-sm leading-relaxed mb-6">
-                                    Librería oficial de componentes accesibles para garantizar cohesión estética y funcional en todas las sedes electrónicas del Reino del Pan.
-                                </p>
-                                <div className="flex items-center justify-between pt-4 border-t border-slate-100 text-xs">
-                                    <span className="font-mono text-slate-500">npm @pan/ui-design</span>
-                                    <a href="#" className="font-bold text-[#005ea2] hover:underline">
-                                        Documentación Técnica →
-                                    </a>
-                                </div>
-                            </div>
-
-                            {/* Proyecto 2 */}
-                            <div className="bg-white border border-slate-200 p-6 rounded-lg shadow-sm">
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="bg-amber-100 text-amber-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase">
-                                        Fase de Pruebas
-                                    </span>
-                                    <span className="text-xs font-mono text-slate-500">v0.9.1</span>
-                                </div>
-                                <h4 className="font-bold text-xl text-slate-900 mb-2">
-                                    Geoportal Abierto del Reino
-                                </h4>
-                                <p className="text-slate-600 text-sm leading-relaxed mb-6">
-                                    API pública y cuadro de mando interactivo para monitorización cartográfica, límites municipales e infraestructura pública.
-                                </p>
-                                <div className="flex items-center justify-between pt-4 border-t border-slate-100 text-xs">
-                                    <span className="font-mono text-slate-500">api.datos.pan.gov</span>
-                                    <a href="#" className="font-bold text-[#005ea2] hover:underline">
-                                        Especificación Swagger →
-                                    </a>
-                                </div>
-                            </div>
-
-                        </div>
-
-                    </div>
-                </section>
-
-                {/* 6. CALL TO ACTION - RECLUTAMIENTO */}
-                <section id="unete" className="py-16 bg-[#0f1e36] text-white">
-                    <div className="max-w-4xl mx-auto px-4 text-center flex flex-col items-center gap-6">
-                        <span className="bg-[#005ea2] text-white text-xs font-bold uppercase tracking-widest px-3 py-1 rounded">
-                            Únete a nuestro equipo
-                        </span>
-                        <h2 className="font-serif-gov text-3xl md:text-4xl font-bold leading-tight">
-                            Pon tu talento tecnológico al servicio del interés general.
-                        </h2>
-                        <p className="text-slate-300 text-base leading-relaxed max-w-2xl">
-                            Buscamos desarrolladores Full-Stack, ingenieros de infraestructura y diseñadores comprometidos con la transparencia, la accesibilidad y la excelencia técnica en la función pública.
-                        </p>
-                        <a
-                            href="mailto:talento@tech.pan.gov"
-                            className="bg-[#005ea2] hover:bg-[#1a4480] text-white font-bold px-8 py-3.5 rounded-md transition text-sm uppercase tracking-wider shadow-lg mt-2"
+                {/* Menú Desplegable Móvil */}
+                {mobileMenuOpen && (
+                    <div className="md:hidden bg-[#0A0A0A] border-b border-zinc-800 px-6 py-6 flex flex-col gap-5">
+                        <a href="#programa" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-zinc-200">El Programa</a>
+                        <a href="#ministerios" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-zinc-200">Ministerios</a>
+                        <a href="#requisitos" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-zinc-200">Requisitos</a>
+                        <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-zinc-200">Preguntas Frecuentes</a>
+                        <button
+                            onClick={() => { setMobileMenuOpen(false); setApplyModalOpen(true); }}
+                            className="bg-[#FF4D00] text-white font-bold py-3 rounded-lg uppercase tracking-wider text-sm"
                         >
-                            Presentar Candidatura
-                        </a>
+                            Postular ahora
+                        </button>
                     </div>
-                </section>
+                )}
+            </header>
 
-                {/* 7. FOOTER INSTITUCIONAL TECHFORCE / USWDS STYLE */}
-                <footer className="bg-slate-900 text-slate-300 text-xs py-12 border-t border-slate-800">
-                    <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-12 gap-8">
+            {/* ==========================================
+          2. HERO SECTION (Vista Satelital Nocturna + Título Gigante)
+      ========================================== */}
+            <section className="tf-hero-bg pt-36 pb-24 md:pt-48 md:pb-36 min-h-screen flex flex-col justify-between border-b border-zinc-800/80 relative">
+                <div className="max-w-7xl mx-auto px-6 w-full flex-1 flex flex-col justify-end">
 
-                        <div className="md:col-span-5 flex flex-col gap-3">
-                            <div className="flex items-center gap-3">
-                                <img
-                                    src="/Otros/PanTech.png"
-                                    alt="Logo Fuerza Tech Paniense"
-                                    className="h-8 w-auto object-contain brightness-200"
-                                />
-                                <span className="font-bold text-white text-base">
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-zinc-700/80 bg-black/60 backdrop-blur-md text-xs tf-mono text-zinc-300 w-fit mb-8">
+                        <span className="w-2 h-2 rounded-full bg-[#FF4D00] animate-ping"></span>
+                        <span>CONVOCATORIA PÚBLICA DE INGENIERÍA 2026 // EDICIÓN I</span>
+                    </div>
+
+                    <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight text-white leading-[0.9] uppercase max-w-6xl">
+                        Tecnología para el <span className="text-zinc-400">Reino del Pan.</span>
+                    </h1>
+
+                    <div className="mt-12 md:mt-20 grid grid-cols-1 md:grid-cols-12 gap-8 items-end border-t border-zinc-800/80 pt-8">
+                        <div className="md:col-span-7">
+                            <p className="text-zinc-300 text-lg sm:text-xl md:text-2xl font-light leading-relaxed">
+                                La <strong className="text-white font-semibold">Fuerza Tech Paniense</strong> es un cuerpo técnico de élite que recluta ingenieros de software, analistas de datos y diseñadores para construir la próxima generación de servicios públicos estatales.
+                            </p>
+                        </div>
+                        <div className="md:col-span-5 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 justify-end">
+                            <button
+                                onClick={() => setApplyModalOpen(true)}
+                                className="bg-[#FF4D00] text-white hover:bg-[#e04400] text-sm font-bold uppercase tracking-widest px-8 py-4 rounded-none transition flex items-center justify-center gap-3"
+                            >
+                                <span>Postular a la Fuerza Tech</span>
+                                <span>→</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            {/* ==========================================
+          3. SECCIÓN EL PROGRAMA (Dos Columnas Brutalistas estilo Tech Force)
+      ========================================== */}
+            <section id="programa" className="py-24 md:py-36 bg-[#0A0A0A] border-b border-zinc-900">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
+
+                        {/* Columna Izquierda - Título Fijo */}
+                        <div className="lg:col-span-4">
+                            <div className="sticky top-28">
+                                <span className="text-xs tf-mono text-[#FF4D00] uppercase tracking-widest block mb-3">// SOBRE EL PROGRAMA</span>
+                                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight text-white leading-none">
+                                    Fuerza Tech Paniense
+                                </h2>
+                                <div className="w-12 h-1 bg-[#FF4D00] mt-6"></div>
+                            </div>
+                        </div>
+
+                        {/* Columna Derecha - Texto Extenso e Impactante */}
+                        <div className="lg:col-span-8 flex flex-col gap-10 text-zinc-300 text-base sm:text-lg leading-relaxed font-light">
+                            <p className="text-xl sm:text-2xl text-white font-normal leading-snug">
+                                La Fuerza Tech Paniense está reclutando a un cuerpo técnico de élite para abordar los desafíos informáticos y de infraestructura cívica más complejos de nuestra era: desde administrar el sistema financiero público hasta fortificar la ciberdefensa del Estado.
+                            </p>
+
+                            <div className="space-y-6 text-zinc-400">
+                                <p>
+                                    A través de un programa intensivo de <strong className="text-zinc-200">dos años de duración</strong>, los participantes integrarán equipos técnicos de alto rendimiento que reportarán directamente a los secretarios de Estado y directores generales de cada ministerio.
+                                </p>
+                                <p>
+                                    En colaboración con las principales compañías tecnológicas del sector privado y laboratorios de investigación, los ingenieros recibirán entrenamiento avanzado en arquitectura distribuida, seguridad Zero-Trust y gestión de productos públicos, trabajando codo con codo con referentes de la industria.
+                                </p>
+                                <p>
+                                    Al finalizar la estancia de dos años, los graduados de la Fuerza Tech podrán incorporarse a plazas fijas dentro de la función pública paniense o dar el salto a empresas privadas asociadas con el máximo reconocimiento profesional.
+                                </p>
+                            </div>
+
+                            {/* Estadísticas / Métricas Clave */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-8 border-t border-zinc-800">
+                                <div>
+                                    <span className="text-4xl sm:text-5xl font-black text-white block tf-mono">2 AÑOS</span>
+                                    <span className="text-xs text-zinc-500 uppercase tracking-wider mt-1 block">Duración del programa</span>
+                                </div>
+                                <div>
+                                    <span className="text-4xl sm:text-5xl font-black text-[#FF4D00] block tf-mono">100%</span>
+                                    <span className="text-xs text-zinc-500 uppercase tracking-wider mt-1 block">Código abierto y soberano</span>
+                                </div>
+                                <div>
+                                    <span className="text-4xl sm:text-5xl font-black text-white block tf-mono">€ 45k-75k</span>
+                                    <span className="text-xs text-zinc-500 uppercase tracking-wider mt-1 block">Rango retributivo anual</span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            {/* ==========================================
+          4. SECCIÓN NARANJA NEÓN ("Responde al llamado" / Answer the call)
+      ========================================== */}
+            <section className="bg-[#FF4D00] text-black py-20 md:py-32 relative overflow-hidden">
+                <div className="max-w-7xl mx-auto px-6 relative z-10">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+
+                        {/* Mensaje Naranja Gigante */}
+                        <div className="lg:col-span-7 flex flex-col items-start gap-8">
+                            <span className="text-xs tf-mono font-bold uppercase tracking-widest bg-black text-[#FF4D00] px-3 py-1">
+                                CONVOCATORIA NACIONAL
+                            </span>
+
+                            <h2 className="text-6xl sm:text-8xl md:text-9xl font-black tracking-tighter uppercase leading-none text-black">
+                                Responde<br />al llamado.
+                            </h2>
+
+                            <p className="text-xl sm:text-2xl font-medium text-black/90 max-w-xl leading-snug">
+                                Construye el futuro de la tecnología gubernamental del Reino del Pan en un programa de ingeniería respaldado por el Ministerio de Transformación Digital, trabajando en misiones reales desde el primer día.
+                            </p>
+
+                            <div className="flex flex-wrap items-center gap-4 pt-4">
+                                <button
+                                    onClick={() => setApplyModalOpen(true)}
+                                    className="bg-black text-white hover:bg-zinc-900 text-sm font-bold uppercase tracking-widest px-8 py-4 transition"
+                                >
+                                    Postular Ahora
+                                </button>
+                                <a
+                                    href="https://x.com"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-xs font-bold uppercase tracking-wider text-black border-b-2 border-black pb-0.5 hover:opacity-75 transition"
+                                >
+                                    Síguenos en X →
+                                </a>
+                            </div>
+                        </div>
+
+                        {/* Arte de la Mascota CRT / Cyber-Engineer estilo Tech Force */}
+                        <div className="lg:col-span-5 flex justify-center">
+                            <div className="w-full max-w-md bg-black p-8 border-4 border-black shadow-2xl relative">
+                                <div className="tf-mono text-xs text-[#FF4D00] mb-4 flex justify-between border-b border-zinc-800 pb-2">
+                                    <span>TERMINAL DE MISIONES</span>
+                                    <span>STATUS: RECRUITING</span>
+                                </div>
+
+                                <div className="space-y-4 text-xs tf-mono text-zinc-300">
+                                    <p className="text-[#FF4D00]">$ ftp --list-missions</p>
+                                    <p className="pl-2 border-l border-zinc-800">
+                                        [1] Rediseño de la pasarela fiscal del Ministerio de Hacienda.<br />
+                                        [2] Despliegue del firewall cibernético de la Red Paniense.<br />
+                                        [3] Lanzamiento de la App Oficial de Movilidad del Reino.<br />
+                                        [4] API de Transparencia de Contratos del Estado.
+                                    </p>
+                                    <p className="text-[#FF4D00]">$ ftp --eligible-profiles</p>
+                                    <p className="pl-2 border-l border-zinc-800 text-zinc-400">
+                                        * Software Engineers (Full-Stack / Backend)<br />
+                                        * Cybersecurity & Infrastructure Engineers<br />
+                                        * Data Analysts & AI Researchers<br />
+                                        * UX/UI Product Designers
+                                    </p>
+                                </div>
+
+                                <div className="mt-8 pt-4 border-t border-zinc-800 text-center">
+                                    <span className="text-[10px] tf-mono text-zinc-500 uppercase">
+                                        Gobierno del Reino del Pan · Ministerio de Transformación Digital
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            {/* ==========================================
+          5. SECCIÓN MINISTERIOS / ÁREAS DE IMPACTO (Desplegable Acordeón)
+      ========================================== */}
+            <section id="ministerios" className="py-24 md:py-36 bg-[#0A0A0A] border-b border-zinc-900">
+                <div className="max-w-7xl mx-auto px-6">
+
+                    <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+                        <div>
+                            <span className="text-xs tf-mono text-[#FF4D00] uppercase tracking-widest block mb-3">// DESTINOS TÉCNICOS</span>
+                            <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tight text-white">
+                                Ministerios e Impacto
+                            </h2>
+                        </div>
+                        <p className="text-zinc-400 text-sm max-w-md">
+                            Selecciona un ministerio para conocer los proyectos estratégicos, las arquitecturas utilizadas y las plazas abiertas.
+                        </p>
+                    </div>
+
+                    {/* Acordeón de Agencias */}
+                    <div className="space-y-4">
+                        {agencies.map((agency, index) => {
+                            const isOpen = activeAgency === index;
+                            return (
+                                <div
+                                    key={agency.id}
+                                    className={`border transition-all duration-300 ${isOpen ? 'border-[#FF4D00] bg-zinc-950' : 'border-zinc-800/80 bg-zinc-900/40 hover:border-zinc-700'
+                                        }`}
+                                >
+                                    <button
+                                        onClick={() => setActiveAgency(isOpen ? null : index)}
+                                        className="w-full p-6 md:p-8 text-left flex items-center justify-between gap-4"
+                                    >
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-4 md:gap-8">
+                                            <span className="text-xs tf-mono font-semibold text-[#FF4D00] bg-[#FF4D00]/10 border border-[#FF4D00]/20 px-3 py-1 w-fit">
+                                                {agency.code}
+                                            </span>
+                                            <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight">
+                                                {agency.title}
+                                            </h3>
+                                        </div>
+                                        <span className="text-2xl text-zinc-400 font-mono">
+                                            {isOpen ? '−' : '+'}
+                                        </span>
+                                    </button>
+
+                                    {isOpen && (
+                                        <div className="px-6 pb-8 md:px-8 md:pb-8 pt-2 border-t border-zinc-900 grid grid-cols-1 lg:grid-cols-12 gap-8">
+                                            <div className="lg:col-span-7 space-y-4 text-zinc-300 text-sm sm:text-base leading-relaxed">
+                                                <p className="font-medium text-white text-lg">{agency.summary}</p>
+                                                <p className="text-zinc-400">{agency.description}</p>
+                                                <div className="pt-4 border-t border-zinc-900">
+                                                    <span className="text-xs tf-mono uppercase text-zinc-500 block mb-2">Métrica de impacto social:</span>
+                                                    <p className="text-sm font-semibold text-[#FF4D00]">{agency.impact}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="lg:col-span-5 bg-zinc-900 p-6 border border-zinc-800 flex flex-col justify-between">
+                                                <div>
+                                                    <span className="text-xs tf-mono uppercase text-zinc-400 block mb-3">// PERFILES BUSCADOS EN ESTA ÁREA</span>
+                                                    <ul className="space-y-2">
+                                                        {agency.roles.map((role, rIdx) => (
+                                                            <li key={rIdx} className="text-xs tf-mono text-zinc-200 flex items-center gap-2">
+                                                                <span className="w-1.5 h-1.5 bg-[#FF4D00]"></span>
+                                                                <span>{role}</span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+
+                                                <button
+                                                    onClick={() => setApplyModalOpen(true)}
+                                                    className="mt-6 w-full bg-white text-black hover:bg-[#FF4D00] hover:text-white transition font-bold text-xs uppercase tracking-wider py-3"
+                                                >
+                                                    Solicitar plaza en este ministerio
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                </div>
+            </section>
+
+            {/* ==========================================
+          6. SECCIÓN REQUISITOS Y PROCESO DE SELECCIÓN
+      ========================================== */}
+            <section id="requisitos" className="py-24 md:py-36 bg-[#0A0A0A] border-b border-zinc-900">
+                <div className="max-w-7xl mx-auto px-6">
+
+                    <div className="max-w-3xl mb-16">
+                        <span className="text-xs tf-mono text-[#FF4D00] uppercase tracking-widest block mb-3">// ELEGIBILIDAD Y FASES</span>
+                        <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tight text-white leading-none">
+                            Proceso de Selección
+                        </h2>
+                        <p className="text-zinc-400 text-lg mt-4 font-light">
+                            Buscamos ingenieros excepcionales motivados por el impacto público. Nuestro proceso es riguroso, transparente y basado 100% en habilidades técnicas demostrables.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+
+                        {/* Paso 1 */}
+                        <div className="border border-zinc-800 bg-zinc-950 p-6 md:p-8 flex flex-col justify-between relative group hover:border-zinc-600 transition">
+                            <div>
+                                <span className="text-3xl font-black text-[#FF4D00] tf-mono block mb-4">01</span>
+                                <h3 className="text-xl font-bold text-white mb-2">Solicitud Inicial</h3>
+                                <p className="text-xs text-zinc-400 leading-relaxed">
+                                    Envío de currículum técnico, perfil de GitHub / Portfolio de proyectos y declaración de motivación para el servicio público.
+                                </p>
+                            </div>
+                            <span className="text-[10px] tf-mono text-zinc-600 uppercase mt-6 block">Plazo: Hasta 31 de Octubre</span>
+                        </div>
+
+                        {/* Paso 2 */}
+                        <div className="border border-zinc-800 bg-zinc-950 p-6 md:p-8 flex flex-col justify-between relative group hover:border-zinc-600 transition">
+                            <div>
+                                <span className="text-3xl font-black text-white tf-mono block mb-4">02</span>
+                                <h3 className="text-xl font-bold text-white mb-2">Prueba Técnica</h3>
+                                <p className="text-xs text-zinc-400 leading-relaxed">
+                                    Desafío práctico asíncrono de código, arquitectura de sistemas o diseño de componentes de acceso público.
+                                </p>
+                            </div>
+                            <span className="text-[10px] tf-mono text-zinc-600 uppercase mt-6 block">Duración: 48 horas</span>
+                        </div>
+
+                        {/* Paso 3 */}
+                        <div className="border border-zinc-800 bg-zinc-950 p-6 md:p-8 flex flex-col justify-between relative group hover:border-zinc-600 transition">
+                            <div>
+                                <span className="text-3xl font-black text-white tf-mono block mb-4">03</span>
+                                <h3 className="text-xl font-bold text-white mb-2">Panel con Líderes</h3>
+                                <p className="text-xs text-zinc-400 leading-relaxed">
+                                    Entrevista técnica profunda con los Directores de Tecnología de los ministerios y revisión del caso práctico.
+                                </p>
+                            </div>
+                            <span className="text-[10px] tf-mono text-zinc-600 uppercase mt-6 block">Formato: Videoconferencia</span>
+                        </div>
+
+                        {/* Paso 4 */}
+                        <div className="border border-zinc-800 bg-zinc-950 p-6 md:p-8 flex flex-col justify-between relative group border-t-4 border-t-[#FF4D00]">
+                            <div>
+                                <span className="text-3xl font-black text-[#FF4D00] tf-mono block mb-4">04</span>
+                                <h3 className="text-xl font-bold text-white mb-2">Incorporación</h3>
+                                <p className="text-xs text-zinc-400 leading-relaxed">
+                                    Asignación formal a ministerio, acreditación de seguridad pública y arranque del programa de 2 años en la Capital Paniense.
+                                </p>
+                            </div>
+                            <span className="text-[10px] tf-mono text-[#FF4D00] uppercase mt-6 block">Inicio: Enero 2027</span>
+                        </div>
+
+                    </div>
+
+                </div>
+            </section>
+
+            {/* ==========================================
+          7. PREGUNTAS FRECUENTES (FAQ)
+      ========================================== */}
+            <section id="faq" className="py-24 md:py-36 bg-[#0A0A0A] border-b border-zinc-900">
+                <div className="max-w-5xl mx-auto px-6">
+
+                    <div className="text-center mb-16">
+                        <span className="text-xs tf-mono text-[#FF4D00] uppercase tracking-widest block mb-3">// RESOLUCIÓN DE DUDAS</span>
+                        <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tight text-white">
+                            Preguntas Frecuentes
+                        </h2>
+                    </div>
+
+                    <div className="space-y-6">
+                        {faqs.map((faq, fIdx) => (
+                            <div key={fIdx} className="border border-zinc-800/80 bg-zinc-950 p-6 sm:p-8">
+                                <h3 className="text-lg sm:text-xl font-bold text-white mb-3">
+                                    {faq.q}
+                                </h3>
+                                <p className="text-zinc-400 text-sm sm:text-base leading-relaxed font-light">
+                                    {faq.a}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+
+                </div>
+            </section>
+
+            {/* ==========================================
+          8. FOOTER COMPLETO ESTILO TECH FORCE
+      ========================================== */}
+            <footer className="bg-black border-t border-zinc-900 text-zinc-400 text-xs py-16 px-6">
+                <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12">
+
+                    {/* Logo e Identidad del Gobierno */}
+                    <div className="md:col-span-5 flex flex-col justify-between space-y-6">
+                        <div>
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-8 h-5 flex flex-col justify-between py-0.5">
+                                    <div className="w-full h-1 bg-white"></div>
+                                    <div className="w-full h-1 bg-white"></div>
+                                    <div className="w-full h-1 bg-[#FF4D00]"></div>
+                                </div>
+                                <span className="text-xl font-extrabold uppercase tracking-tighter text-white">
                                     Fuerza Tech Paniense
                                 </span>
                             </div>
-                            <p className="text-slate-400 leading-relaxed max-w-sm">
-                                Unidad de Ingeniería y Transformación Digital adscrita al Ministerio de Transformación Digital del Reino del Pan.
+                            <p className="text-zinc-500 leading-relaxed max-w-sm text-xs">
+                                Iniciativa gubernamental para el reclutamiento de talento informático de vanguardia al servicio del Reino del Pan. Adscrita al Ministerio de Transformación Digital y Coordinación Cívica.
                             </p>
                         </div>
 
-                        <div className="md:col-span-3 flex flex-col gap-2">
-                            <span className="font-bold text-white uppercase tracking-wider text-[11px] mb-1">
-                                Portales Oficiales
-                            </span>
-                            <a href="#" className="hover:text-white transition">Sede Electrónica General</a>
-                            <a href="#" className="hover:text-white transition">Boletín Oficial del Estado</a>
-                            <a href="#" className="hover:text-white transition">Portal de Transparencia</a>
-                            <a href="#" className="hover:text-white transition">Estándares de Accesibilidad</a>
+                        <div className="tf-mono text-[11px] text-zinc-600">
+                            GOBIERNO DEL REINO DEL PAN · SERVICIO PÚBLICO DE TECNOLOGÍA
                         </div>
-
-                        <div className="md:col-span-4 flex flex-col gap-2">
-                            <span className="font-bold text-white uppercase tracking-wider text-[11px] mb-1">
-                                Aviso Legal y Licencia
-                            </span>
-                            <p className="text-slate-400 leading-relaxed">
-                                El código y la documentación publicados por Fuerza Tech Paniense están sujetos a Licencia Pública Abierta salvo que se indique lo contrario.
-                            </p>
-                            <p className="text-slate-500 mt-2">
-                                © 2026 Gobierno del Reino del Pan.
-                            </p>
-                        </div>
-
                     </div>
-                </footer>
 
-            </div>
+                    {/* Enlaces de Navegación Rápida */}
+                    <div className="md:col-span-3 space-y-3">
+                        <span className="text-xs font-bold uppercase text-white tracking-wider block mb-4 tf-mono">Navegación</span>
+                        <a href="#programa" className="block hover:text-white transition">El Programa de 2 Años</a>
+                        <a href="#ministerios" className="block hover:text-white transition">Ministerios y Agencias</a>
+                        <a href="#requisitos" className="block hover:text-white transition">Elegibilidad y Proceso</a>
+                        <a href="#faq" className="block hover:text-white transition">Preguntas Frecuentes</a>
+                        <a href="https://x.com" target="_blank" rel="noreferrer" className="block hover:text-white transition text-[#FF4D00]">Canal Oficial en X ↗</a>
+                    </div>
+
+                    {/* Legales y Transparencia */}
+                    <div className="md:col-span-4 space-y-3">
+                        <span className="text-xs font-bold uppercase text-white tracking-wider block mb-4 tf-mono">Transparencia y Licencia</span>
+                        <p className="text-zinc-500 leading-relaxed text-xs">
+                            Todo el código producido por los miembros de la Fuerza Tech Paniense es publicado bajo licencias abiertas compatibles con el Dominio Público Paniense.
+                        </p>
+                        <div className="pt-4 text-zinc-600 text-[11px]">
+                            © 2026 Gobierno del Reino del Pan. Todos los derechos reservados.
+                        </div>
+                    </div>
+
+                </div>
+            </footer>
+
+            {/* ==========================================
+          MODAL DE POSTULACIÓN
+      ========================================== */}
+            {applyModalOpen && (
+                <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="bg-zinc-950 border border-zinc-800 max-w-2xl w-full p-8 relative">
+                        <button
+                            onClick={() => setApplyModalOpen(false)}
+                            className="absolute top-6 right-6 text-zinc-400 hover:text-white text-xl font-mono"
+                        >
+                            ✕
+                        </button>
+
+                        <span className="text-xs tf-mono text-[#FF4D00] uppercase tracking-widest block mb-2">// FORMULARIO DE CANDIDATURA</span>
+                        <h3 className="text-2xl font-bold uppercase text-white mb-6">Unirse a la Fuerza Tech</h3>
+
+                        <form onSubmit={(e) => { e.preventDefault(); alert('Candidatura registrada correctamente en la Fuerza Tech Paniense.'); setApplyModalOpen(false); }} className="space-y-4">
+                            <div>
+                                <label className="block text-xs tf-mono text-zinc-400 uppercase mb-1">Nombre Completo *</label>
+                                <input required type="text" placeholder="Ej. Álex García" className="w-full bg-zinc-900 border border-zinc-800 p-3 text-white text-sm focus:border-[#FF4D00] focus:outline-none" />
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs tf-mono text-zinc-400 uppercase mb-1">Correo Electrónico *</label>
+                                    <input required type="email" placeholder="alex@ejemplo.pan" className="w-full bg-zinc-900 border border-zinc-800 p-3 text-white text-sm focus:border-[#FF4D00] focus:outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs tf-mono text-zinc-400 uppercase mb-1">Enlace a GitHub / Portfolio *</label>
+                                    <input required type="url" placeholder="https://github.com/usuario" className="w-full bg-zinc-900 border border-zinc-800 p-3 text-white text-sm focus:border-[#FF4D00] focus:outline-none" />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs tf-mono text-zinc-400 uppercase mb-1">Ministerio de Preferencia</label>
+                                <select className="w-full bg-zinc-900 border border-zinc-800 p-3 text-white text-sm focus:border-[#FF4D00] focus:outline-none">
+                                    {agencies.map(a => (
+                                        <option key={a.id} value={a.id}>{a.title}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs tf-mono text-zinc-400 uppercase mb-1">Motivación para el servicio público</label>
+                                <textarea rows={3} placeholder="Explica brevemente por qué deseas aportar tus conocimientos técnicos al Reino del Pan..." className="w-full bg-zinc-900 border border-zinc-800 p-3 text-white text-sm focus:border-[#FF4D00] focus:outline-none"></textarea>
+                            </div>
+
+                            <div className="pt-4 flex justify-end gap-3">
+                                <button type="button" onClick={() => setApplyModalOpen(false)} className="px-5 py-2.5 text-xs font-bold uppercase text-zinc-400 hover:text-white">
+                                    Cancelar
+                                </button>
+                                <button type="submit" className="bg-[#FF4D00] text-white px-6 py-2.5 text-xs font-bold uppercase tracking-wider hover:bg-[#e04400]">
+                                    Enviar Candidatura Oficial
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }
