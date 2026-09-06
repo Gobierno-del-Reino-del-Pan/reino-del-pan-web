@@ -295,7 +295,7 @@ export default function FuerzaTechPaniense() {
                                 ÚNETE<br></br>
                             </h2>
                             <p className="text-xl sm:text-2xl font-medium text-black/90 max-w-xl leading-snug">
-                                Construye el futuro de la tecnología gubernamental del Reino del Pan en un programa de ingeniería respaldado por el Ministerio de Transformación Digital, trabajando en misiones reales desde el primer día.
+                                <br></br>   Construye el futuro de la tecnología gubernamental del Reino del Pan en un programa de ingeniería respaldado por el Ministerio de Transformación Digital, trabajando en misiones reales desde el primer día.
                             </p>
 
                             <div className="flex flex-wrap items-center gap-4 pt-4">
