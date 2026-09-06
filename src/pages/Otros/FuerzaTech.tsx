@@ -197,7 +197,7 @@ export default function FuerzaTechPaniense() {
                     </div>
 
                     <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight text-white leading-[0.9] uppercase max-w-6xl">
-                        Tecnología para el <span className="text-zinc-400">Reino del Pan.</span>
+                        Tech para los <span className="text-zinc-400">Panienses.</span>
                     </h1>
 
                     <div className="mt-12 md:mt-20 grid grid-cols-1 md:grid-cols-12 gap-8 items-end border-t border-zinc-800/80 pt-8">
@@ -267,7 +267,7 @@ export default function FuerzaTechPaniense() {
                                     <span className="text-xs text-zinc-500 uppercase tracking-wider mt-1 block">Código abierto y soberano</span>
                                 </div>
                                 <div>
-                                    <span className="text-4xl sm:text-5xl font-black text-white block tf-mono">€ 45k-75k</span>
+                                    <span className="text-4xl sm:text-5xl font-black text-white block tf-mono">Ᵽ 800M</span>
                                     <span className="text-xs text-zinc-500 uppercase tracking-wider mt-1 block">Rango retributivo anual</span>
                                 </div>
                             </div>
@@ -292,7 +292,7 @@ export default function FuerzaTechPaniense() {
                             </span>
 
                             <h2 className="text-6xl sm:text-8xl md:text-9xl font-black tracking-tighter uppercase leading-none text-black">
-                                Responde<br />al llamado.
+                                ÚNETE<br />¡YA!.
                             </h2>
 
                             <p className="text-xl sm:text-2xl font-medium text-black/90 max-w-xl leading-snug">
@@ -472,12 +472,12 @@ export default function FuerzaTechPaniense() {
                                 />
                             </div>
                             <p className="text-zinc-500 leading-relaxed max-w-sm text-xs">
-                                Iniciativa gubernamental para el reclutamiento de talento informático de vanguardia al servicio del Reino del Pan. Adscrita al Ministerio de Transformación Digital y Coordinación Cívica.
+                                Iniciativa gubernamental para el reclutamiento de talento informático de vanguardia al servicio del Reino del Pan. Adscrita al Ministerio de Transformación Digital.
                             </p>
                         </div>
 
                         <div className="tf-mono text-[11px] text-zinc-600">
-                            GOBIERNO DEL REINO DEL PAN · SERVICIO PÚBLICO DE TECNOLOGÍA
+                            GOBIERNO DEL REINO DEL PAN · MINISTERIO DE TRANSFORMACIÓN DIGITAL
                         </div>
                     </div>
 
@@ -485,7 +485,6 @@ export default function FuerzaTechPaniense() {
                     <div className="md:col-span-3 space-y-3">
                         <span className="text-xs font-bold uppercase text-white tracking-wider block mb-4 tf-mono">Navegación</span>
                         <a href="#programa" className="block hover:text-white transition">El Programa de 2 Años</a>
-                        <a href="#ministerios" className="block hover:text-white transition">Ministerios y Agencias</a>
                         <a href="#requisitos" className="block hover:text-white transition">Elegibilidad y Proceso</a>
                         <a href="#faq" className="block hover:text-white transition">Preguntas Frecuentes</a>
                         <a href="https://x.com" target="_blank" rel="noreferrer" className="block hover:text-white transition text-[#FF4D00]">Canal Oficial en X ↗</a>
