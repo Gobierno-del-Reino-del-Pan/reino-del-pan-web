@@ -292,7 +292,7 @@ export default function FuerzaTechPaniense() {
                             </span>
 
                             <h2 className="text-6xl sm:text-8xl md:text-9xl font-black tracking-tighter uppercase leading-none text-black">
-                                ÚNETE<br />¡YA!.
+                                ÚNETE<br />.
                             </h2>
 
                             <p className="text-xl sm:text-2xl font-medium text-black/90 max-w-xl leading-snug">
