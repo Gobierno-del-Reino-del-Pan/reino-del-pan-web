@@ -14,6 +14,7 @@ const comunidadItems = [
   { href: "/Politics", label: "Grupos Políticos" },
   { href: "https://www.mafiadepan.com/", label: "La Mafia", isExternal: true },
   { href: "/pkmn", label: "PKMN" },
+  { href: "/Pandora", label: "Conf. Episcopal de Pandora" },
   { href: "/turismo", label: "Turismo" },
 
 ];
@@ -22,7 +23,10 @@ const infoItems = [
   { href: "/donations", label: "Donaciones" },
   { href: "/laliga", label: "LA MiGA" },
   { href: "/tvp", label: "TVP" },
+  { href: "/FTech", label: "Fuerza Tech" },
+  { href: "/Igualdad", label: "Igualdad" },
   { href: "/about", label: "Acerca de" },
+
 ];
 
 interface DiscordUser {

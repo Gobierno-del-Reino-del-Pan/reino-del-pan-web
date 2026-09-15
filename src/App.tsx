@@ -35,6 +35,8 @@ import tvpContest from "./pages/concursos/tvpContest.tsx";
 import Elecciones from "./pages/Otros/Electa.tsx";
 import Alertas from "./pages/Alerta.tsx"
 import FuerzaTech from "./pages/Otros/FuerzaTech.tsx";
+import Pandora from "./pages/Otros/Pandora.tsx";
+
 
 
 function App() {
@@ -78,6 +80,9 @@ function App() {
         <Route path="/terms" component={Terms} />
         <Route path="/404" component={NotFound} />
         <Route path="/FTech" component={FuerzaTech} />
+
+        <Route path="/Pandora" component={Pandora} />
+
         <Route component={NotFound} />
       </Switch>
     </div>

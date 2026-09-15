@@ -3,7 +3,11 @@ import React, { useState } from 'react';
 export default function FuerzaTechPaniense() {
     const [activeAgency, setActiveAgency] = useState<number | null>(0);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [applyModalOpen, setApplyModalOpen] = useState(false);
+
+    // Redirección al portal del Ministerio de Transformación Digital
+    const handleApplyClick = () => {
+        window.location.href = "https://mitd.duckdns.org/participa/desarrollador";
+    };
 
     // Estilos tipográficos y utilidades personalizadas de Tech Force
     const customStyles = `
@@ -145,7 +149,7 @@ export default function FuerzaTechPaniense() {
                                 <span className="text-[10px]">↗</span>
                             </a>
                             <button
-                                onClick={() => setApplyModalOpen(true)}
+                                onClick={handleApplyClick}
                                 className="bg-white text-black font-semibold px-5 py-2.5 rounded-full text-xs uppercase tracking-wider hover:bg-[#FF4D00] hover:text-white transition-all transform hover:scale-105"
                             >
                                 Postular ahora
@@ -175,7 +179,7 @@ export default function FuerzaTechPaniense() {
                             <a href="#requisitos" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-zinc-200">Requisitos</a>
                             <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-zinc-200">Preguntas Frecuentes</a>
                             <button
-                                onClick={() => { setMobileMenuOpen(false); setApplyModalOpen(true); }}
+                                onClick={() => { setMobileMenuOpen(false); handleApplyClick(); }}
                                 className="bg-[#FF4D00] text-white font-bold py-3 rounded-lg uppercase tracking-wider text-sm"
                             >
                                 Postular ahora
@@ -208,7 +212,7 @@ export default function FuerzaTechPaniense() {
                         </div>
                         <div className="md:col-span-5 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 justify-end">
                             <button
-                                onClick={() => setApplyModalOpen(true)}
+                                onClick={handleApplyClick}
                                 className="bg-[#FF4D00] text-white hover:bg-[#e04400] text-sm font-bold uppercase tracking-widest px-8 py-4 rounded-none transition flex items-center justify-center gap-3"
                             >
                                 <span>Postular a la Fuerza Tech</span>
@@ -300,7 +304,7 @@ export default function FuerzaTechPaniense() {
 
                             <div className="flex flex-wrap items-center gap-4 pt-4">
                                 <button
-                                    onClick={() => setApplyModalOpen(true)}
+                                    onClick={handleApplyClick}
                                     className="bg-black text-white hover:bg-zinc-900 text-sm font-bold uppercase tracking-widest px-8 py-4 transition"
                                 >
                                     Postular Ahora
@@ -502,66 +506,6 @@ export default function FuerzaTechPaniense() {
 
                 </div>
             </footer>
-
-            {/* ==========================================
-          MODAL DE POSTULACIÓN
-      ========================================== */}
-            {applyModalOpen && (
-                <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
-                    <div className="bg-zinc-950 border border-zinc-800 max-w-2xl w-full p-8 relative">
-                        <button
-                            onClick={() => setApplyModalOpen(false)}
-                            className="absolute top-6 right-6 text-zinc-400 hover:text-white text-xl font-mono"
-                        >
-                            ✕
-                        </button>
-
-                        <span className="text-xs tf-mono text-[#FF4D00] uppercase tracking-widest block mb-2">// FORMULARIO DE CANDIDATURA</span>
-                        <h3 className="text-2xl font-bold uppercase text-white mb-6">Unirse a la Fuerza Tech</h3>
-
-                        <form onSubmit={(e) => { e.preventDefault(); alert('Candidatura registrada correctamente en la Fuerza Tech Paniense.'); setApplyModalOpen(false); }} className="space-y-4">
-                            <div>
-                                <label className="block text-xs tf-mono text-zinc-400 uppercase mb-1">Nombre Completo *</label>
-                                <input required type="text" placeholder="Ej. Álex García" className="w-full bg-zinc-900 border border-zinc-800 p-3 text-white text-sm focus:border-[#FF4D00] focus:outline-none" />
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs tf-mono text-zinc-400 uppercase mb-1">Correo Electrónico *</label>
-                                    <input required type="email" placeholder="alex@ejemplo.pan" className="w-full bg-zinc-900 border border-zinc-800 p-3 text-white text-sm focus:border-[#FF4D00] focus:outline-none" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs tf-mono text-zinc-400 uppercase mb-1">Enlace a GitHub / Portfolio *</label>
-                                    <input required type="url" placeholder="https://github.com/usuario" className="w-full bg-zinc-900 border border-zinc-800 p-3 text-white text-sm focus:border-[#FF4D00] focus:outline-none" />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs tf-mono text-zinc-400 uppercase mb-1">Ministerio de Preferencia</label>
-                                <select className="w-full bg-zinc-900 border border-zinc-800 p-3 text-white text-sm focus:border-[#FF4D00] focus:outline-none">
-                                    {agencies.map(a => (
-                                        <option key={a.id} value={a.id}>{a.title}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs tf-mono text-zinc-400 uppercase mb-1">Motivación para el servicio público</label>
-                                <textarea rows={3} placeholder="Explica brevemente por qué deseas aportar tus conocimientos técnicos al Reino del Pan..." className="w-full bg-zinc-900 border border-zinc-800 p-3 text-white text-sm focus:border-[#FF4D00] focus:outline-none"></textarea>
-                            </div>
-
-                            <div className="pt-4 flex justify-end gap-3">
-                                <button type="button" onClick={() => setApplyModalOpen(false)} className="px-5 py-2.5 text-xs font-bold uppercase text-zinc-400 hover:text-white">
-                                    Cancelar
-                                </button>
-                                <button type="submit" className="bg-[#FF4D00] text-white px-6 py-2.5 text-xs font-bold uppercase tracking-wider hover:bg-[#e04400]">
-                                    Enviar Candidatura Oficial
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
 
         </div>
     );
