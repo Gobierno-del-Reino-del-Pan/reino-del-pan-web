@@ -212,9 +212,7 @@ export default function Electa() {
 
         try {
             // Se envía según lo configurado en server.js
-            const bodyPayload = procesoSeleccionado.tipo === "referendum"
-                ? { proceso_id: procesoSeleccionado.id, opcion: votoSeleccionado }
-                : { proceso_id: procesoSeleccionado.id, candidatura_id: votoSeleccionado };
+            const bodyPayload = { proceso_id: procesoSeleccionado.id, opcion: votoSeleccionado };
 
             const res = await fetch("/api/electoral/votar", {
                 method: "POST",
