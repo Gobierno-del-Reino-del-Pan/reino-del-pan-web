@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
-import {
-  ESTADO_BADGE,
-  Expediente,
-  PersonaCompleta,
-  REGIMEN_LABEL,
-} from "../../types/padron";
+import { ESTADO_BADGE, Expediente, PersonaCompleta, REGIMEN_LABEL } from "../../types/padron";
 
 interface HistorialFila {
   id: number;

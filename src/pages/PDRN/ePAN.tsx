@@ -1,12 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
+
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
+
 import { supabase } from "../../lib/supabaseClient";
-import { useMasaAuth } from "../contexts/MasaAuthContext";
+
+import { useMasaAuth } from "../../../context/MasaAuthContext";
+
 import MasaLogin from "../MasaLogin";
+
 import AltaPersonaModal from "../../components/padron/AltaPersonaModal";
-import NuevoExpedienteModal from "../components/padron/NuevoExpedienteModal";
-import PersonaDetalle from "../components/padron/PersonaDetalle";
+import NuevoExpedienteModal from "../../components/padron/NuevoExpedienteModal";
+import PersonaDetalle from "../../components/padron/PersonaDetalle";
+
 import {
   ESTADO_BADGE,
   EstadoPadron,
@@ -17,7 +23,7 @@ import {
   RegimenDocumento,
   TipoExpediente,
   Vencimiento,
-} from "../types/padron";
+} from "../../types/padron";
 
 // ────────────────────────────────────────────────────────────────
 // ePOB — Padrón Oficial de Panienses
@@ -160,8 +166,8 @@ function PadronDashboard() {
           <button
             onClick={() => setVistaVencimientos(!vistaVencimientos)}
             className={`text-left rounded-2xl p-5 border transition-colors ${vencimientosCriticos.length > 0
-                ? "bg-rose-500/10 border-rose-500/30 hover:bg-rose-500/15"
-                : "bg-[#0e1017] border-white/5 hover:border-white/20"
+              ? "bg-rose-500/10 border-rose-500/30 hover:bg-rose-500/15"
+              : "bg-[#0e1017] border-white/5 hover:border-white/20"
               }`}
           >
             <span className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold block mb-1">
@@ -221,8 +227,8 @@ function PadronDashboard() {
                           <td className="px-5 py-3">
                             <span
                               className={`text-[10px] font-bold px-3 py-1 rounded-full border ${v.vencido
-                                  ? "bg-rose-500/15 text-rose-400 border-rose-500/30"
-                                  : "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                                ? "bg-rose-500/15 text-rose-400 border-rose-500/30"
+                                : "bg-amber-500/15 text-amber-400 border-amber-500/30"
                                 }`}
                             >
                               {v.vencido ? "Vencido" : "Próximo"}
