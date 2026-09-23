@@ -75,7 +75,7 @@ export default function AltaPersonaModal({
                     apellidos: apellidos.trim(),
                     dpi: dpi.trim(),
 
-                    municipio_id: municipioId || null,
+                    municipio_id: municipioId ? Number(municipioId) : null,
                     nivel_estudios_id: nivelEstudios || null,
 
                     regimen_documento: regimen,
@@ -242,10 +242,10 @@ export default function AltaPersonaModal({
 
                                 {nivelesEstudios.map((nivel) => (
                                     <option
-                                        key={nivel.id}
-                                        value={nivel.id}
+                                        key={nivel.codigo}
+                                        value={nivel.codigo}
                                     >
-                                        {nivel.nombre}
+                                        {nivel.descripcion}
                                     </option>
                                 ))}
                             </select>

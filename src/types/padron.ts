@@ -15,9 +15,10 @@ export type RegimenDocumento =
 // ─────────────────────────────────────────────────────────────
 
 export interface Municipio {
-    id: string | number;
+    id: number;
     nombre: string;
     activo: boolean;
+    created_at?: string;
 }
 
 
@@ -26,9 +27,8 @@ export interface Municipio {
 // ─────────────────────────────────────────────────────────────
 
 export interface NivelEstudios {
-    id: string | number;
-    nombre: string;
-    descripcion?: string | null;
+    codigo: string;
+    descripcion: string;
     activo: boolean;
 }
 
