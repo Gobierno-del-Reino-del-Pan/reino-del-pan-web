@@ -32,7 +32,7 @@ export default function AltaPersonaModal({
     const [dpi, setDpi] = useState("");
 
     const [municipioId, setMunicipioId] = useState("");
-    const [nivelEstudiosId, setNivelEstudiosId] = useState("");
+    const [nivelEstudios, setNivelEstudios] = useState("");
 
     const [regimen, setRegimen] =
         useState<RegimenDocumento>("PANIENSE");
@@ -49,7 +49,7 @@ export default function AltaPersonaModal({
         setApellidos("");
         setDpi("");
         setMunicipioId("");
-        setNivelEstudiosId("");
+        setNivelEstudios("");
         setRegimen("PANIENSE");
         setError(null);
     }
@@ -76,7 +76,7 @@ export default function AltaPersonaModal({
                     dpi: dpi.trim(),
 
                     municipio_id: municipioId || null,
-                    nivel_estudios_id: nivelEstudiosId || null,
+                    nivel_estudios_id: nivelEstudios || null,
 
                     regimen_documento: regimen,
                     estado_padron: "ACTIVO",
@@ -230,9 +230,9 @@ export default function AltaPersonaModal({
                             </label>
 
                             <select
-                                value={nivelEstudiosId}
+                                value={nivelEstudios}
                                 onChange={(event) =>
-                                    setNivelEstudiosId(event.target.value)
+                                    setNivelEstudios(event.target.value)
                                 }
                                 className="mt-2 w-full rounded-xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white outline-none focus:border-accent/60"
                             >
