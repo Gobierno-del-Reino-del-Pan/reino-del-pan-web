@@ -67,27 +67,44 @@ function PadronDashboard() {
   async function cargarTodo() {
     setLoading(true);
 
-    const [
-      { data: personasData },
-      { data: vencimientosData },
-      { data: municipiosData },
-      { data: nivelesData },
-      { data: tiposData },
-    ] = await Promise.all([
-      supabase.from("padron_personas_completo").select("*").order("apellidos"),
-      supabase.from("padron_vencimientos").select("*").order("fecha_proxima_actuacion"),
-      supabase.from("padron_municipios").select("*").eq("activo", true).order("nombre"),
-      supabase.from("padron_niveles_estudios").select("*").eq("activo", true),
-      supabase.from("padron_tipos_expediente").select("*").eq("activo", true),
-    ]);
+    try {
+      const [
+        personasResult,
+        vencimientosResult,
+        municipiosResult,
+        nivelesResult,
+        tiposResult,
+      ] = await Promise.all([
+        supabase.from("padron_personas_completo").select("*").order("apellidos"),
+        supabase.from("padron_vencimientos").select("*").order("fecha_proxima_actuacion"),
+        supabase.from("padron_municipios").select("*").eq("activo", true).order("nombre"),
+        supabase.from("padron_niveles_estudios").select("*").eq("activo", true),
+        supabase.from("padron_tipos_expediente").select("*").eq("activo", true),
+      ]);
 
-    setPersonas((personasData as PersonaCompleta[]) || []);
-    setVencimientos((vencimientosData as Vencimiento[]) || []);
-    setMunicipios((municipiosData as Municipio[]) || []);
-    setNivelesEstudios((nivelesData as NivelEstudios[]) || []);
-    setTiposExpediente((tiposData as TipoExpediente[]) || []);
+      console.log("=== DIAGNÓSTICO ePOB ===");
+      console.log("Personas:", personasResult.data);
+      console.log("Error personas:", personasResult.error);
+      console.log("Vencimientos:", vencimientosResult.data);
+      console.log("Error vencimientos:", vencimientosResult.error);
+      console.log("Municipios:", municipiosResult.data);
+      console.log("Error municipios:", municipiosResult.error);
+      console.log("Niveles estudios:", nivelesResult.data);
+      console.log("Error niveles:", nivelesResult.error);
+      console.log("Tipos expediente:", tiposResult.data);
+      console.log("Error tipos:", tiposResult.error);
+      console.log("========================");
 
-    setLoading(false);
+      setPersonas((personasResult.data as PersonaCompleta[]) || []);
+      setVencimientos((vencimientosResult.data as Vencimiento[]) || []);
+      setMunicipios((municipiosResult.data as Municipio[]) || []);
+      setNivelesEstudios((nivelesResult.data as NivelEstudios[]) || []);
+      setTiposExpediente((tiposResult.data as TipoExpediente[]) || []);
+    } catch (error) {
+      console.error("Error general cargando ePOB:", error);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -97,12 +114,12 @@ function PadronDashboard() {
   const personasFiltradas = useMemo(() => {
     const termino = busqueda.trim().toLowerCase();
 
-    return personas.filter((p) => {
+    return personas.filter((p: PersonaCompleta) => {
       if (filtroEstado !== "TODOS" && p.estado_padron !== filtroEstado) return false;
       if (filtroRegimen !== "TODOS" && p.regimen_documento !== filtroRegimen) return false;
 
       if (termino) {
-        const texto = `${p.nombre} ${p.apellidos} ${p.dpi} ${p.municipio}`.toLowerCase();
+        const texto = `${p.nombre ?? ""} ${p.apellidos ?? ""} ${p.dpi ?? ""} ${p.municipio ?? ""}`.toLowerCase();
         if (!texto.includes(termino)) return false;
       }
 
@@ -110,8 +127,13 @@ function PadronDashboard() {
     });
   }, [personas, busqueda, filtroEstado, filtroRegimen]);
 
-  const vencimientosCriticos = vencimientos.filter((v) => v.vencido);
-  const totalActivos = personas.filter((p) => p.estado_padron === "ACTIVO").length;
+  const vencimientosCriticos = vencimientos.filter(
+    (v: Vencimiento) => v.vencido
+  );
+
+  const totalActivos = personas.filter(
+    (p: PersonaCompleta) => p.estado_padron === "ACTIVO"
+  ).length;
 
   const abrirNuevoExpediente = (persona: PersonaCompleta) => {
     setPersonaParaExpediente(persona);
