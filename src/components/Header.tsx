@@ -323,12 +323,6 @@ export default function Header() {
                       📁 Mi Carpeta
                     </Link>
 
-                    <a
-                      href={`/404`}
-                      className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-black/70 hover:text-accent hover:bg-white/40 transition duration-200 border-t border-black/5"
-                    >
-                      🆔 Tarjeta DPI
-                    </a>
 
                     <a
                       href={"/consorcio"}
