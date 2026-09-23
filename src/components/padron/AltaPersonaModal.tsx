@@ -76,7 +76,7 @@ export default function AltaPersonaModal({
                     dpi: dpi.trim(),
 
                     municipio_id: municipioId ? Number(municipioId) : null,
-                    nivel_estudios_id: nivelEstudios || null,
+                    nivel_estudios: nivelEstudios || null,
 
                     regimen_documento: regimen,
                     estado_padron: "ACTIVO",
