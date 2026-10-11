@@ -148,6 +148,7 @@ export default function Privacy() {
             <div className="privacy-hero-content">
               <span className="privacy-eyebrow"><span className="privacy-eyebrow-dot" /> ARTIS PANIS / TRANSPARENCIA</span>
               <h1>Política de <span>Privacidad</span></h1>
+              <hr> </hr>
               <p className="privacy-hero-description">
                 Información sobre el tratamiento de datos, la seguridad de la plataforma y tus derechos como usuario.
               </p>
