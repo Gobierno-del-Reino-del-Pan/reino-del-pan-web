@@ -5,7 +5,7 @@ import { ArrowRight, ExternalLink, Megaphone, Menu, X } from "lucide-react";
 // Comunicado original de TVP. Se atribuye a la corporación televisiva,
 // no al Consejo Superior de Deportes.
 const COMUNICADO_TVP =
-  'La Corporación de Radio y Televisión Paniense (tvp) estamos en contra de los actos y corruptelas del denominado "monarca". Apoyamos y apoyaremos al gobierno hasta la última gota de sudor, esfuerzo y lágrimas. No lo permitamos. Avanzamos hacia un verdadero cambio. Nos temerán';
+  'El CSD está en contra de los actos y corruptelas del denominado "monarca". Apoyamos y apoyaremos al gobierno hasta la última gota de sudor, esfuerzo y lágrimas. No lo permitamos. Avanzamos hacia un verdadero cambio. Nos temerán';
 
 const navLinks = [
   { name: "El Consejo", id: "consejo" },
@@ -132,7 +132,7 @@ export default function CSD() {
               aria-label="Abrir comunicado de TVP"
             >
               <Megaphone className="h-4 w-4" aria-hidden="true" />
-              <span className="hidden text-xs font-bold sm:inline">Comunicado TVP</span>
+              <span className="hidden text-xs font-bold sm:inline">Comunicado</span>
             </button>
             <Link
               href="/"
@@ -257,9 +257,9 @@ export default function CSD() {
             <div className="relative max-h-[min(88dvh,750px)] overflow-y-auto p-6 sm:p-9">
               <div className="mb-7 flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <img src="/TVP/TVP.png" alt="TVP" className="h-9 max-w-[100px] object-contain sm:h-11" />
+                  <img src="/LALIGA/CSD.png" alt="CSD" className="h-9 max-w-[100px] object-contain sm:h-11" />
                   <span className="hidden h-6 w-px bg-white/20 sm:block" aria-hidden="true" />
-                  <span className="hidden text-[10px] font-bold uppercase tracking-[.17em] text-white/45 sm:block">Corporación Paniense</span>
+                  <span className="hidden text-[10px] font-bold uppercase tracking-[.17em] text-white/45 sm:block">Consejo Superior de Deportes</span>
                 </div>
                 <button
                   ref={closeButtonRef}
@@ -276,7 +276,7 @@ export default function CSD() {
                 <Megaphone className="h-3.5 w-3.5" aria-hidden="true" /> Posicionamiento institucional de TVP
               </div>
               <h2 id="csd-tvp-dialog-title" className="csd-announcement-title mb-5 text-white">
-                Comunicado oficial de TVP
+                Comunicado oficial del CSD
               </h2>
               <div className="mb-6 h-px bg-gradient-to-r from-[#FF4D00] via-white/20 to-transparent" />
               <p id="csd-tvp-dialog-description" className="text-[14px] leading-[1.9] text-white/80 sm:text-[15px]">
@@ -285,7 +285,7 @@ export default function CSD() {
 
               <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-[.12em] text-white/35">
-                  Corporación de Radio y Televisión Paniense
+                  Consejo Superior de Deportes
                 </span>
                 <button
                   type="button"
@@ -296,7 +296,7 @@ export default function CSD() {
                 </button>
               </div>
               <div className="mt-5 flex items-center justify-center gap-1 text-[10px] text-white/35">
-                <ExternalLink className="h-3 w-3" aria-hidden="true" /> Comunicado de TVP mostrado en el portal del CSD
+                <ExternalLink className="h-3 w-3" aria-hidden="true" /> Comunicado del CSD mostrado en el portal del CSD
               </div>
             </div>
           </div>
