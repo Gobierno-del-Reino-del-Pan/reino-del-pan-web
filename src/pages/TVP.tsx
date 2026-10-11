@@ -1,494 +1,524 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "wouter";
 import { supabase } from "../lib/supabaseClient";
+import {
+  ArrowLeft, ArrowUpRight, ChevronRight, Megaphone, Newspaper,
+  Play, Radio, X,
+} from "lucide-react";
 
 interface PlayItem {
+
     id: string;
+
     title: string;
+
     subtitle: string;
+
     img: string;
+
     progress?: number;
+
 }
 
 interface PlayCategory {
+
     title: string;
+
     items: PlayItem[];
+
 }
 
-const PLAY_CONTENT: { hero: any; categories: PlayCategory[] } = {
+const PLAY_CONTENT: { hero: { title: string; category: string; description: string; duration: string; image: string }; categories: PlayCategory[] } = {
+
     hero: {
+
         title: "La Promesa",
+
         category: "SERIE DE ÉXITO",
+
         description: "El gran drama de época que tiene en vilo a todo el Reino del Pan. Intriga, amor y traición en el palacio más custodiado del estado.",
+
         duration: "1h 45min",
+
         image: "https://img.rtve.es/imagenes/la-promesa/01773410920378.jpg"
+
     },
+
     categories: [
+
         {
+
             title: "Seguir viendo en TVP Play",
+
             items: [
+
                 {
+
                     id: "sv1",
+
                     title: "Telediario 2",
+
                     progress: 75,
+
                     subtitle: "Informativo nocturno paniense con Angels Barceló y María José Sáez",
+
                     img: "TVP/Telediario2.png"
+
                 },
+
                 {
+
                     id: "sv2",
+
                     title: "NO ME DIGAS",
+
                     progress: 40,
+
                     subtitle: "Programa vespertino de los viernes donde se habla de toda la actualidad del Corazón con Yurena de presentadora",
+
                     img: "https://imagenes.atresplayer.com/atp/clipping/cmsimages01/2025/09/11/E8170CEA-0E08-4A61-B7EB-269C9973142D//386x217.jpg?optimize=low&format=webply"
+
                 },
+
                 {
+
                     id: "sv3",
+
                     title: "Y Ahora Santaolalla",
+
                     progress: 90,
+
                     subtitle: "Magacín que aborda la crónica social y toda la actualidad del día con un grupo de colaboradores de diversos ámbitos. El espacio se divide en diferentes secciones y cuenta con un equipo de reporteros a pie de calle",
+
                     img: "TVP/SANTAOLALLA.png"
+
                 }
+
             ]
+
         },
+
         {
+
             title: "Series y Ficción Panienses",
+
             items: [
+
                 { id: "sf1", title: "La Moderna", subtitle: "Nuevos capítulos", img: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=400&auto=format&fit=crop" },
+
                 { id: "sf2", title: "Cuéntame cómo pasó", subtitle: "Temporada Final", img: "https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=400&auto=format&fit=crop" },
+
                 { id: "sf3", title: "Operación Barrio Inglés", subtitle: "Serie Completa", img: "https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=400&auto=format&fit=crop" }
+
             ]
+
         }
+
     ]
+
 };
 
 const LOCAL_NEWS_FALLBACK = {
+
     breaking: "Urgente: El temporal obliga a activar la alerta naranja en todo el litoral del Reino del Pan",
+
     main: {
+
         category: "POLÍTICA",
+
         title: "Histórico acuerdo de infraestructuras para la conexión ferroviaria en el Reino del Pan",
+
         summary: "El Gobierno y las administraciones regionales sellan un plan de inversión de más de 3.000 millones de euros para acelerar la transición del transporte nacional paniense.",
+
         time: "Hace 12 min",
+
         img: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=800&auto=format&fit=crop"
+
     },
+
     secondary: [
+
         { id: "n1", category: "SOCIEDAD", title: "La ola de calor invernal bate récords en el este del país", time: "Hace 45 min", img: "https://images.unsplash.com/photo-1504370805625-d32c54b16100?q=80&w=400&auto=format&fit=crop" },
+
         { id: "n2", category: "DEPORTES", title: "El TVP Paniense F.C. se clasifica para la gran final continental tras una prórroga agónica", time: "Hace 1 hora", img: "https://images.unsplash.com/photo-1518063319789-7217e6706b04?q=80&w=400&auto=format&fit=crop" }
+
     ],
+
     trending: [
+
         { id: "t1", number: "01", title: "Los trucos del nuevo borrador fiscal para autónomos del Reino" },
+
         { id: "t2", number: "02", title: "Las 5 series más vistas de TVP Play este mes" },
+
         { id: "t3", number: "03", title: "Previsión del tiempo: ¿Cuándo llegarán las lluvias al norte?" }
+
     ]
+
 };
 
-export default function TVPPortal() {
-    const [activeTab, setActiveTab] = useState<'play' | 'directo' | 'noticias'>('play');
-    const [mainNews, setMainNews] = useState(LOCAL_NEWS_FALLBACK.main);
-    const [secondaryNews, setSecondaryNews] = useState(LOCAL_NEWS_FALLBACK.secondary);
-    const [parentDomain, setParentDomain] = useState("localhost");
 
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            setParentDomain(window.location.hostname);
-        }
-    }, []);
+type Tab = "play" | "directo" | "noticias";
+type NewsCard = { id: string; category: string; title: string; time: string; img: string; summary?: string };
 
-    useEffect(() => {
-        async function loadNewsFromSupabase() {
-            try {
-                if (supabase) {
-                    const { data, error } = await supabase
-                        .from('tvp_news')
-                        .select('*')
-                        .order('created_at', { ascending: false });
+const COMUNICADO = 'La Corporación de Radio y Televisión Paniense (tvp) estamos en contra de los actos y corruptelas del denominado "monarca". Apoyamos y apoyaremos al gobierno hasta la última gota de sudor, esfuerzo y lágrimas. No lo permitamos. Avanzamos hacia un verdadero cambio. Nos temerán';
 
-                    if (error) throw error;
+const TABS: { id: Tab; label: string; icon: typeof Play }[] = [
+  { id: "play", label: "TVP Play", icon: Play },
+  { id: "directo", label: "En directo", icon: Radio },
+  { id: "noticias", label: "TVP Noticias", icon: Newspaper },
+];
 
-                    if (data && data.length > 0) {
-                        const supabaseMain = data.find((n: any) => n.type === 'main');
-                        if (supabaseMain) {
-                            setMainNews({
-                                category: supabaseMain.category,
-                                title: supabaseMain.title,
-                                summary: supabaseMain.summary || '',
-                                time: supabaseMain.time_label,
-                                img: supabaseMain.img_url
-                            });
-                        }
+function IconButton({ children, onClick, label }: { children: ReactNode; onClick: () => void; label: string }) {
+  return (
+    <button type="button" onClick={onClick} aria-label={label}
+      className="tvp-glass flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] text-white/80 transition hover:bg-white/15 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff7b43]">
+      {children}
+    </button>
+  );
+}
 
-                        const supabaseSecondaries = data.filter((n: any) => n.type === 'secondary');
-                        if (supabaseSecondaries.length > 0) {
-                            setSecondaryNews(supabaseSecondaries.map((n: any) => ({
-                                id: n.id,
-                                category: n.category,
-                                title: n.title,
-                                time: n.time_label,
-                                img: n.img_url
-                            })));
-                        }
-                    }
-                }
-            } catch (err) {
-                console.warn("Usando noticias locales de fallback debido a un error:", err);
-            }
-        }
+/** A11y modal: focus on open, tab trapped and Escape dismissal. */
+function Modal({ title, children, onClose, labelledBy }: {
+  title: string; children: ReactNode; onClose: () => void; labelledBy: string;
+}) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
-        if (activeTab === 'noticias') {
-            loadNewsFromSupabase();
-        }
-    }, [activeTab]);
-
-    const handleNewsClick = (newsId: string, title: string) => {
-        console.log(`Cargando noticia ID: ${newsId}`);
-        alert(`Cargando artículo: \n"${title}"`);
+  useEffect(() => {
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialogRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); onCloseRef.current(); return; }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const focusables = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )).filter(el => el.getClientRects().length > 0);
+      if (focusables.length === 0) { event.preventDefault(); dialogRef.current.focus(); return; }
+      const first = focusables[0], last = focusables[focusables.length - 1];
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialogRef.current)) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault(); first.focus();
+      }
     };
+    document.addEventListener("keydown", onKeyDown);
+    return () => { document.body.style.overflow = previousOverflow; document.removeEventListener("keydown", onKeyDown); previouslyFocused?.focus(); };
+  }, []);
 
-    useEffect(() => {
-        if (activeTab === 'play') {
-            document.title = "TVP Play - Televisión Paniense Bajo Demanda";
-        } else if (activeTab === 'directo') {
-            document.title = "TVP En Directo - Emisión en Vivo";
-        } else {
-            document.title = "TVP Noticias - Última hora del Reino del Pan";
+  return (
+    <div className="tvp-modal-wrap fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-3 sm:p-6" role="presentation">
+      <div className="absolute inset-0 bg-[#030308]/80 backdrop-blur-xl" onClick={onClose} aria-hidden="true" />
+      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={title}
+        aria-labelledby={labelledBy} className="tvp-glass tvp-modal relative my-auto w-full max-w-[590px] overflow-hidden rounded-[28px] p-5 text-white outline-none sm:rounded-[34px] sm:p-9">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export default function TVPPortal() {
+  const [activeTab, setActiveTab] = useState<Tab>("play");
+  const [mainNews, setMainNews] = useState(LOCAL_NEWS_FALLBACK.main);
+  const [secondaryNews, setSecondaryNews] = useState<NewsCard[]>(LOCAL_NEWS_FALLBACK.secondary);
+  const [newsMode, setNewsMode] = useState<"fallback" | "supabase">("fallback");
+  const [parentDomain, setParentDomain] = useState<string | null>(null);
+  const [noticeOpen, setNoticeOpen] = useState(true);
+  const [selectedNews, setSelectedNews] = useState<NewsCard | null>(null);
+  const topRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setParentDomain(window.location.hostname || "localhost"); }, []);
+  useEffect(() => {
+    const titles = { play: "TVP Play - Televisión Paniense", directo: "TVP En Directo - Emisión en Vivo", noticias: "TVP Noticias - Actualidad Paniense" };
+    const prevTitle = document.title;
+    document.title = titles[activeTab];
+    return () => { document.title = prevTitle; };
+  }, [activeTab]);
+
+  // Same Supabase table and data fields as the original implementation.
+  useEffect(() => {
+    if (activeTab !== "noticias" || !supabase) return;
+    let active = true;
+    async function fetchNews() {
+      try {
+        const { data, error } = await supabase.from("tvp_news")
+          .select("id,type,category,title,summary,time_label,img_url,created_at")
+          .order("created_at", { ascending: false }).limit(20);
+        if (error) throw error;
+        if (!active || !data?.length) return;
+        const principal = data.find((n: any) => n.type === "main");
+        const others = data.filter((n: any) => n.type === "secondary");
+        if (principal) {
+          setMainNews({
+            category: principal.category || "ACTUALIDAD", title: principal.title,
+            summary: principal.summary || "", time: principal.time_label || "TVP Noticias",
+            img: principal.img_url || LOCAL_NEWS_FALLBACK.main.img,
+          });
         }
-
-        const canvas = document.createElement("canvas");
-        canvas.width = 64;
-        canvas.height = 64;
-        const ctx = canvas.getContext("2d");
-
-        if (ctx) {
-            const img = new Image();
-            img.src = "/TVP/TVPPlay.png";
-            img.onload = () => {
-                ctx.drawImage(img, 0, 0, 64, 64);
-                let link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
-                if (!link) {
-                    link = document.createElement("link");
-                    link.rel = "icon";
-                    document.head.appendChild(link);
-                }
-                link.href = canvas.toDataURL("image/png");
-            };
+        if (others.length) {
+          setSecondaryNews(others.map((n: any) => ({
+            id: String(n.id), category: n.category || "NOTICIAS", title: n.title,
+            summary: n.summary || "", time: n.time_label || "TVP Noticias",
+            img: n.img_url || LOCAL_NEWS_FALLBACK.main.img,
+          })));
         }
-    }, [activeTab]);
+        if (principal || others.length) setNewsMode("supabase");
+      } catch (err) { console.warn("TVP: noticias de muestra; no se pudo consultar Supabase", err); }
+    }
+    void fetchNews();
+    return () => { active = false; };
+  }, [activeTab]);
 
-    return (
-        <div className="min-h-screen bg-[#07080c] text-white flex flex-col font-tvp-text selection:bg-[#ff4d00] selection:text-white pb-20 md:pb-0">
+  const chooseTab = (tab: Tab) => {
+    setActiveTab(tab);
+    topRef.current?.scrollIntoView({ behavior: "auto", block: "start" });
+  };
 
-            <style dangerouslySetInnerHTML={{
-                __html: `
-                @font-face {
-                    font-family: 'TVP-Heading';
-                    src: url('/TVP/TVP.ttf') format('truetype');
-                    font-weight: bold;
-                }
-                @font-face {
-                    font-family: 'TVP-Text';
-                    src: url('/TVP/TVPtext.ttf') format('truetype');
-                    font-weight: normal;
-                }
-                .font-tvp-head { font-family: 'TVP-Heading', sans-serif; }
-                .font-tvp-text { font-family: 'TVP-Text', sans-serif; }
-                .no-scrollbar::-webkit-scrollbar { display: none; }
-                .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-            `}} />
+  const showNews = (item: NewsCard) => setSelectedNews(item);
 
-            <header className="w-full bg-[#0a0b10]/95 backdrop-blur-xl border-b border-white/5 px-6 md:px-12 py-5 flex items-center justify-between sticky top-0 z-50 shadow-2xl">
-                <div className="flex items-center gap-6 md:gap-8">
-                    <Link to="/">
-                        <a className="transition-opacity hover:opacity-80 flex items-center">
-                            <img src="/logo.png" alt="Inicio" className="h-8 object-contain select-none" />
-                        </a>
-                    </Link>
+  return (
+    <div ref={topRef} className="tvp-root relative flex min-h-screen flex-col overflow-x-clip bg-[#08090d] text-white selection:bg-[#ff4d00]/50">
+      <style>{`
+        @font-face {font-family:TVPHeading;src:url('/TVP/TVP.ttf') format('truetype');font-display:swap;}
+        @font-face {font-family:TVPText;src:url('/TVP/TVPtext.ttf') format('truetype');font-display:swap;}
+        .tvp-root {font-family:TVPText,Inter,system-ui,sans-serif;--tvp-orange:#ff4d00;--tvp-purple:#630B57;}
+        .tvp-head {font-family:TVPHeading,Inter,system-ui,sans-serif;}
+        .tvp-glass {background:linear-gradient(125deg,rgba(37,38,46,.82),rgba(23,22,31,.75) 45%,rgba(39,27,43,.76));border:1px solid rgba(255,255,255,.13);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 15px 38px rgba(0,0,0,.25);backdrop-filter:blur(25px) saturate(145%);-webkit-backdrop-filter:blur(25px) saturate(145%);}
+        .tvp-card {background:linear-gradient(145deg,rgba(36,37,45,.82),rgba(16,17,23,.92));border:1px solid rgba(255,255,255,.095);box-shadow:inset 0 1px rgba(255,255,255,.1),0 16px 38px rgba(0,0,0,.22);}
+        .tvp-primary {background:linear-gradient(135deg,#ff7438,#ff4d00);color:#100906;box-shadow:inset 0 1px rgba(255,255,255,.37),0 8px 24px rgba(255,77,0,.25);}
+        .tvp-tab[data-active=true] {background:linear-gradient(135deg,rgba(255,103,41,.2),rgba(99,11,87,.23));color:#fff;border-color:rgba(255,111,56,.32);}
+        .tvp-modal:before {content:'';position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,transparent,#ff7131 40%,#c67bc5 70%,transparent);}
+        .tvp-modal-wrap {animation:tvpFade .2s ease-out both;}
+        .tvp-modal {animation:tvpRise .3s cubic-bezier(.2,.8,.2,1) both;}
+        @keyframes tvpFade {from{opacity:0}to{opacity:1}}
+        @keyframes tvpRise {from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+        .tvp-root button:focus-visible,.tvp-root a:focus-visible {outline:2px solid #ff915e;outline-offset:3px;}
+        .tvp-hide-scrollbar {scrollbar-width:none;} .tvp-hide-scrollbar::-webkit-scrollbar{display:none;}
+        @media (prefers-reduced-motion:reduce){.tvp-root *, .tvp-root *:before,.tvp-root *:after {animation-duration:.01ms!important;scroll-behavior:auto!important;transition-duration:.01ms!important;}}
+      `}</style>
 
-                    <div className="h-5 w-[1px] bg-white/20 hidden sm:block"></div>
-
-                    <div className="flex items-center gap-6 md:gap-8">
-                        <img src="/TVP/TVP.png" alt="TVP" className="h-8 md:h-9 object-contain select-none" />
-                        <div className="h-5 w-[1px] bg-white/20 hidden sm:block"></div>
-                        <div className="hidden sm:flex items-center gap-3">
-                            <img src="/TVP/2Pan.png" alt="2Pan" className="h-6 md:h-7 object-contain opacity-75" />
-                        </div>
-                    </div>
-                </div>
-
-                <nav className="hidden md:flex items-center gap-12 text-sm font-bold tracking-widest">
-                    <button
-                        onClick={() => setActiveTab('play')}
-                        className={`transition-all duration-300 flex items-center gap-3.5 pb-2 border-b-2 uppercase font-tvp-head ${activeTab === 'play' ? 'text-[#ff4d00] border-[#ff4d00]' : 'text-white/60 hover:text-white border-transparent'}`}
-                    >
-                        TVP Play
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('directo')}
-                        className={`transition-all duration-300 flex items-center gap-2 pb-2 border-b-2 uppercase font-tvp-head ${activeTab === 'directo' ? 'text-[#ff4d00] border-[#ff4d00]' : 'text-white/60 hover:text-white border-transparent'}`}
-                    >
-                        <span className="w-2 h-2 bg-[#ff4d00] rounded-full animate-pulse"></span>
-                        En Directo
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('noticias')}
-                        className={`transition-all duration-300 pb-2 border-b-2 uppercase font-tvp-head ${activeTab === 'noticias' ? 'text-[#ff4d00] border-[#ff4d00]' : 'text-white/60 hover:text-white border-transparent'}`}
-                    >
-                        TVP Noticias
-                    </button>
-                </nav>
-
-                <div className="flex items-center w-10 h-2"></div>
-            </header>
-
-            {activeTab === 'play' && (
-                <main className="flex-1 flex flex-col w-full animate-in fade-in duration-500">
-                    <section className="relative w-full min-h-[80vh] md:min-h-0 md:aspect-[21/9] bg-[#07080c] overflow-hidden flex items-end">
-                        <div className="absolute inset-0">
-                            <img src={PLAY_CONTENT.hero.image} alt={PLAY_CONTENT.hero.title} className="w-full h-full object-cover opacity-60 transform scale-101 object-center" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#07080c] via-[#07080c]/60 to-transparent" />
-                            <div className="absolute inset-0 bg-gradient-to-r from-[#07080c]/80 via-transparent to-transparent hidden md:block" />
-                        </div>
-
-                        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 md:px-16 pb-12 pt-24 md:pb-20 flex flex-col items-start gap-4 md:gap-5">
-                            <div className="flex items-center gap-3 sm:gap-4">
-                                <span className="bg-[#ff4d00]/10 text-[#ff4d00] border border-[#ff4d00]/30 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest font-tvp-head">
-                                    {PLAY_CONTENT.hero.category}
-                                </span>
-                                <span className="text-white/50 text-xs font-medium tracking-wide">{PLAY_CONTENT.hero.duration}</span>
-                            </div>
-                            <h2 className="font-tvp-head text-4xl sm:text-5xl md:text-7xl font-black tracking-wide max-w-4xl leading-relaxed text-white drop-shadow-md">
-                                {PLAY_CONTENT.hero.title}
-                            </h2>
-                            <p className="text-white/80 max-w-xl text-sm md:text-base line-clamp-4 md:line-clamp-3 font-light leading-relaxed tracking-wide drop-shadow">
-                                {PLAY_CONTENT.hero.description}
-                            </p>
-                            <div className="flex items-center gap-4 mt-3 w-full sm:w-auto">
-                                <button className="w-full sm:w-auto flex items-center justify-center gap-3 bg-[#ff4d00] hover:bg-[#e04300] text-black font-black uppercase text-xs md:text-sm px-10 py-4 rounded-full transition-all shadow-xl hover:scale-[1.02] font-tvp-head">
-                                    Ver ahora
-                                </button>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section className="px-6 sm:px-8 md:px-16 py-12 md:py-16 max-w-7xl mx-auto w-full flex flex-col gap-12 md:gap-24">
-                        {PLAY_CONTENT.categories.map((cat, idx) => (
-                            <div key={idx} className="flex flex-col gap-6 md:gap-8">
-                                <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                                    <h3 className="font-tvp-head text-lg md:text-2xl font-bold tracking-wider leading-relaxed">{cat.title}</h3>
-                                    <span className="text-xs text-[#ff4d00] cursor-pointer hover:underline uppercase tracking-[0.2em] font-bold font-tvp-head">Ver todo</span>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-10">
-                                    {cat.items.map((item) => (
-                                        <div key={item.id} className="group cursor-pointer bg-[#0e1017] rounded-xl overflow-hidden border border-white/5 hover:border-white/10 transition-all duration-300 shadow-lg">
-                                            <div className="relative aspect-video overflow-hidden">
-                                                <img src={item.img} alt={item.title} className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500" />
-                                                {item.progress !== undefined && (
-                                                    <div className="absolute bottom-0 left-0 w-full h-1 bg-white/10">
-                                                        <div className="bg-[#ff4d00] h-full" style={{ width: `${item.progress}%` }}></div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="p-5 md:p-6 flex flex-col gap-1.5">
-                                                <h4 className="font-tvp-head font-bold text-sm md:text-base text-white/90 group-hover:text-white transition-colors tracking-wide leading-relaxed">
-                                                    {item.title}
-                                                </h4>
-                                                <p className="text-xs md:text-sm text-white/45 tracking-wide font-light font-tvp-text">{item.subtitle}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </section>
-                </main>
-            )}
-
-            {activeTab === 'directo' && (
-                <main className="flex-1 flex flex-col w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-8 animate-in fade-in duration-500 gap-6">
-                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-white/10 pb-6">
-                        <div className="flex items-center gap-3">
-                            <span className="flex items-center gap-2 bg-[#ff4d00] text-black text-xs font-black px-3 py-1.5 rounded uppercase tracking-widest font-tvp-head">
-                                <span className="w-2.5 h-2.5 bg-black rounded-full animate-ping"></span>
-                                En Directo
-                            </span>
-                            <h1 className="font-tvp-head text-xl md:text-3xl font-black tracking-wide text-white">
-                            </h1>
-                        </div>
-                        <span className="text-xs text-white/60 font-tvp-text">
-                            Emisión Oficial en Vivo
-                        </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                        <div className="lg:col-span-3 w-full bg-black rounded-xl overflow-hidden border border-white/10 shadow-2xl aspect-video">
-                            <iframe
-                                src={`https://player.twitch.tv/?channel=televisionpaniense&parent=${parentDomain}&autoplay=true`}
-                                className="w-full h-full border-0"
-                                allowFullScreen={true}
-                                title="TVP En Directo"
-                            />
-                        </div>
-
-                        <div className="lg:col-span-1 w-full h-[450px] lg:h-auto bg-[#0e1017] rounded-xl overflow-hidden border border-white/10 shadow-xl">
-                            <iframe
-                                src={`https://www.twitch.tv/embed/televisionpaniense/chat?parent=${parentDomain}`}
-                                className="w-full h-full border-0"
-                                title="Chat de TVP"
-                            />
-                        </div>
-                    </div>
-                </main>
-            )}
-
-            {activeTab === 'noticias' && (
-                <main className="flex-1 flex flex-col w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-16 py-8 md:py-12 animate-in fade-in duration-500">
-                    <div className="mb-8 md:mb-12 w-full bg-[#ff4d00]/10 border border-[#ff4d00]/25 rounded-xl p-4 md:p-5 flex flex-col md:flex-row items-start md:items-center gap-4 shadow-sm">
-                        <span className="flex items-center gap-2 bg-[#ff4d00] text-black text-xs font-black px-3 py-1.5 rounded uppercase tracking-widest font-tvp-head">
-                            <span className="w-2 h-2 bg-black rounded-full animate-ping"></span>
-                            Última hora
-                        </span>
-                        <p className="text-sm md:text-base font-bold tracking-wide text-neutral-200 leading-relaxed pl-1 font-tvp-text">
-                            {LOCAL_NEWS_FALLBACK.breaking}
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12 lg:gap-14">
-                        <div className="lg:col-span-2 flex flex-col gap-8 md:gap-12">
-                            <div
-                                onClick={() => handleNewsClick('main', mainNews.title)}
-                                className="group cursor-pointer bg-[#0e1017] rounded-xl overflow-hidden border border-white/5 hover:border-white/10 transition-all duration-300 shadow-xl flex flex-col"
-                            >
-                                <div className="relative w-full aspect-video overflow-hidden">
-                                    <img src={mainNews.img} alt={mainNews.title} className="w-full h-full object-cover" />
-                                    <span className="absolute top-4 left-4 sm:top-5 sm:left-5 bg-[#ff4d00] text-black text-[10px] sm:text-xs font-black px-3 sm:px-4 py-1.5 rounded font-tvp-head tracking-widest uppercase">
-                                        {mainNews.category}
-                                    </span>
-                                </div>
-                                <div className="p-5 sm:p-8 md:p-10 flex flex-col gap-3.5 sm:gap-4 flex-1 justify-between">
-                                    <div className="flex flex-col gap-2.5 sm:gap-3">
-                                        <span className="text-[11px] sm:text-xs text-white/40 tracking-wider uppercase font-semibold font-tvp-text">{mainNews.time}</span>
-                                        <h3 className="font-tvp-head text-xl sm:text-2xl md:text-4xl font-black tracking-wide text-white group-hover:text-[#ff4d00] transition-colors leading-relaxed">
-                                            {mainNews.title}
-                                        </h3>
-                                        <p className="text-xs sm:text-sm md:text-base text-neutral-400 font-light leading-relaxed tracking-wide mt-1 font-tvp-text">
-                                            {mainNews.summary}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col gap-6 md:gap-8">
-                                {secondaryNews.map((news) => (
-                                    <div
-                                        key={news.id}
-                                        onClick={() => handleNewsClick(news.id, news.title)}
-                                        className="group cursor-pointer bg-[#0e1017] rounded-xl overflow-hidden border border-white/5 hover:border-white/10 transition-all duration-300 shadow-md flex flex-col md:flex-row w-full min-h-0"
-                                    >
-                                        <div className="relative w-full md:w-[40%] aspect-video md:aspect-auto md:min-h-[160px] overflow-hidden flex-shrink-0">
-                                            <img src={news.img} alt={news.title} className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" />
-                                            <span className="absolute top-3 left-3 bg-[#0a0b10]/95 backdrop-blur text-white text-[9px] font-bold px-2 py-1 rounded tracking-widest uppercase font-tvp-head">
-                                                {news.category}
-                                            </span>
-                                        </div>
-                                        <div className="p-5 md:p-6 flex flex-col gap-2.5 justify-center flex-1 min-w-0">
-                                            <span className="text-[10px] text-white/40 font-medium tracking-wide font-tvp-text">{news.time}</span>
-                                            <h4 className="font-tvp-head font-bold text-base sm:text-lg text-white/90 group-hover:text-[#ff4d00] transition-colors tracking-wide leading-relaxed balance">
-                                                {news.title}
-                                            </h4>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col gap-8 md:gap-12">
-                            <div className="bg-[#0e1017] rounded-xl border border-white/5 p-6 sm:p-8 flex flex-col gap-6 shadow-sm">
-                                <h3 className="font-tvp-head text-base sm:text-lg font-bold border-b border-white/10 pb-4 tracking-widest flex items-center gap-3 uppercase leading-relaxed">
-                                    <span className="w-2.5 h-2.5 bg-[#ff4d00] rounded-full"></span>
-                                    Lo más visto
-                                </h3>
-                                <div className="flex flex-col divide-y divide-white/5">
-                                    {LOCAL_NEWS_FALLBACK.trending.map((trend) => (
-                                        <div key={trend.id} className="py-4 sm:py-5 flex gap-4 sm:gap-5 items-start group cursor-pointer">
-                                            <span className="font-tvp-head text-2xl sm:text-3xl font-black text-[#ff4d00]/40 group-hover:text-[#ff4d00] transition-colors leading-none">
-                                                {trend.number}
-                                            </span>
-                                            <p className="font-tvp-head text-xs sm:text-sm font-bold text-neutral-300 group-hover:text-white transition-colors tracking-wide leading-relaxed">
-                                                {trend.title}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="bg-[#0e1017] rounded-xl border border-white/5 p-6 sm:p-8 text-center flex flex-col items-center justify-center gap-4 sm:gap-5 shadow-inner">
-                                <span className="bg-[#ff4d00]/10 text-[#ff4d00] border border-[#ff4d00]/20 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest font-tvp-head">
-                                    Área Deportiva Paniense
-                                </span>
-                                <h4 className="font-tvp-head text-sm sm:text-base font-bold text-white/90 tracking-wider leading-relaxed">Especial Copa del Reino 2026</h4>
-                                <p className="text-[11px] sm:text-xs text-neutral-500 leading-relaxed max-w-xs font-light tracking-wide font-tvp-text">
-                                    Estamos acondicionando la parrilla de retransmisión televisiva para los próximos encuentros oficiales del campeonato nacional paniense.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </main>
-            )}
-
-            {/* FOOTER */}
-            <footer className="w-full py-10 border-t border-white/5 bg-[#050609] text-xs text-neutral-600 px-6 md:px-12 mt-12 font-tvp-text">
-                <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
-                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 sm:gap-6">
-                        <Link to="/">
-                            <a className="transition-opacity hover:opacity-80 block">
-                                <img src="/logo.png" alt="Reino del Pan" className="h-8 object-contain" />
-                            </a>
-                        </Link>
-
-                        <div className="h-4 w-[1px] bg-white/10 hidden sm:block"></div>
-
-                        <a
-                            href="https://discord.com/invite/reino-del-pan-1381359904731693056"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 bg-[#5865F2]/10 hover:bg-[#5865F2] text-[#5865F2] hover:text-white px-4 py-2 rounded-full border border-[#5865F2]/20 transition-all duration-300 font-tvp-head font-bold uppercase tracking-wider text-[10px]"
-                        >
-                            <svg className="w-4 h-4 fill-current" viewBox="0 0 127.14 96.36" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a74.37,74.37,0,0,0,6.71-11,68.6,68.6,0,0,1-10.64-5.12c.91-.66,1.8-1.34,2.65-2a75.58,75.58,0,0,0,72.94,0c.85.71,1.74,1.39,2.65,2a68.6,68.6,0,0,1-10.64,5.12,74.37,74.37,0,0,0,6.71,11,105.73,105.73,0,0,0,31.54-18.83C130.1,49.22,123.39,26.47,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.83,46,53.83,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.07,46,96.07,53,91,65.69,84.69,65.69Z" />
-                            </svg>
-                            Discord
-                        </a>
-                    </div>
-                    <p className="tracking-wide font-light text-center sm:text-right text-neutral-500 max-w-md sm:max-w-none">
-                        © 2026 Corporación de Radio y Televisión del Reino del Pan (TVP). Todos los derechos reservados.
-                    </p>
-                </div>
-            </footer>
-
-            {/* BARRA MÓVIL */}
-            <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#0a0b10]/95 backdrop-blur-xl border-t border-white/5 flex items-center justify-around z-50 px-6 shadow-2xl">
-                <button onClick={() => setActiveTab('play')} className={`flex flex-col items-center justify-center gap-1.5 ${activeTab === 'play' ? 'text-[#ff4d00]' : 'text-white/45'}`}>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5.5 h-5.5">
-                        <path d="M4 4.5A1.5 1.5 0 0 1 5.5 3h13A1.5 1.5 0 0 1 20 4.5v11 a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 16v-11.5zM5.5 4a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5h-13z" />
-                        <path d="M9.75 13.848V8.152a.25.25 0 0 1 .388-.21l4.8 2.848a.25.25 0 0 1 0 .42l-4.8 2.848a.25.25 0 0 1-.388-.21z" />
-                    </svg>
-                    <span className="text-[9px] font-black tracking-widest uppercase font-tvp-head leading-none">TVP PLAY</span>
-                </button>
-
-                <button onClick={() => setActiveTab('directo')} className={`flex flex-col items-center justify-center gap-1.5 ${activeTab === 'directo' ? 'text-[#ff4d00]' : 'text-white/45'}`}>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5.5 h-5.5">
-                        <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z" />
-                        <circle cx="12" cy="12" r="3" />
-                    </svg>
-                    <span className="text-[9px] font-black tracking-widest uppercase font-tvp-head leading-none">DIRECTO</span>
-                </button>
-
-                <button onClick={() => setActiveTab('noticias')} className={`flex flex-col items-center justify-center gap-1.5 ${activeTab === 'noticias' ? 'text-[#ff4d00]' : 'text-white/45'}`}>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5.5 h-5.5">
-                        <path d="M19 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm-5 12H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
-                    </svg>
-                    <span className="text-[9px] font-black tracking-widest uppercase font-tvp-head leading-none">NOTICIAS</span>
-                </button>
+      {/* Header uses TVP's own identity and is independent of the general government header. */}
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#08090d]/80 backdrop-blur-2xl supports-[backdrop-filter]:bg-[#08090d]/70">
+        <div className="mx-auto flex h-[68px] w-full max-w-[1440px] items-center justify-between gap-2 px-3 sm:h-[76px] sm:px-6 lg:px-9">
+          <div className="flex min-w-0 items-center gap-2.5 sm:gap-4">
+            <Link href="/" aria-label="Volver al portal principal" className="tvp-glass flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] transition hover:bg-white/15" title="Inicio">
+              <ArrowLeft size={18} className="text-white/90" />
+            </Link>
+            <div className="h-7 w-px shrink-0 bg-white/15" aria-hidden="true" />
+            <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+              <img src="/TVP/TVP.png" alt="TVP" className="max-h-10 w-auto max-w-[88px] object-contain sm:max-h-11 sm:max-w-[115px]" />
+              <div className="hidden min-w-0 flex-col border-l border-white/15 pl-3 sm:flex">
+                <span className="text-[10px] font-bold uppercase tracking-[.20em] text-white/65">Televisión Paniense</span>
+                <span className="text-[9px] font-semibold uppercase tracking-[.16em] text-[#f0a5d9]"><s className="decoration-[#fc844c] decoration-2">Reino del</s> Pan</span>
+              </div>
+              <img src="/TVP/2Pan.png" alt="2Pan" className="ml-1 hidden max-h-6 max-w-[65px] object-contain opacity-75 xl:block" />
             </div>
+          </div>
+          <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-white/[.045] p-1.5 min-[900px]:flex" aria-label="Secciones de TVP">
+            {TABS.map(({ id, label, icon: TabIcon }) => (
+              <button key={id} type="button" onClick={() => chooseTab(id)} data-active={activeTab === id}
+                aria-current={activeTab === id ? "page" : undefined}
+                className="tvp-tab flex items-center gap-2 rounded-full border border-transparent px-3 py-2.5 text-[11px] font-bold uppercase tracking-[.07em] text-white/60 transition hover:text-white min-[1100px]:px-4">
+                <TabIcon size={15} aria-hidden="true" />{label}
+              </button>
+            ))}
+          </nav>
+          <button type="button" onClick={() => setNoticeOpen(true)}
+            className="tvp-glass flex min-h-10 shrink-0 items-center gap-2 rounded-[14px] px-3 text-[11px] font-bold uppercase tracking-[.08em] text-[#ff9c71] transition hover:bg-[#ff4d00]/15 sm:px-4">
+            <Megaphone size={16} aria-hidden="true" />
+            <span className="hidden min-[405px]:inline">Comunicado</span>
+            <span className="sr-only min-[405px]:hidden">Abrir comunicado</span>
+          </button>
         </div>
-    );
+      </header>
+
+      {activeTab === "play" && (
+        <main className="min-w-0 flex-1">
+          <section className="relative isolate flex min-h-[500px] items-end overflow-hidden bg-[#0a0b10] sm:min-h-[580px] lg:min-h-[610px]">
+            <img src={PLAY_CONTENT.hero.image} alt="" className="absolute inset-0 -z-20 h-full w-full object-cover object-center opacity-65" />
+            <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#08090d] via-[#08090d]/65 to-[#08090d]/15" />
+            <div className="absolute inset-0 -z-10 hidden bg-gradient-to-r from-[#08090d]/75 via-transparent to-transparent lg:block" />
+            <div className="mx-auto w-full max-w-[1440px] px-5 pb-12 pt-24 sm:px-8 sm:pb-16 lg:px-12 lg:pb-20">
+              <div className="mb-5 flex flex-wrap items-center gap-3">
+                <span className="tvp-glass rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.16em] text-[#ffa77b]">{PLAY_CONTENT.hero.category}</span>
+                <span className="text-xs font-semibold text-white/70">{PLAY_CONTENT.hero.duration}</span>
+              </div>
+              <h1 className="tvp-head max-w-[850px] text-[clamp(2.7rem,7vw,6rem)] font-bold leading-[1.04] tracking-tight drop-shadow-xl">{PLAY_CONTENT.hero.title}</h1>
+              <p className="mt-5 max-w-[610px] text-sm leading-7 text-white/85 sm:text-base">{PLAY_CONTENT.hero.description}</p>
+              <a href="#tvp-catalogo" className="tvp-primary mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2.5 rounded-full px-7 py-3 text-xs font-black uppercase tracking-[.14em] transition hover:brightness-110 active:scale-[.98] sm:w-auto">
+                <Play size={17} fill="currentColor" aria-hidden="true" /> Explorar programación <ChevronRight size={17} aria-hidden="true" />
+              </a>
+            </div>
+          </section>
+          <div id="tvp-catalogo" className="scroll-mt-24 mx-auto max-w-[1440px] space-y-12 px-4 py-12 sm:px-8 sm:py-16 lg:space-y-20 lg:px-12">
+            {PLAY_CONTENT.categories.map((cat) => (
+              <section key={cat.title} aria-label={cat.title}>
+                <div className="mb-5 flex items-end justify-between gap-4 border-b border-white/10 pb-4 sm:mb-7">
+                  <h2 className="tvp-head text-[clamp(1.2rem,2.2vw,1.9rem)] font-bold tracking-wide">{cat.title}</h2>
+                  <span className="shrink-0 text-[10px] font-bold uppercase tracking-[.16em] text-[#ff9d71]">{cat.items.length} programas</span>
+                </div>
+                <div className="tvp-hide-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:px-0 lg:grid-cols-3">
+                  {cat.items.map(item => (
+                    <article key={item.id} className="tvp-card group w-[min(82vw,350px)] shrink-0 snap-start overflow-hidden rounded-[22px] sm:w-auto sm:shrink">
+                      <div className="relative aspect-video overflow-hidden bg-black/40">
+                        <img src={item.img.startsWith("http") || item.img.startsWith("/") ? item.img : `/${item.img}`} alt="" loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]" />
+                        {item.progress !== undefined && (
+                          <div className="absolute inset-x-0 bottom-0 h-1.5 bg-white/25" aria-label={`${item.progress}% reproducido`} role="progressbar" aria-valuenow={item.progress} aria-valuemin={0} aria-valuemax={100}>
+                            <div className="h-full bg-[#ff4d00]" style={{ width: `${item.progress}%` }} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-1.5 p-4 sm:p-5">
+                        <h3 className="tvp-head text-base font-bold leading-snug text-white">{item.title}</h3>
+                        <p className="line-clamp-3 text-sm leading-relaxed text-white/60">{item.subtitle}</p>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        </main>
+      )}
+
+      {activeTab === "directo" && (
+        <main className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-8 sm:px-8 sm:py-12 lg:px-12">
+          <div className="mb-7 flex flex-wrap items-end justify-between gap-4 border-b border-white/10 pb-6">
+            <div>
+              <span className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#ff4d00]/35 bg-[#ff4d00]/15 px-3 py-1.5 text-[10px] font-black uppercase tracking-[.16em] text-[#ff915d]"><span className="h-2 w-2 rounded-full bg-[#ff4d00]" />Canal en directo</span>
+              <h1 className="tvp-head text-3xl font-bold sm:text-4xl">TVP en directo</h1>
+            </div>
+            <p className="text-xs text-white/55">Emisión desde Twitch · Televisión Paniense</p>
+          </div>
+          <div className="grid min-w-0 grid-cols-1 gap-5 xl:grid-cols-[minmax(0,3fr)_minmax(270px,1fr)]">
+            <div className="tvp-card min-w-0 overflow-hidden rounded-[22px] p-1.5 sm:rounded-[28px] sm:p-2">
+              <div className="aspect-video overflow-hidden rounded-[16px] bg-black sm:rounded-[22px]">
+                {parentDomain ? (
+                  <iframe title="Emisión en directo de TVP" src={`https://player.twitch.tv/?channel=televisionpaniense&parent=${encodeURIComponent(parentDomain)}&autoplay=false`} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen className="h-full w-full border-0" />
+                ) : <div className="grid h-full place-items-center text-sm text-white/55">Cargando reproductor…</div>}
+              </div>
+            </div>
+            <div className="tvp-card min-w-0 overflow-hidden rounded-[22px] p-1.5 sm:rounded-[28px] sm:p-2">
+              <div className="h-[390px] overflow-hidden rounded-[16px] bg-[#13141d] sm:h-[490px] xl:h-full xl:min-h-[300px] sm:rounded-[22px]">
+                {parentDomain ? (
+                  <iframe title="Chat de la emisión de TVP" src={`https://www.twitch.tv/embed/televisionpaniense/chat?parent=${encodeURIComponent(parentDomain)}`} className="h-full w-full border-0" />
+                ) : <div className="grid h-full place-items-center text-sm text-white/55">Cargando chat…</div>}
+              </div>
+            </div>
+          </div>
+        </main>
+      )}
+
+      {activeTab === "noticias" && (
+        <main className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-8 sm:px-8 sm:py-12 lg:px-12">
+          <div className="mb-7 flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#ff9b69]"><Newspaper size={15} aria-hidden="true" /> TVP Noticias</div>
+              <h1 className="tvp-head text-3xl font-bold sm:text-4xl lg:text-5xl">Actualidad paniense</h1>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-white/60">Información, análisis y actualidad del territorio.</p>
+            </div>
+            <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[10px] uppercase tracking-[.1em] text-white/60">{newsMode === "supabase" ? "Titulares del registro TVP" : "Contenido de muestra"}</span>
+          </div>
+          <div className="tvp-glass mb-8 flex flex-col gap-3 rounded-[20px] px-4 py-4 sm:flex-row sm:items-center sm:px-6">
+            <span className="inline-flex shrink-0 items-center gap-2 self-start rounded-lg bg-[#ff4d00] px-3 py-1.5 text-[10px] font-black uppercase tracking-[.12em] text-black">Titulares</span>
+            <p className="text-sm font-semibold leading-6 text-white/80">{newsMode === "fallback" ? LOCAL_NEWS_FALLBACK.breaking : mainNews.title}</p>
+          </div>
+          <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.85fr)_minmax(290px,1fr)] lg:gap-8">
+            <div className="min-w-0 space-y-5">
+              <button type="button" onClick={() => showNews({ id: "main", ...mainNews })} className="tvp-card group w-full overflow-hidden rounded-[24px] text-left transition hover:border-[#ff4d00]/45">
+                <div className="relative aspect-video overflow-hidden">
+                  <img src={mainNews.img} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]" />
+                  <span className="absolute left-4 top-4 rounded-lg bg-[#ff4d00] px-3 py-1.5 text-[10px] font-black uppercase tracking-[.1em] text-black">{mainNews.category}</span>
+                </div>
+                <div className="p-5 sm:p-8">
+                  <p className="mb-2 text-xs text-white/50">{mainNews.time}</p>
+                  <h2 className="tvp-head text-[clamp(1.4rem,3vw,2.5rem)] font-bold leading-snug transition group-hover:text-[#ffb086]">{mainNews.title}</h2>
+                  <p className="mt-3 line-clamp-3 text-sm leading-7 text-white/65">{mainNews.summary}</p>
+                  <span className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#ff9c71]">Ver información <ArrowUpRight size={15} aria-hidden="true" /></span>
+                </div>
+              </button>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {secondaryNews.map(news => (
+                  <button key={news.id} type="button" onClick={() => showNews(news)} className="tvp-card group overflow-hidden rounded-[20px] text-left transition hover:border-[#ff4d00]/45">
+                    <div className="aspect-video overflow-hidden"><img src={news.img} alt="" loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]" /></div>
+                    <div className="p-4 sm:p-5"><p className="text-[10px] font-bold uppercase tracking-wider text-[#ff9b70]">{news.category} · {news.time}</p><h3 className="tvp-head mt-2 text-lg font-bold leading-snug">{news.title}</h3></div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <aside className="min-w-0 space-y-5">
+              <div className="tvp-card rounded-[24px] p-5 sm:p-7">
+                <h2 className="tvp-head mb-5 border-b border-white/10 pb-4 text-xl font-bold">Lo más visto</h2>
+                {LOCAL_NEWS_FALLBACK.trending.map(t => (
+                  <div key={t.id} className="flex items-start gap-4 border-b border-white/10 py-4 last:border-0">
+                    <span className="tvp-head text-3xl font-bold text-[#ff4d00]/75">{t.number}</span><p className="text-sm leading-6 text-white/75">{t.title}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="tvp-glass rounded-[24px] p-5 sm:p-7">
+                <span className="text-[10px] font-black uppercase tracking-[.14em] text-[#ff9a6d]">Área Deportiva Paniense</span>
+                <h2 className="tvp-head mt-3 text-xl font-bold">Especial Copa del Reino 2026</h2>
+                <p className="mt-3 text-sm leading-7 text-white/65">Estamos acondicionando la parrilla de retransmisión televisiva para los próximos encuentros oficiales del campeonato nacional paniense.</p>
+              </div>
+            </aside>
+          </div>
+        </main>
+      )}
+
+      {/* TVP footer kept separate from the general government footer. */}
+      <footer className="mt-auto border-t border-white/10 bg-[#050608] px-4 py-8 text-xs text-white/50 sm:px-8 lg:px-12">
+        <div className="mx-auto flex max-w-[1440px] flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-4">
+            <Link href="/" aria-label="Volver al inicio"><img src="/logo.png" alt="Artis Panis" className="h-8 w-auto object-contain" /></Link>
+            <a href="https://discord.com/invite/reino-del-pan-1381359904731693056" target="_blank" rel="noopener noreferrer" className="tvp-glass rounded-full px-4 py-2 text-[11px] font-bold text-white/80 transition hover:text-[#ffa77b]">Comunidad Discord ↗</a>
+            <button type="button" onClick={() => setNoticeOpen(true)} className="text-[11px] font-bold text-[#ff9c71] underline-offset-4 hover:underline">Comunicado de TVP</button>
+          </div>
+          <p className="max-w-xl leading-6 text-white/50">© {new Date().getFullYear()} Corporación de Radio y Televisión Paniense (TVP). Todos los derechos reservados.</p>
+        </div>
+      </footer>
+
+      {/* Mobile navigation: fixed bar under 900px, with safe-area support. */}
+      <nav aria-label="Navegación móvil de TVP" className="tvp-glass fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 gap-1 rounded-t-[22px] border-x-0 border-b-0 p-1.5 pb-[max(6px,env(safe-area-inset-bottom))] min-[900px]:hidden">
+        {TABS.map(({ id, label, icon: TabIcon }) => (
+          <button key={id} type="button" onClick={() => chooseTab(id)} data-active={activeTab === id} aria-current={activeTab === id ? "page" : undefined}
+            className="tvp-tab flex min-h-14 flex-col items-center justify-center gap-1 rounded-[16px] border border-transparent px-1 text-center text-[10px] font-bold uppercase tracking-[.03em] text-white/65 transition hover:text-white">
+            <TabIcon size={19} aria-hidden="true" />{label}
+          </button>
+        ))}
+      </nav>
+      <div aria-hidden="true" className="h-[calc(70px+env(safe-area-inset-bottom))] shrink-0 min-[900px]:hidden" />
+
+      {/* Automatic corporate statement. Can be dismissed and reopened any time. */}
+      {noticeOpen && (
+        <Modal title="Comunicado oficial de TVP" labelledBy="tvp-notice-title" onClose={() => setNoticeOpen(false)}>
+          <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-[#630B57]/40 blur-[65px]" />
+          <div className="relative flex items-center justify-between gap-4">
+            <img src="/TVP/TVP.png" alt="TVP" className="h-10 w-auto max-w-[130px] object-contain" />
+            <IconButton onClick={() => setNoticeOpen(false)} label="Cerrar comunicado"><X size={19} /></IconButton>
+          </div>
+          <div className="relative mt-7 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[.18em] text-[#ffad7b]"><Megaphone size={15} /> Posicionamiento institucional</div>
+          <h2 id="tvp-notice-title" className="tvp-head relative mt-3 text-[clamp(1.65rem,5vw,2.8rem)] font-bold leading-[1.12]">Comunicado oficial de TVP</h2>
+          <div className="mt-5 h-px w-full bg-gradient-to-r from-[#ff4d00]/80 via-white/15 to-transparent" />
+          <p className="relative mt-6 max-h-[45dvh] overflow-y-auto pr-1 text-[14px] leading-[1.9] text-white/85 sm:text-[16px]">{COMUNICADO}</p>
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-[.12em] text-white/40">Corporación de Radio y Televisión Paniense</span>
+            <button type="button" onClick={() => setNoticeOpen(false)} className="tvp-primary inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-6 text-xs font-black uppercase tracking-[.09em] transition hover:brightness-110">Entendido <ChevronRight size={17} /></button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Preview modal avoids fake article navigation where no article URL exists. */}
+      {selectedNews && !noticeOpen && (
+        <Modal title={selectedNews.title} labelledBy="tvp-news-title" onClose={() => setSelectedNews(null)}>
+          <div className="flex items-center justify-between gap-2"><span className="text-[10px] font-bold uppercase tracking-[.15em] text-[#ff9f75]">{selectedNews.category} · {selectedNews.time}</span><IconButton onClick={() => setSelectedNews(null)} label="Cerrar noticia"><X size={19}/></IconButton></div>
+          <h2 id="tvp-news-title" className="tvp-head mt-5 text-2xl font-bold leading-snug sm:text-3xl">{selectedNews.title}</h2>
+          <img src={selectedNews.img} alt="" className="mt-5 aspect-video w-full rounded-[18px] object-cover" />
+          <p className="mt-5 text-sm leading-7 text-white/70">{selectedNews.summary || "Este titular aún no dispone de un artículo ampliado."}</p>
+          <button type="button" onClick={() => setSelectedNews(null)} className="mt-6 inline-flex items-center gap-2 text-xs font-bold text-[#ffa77b]"><ArrowLeft size={16} /> Volver a las noticias</button>
+        </Modal>
+      )}
+    </div>
+  );
 }
