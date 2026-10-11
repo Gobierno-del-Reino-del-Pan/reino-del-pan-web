@@ -188,7 +188,7 @@ export default function PoliciaNacional() {
               <strong className="text-[11px] uppercase tracking-[.13em]">Emergencias</strong>
             </div>
             <p className="text-[12px] leading-6 text-[#713642] sm:text-[13px]">
-              Ante una emergencia real en España, llama al <a href="tel:112" className="cpnp-focus rounded font-extrabold underline decoration-[#A42135]/35 underline-offset-2">112</a>. En el entorno del Reino, el <strong>99</strong> figura como número interno, si está habilitado.
+              Ante una emergencia real, llama al <a href="tel:112" className="cpnp-focus rounded font-extrabold underline decoration-[#A42135]/35 underline-offset-2">112</a>. El <strong>99</strong> es otra opción si solo quiere llamar a la policía.
             </p>
           </section>
 

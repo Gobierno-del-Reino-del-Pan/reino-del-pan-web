@@ -164,8 +164,15 @@ export default function PKMN() {
   return (
     <div className="pkmn-page min-h-screen flex flex-col">
       <style>{`
-        .pkmn-page{--pk-primary:#630B57;--pk-ink:#312330;--pk-muted:#746575;--pk-line:rgba(99,11,87,.12);background:linear-gradient(155deg,#fcf8fc 0%,#f6edf5 52%,#fbf8fc 100%);color:var(--pk-ink);font-family:var(--body-font,Inter,system-ui,sans-serif);overflow-x:clip}
+        .pkmn-page{--pk-primary:#630B57;--pk-ink:#312330;--pk-muted:#746575;--pk-line:rgba(99,11,87,.12);--pk-heading:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;font-size-adjust:none;background:linear-gradient(155deg,#fcf8fc 0%,#f6edf5 52%,#fbf8fc 100%);color:var(--pk-ink);font-family:var(--body-font,Inter,system-ui,sans-serif);overflow-x:clip}
         .pkmn-page *, .pkmn-page *::before, .pkmn-page *::after{box-sizing:border-box}
+        /* Sobrescribe font-size-adjust:1 y las métricas incompatibles de Chillvornia del CSS global. */
+        .pkmn-page h1,.pkmn-page h2,.pkmn-page h3,.pkmn-page h4,.pkmn-page h5,.pkmn-page h6{font-size-adjust:none!important;font-stretch:normal!important;font-family:var(--pk-heading)!important;letter-spacing:-.025em;overflow-wrap:break-word}
+        .pkmn-page .pk-title-lockup strong{font-size-adjust:none!important;font-family:var(--pk-heading)!important}
+        .pkmn-page .pk-metric-value{font-size-adjust:none!important}
+        .pkmn-page .pk-intro h1{letter-spacing:-.045em}
+        .pkmn-page h1,.pkmn-page h2,.pkmn-page h3{max-width:100%}
+
         .pk-shell{width:min(1160px,100%);margin-inline:auto;padding-inline:clamp(16px,3vw,32px)}
         .pk-glass{background:linear-gradient(135deg,rgba(255,255,255,.85),rgba(255,255,255,.52) 55%,rgba(249,235,247,.65));border:1px solid rgba(255,255,255,.95);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 13px 42px rgba(66,24,61,.065),0 1px 4px rgba(66,24,61,.045);-webkit-backdrop-filter:blur(22px) saturate(145%);backdrop-filter:blur(22px) saturate(145%)}
         .pk-utility{background:#251522;color:#efdeea;font-size:10px;letter-spacing:.065em;line-height:1.6;text-align:center;padding:9px 16px}
@@ -173,12 +180,13 @@ export default function PKMN() {
         .pk-utility img{width:23px;height:15px;object-fit:cover;border-radius:2px;flex-shrink:0}
         .pk-utility s{text-decoration-thickness:1.4px;text-decoration-color:#d4a4cd}
         .pk-page-header{position:sticky;top:0;z-index:40;padding:10px 14px;isolation:isolate}
-        .pk-head-inner{width:min(1180px,100%);min-height:72px;margin:auto;padding:10px clamp(12px,2vw,22px);border-radius:23px;display:grid;grid-template-columns:minmax(90px,1fr) auto minmax(90px,1fr);align-items:center;gap:12px}
+        .pk-head-inner{width:min(1180px,100%);min-height:72px;margin:auto;padding:10px clamp(12px,2vw,22px);border-radius:23px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,auto) minmax(0,1fr);align-items:center;gap:12px}
         .pk-title-lockup{text-align:center;min-width:0;line-height:1.1}
         .pk-title-lockup small{display:block;font-size:9px;font-weight:800;letter-spacing:.21em;color:#876780;margin-bottom:5px;text-transform:uppercase}
-        .pk-title-lockup strong{display:block;font-size:clamp(18px,2.4vw,27px);line-height:1.1;font-family:var(--display-font,inherit);font-weight:800;white-space:nowrap}
+        .pk-title-lockup strong{display:block;font-size:clamp(16px,2vw,23px);line-height:1.25;font-family:var(--pk-heading);font-weight:800;letter-spacing:-.035em;white-space:nowrap}
         .pk-title-lockup em{font-style:normal;color:#630B57}
         .pk-head-end{display:flex;justify-content:flex-end;min-width:0}
+        .pk-head-inner>.pk-nav-pill{justify-self:start;width:max-content;max-width:100%}
         .pk-nav-pill{display:inline-flex;justify-content:center;align-items:center;gap:9px;min-height:42px;border-radius:15px;padding:10px 14px;font-size:12px;font-weight:800;white-space:nowrap;color:#630B57;border:1px solid rgba(99,11,87,.12);background:rgba(255,255,255,.62);box-shadow:inset 0 1px 0 #fff;transition:transform .2s,background .2s,box-shadow .2s}
         .pk-nav-pill:hover{transform:translateY(-2px);background:#fff;box-shadow:0 7px 16px rgba(99,11,87,.09)}
         .pk-nav-pill:focus-visible,.pk-action:focus-visible,.pk-quiet-action:focus-visible,.pk-retry:focus-visible{outline:3px solid #be8cb6;outline-offset:3px}
@@ -190,7 +198,7 @@ export default function PKMN() {
         .pk-orb-b{height:160px;width:160px;bottom:10px;left:-85px;background:rgba(253,185,89,.15)}
         .pk-intro{position:relative;max-width:880px}
         .pk-overline{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(99,11,87,.14);border-radius:99px;padding:8px 12px;background:rgba(255,255,255,.8);color:#630B57;font-size:10px;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
-        .pk-intro h1{font-family:var(--display-font,inherit);font-weight:800;font-size:clamp(38px,7vw,76px);line-height:1.03;letter-spacing:-.045em;margin:20px 0 19px;color:#231823;overflow-wrap:anywhere}
+        .pk-intro h1{font-family:var(--pk-heading);font-weight:850;font-size:clamp(34px,5.4vw,68px);line-height:1.15;letter-spacing:-.045em;margin:22px 0 22px;color:#231823;overflow-wrap:normal;word-break:normal}
         .pk-intro h1 span{color:#630B57}
         .pk-intro p{max-width:690px;font-size:clamp(14px,1.45vw,17px);line-height:1.8;color:#6a5868}
         .pk-hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
@@ -208,7 +216,7 @@ export default function PKMN() {
         .pk-section{padding-top:clamp(40px,6vw,70px)}
         .pk-section-head{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:20px}
         .pk-section-kicker{color:#853d79;font-size:11px;letter-spacing:.2em;font-weight:800;text-transform:uppercase}
-        .pk-section-title{font-family:var(--display-font,inherit);font-size:clamp(25px,3.5vw,39px);line-height:1.15;color:#291c28;margin:7px 0 0;font-weight:800;letter-spacing:-.025em}
+        .pk-section-title{font-family:var(--pk-heading);font-size:clamp(25px,3.2vw,37px);line-height:1.24;color:#291c28;margin:9px 0 0;font-weight:800;letter-spacing:-.035em}
         .pk-section-sub{font-size:13px;color:#796776;line-height:1.7;max-width:420px}
         .pk-roster-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
         .pk-roster{padding:clamp(16px,2.5vw,28px);border-radius:24px;min-width:0}
@@ -233,7 +241,7 @@ export default function PKMN() {
         .pk-comm-art img{width:100%;height:100%;object-fit:contain}
         .pk-comm-body{min-width:0}
         .pk-comm-body small{color:#8b4d81;font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.11em}
-        .pk-comm-body h3{font-size:19px;line-height:1.22;margin:9px 0;color:#3a2435;font-weight:800;font-family:var(--display-font,inherit)}
+        .pk-comm-body h3{font-size:19px;line-height:1.32;margin:9px 0 12px;color:#3a2435;font-weight:800;font-family:var(--pk-heading)}
         .pk-comm-body p{font-size:13px;line-height:1.7;color:#786976}
         .pk-comm-foot{margin-top:16px;border-top:1px solid rgba(99,11,87,.1);padding-top:12px;color:#8f7789;font-size:11px}
         .pk-starters{display:grid;gap:15px}
@@ -249,7 +257,7 @@ export default function PKMN() {
         .pk-starter-tags{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
         .pk-type-status{background:var(--type-tint);color:var(--type-color);border-radius:999px;padding:6px 11px;text-transform:uppercase;letter-spacing:.07em;font-size:10px;font-weight:850}
         .pk-number{font-size:11px;color:#918291;font-weight:700}
-        .pk-starter-info h3{font-size:clamp(20px,2.5vw,28px);line-height:1.18;margin:14px 0 12px;font-family:var(--display-font,inherit);font-weight:800;letter-spacing:-.02em;color:#3a2537}
+        .pk-starter-info h3{font-size:clamp(20px,2.3vw,27px);line-height:1.3;margin:16px 0 13px;font-family:var(--pk-heading);font-weight:800;letter-spacing:-.035em;color:#3a2537}
         .pk-starter-info h3 span{color:var(--type-color)}
         .pk-starter-info p{max-width:740px;font-size:13px;line-height:1.8;color:#746472}
         .pk-starter-footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:9px;margin-top:19px;padding-top:13px;border-top:1px solid rgba(99,11,87,.1);color:#887686;font-size:11px}
@@ -262,20 +270,21 @@ export default function PKMN() {
         .pk-mafia-types{display:flex;align-items:center;gap:9px}
         .pk-mafia-types img{max-height:21px;max-width:61px;object-fit:contain;filter:grayscale(1)}
         .pk-mafia-eyebrow{color:#e6ba7e;font:800 10px ui-monospace,monospace;letter-spacing:.12em}
-        .pk-mafia h3{font-size:clamp(20px,3vw,29px);font-family:var(--display-font,inherit);margin:10px 0 13px;line-height:1.15;color:#fff}
+        .pk-mafia h3{font-size:clamp(21px,2.8vw,28px);font-family:var(--pk-heading);margin:13px 0 15px;line-height:1.28;color:#fff}
         .pk-mafia h3 span{color:#e4ab5f}
         .pk-mafia p{font:12px/1.9 ui-monospace,monospace;color:#d6c9d1;max-width:730px}
         .pk-mafia-footer{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;background:#0d0b0eb8;border-top:1px solid #4f3c31;padding:13px clamp(20px,4vw,35px);color:#d9ad74;font:10px/1.5 ui-monospace,monospace}
         .pk-mafia-footer s{color:#93838c}
         .pk-next{margin-top:17px;padding:21px 24px;display:flex;gap:17px;align-items:center;justify-content:space-between;border:1px dashed #c7a8bf;border-radius:21px;background:#fff8}
-        .pk-next h3{color:#442b40;font-size:14px;font-weight:800}
+        .pk-next h3{color:#442b40;font-size:15px;line-height:1.35;font-weight:800}
         .pk-next p{max-width:750px;font-size:12px;line-height:1.6;color:#8c7888;margin-top:4px}
         .pk-next-label{display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:8px 10px;color:#8c6283;background:#f3e8f0;font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:800;white-space:nowrap}
         .pk-bottom{padding-bottom:clamp(55px,7vw,90px)}
         @keyframes pkShimmer{to{background-position-x:-210%}}
         @media(max-width:850px){.pk-roster-list{grid-template-columns:1fr}.pk-comms{grid-template-columns:1fr}}
         @media(max-width:640px){.pk-page-header{padding:8px}.pk-head-inner{grid-template-columns:1fr auto;min-height:auto;gap:10px;border-radius:19px;padding:10px 11px}.pk-title-lockup{grid-column:1/-1;grid-row:1;text-align:center;padding-bottom:9px;border-bottom:1px solid rgba(99,11,87,.1)}.pk-head-inner>.pk-nav-pill{grid-column:1;grid-row:2;justify-self:start}.pk-head-end{grid-column:2;grid-row:2}.pk-nav-pill{min-height:39px;padding:9px 12px;font-size:11px}.pk-hero{padding-top:34px}.pk-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:30px}.pk-metric:last-child{grid-column:1/-1}.pk-metric{padding:17px}.pk-roster-grid{grid-template-columns:1fr}.pk-roster-list{grid-template-columns:repeat(2,minmax(0,1fr))}.pk-section-head{flex-direction:column;align-items:start;gap:7px}.pk-starter{grid-template-columns:1fr}.pk-starter-visual{min-height:205px}.pk-starter-art{height:135px}.pk-mafia-main{grid-template-columns:1fr}.pk-mafia-art{min-height:150px}.pk-next{flex-direction:column;align-items:start}.pk-comm{align-items:center}}
-        @media(max-width:400px){.pk-utility{font-size:9px}.pk-intro h1{font-size:37px}.pk-roster-list{grid-template-columns:1fr}.pk-comm{flex-direction:column}.pk-comm-art{width:85px;height:85px}.pk-metric-value{font-size:28px}.pk-starter-info{padding:18px}.pk-next{padding:17px}}
+        @media(max-width:400px){.pk-utility{font-size:9px}.pk-intro h1{font-size:clamp(32px,9vw,38px)}.pk-roster-list{grid-template-columns:1fr}.pk-comm{flex-direction:column}.pk-comm-art{width:85px;height:85px}.pk-metric-value{font-size:28px}.pk-starter-info{padding:18px}.pk-next{padding:17px}}
+        @media(max-width:360px){.pk-head-inner{gap:7px}.pk-title-lockup strong{font-size:19px}.pk-nav-pill{padding:9px 10px}.pk-intro h1{font-size:32px}.pk-hero-actions>a{width:100%}.pk-metric-icon{font-size:9px;letter-spacing:.055em}.pk-starter-tags{gap:7px}.pk-starter-info h3{font-size:20px}}
         @media(prefers-reduced-motion:reduce){.pkmn-page *, .pkmn-page *::before, .pkmn-page *::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
       `}</style>
 
