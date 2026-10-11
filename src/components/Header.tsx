@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
+// Se mantienen las rutas y los servicios del componente original.
 const navItems = [
   { href: "/", label: "Inicio" },
   { href: "/gobierno", label: "Gobierno" },
@@ -9,14 +10,12 @@ const navItems = [
   { href: "/policia", label: "DPI - CPNP" },
 ];
 
-// REORGANIZACIÓN: Dividimos "Otros" en Comunidad e Info/Utilidades
 const comunidadItems = [
   { href: "/Politics", label: "Grupos Políticos" },
   { href: "https://www.mafiadepan.com/", label: "La Mafia", isExternal: true },
   { href: "/pkmn", label: "PKMN" },
   { href: "/Pandora", label: "Conf. Episcopal de Pandora" },
   { href: "/turismo", label: "Turismo" },
-
 ];
 
 const infoItems = [
@@ -26,7 +25,6 @@ const infoItems = [
   { href: "/FTech", label: "Fuerza Tech" },
   { href: "/Igualdad", label: "Igualdad" },
   { href: "/about", label: "Acerca de" },
-
 ];
 
 interface DiscordUser {
@@ -39,474 +37,304 @@ interface DiscordUser {
   roles: any[];
 }
 
+type DropName = "comunidad" | "info" | "usuario" | null;
+type SubItem = { href: string; label: string; isExternal?: boolean };
+
+const Chevron = ({ up = false }: { up?: boolean }) => (
+  <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+    className={`shrink-0 transition-transform duration-200 ${up ? "rotate-180" : ""}`}>
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+);
+
+const MenuIcon = ({ open }: { open: boolean }) => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none"
+    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
+    className="transition-transform duration-300">
+    <path className="origin-center transition-all duration-300"
+      d={open ? "M5 5 19 19" : "M4 7h16"} />
+    <path className={`transition-opacity duration-150 ${open ? "opacity-0" : "opacity-100"}`} d="M4 12h16" />
+    <path d={open ? "M19 5 5 19" : "M4 17h16"} />
+  </svg>
+);
+
+// Tanto el isotipo como el nombre mantienen su ruta al inicio.
+function Brand() {
+  return (
+    <Link href="/" aria-label="Ir al inicio de Pan" className="pan-brand group flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-3">
+      <span className="pan-brand-icon relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-[15px] sm:h-11 sm:w-11">
+        <img src="/logo.png" alt="" className="relative z-10 h-full w-full object-contain p-1" />
+      </span>
+      <span className="min-w-0 leading-none">
+        <span className="block text-[9px] font-semibold uppercase tracking-[0.26em] text-[#8C6488]">ARTIS PANIS</span>
+        <span className="mt-1 flex items-baseline gap-[5px] whitespace-nowrap text-[12px] font-black uppercase tracking-[0.045em] text-[#630B57] sm:text-[13px]">
+          <span className="pan-strike" aria-label="Reino del, tachado">REINO DEL</span>
+          <span>PAN</span>
+        </span>
+      </span>
+    </Link>
+  );
+}
+
 export default function Header() {
   const [location] = useLocation();
   const [user, setUser] = useState<DiscordUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  // Estados independientes para cada menú nuevo
-  const [comunidadOpen, setComunidadOpen] = useState(false);
-  const [infoOpen, setInfoOpen] = useState(false);
+  const [drop, setDrop] = useState<DropName>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  const menuRef = useRef<HTMLDivElement>(null);
-  // Refs independientes para detectar clics fuera de los menús
-  const comunidadRef = useRef<HTMLDivElement>(null);
-  const infoRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    let isMounted = true;
-    fetch("/api/me")
-      .then((r) => r.json())
-      .then((d) => {
-        if (isMounted) setUser(d.user ?? null);
-      })
-      .catch(() => {
-        if (isMounted) setUser(null);
-      })
-      .finally(() => {
-        if (isMounted) setLoading(false);
-      });
+    const controller = new AbortController();
+    fetch("/api/me", { signal: controller.signal })
+      .then(r => { if (!r.ok) throw new Error("No se pudo cargar la sesión"); return r.json(); })
+      .then(d => setUser(d.user ?? null))
+      .catch(err => { if (err.name !== "AbortError") setUser(null); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const onOutside = (event: PointerEvent) => {
+      if (headerRef.current && !headerRef.current.contains(event.target as Node)) {
+        setDrop(null);
+        setMobileOpen(false);
+      }
+    };
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { setDrop(null); setMobileOpen(false); }
+    };
+    document.addEventListener("pointerdown", onOutside);
+    document.addEventListener("keydown", onEscape);
     return () => {
-      isMounted = false;
+      document.removeEventListener("pointerdown", onOutside);
+      document.removeEventListener("keydown", onEscape);
     };
   }, []);
 
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-      if (comunidadRef.current && !comunidadRef.current.contains(e.target as Node)) {
-        setComunidadOpen(false);
-      }
-      if (infoRef.current && !infoRef.current.contains(e.target as Node)) {
-        setInfoOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
-
-  useEffect(() => {
-    setMobileOpen(false);
-    setComunidadOpen(false);
-    setInfoOpen(false);
-  }, [location]);
+  useEffect(() => { setMobileOpen(false); setDrop(null); }, [location]);
 
   const esReportero = useMemo(() => {
     if (!user || !Array.isArray(user.roles)) return false;
-    return user.roles.some((rol) => {
+    return user.roles.some(rol => {
       if (!rol) return false;
-      const idRol = rol.id || rol.discord_role_id || String(rol);
-      const nombreRol = typeof rol === "string" ? rol : (rol.nombre || rol.name || "");
-
-      return (
-        idRol === "1507784487084363858" ||
-        nombreRol.toLowerCase().includes("reportero")
-      );
+      const id = rol.id || rol.discord_role_id || String(rol);
+      const nombre = typeof rol === "string" ? rol : (rol.nombre || rol.name || "");
+      return id === "1507784487084363858" || nombre.toLowerCase().includes("reportero");
     });
   }, [user]);
 
-  const allNavItems = useMemo(() => {
-    const items = [...navItems];
-    if (user) {
-      items.push({ href: "/carpeta", label: "Mi Carpeta" });
-    }
-    return items;
-  }, [user]);
+  const allNavItems = useMemo(() => user
+    ? [...navItems, { href: "/carpeta", label: "Mi Carpeta" }]
+    : navItems, [user]);
 
-  // Helpers para comprobar si alguno de los subelementos está activo
-  const isComunidadActive = useMemo(() => {
-    return comunidadItems.some(item => !item.isExternal && location.toLowerCase().startsWith(item.href.toLowerCase()));
-  }, [location]);
+  const active = (href: string) => href === "/"
+    ? location === "/"
+    : location.toLowerCase().startsWith(href.toLowerCase());
+  const comunidadActive = comunidadItems.some(x => !x.isExternal && active(x.href));
+  const infoActive = infoItems.some(x => active(x.href));
+  const toggleDrop = (which: Exclude<DropName, null>) => setDrop(d => d === which ? null : which);
 
-  const isInfoActive = useMemo(() => {
-    return infoItems.some(item => location.toLowerCase().startsWith(item.href.toLowerCase()));
-  }, [location]);
+  const renderItems = (items: SubItem[]) => items.map(item => {
+    const isMafia = item.isExternal;
+    const klass = `pan-menu-item ${active(item.href) && !isMafia ? "pan-menu-selected" : ""} ${isMafia ? "mafia-hacker-link" : ""}`;
+    if (isMafia) return (
+      <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer" className={klass}>
+        <span className="w-5 text-center">♠</span>{item.label}
+        <span aria-hidden="true" className="ml-auto opacity-50">↗</span>
+      </a>
+    );
+    return <Link key={item.href} href={item.href} className={klass}>{item.label}</Link>;
+  });
+
   return (
-    <>
-      {/* Estilos aislados para el efecto de hackeo/glitch */}
+    <header ref={headerRef} className="pan-header sticky top-0 z-50 w-full px-3 pt-3 sm:px-5 sm:pt-4 lg:px-6">
       <style>{`
+        .pan-glass {
+          position: relative;
+          isolation: isolate;
+          background: linear-gradient(122deg, rgba(255,255,255,.82), rgba(253,245,252,.65) 42%, rgba(255,255,255,.74));
+          border: 1px solid rgba(255,255,255,.86);
+          box-shadow: 0 2px 2px rgba(255,255,255,.85) inset, 0 -1px 1px rgba(99,11,87,.08) inset,
+            0 10px 35px rgba(46,12,42,.13), 0 2px 9px rgba(46,12,42,.05);
+          -webkit-backdrop-filter: blur(28px) saturate(175%);
+          backdrop-filter: blur(28px) saturate(175%);
+        }
+        .pan-glass::before {
+          content: ""; position: absolute; inset: 1px; z-index: -1; pointer-events: none;
+          border-radius: inherit;
+          background: linear-gradient(175deg, rgba(255,255,255,.35), transparent 37%, rgba(99,11,87,.025) 90%);
+        }
+        .pan-header-main { border-radius: 24px; }
+        .pan-brand-icon {
+          background: linear-gradient(145deg, rgba(255,255,255,.86), rgba(245,214,239,.68));
+          box-shadow: inset 0 1px 1px white, 0 3px 9px rgba(99,11,87,.11);
+          border: 1px solid rgba(255,255,255,.9);
+          transition: transform .3s cubic-bezier(.2,.85,.25,1),box-shadow .3s;
+        }
+        .pan-brand:hover .pan-brand-icon { transform: translateY(-2px) rotate(-3deg); box-shadow: 0 7px 20px rgba(99,11,87,.2); }
+        .pan-strike { position: relative; text-decoration: line-through; text-decoration-color: #9D4E92; text-decoration-thickness: 1.8px; text-decoration-skip-ink: none; opacity: .8; }
+        .pan-nav {
+          display: flex; align-items: center; gap: 2px; padding: 5px;
+          border: 1px solid rgba(255,255,255,.72); border-radius: 999px;
+          background: rgba(255,255,255,.34); box-shadow: 0 1px 2px rgba(70,10,60,.035) inset;
+        }
+        .pan-nav-link {
+          display: inline-flex; justify-content: center; align-items: center; gap: 5px;
+          padding: 10px 11px; border-radius: 999px; white-space: nowrap;
+          font-size: 10px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase;
+          color: #61465B; transition: background .2s, color .2s, box-shadow .2s, transform .2s;
+        }
+        .pan-nav-link:hover { background: rgba(99,11,87,.09); color: #630B57; }
+        .pan-nav-link[data-active="true"] {
+          color: #fff; background: linear-gradient(160deg, #8A287D, #630B57);
+          box-shadow: 0 2px 6px rgba(99,11,87,.19), inset 0 1px 1px rgba(255,255,255,.23);
+        }
+        .pan-nav-link[data-expanded="true"] { background: rgba(99,11,87,.12); color: #630B57; }
+        .pan-nav-link:focus-visible, .pan-icon-button:focus-visible, .pan-menu-item:focus-visible,
+        .pan-cta:focus-visible, .pan-brand:focus-visible { outline: 3px solid #B879AD; outline-offset: 3px; }
+        .pan-popover {
+          position: absolute; top: calc(100% + 13px); min-width: 220px; padding: 7px;
+          border-radius: 21px; animation: panGlassAppear .18s ease-out both;
+        }
+        .pan-menu-item {
+          display: flex; align-items: center; gap: 9px; width: 100%;
+          border-radius: 13px; padding: 12px 13px; color: #4E384A;
+          font-size: 12px; font-weight: 650; text-align: left;
+          transition: background .18s, color .18s;
+        }
+        .pan-menu-item:hover, .pan-menu-selected { background: rgba(99,11,87,.09); color: #630B57; }
+        .pan-icon-button {
+          width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
+          border: 1px solid rgba(255,255,255,.88); border-radius: 15px;
+          background: rgba(255,255,255,.48); color: #630B57;
+          box-shadow: inset 0 1px 1px #fff, 0 3px 9px rgba(51,15,46,.07);
+          transition: background .2s, transform .2s;
+        }
+        .pan-icon-button:hover { background: rgba(247,229,244,.95); transform: translateY(-1px); }
+        .pan-cta {
+          display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+          min-height: 41px; padding: 0 15px; border-radius: 15px;
+          background: linear-gradient(155deg,#812375,#630B57 75%); color: white;
+          font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em;
+          border: 1px solid rgba(255,255,255,.2);
+          box-shadow: inset 0 1px 1px rgba(255,255,255,.2), 0 5px 15px rgba(99,11,87,.18);
+          transition: transform .2s, box-shadow .2s;
+        }
+        .pan-cta:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(99,11,87,.28); }
+        .pan-mobile-panel { border-radius: 25px; animation: panGlassAppear .22s ease-out both; }
+        .pan-mobile-link {
+          display: flex; align-items: center; padding: 12px 14px; border-radius: 13px;
+          font-size: 12px; font-weight: 700; color: #483445;
+        }
+        .pan-mobile-link:hover, .pan-mobile-link[data-active="true"] { background: rgba(99,11,87,.09); color: #630B57; }
+        @keyframes panGlassAppear { from { opacity: 0; transform: translateY(-8px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
         @keyframes mafiaGlitch {
-          0% { text-shadow: 1.5px 0 #ef4444, -1.5px 0 #06b6d4; transform: translate(0, 0); }
-          15% { text-shadow: -1.5px 0 #ef4444, 1.5px 0 #06b6d4; transform: translate(-1px, 0.5px); }
-          30% { text-shadow: 1.5px 0 #eab308, -1.5px 0 #ef4444; transform: translate(0.5px, -0.5px); }
-          45% { text-shadow: -1.5px 0 #06b6d4, 1.5px 0 #eab308; transform: translate(-0.5px, -1px); }
-          60% { text-shadow: 2px 0 #ef4444, -2px 0 #06b6d4; transform: translate(1px, 1px); }
-          75% { text-shadow: -1px 0 #ef4444, 1px 0 #eab308; transform: translate(-1px, -0.5px); }
-          100% { text-shadow: 1.5px 0 #ef4444, -1.5px 0 #06b6d4; transform: translate(0, 0); }
+          0%, 100% { text-shadow: 1.5px 0 #ef4444, -1.5px 0 #06b6d4; transform:translate(0); }
+          35% { text-shadow: -1.5px 0 #ef4444, 1.5px 0 #06b6d4; transform:translate(-1px,.5px); }
+          70% { text-shadow: 1.5px 0 #eab308, -1.5px 0 #ef4444; transform:translate(1px,-.5px); }
         }
-        .mafia-hacker-link { position: relative; transition: all 0.2s ease-in-out; }
-        .mafia-hacker-link:hover {
-          animation: mafiaGlitch 0.25s linear infinite;
-          color: #ef4444 !important;
-          border-color: rgba(239, 68, 68, 0.4) !important;
-          background: rgba(239, 68, 68, 0.08) !important;
-          box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+        .mafia-hacker-link:hover { animation: mafiaGlitch .25s linear infinite; background:rgba(239,68,68,.08)!important; color:#dc2626!important; }
+        @media (prefers-reduced-motion: reduce) {
+          .pan-header *, .pan-header *::before, .pan-header *::after { animation-duration: .01ms!important; transition-duration: .01ms!important; }
         }
+        @media (max-width: 639px) { .pan-header-main { border-radius: 21px; } }
       `}</style>
 
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-gradient-to-b from-white/10 via-background/60 to-background/70 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_1px_0_rgba(255,255,255,0.08)_inset,0_8px_30px_-10px_rgba(0,0,0,0.4)] transition-all duration-300">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+      <div className="pan-glass pan-header-main mx-auto flex min-h-[72px] max-w-[1500px] items-center justify-between gap-3 px-3 py-2 sm:px-4 lg:px-5">
+        <Brand />
 
-        <div className="container mx-auto flex items-center justify-between gap-4 py-3.5 px-4 sm:px-6">
+        <nav aria-label="Navegación principal" className="pan-nav hidden xl:flex">
+          {allNavItems.map(item => (
+            <Link key={item.href} href={item.href} className="pan-nav-link" data-active={active(item.href)}
+              aria-current={active(item.href) ? "page" : undefined}>{item.label}</Link>
+          ))}
 
-          {/* Logo del Reino del Pan */}
-          <Link href="/" className="flex items-center gap-3 shrink-0 group">
-            <div className="relative">
-              <img
-                src="/logo.png"
-                alt="Reino del Pan"
-                className="h-10 w-10 rounded-full border border-white/15 shadow-[0_0_0_1px_rgba(255,255,255,0.05)_inset]"
-              />
-              <div className="absolute inset-0 rounded-full bg-accent/25 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </div>
-            <div className="hidden sm:block">
-              <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-accent/80 leading-tight">Artis Panis</p>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-accent leading-tight mt-0.5">Reino del Pan</p>
-            </div>
-          </Link>
-
-          {/* Navegación Principal Desktop */}
-          <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
-            {allNavItems.map((item) => {
-              const isActive = item.href === "/"
-                ? location === "/"
-                : location.toLowerCase().startsWith(item.href.toLowerCase());
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`relative px-3 py-1.5 uppercase tracking-[0.18em] text-[11px] font-bold transition-all duration-300 whitespace-nowrap rounded-full ${isActive
-                    ? "text-accent bg-white/10 backdrop-blur-md font-extrabold shadow-[0_0_0_1px_rgba(255,255,255,0.08)_inset]"
-                    : "text-white/70 hover:text-white hover:bg-white/5"
-                    }`}
-                >
-                  {item.label}
-                  {isActive && (
-                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-accent rounded-full shadow-[0_0_8px_#d4af37]" />
-                  )}
-                </Link>
-              );
-            })}
-
-            {/* Menú 1: "Comunidad" */}
-            <div className="relative" ref={comunidadRef}>
-              <button
-                onClick={() => { setComunidadOpen(v => !v); setInfoOpen(false); }}
-                className={`px-3 py-1.5 uppercase tracking-[0.18em] text-[11px] font-bold transition-all duration-300 whitespace-nowrap rounded-full flex items-center gap-1 cursor-pointer backdrop-blur-md ${isComunidadActive
-                  ? "text-background bg-accent/90 font-extrabold shadow-[0_0_20px_rgba(212,175,55,0.35),0_0_0_1px_rgba(255,255,255,0.2)_inset]"
-                  : "text-accent bg-accent/10 hover:bg-accent/20 shadow-[0_0_0_1px_rgba(255,255,255,0.06)_inset]"
-                  }`}
-              >
-                Comunidad
-                <svg className={`w-3 h-3 transition-transform duration-200 ${comunidadOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {comunidadOpen && (
-                <div className="absolute left-0 mt-2 w-44 rounded-2xl border border-white/20 bg-white/70 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_12px_40px_-8px_rgba(0,0,0,0.25)] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                  {comunidadItems.map((subItem) => {
-                    if (subItem.isExternal) {
-                      return (
-                        <a
-                          key={subItem.href}
-                          href={subItem.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full block px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-neutral-800 hover:bg-white/40 mafia-hacker-link"
-                        >
-                          ♠ {subItem.label}
-                        </a>
-                      );
-                    }
-                    const isSubActive = location.toLowerCase().startsWith(subItem.href.toLowerCase());
-                    return (
-                      <Link
-                        key={subItem.href}
-                        href={subItem.href}
-                        className={`w-full block px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] transition duration-200 ${isSubActive
-                          ? "text-black bg-white/60 font-black"
-                          : "text-neutral-800 hover:text-neutral-950 hover:bg-white/40"
-                          }`}
-                      >
-                        {subItem.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Menú 2: "Info" */}
-            <div className="relative" ref={infoRef}>
-              <button
-                onClick={() => { setInfoOpen(v => !v); setComunidadOpen(false); }}
-                style={{
-                  // Manejo dinámico de estilos usando el color solicitado
-                  backgroundColor: isInfoActive ? '#B16F16' : 'rgba(177, 111, 22, 0.1)',
-                  color: isInfoActive ? '#000000' : '#B16F16',
-                  boxShadow: isInfoActive
-                    ? '0 0 20px rgba(177, 111, 22, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.2)'
-                    : 'inset 0 0 0 1px rgba(255, 255, 255, 0.06)'
-                }}
-                className={`px-3 py-1.5 uppercase tracking-[0.18em] text-[11px] font-bold transition-all duration-300 whitespace-nowrap rounded-full flex items-center gap-1 cursor-pointer backdrop-blur-md ${isInfoActive ? "font-extrabold" : "hover:bg-[rgba(177,111,22,0.2)]"
-                  }`}
-              >
-                Info
-                <svg className={`w-3 h-3 transition-transform duration-200 ${infoOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {infoOpen && (
-                <div className="absolute left-0 mt-2 w-44 rounded-2xl border border-white/20 bg-white/70 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_12px_40px_-8px_rgba(0,0,0,0.25)] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                  {infoItems.map((subItem) => {
-                    const isSubActive = location.toLowerCase().startsWith(subItem.href.toLowerCase());
-                    return (
-                      <Link
-                        key={subItem.href}
-                        href={subItem.href}
-                        className={`w-full block px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] transition duration-200 ${isSubActive
-                          ? "text-black bg-white/60 font-black"
-                          : "text-neutral-800 hover:text-neutral-950 hover:bg-white/40"
-                          }`}
-                      >
-                        {subItem.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </nav>
-
-          {/* Bloque de Usuario / Login / Menú hamburguesa */}
-          <div className="flex items-center gap-3">
-            {loading ? (
-              <div className="w-8 h-8 rounded-full border border-white/15 bg-white/10 backdrop-blur-md animate-pulse" />
-            ) : user ? (
-              <div className="relative" ref={menuRef}>
-                <button
-                  onClick={() => { setMenuOpen(v => !v); }}
-                  className="flex items-center focus:outline-none group cursor-pointer relative"
-                >
-                  <img
-                    src={user.avatar}
-                    alt={user.username}
-                    className={`w-8 h-8 rounded-full border-2 transition-all duration-300 shadow-md ${menuOpen
-                      ? "border-accent scale-105 shadow-accent/30"
-                      : esReportero
-                        ? "border-amber-400 ring-2 ring-amber-500/25 shadow-[0_0_10px_rgba(245,158,11,0.35)]"
-                        : "border-white/25 group-hover:border-accent/70"
-                      }`}
-                  />
-                </button>
-
-                {menuOpen && (
-                  <div className="absolute right-0 mt-3 w-48 rounded-2xl border border-white/20 bg-white/70 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_12px_40px_-8px_rgba(0,0,0,0.25)] overflow-hidden z-50">
-                    <div className="px-4 py-2.5 border-b border-black/5 bg-white/30">
-                      <p className="text-[10px] text-black/40 uppercase tracking-wider font-semibold">
-                        {esReportero ? "🎥 Reportero TVP" : "Ciudadano"}
-                      </p>
-                      <p className="text-xs font-bold text-black truncate mt-0.5">{user.username}</p>
-                    </div>
-
-                    <Link
-                      href="/carpeta"
-                      className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-black/70 hover:text-accent hover:bg-white/40 transition duration-200"
-                    >
-                      📁 Mi Carpeta
-                    </Link>
-
-
-                    <a
-                      href={"/consorcio"}
-                      className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-black/70 hover:text-accent hover:bg-white/40 transition duration-200 border-t border-black/5"
-                    >
-                      <img
-                        src="/CONSORCIO/consorcio.png"
-                        className="w-[1em] h-[1em] object-contain inline-block align-text-bottom"
-                        alt="logo consorcio"
-                      />
-                      <span>Tarjeta Transporte</span>
-                    </a>
-
-                    <a
-                      href={"/electa"}
-                      className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-black/70 hover:text-accent hover:bg-white/40 transition duration-200 border-t border-black/5"
-                    >
-                      <img
-                        src="/electa/electa.png"
-                        className="w-[1em] h-[1em] object-contain inline-block align-text-bottom"
-                        alt="logo Electa"
-                      />
-                      <span>Electa. Elecciones</span>
-                    </a>
-
-                    <a
-                      href={"https://mineco.duckdns.org/lpb/cuenta"}
-                      className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-black/70 hover:text-accent hover:bg-white/40 transition duration-200 border-t border-black/5"
-                    >
-                      <img
-                        src="/LaboralBank/LPB.png"
-                        className="w-[1em] h-[1em] object-contain inline-block align-text-bottom"
-                        alt="logo LPB"
-                      />
-                      <span>Cuenta Bancaria LPB</span>
-                    </a>
-
-
-                    {esReportero && (
-                      <Link
-                        href="/TVP/PanelDeControl"
-                        className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-accent bg-accent/10 hover:bg-accent/20 transition duration-200 border-t border-black/5"
-                      >
-                        🎥 Panel TVP
-                      </Link>
-                    )}
-
-                    <button
-                      onClick={() => { window.location.href = "/auth/logout"; }}
-                      className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-red-500 hover:bg-red-500/10 transition duration-200 border-t border-black/5 cursor-pointer"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                      </svg>
-                      Cerrar sesión
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <button
-                onClick={() => { window.location.href = "/auth/discord"; }}
-                className="inline-flex items-center gap-2 shrink-0 whitespace-nowrap cursor-pointer px-4 py-2 sm:px-5 rounded-full text-[11px] font-bold uppercase tracking-[0.18em] border border-accent/60 text-accent bg-accent/10 backdrop-blur-md shadow-[0_0_0_1px_rgba(255,255,255,0.1)_inset] transition-all duration-300 hover:bg-accent hover:text-background hover:shadow-[0_0_25px_rgba(212,175,55,0.4)] active:scale-[0.98]"
-              >
-                <img src="/clave.png" alt="" className="w-3.5 h-3.5 object-contain opacity-90" />
-                <span className="block sm:hidden">Inicia Aquí</span>
-                <span className="hidden sm:block">Mi Carpeta</span>
-              </button>
-            )}
-
-            <button
-              onClick={() => { setMobileOpen(v => !v); }}
-              className="lg:hidden flex flex-col justify-center items-center w-10 h-10 rounded-full border border-neutral-300 bg-white/20 backdrop-blur-md hover:bg-white/30 transition relative z-50 cursor-pointer shadow-[0_0_0_1px_rgba(255,255,255,0.1)_inset]"
-              aria-label="Menú"
-            >
-              <div className="w-5 h-3.5 flex flex-col justify-between relative">
-                <span className={`block w-5 h-0.5 rounded-full transition-all duration-300 ${mobileOpen ? "bg-foreground rotate-45 translate-y-1.5" : "bg-foreground"}`} />
-                <span className={`block w-5 h-0.5 rounded-full transition-all duration-300 ${mobileOpen ? "opacity-0 scale-0" : "bg-foreground"}`} />
-                <span className={`block w-5 h-0.5 rounded-full transition-all duration-300 ${mobileOpen ? "bg-foreground -rotate-45 -translate-y-1.5" : "bg-foreground"}`} />
-              </div>
+          <div className="relative">
+            <button type="button" className="pan-nav-link" data-active={comunidadActive}
+              data-expanded={drop === "comunidad"} aria-haspopup="menu" aria-expanded={drop === "comunidad"}
+              onClick={() => toggleDrop("comunidad")}>
+              Comunidad <Chevron up={drop === "comunidad"} />
             </button>
+            {drop === "comunidad" && (
+              <div role="menu" className="pan-glass pan-popover left-0">{renderItems(comunidadItems)}</div>
+            )}
           </div>
-        </div>
-      </header>
 
-      {/* Menú Mobile */}
-      {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-40 pt-[69px]">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={() => { setMobileOpen(false); }} />
-          <div className="relative mx-3 mt-3 rounded-3xl border border-white/20 bg-white/60 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_20px_50px_-10px_rgba(0,0,0,0.35)] overflow-y-auto max-h-[calc(100vh-90px)] animate-in slide-in-from-top duration-200">
-            <nav className="container mx-auto px-5 py-6 flex flex-col gap-2">
-              {allNavItems.map((item) => {
-                const isActive = item.href === "/"
-                  ? location === "/"
-                  : location.toLowerCase().startsWith(item.href.toLowerCase());
+          <div className="relative">
+            <button type="button" className="pan-nav-link" data-active={infoActive}
+              data-expanded={drop === "info"} aria-haspopup="menu" aria-expanded={drop === "info"}
+              onClick={() => toggleDrop("info")}>
+              Info <Chevron up={drop === "info"} />
+            </button>
+            {drop === "info" && (
+              <div role="menu" className="pan-glass pan-popover right-0">{renderItems(infoItems)}</div>
+            )}
+          </div>
+        </nav>
 
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`relative flex items-center px-4 py-3 rounded-xl text-[11px] font-bold uppercase tracking-[0.18em] transition-all duration-200 ${isActive
-                      ? "text-accent bg-accent/10 font-black shadow-[0_0_0_1px_rgba(var(--accent-rgb),0.2)_inset]"
-                      : "text-neutral-700 hover:text-neutral-950 hover:bg-white/40"
-                      }`}
-                  >
-                    <span className="flex-1">{item.label}</span>
-                    {isActive && (
-                      <span className="absolute left-0 top-3 bottom-3 w-1 bg-accent rounded-full" />
-                    )}
-                  </Link>
-                );
-              })}
-
-              {/* Sección Móvil: Comunidad */}
-              <div className="h-px bg-white/40 my-2" />
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500 px-4 mb-1">Comunidad</p>
-
-              {comunidadItems.map((subItem) => {
-                if (subItem.isExternal) {
-                  return (
-                    <a
-                      key={subItem.href}
-                      href={subItem.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="relative flex items-center pl-8 pr-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-[0.18em] text-neutral-900 bg-white/40 hover:bg-white/55 border border-white/30 shadow-sm mb-1 mafia-hacker-link"
-                    >
-                      <span className="flex-1">♠ {subItem.label}</span>
-                    </a>
-                  );
-                }
-                const isSubActive = location.toLowerCase().startsWith(subItem.href.toLowerCase());
-                return (
-                  <Link
-                    key={subItem.href}
-                    href={subItem.href}
-                    className={`relative flex items-center pl-8 pr-4 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-[0.18em] transition-all duration-200 ${isSubActive
-                      ? "text-accent bg-accent/10 font-black shadow-[0_0_0_1px_rgba(var(--accent-rgb),0.2)_inset]"
-                      : "text-neutral-900 bg-white/40 hover:bg-white/55 border border-white/30 shadow-sm mb-1"
-                      }`}
-                  >
-                    <span className="flex-1">🔹 {subItem.label}</span>
-                    {isSubActive && (
-                      <span className="absolute left-4 top-2.5 bottom-2.5 w-1 bg-accent rounded-full" />
-                    )}
-                  </Link>
-                );
-              })}
-
-              {/* Sección Móvil: Info */}
-              <div className="h-px bg-white/40 my-2" />
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500 px-4 mb-1">Información</p>
-
-              {infoItems.map((subItem) => {
-                const isSubActive = location.toLowerCase().startsWith(subItem.href.toLowerCase());
-                return (
-                  <Link
-                    key={subItem.href}
-                    href={subItem.href}
-                    className={`relative flex items-center pl-8 pr-4 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-[0.18em] transition-all duration-200 ${isSubActive
-                      ? "text-accent bg-accent/10 font-black shadow-[0_0_0_1px_rgba(var(--accent-rgb),0.2)_inset]"
-                      : "text-neutral-900 bg-white/40 hover:bg-white/55 border border-white/30 shadow-sm mb-1"
-                      }`}
-                  >
-                    <span className="flex-1">🔸 {subItem.label}</span>
-                    {isSubActive && (
-                      <span className="absolute left-4 top-2.5 bottom-2.5 w-1 bg-accent rounded-full" />
-                    )}
-                  </Link>
-                );
-              })}
-
-              {user && (
-                <button
-                  onClick={() => { window.location.href = "/auth/logout"; }}
-                  className="mt-3 flex items-center justify-center gap-2 px-4 py-3 rounded-full text-[11px] font-bold uppercase tracking-[0.18em] border border-red-300/50 bg-red-50/60 backdrop-blur-md text-red-600 hover:bg-red-100/70 transition-all duration-200 cursor-pointer shadow-sm"
-                >
-                  Cerrar Sesión
-                </button>
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          {loading ? (
+            <span className="h-10 w-10 animate-pulse rounded-[15px] bg-[#630B57]/10" aria-label="Cargando sesión" />
+          ) : user ? (
+            <div className="relative">
+              <button type="button" onClick={() => toggleDrop("usuario")}
+                className="pan-icon-button relative" aria-label={`Abrir menú de ${user.username}`}
+                aria-haspopup="menu" aria-expanded={drop === "usuario"}>
+                <img src={user.avatar} alt="" className={`h-8 w-8 rounded-[11px] object-cover ${esReportero ? "ring-2 ring-amber-400" : ""}`} />
+                <span className="absolute bottom-[5px] right-[5px] h-2 w-2 rounded-full border border-white bg-emerald-500" />
+              </button>
+              {drop === "usuario" && (
+                <div role="menu" className="pan-glass pan-popover right-0 w-[250px]">
+                  <div className="mb-1 border-b border-[#630B57]/10 px-3 py-3">
+                    <p className="text-[10px] font-bold uppercase tracking-[.1em] text-[#876880]">{esReportero ? "🎥 Reportero TVP" : "Ciudadano"}</p>
+                    <p className="mt-1 truncate text-sm font-bold text-[#43113C]">{user.username}</p>
+                  </div>
+                  <Link href="/carpeta" className="pan-menu-item">📁 Mi Carpeta</Link>
+                  <a href="/consorcio" className="pan-menu-item"><img src="/CONSORCIO/consorcio.png" alt="" className="h-4 w-4 object-contain" /> Tarjeta Transporte</a>
+                  <a href="/electa" className="pan-menu-item"><img src="/electa/electa.png" alt="" className="h-4 w-4 object-contain" /> Electa. Elecciones</a>
+                  <a href="https://mineco.duckdns.org/lpb/cuenta" className="pan-menu-item"><img src="/LaboralBank/LPB.png" alt="" className="h-4 w-4 object-contain" /> Cuenta Bancaria LPB</a>
+                  {esReportero && <Link href="/TVP/PanelDeControl" className="pan-menu-item">🎥 Panel TVP</Link>}
+                  <div className="my-1 h-px bg-[#630B57]/10" />
+                  <a href="/auth/logout" className="pan-menu-item !text-red-600 hover:!bg-red-50">↪ Cerrar sesión</a>
+                </div>
               )}
-            </nav>
-          </div>
+            </div>
+          ) : (
+            <a href="/auth/discord" className="pan-cta">
+              <img src="/clave.png" alt="" className="h-4 w-4 object-contain brightness-0 invert" />
+              <span className="hidden sm:inline">Mi Carpeta</span><span className="sm:hidden">Entrar</span>
+            </a>
+          )}
+
+          <button type="button" aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={mobileOpen} aria-controls="pan-mobile-navigation"
+            className="pan-icon-button xl:hidden" onClick={() => { setMobileOpen(v => !v); setDrop(null); }}>
+            <MenuIcon open={mobileOpen} />
+          </button>
+        </div>
+      </div>
+
+      {/* Menú móvil anclado al header: mismo acabado cristal, sin oscurecer toda la página. */}
+      {mobileOpen && (
+        <div id="pan-mobile-navigation" className="pan-glass pan-mobile-panel mx-auto mt-2 max-h-[calc(100dvh-110px)] max-w-[1500px] overflow-y-auto p-3 shadow-2xl xl:hidden">
+          <nav aria-label="Navegación móvil">
+            <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+              {allNavItems.map(item => (
+                <Link key={item.href} href={item.href} className="pan-mobile-link" data-active={active(item.href)}
+                  aria-current={active(item.href) ? "page" : undefined}>{item.label}</Link>
+              ))}
+            </div>
+            <div className="my-3 h-px bg-[#630B57]/10" />
+            <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-[.15em] text-[#90688B]">Comunidad</p>
+            <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">{renderItems(comunidadItems)}</div>
+            <div className="my-3 h-px bg-[#630B57]/10" />
+            <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-[.15em] text-[#90688B]">Información</p>
+            <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">{renderItems(infoItems)}</div>
+          </nav>
         </div>
       )}
-    </>
+    </header>
   );
 }
