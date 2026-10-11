@@ -3,12 +3,12 @@ import { Link } from "wouter";
 import { ArrowRight, ExternalLink, Megaphone, Menu, X } from "lucide-react";
 
 // Comunicado original de TVP. Se atribuye a la corporación televisiva,
-// no al Consejo Superior de Deportes.
+// no al Comité Superior de Deportes.
 const COMUNICADO_TVP =
   'El CSD está en contra de los actos y corruptelas del denominado "monarca". Apoyamos y apoyaremos al gobierno hasta la última gota de sudor, esfuerzo y lágrimas. No lo permitamos. Avanzamos hacia un verdadero cambio. Nos temerán';
 
 const navLinks = [
-  { name: "El Consejo", id: "consejo" },
+  { name: "El Comité", id: "Comité" },
   { name: "Ayudas y Subvenciones", id: "ayudas" },
   { name: "Federaciones", id: "federaciones" },
   { name: "Salud en el Deporte", id: "salud" },
@@ -107,7 +107,7 @@ export default function CSD() {
           <Link href="/" className="group flex shrink-0 items-center gap-3" aria-label="Volver al portal del Gobierno">
             <img
               src="/LALIGA/CSD.png"
-              alt="Logotipo del Consejo Superior de Deportes"
+              alt="Logotipo del Comité Superior de Deportes"
               className="h-12 w-auto max-w-[145px] object-contain transition-transform duration-300 group-hover:scale-[1.03] sm:h-14"
             />
           </Link>
@@ -175,9 +175,9 @@ export default function CSD() {
       </header>
 
       <main className="mx-auto max-w-7xl space-y-16 px-4 py-12 sm:space-y-20 sm:px-6 sm:py-16 lg:space-y-24">
-        <section id="consejo" className="scroll-mt-36">
+        <section id="Comité" className="scroll-mt-36">
           <span className="mb-4 inline-block text-xs font-bold uppercase tracking-[.2em] text-[#B46B23]">Institución deportiva</span>
-          <h1 className="mb-6 text-4xl font-black leading-tight tracking-tight sm:text-5xl">El Consejo</h1>
+          <h1 className="mb-6 text-4xl font-black leading-tight tracking-tight sm:text-5xl">El Comité</h1>
           <p className="max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
             Somos el órgano rector del deporte en el Reino del Pan. Nuestra misión es fomentar la actividad física y el alto rendimiento desde la transparencia y la excelencia institucional.
           </p>
@@ -259,7 +259,7 @@ export default function CSD() {
                 <div className="flex items-center gap-3">
                   <img src="/LALIGA/CSD.png" alt="CSD" className="h-9 max-w-[100px] object-contain sm:h-11" />
                   <span className="hidden h-6 w-px bg-white/20 sm:block" aria-hidden="true" />
-                  <span className="hidden text-[10px] font-bold uppercase tracking-[.17em] text-white/45 sm:block">Consejo Superior de Deportes</span>
+                  <span className="hidden text-[10px] font-bold uppercase tracking-[.17em] text-white/45 sm:block">Comité Superior de Deportes</span>
                 </div>
                 <button
                   ref={closeButtonRef}
@@ -273,7 +273,7 @@ export default function CSD() {
               </div>
 
               <div className="mb-4 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#FF9B6A]">
-                <Megaphone className="h-3.5 w-3.5" aria-hidden="true" /> Posicionamiento institucional del CSD
+                <Megaphone className="h-3.5 w-3.5" aria-hidden="true" /> Posicionamiento institucional de
               </div>
               <h2 id="csd-tvp-dialog-title" className="csd-announcement-title mb-5 text-white">
                 Comunicado oficial del CSD
@@ -285,7 +285,7 @@ export default function CSD() {
 
               <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-[.12em] text-white/35">
-                  Consejo Superior de Deportes
+                  Comité Superior de Deportes
                 </span>
                 <button
                   type="button"
