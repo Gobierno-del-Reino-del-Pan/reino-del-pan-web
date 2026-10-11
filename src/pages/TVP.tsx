@@ -212,7 +212,7 @@ function Modal({ title, children, onClose, labelledBy }: {
     <div className="tvp-modal-wrap fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-3 sm:p-6" role="presentation">
       <div className="absolute inset-0 bg-[#030308]/80 backdrop-blur-xl" onClick={onClose} aria-hidden="true" />
       <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={title}
-        aria-labelledby={labelledBy} className="tvp-glass tvp-modal relative my-auto w-full max-w-[590px] overflow-hidden rounded-[28px] p-5 text-white outline-none sm:rounded-[34px] sm:p-9">
+        aria-labelledby={labelledBy} className="tvp-glass tvp-modal relative my-auto max-h-[calc(100dvh-24px)] w-full max-w-[590px] overflow-y-auto overflow-x-hidden rounded-[28px] p-5 text-white outline-none sm:max-h-[calc(100dvh-48px)] sm:rounded-[34px] sm:p-9">
         {children}
       </div>
     </div>
@@ -284,7 +284,49 @@ export default function TVPPortal() {
         @font-face {font-family:TVPHeading;src:url('/TVP/TVP.ttf') format('truetype');font-display:swap;}
         @font-face {font-family:TVPText;src:url('/TVP/TVPtext.ttf') format('truetype');font-display:swap;}
         .tvp-root {font-family:TVPText,Inter,system-ui,sans-serif;--tvp-orange:#ff4d00;--tvp-purple:#630B57;}
-        .tvp-head {font-family:TVPHeading,Inter,system-ui,sans-serif;}
+        /* El CSS general aplica font-size-adjust:1 a todos los encabezados.
+           Ese valor amplifica los glifos y provoca exactamente el solapamiento
+           visible en las capturas. Se anula SOLO dentro del portal TVP. */
+        .tvp-root :is(h1,h2,h3,h4,h5,h6) {
+          font-size-adjust: none;
+        }
+        /* TVP.ttf tiene además métricas peculiares a tamaños grandes:
+           usamos titulares legibles y mantenemos el branding en logos TVP. */
+        .tvp-head {
+          font-family: Inter, "Segoe UI", Arial, system-ui, sans-serif;
+          font-weight: 750;
+          font-synthesis: weight;
+          font-size-adjust: none;
+          line-height: 1.16;
+          letter-spacing: -0.035em;
+          overflow-wrap: break-word;
+          text-wrap: balance;
+        }
+        .tvp-hero-title {
+          font-family: Inter, "Segoe UI", Arial, system-ui, sans-serif;
+          font-size: clamp(2.8rem, 6.1vw, 5.25rem);
+          line-height: 1.03;
+          letter-spacing: -0.055em;
+          font-weight: 800;
+          font-size-adjust: none;
+          max-width: 760px;
+          overflow-wrap: break-word;
+          text-wrap: balance;
+        }
+        .tvp-modal-title {
+          font-family: Inter, "Segoe UI", Arial, system-ui, sans-serif;
+          font-size: clamp(1.85rem, 4.4vw, 2.75rem);
+          line-height: 1.12;
+          letter-spacing: -0.045em;
+          font-weight: 750;
+          font-size-adjust: none;
+          overflow-wrap: break-word;
+          text-wrap: balance;
+        }
+        @media (max-width: 400px) {
+          .tvp-hero-title {font-size: clamp(2.35rem, 11vw, 2.8rem);}
+          .tvp-modal-title {font-size: clamp(1.75rem, 8vw, 2rem);}
+        }
         .tvp-glass {background:linear-gradient(125deg,rgba(37,38,46,.82),rgba(23,22,31,.75) 45%,rgba(39,27,43,.76));border:1px solid rgba(255,255,255,.13);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 15px 38px rgba(0,0,0,.25);backdrop-filter:blur(25px) saturate(145%);-webkit-backdrop-filter:blur(25px) saturate(145%);}
         .tvp-card {background:linear-gradient(145deg,rgba(36,37,45,.82),rgba(16,17,23,.92));border:1px solid rgba(255,255,255,.095);box-shadow:inset 0 1px rgba(255,255,255,.1),0 16px 38px rgba(0,0,0,.22);}
         .tvp-primary {background:linear-gradient(135deg,#ff7438,#ff4d00);color:#100906;box-shadow:inset 0 1px rgba(255,255,255,.37),0 8px 24px rgba(255,77,0,.25);}
@@ -345,8 +387,8 @@ export default function TVPPortal() {
                 <span className="tvp-glass rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.16em] text-[#ffa77b]">{PLAY_CONTENT.hero.category}</span>
                 <span className="text-xs font-semibold text-white/70">{PLAY_CONTENT.hero.duration}</span>
               </div>
-              <h1 className="tvp-head max-w-[850px] text-[clamp(2.7rem,7vw,6rem)] font-bold leading-[1.04] tracking-tight drop-shadow-xl">{PLAY_CONTENT.hero.title}</h1>
-              <p className="mt-5 max-w-[610px] text-sm leading-7 text-white/85 sm:text-base">{PLAY_CONTENT.hero.description}</p>
+              <h1 className="tvp-hero-title drop-shadow-xl">{PLAY_CONTENT.hero.title}</h1>
+              <p className="relative mt-6 max-w-[610px] text-sm leading-7 text-white/85 sm:mt-7 sm:text-base">{PLAY_CONTENT.hero.description}</p>
               <a href="#tvp-catalogo" className="tvp-primary mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2.5 rounded-full px-7 py-3 text-xs font-black uppercase tracking-[.14em] transition hover:brightness-110 active:scale-[.98] sm:w-auto">
                 <Play size={17} fill="currentColor" aria-hidden="true" /> Explorar programación <ChevronRight size={17} aria-hidden="true" />
               </a>
@@ -498,8 +540,8 @@ export default function TVPPortal() {
             <img src="/TVP/TVP.png" alt="TVP" className="h-10 w-auto max-w-[130px] object-contain" />
             <IconButton onClick={() => setNoticeOpen(false)} label="Cerrar comunicado"><X size={19} /></IconButton>
           </div>
-          <div className="relative mt-7 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[.18em] text-[#ffad7b]"><Megaphone size={15} /> Posicionamiento institucional</div>
-          <h2 id="tvp-notice-title" className="tvp-head relative mt-3 text-[clamp(1.65rem,5vw,2.8rem)] font-bold leading-[1.12]">Comunicado oficial de TVP</h2>
+          <div className="relative mt-6 inline-flex max-w-full flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-[.12em] text-[#ffad7b] sm:tracking-[.18em]"><Megaphone size={15} /> Posicionamiento institucional</div>
+          <h2 id="tvp-notice-title" className="tvp-modal-title relative mt-4">Comunicado oficial de TVP</h2>
           <div className="mt-5 h-px w-full bg-gradient-to-r from-[#ff4d00]/80 via-white/15 to-transparent" />
           <p className="relative mt-6 max-h-[45dvh] overflow-y-auto pr-1 text-[14px] leading-[1.9] text-white/85 sm:text-[16px]">{COMUNICADO}</p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
