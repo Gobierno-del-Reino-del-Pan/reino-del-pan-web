@@ -24,7 +24,7 @@ export default function GetInvolved() {
       <div className="container mx-auto">
         <div className="mb-12 max-w-3xl">
           <p className="text-sm uppercase tracking-[0.35em] text-accent">¿Cómo puedes involucrarte?</p>
-          <h2 className="display-font mt-4 text-4xl font-semibold">El Reino del Pan crece gracias a su comunidad global.</h2>
+          <h2 className="display-font mt-4 text-4xl font-semibold">Pan crece gracias a su comunidad global.</h2>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
