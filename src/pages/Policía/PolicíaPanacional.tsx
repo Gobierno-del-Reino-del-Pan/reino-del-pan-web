@@ -202,7 +202,7 @@ export default function PoliciaNacional() {
               <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-2 text-[10px] font-bold uppercase tracking-[.15em] text-white/90 backdrop-blur-xl">
                 <ShieldCheck className="h-4 w-4" aria-hidden="true" /> Servicio de identificación
               </span>
-              <h1 id="tramites-heading" className="cpnp-type mt-5 text-[clamp(2.5rem,6vw,5.2rem)] font-bold leading-[1.03] tracking-[-.03em]">DP<br /><span className="text-[#DCC1E8]">I</span></h1>
+              <h1 id="tramites-heading" className="cpnp-type mt-5 text-[clamp(2.5rem,6vw,5.2rem)] font-bold leading-[1.03] tracking-[-.03em]">DPI</h1>
               <p className="mt-5 max-w-xl text-sm leading-7 text-white/85 sm:text-base">
                 Es obligatorio para todos los ciudadanos del Reino portar su acreditación vigente. Realiza tu solicitud de manera segura o recupera un documento existente.
               </p>
