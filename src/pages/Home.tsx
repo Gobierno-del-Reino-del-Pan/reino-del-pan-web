@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, CSSProperties } from "react";
 import { Link } from "wouter";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -9,16 +9,26 @@ import {
   ArrowRight, ArrowUpRight, Banknote, CloudSun, Coins,
   Headphones, Landmark, Megaphone, Music2, Pause, Play, Radio,
   ShieldCheck, Sparkles, TrendingUp, Trophy, Volume2, WifiOff,
+  RefreshCw, Crown, Wind, Droplets, ThermometerSun, TrendingDown,
+  Clock3, CalendarDays, Medal, ExternalLink,
+  ChevronLeft, ChevronRight, PauseCircle, PlayCircle, Sunrise, Sunset, Moon, X,
 } from "lucide-react";
 
-// Página Inicio | Liquid Glass v2
+// Página Inicio | Liquid Glass v3 | Cotizaciones mediante API propia + podio + observatorio.
 // Se conservan las rutas, los archivos multimedia y los servicios originales.
 // Importante: el PANEX es un índice ficticio; no se presenta como cotización real.
 
+type WeatherDay = { date: string; max: number; min: number; code: number };
 type RegionWeather = {
   id: string; region: string; ciudad: string; lat: number; lon: number;
+  tagline: string; phrase: string;
   temp?: number; description?: string; icon?: string; max?: number; min?: number;
+  code?: number; feel?: number; wind?: number; humidity?: number;
+  observation?: string; forecast?: WeatherDay[];
+  timezone?: string; utcOffsetSeconds?: number; isDay?: boolean;
+  sunrise?: string; sunset?: string;
 };
+
 type NewsItem = {
   id: string; category: string; title: string; summary?: string;
   time: string; img: string;
@@ -31,8 +41,23 @@ type Song = {
   id: number; src: string; title: string; artist: string; cover: string | null;
   startTime?: number; endTime?: number;
 };
-type MarketQuote = { price: number; change: number };
-type MarketState = { ibex: MarketQuote | null; nikkei: MarketQuote | null; status: "loading" | "live" | "offline" };
+type MarketQuote = {
+  price: number; change: number; currency: string;
+  timestamp: string | null;
+};
+type MarketState = {
+  ibex: MarketQuote | null; nikkei: MarketQuote | null;
+  status: "loading" | "ready" | "partial" | "offline";
+  source: string; fetchedAt: string | null; stale: boolean; refreshing: boolean;
+};
+type RankUser = {
+  posicion: number; id: string; username: string; level: number;
+  total_xp: number; avatar: string;
+};
+type LeaderboardState = {
+  status: "loading" | "ready" | "offline";
+  top3: RankUser[];
+};
 
 const MARQUEE = [
   "El sistema de generación de DPIs está totalmente operativo",
@@ -46,13 +71,14 @@ const METRICS = [
   { number: "Aviso", label: "Situación fronteriza", detail: "Fronteras cerradas hasta nuevo aviso", icon: Megaphone },
 ];
 const REGIONS: RegionWeather[] = [
-  { id: "baguette", region: "Baguette 🥖", ciudad: "Pantopía", lat: 37.3828, lon: -5.9732 },
-  { id: "pimbo", region: "Pimbo 🍞", ciudad: "Pimbolandia", lat: 40.9688, lon: -5.6639 },
-  { id: "pretzel", region: "Pretzel 🥨", ciudad: "Pretzelopolis", lat: 39.4698, lon: -0.3763 },
-  { id: "croissant", region: "Croissant 🥐", ciudad: "Vila Croissant", lat: 43.4832, lon: -1.5586 },
-  { id: "singluten", region: "Sin Glúten 🌾", ciudad: "ChinPan", lat: 34.0522, lon: -118.2437 },
-  { id: "panplano", region: "Pan Plano/Arepa 🫓", ciudad: "Arepa", lat: -34.6037, lon: -58.3816 },
+  { id: "baguette", region: "Baguette 🥖", ciudad: "Pantopía", lat: 37.3828, lon: -5.9732, tagline: "Observatorio de Pantopía", phrase: "El cielo de nuestra capital" },
+  { id: "pimbo", region: "Pimbo 🍞", ciudad: "Pimbolandia", lat: 40.9688, lon: -5.6639, tagline: "Estación Pimbo", phrase: "Un día para descubrir la ciudad" },
+  { id: "pretzel", region: "Pretzel 🥨", ciudad: "Pretzelópolis", lat: 39.4698, lon: -0.3763, tagline: "Estación Pretzel", phrase: "El cielo marca el ritmo" },
+  { id: "croissant", region: "Croissant 🥐", ciudad: "Vila Croissant", lat: 43.4832, lon: -1.5586, tagline: "Estación Croissant", phrase: "Así amanece por aquí" },
+  { id: "singluten", region: "Sin Glúten 🌾", ciudad: "ChinPan", lat: 34.0522, lon: -118.2437, tagline: "Estación ChinPan", phrase: "Entre nubes y horizontes" },
+  { id: "panplano", region: "Pan Plano/Arepa 🫓", ciudad: "Arepa", lat: -34.6037, lon: -58.3816, tagline: "Estación Arepa", phrase: "La otra cara del cielo" },
 ];
+
 const SONG_FILES = [
   { id: 1, src: "/canciones/1.mp3", title: "Sin Explicacion3s", artist: "Dellafuente", cover: "/canciones/1.jpg", startTime: 30, endTime: 190 },
   { id: 2, src: "/canciones/2.m4a", title: "Perro", artist: "Bad Gyal y Victor Mendivil", cover: "/canciones/2.avif" },
@@ -81,13 +107,101 @@ function formatPrice(price: number) {
   return price.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+
+const DEFAULT_AVATAR = "https://cdn.discordapp.com/embed/avatars/0.png";
+function avatarFor(user: RankUser) {
+  const image = user.avatar?.trim();
+  if (image && /^https:\/\//i.test(image) && !image.includes("undefined") && !image.includes("null")) return image;
+  if (image && user.id && /^[a-zA-Z0-9_]+$/.test(image)) {
+    return `https://cdn.discordapp.com/avatars/${encodeURIComponent(user.id)}/${image}.${image.startsWith("a_") ? "gif" : "png"}?size=128`;
+  }
+  return DEFAULT_AVATAR;
+}
+function marketTime(value: string | null) {
+  if (!value) return "Horario no disponible";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "Horario no disponible" : new Intl.DateTimeFormat("es-ES", {
+    day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Madrid"
+  }).format(date) + " (hora peninsular)";
+}
+function weatherMood(code: number | undefined) {
+  if (code === 0) return { label: "Un cielo para disfrutar", message: "Jornada despejada. Buen momento para salir a descubrir la región.", tint: "#FFD19A", glow: "#F4AC56" };
+  if (code !== undefined && [1,2,3].includes(code)) return { label: "Nubes con personalidad", message: "El cielo cambia de aspecto. Planes al aire libre, con un ojo puesto arriba.", tint: "#E0D2F4", glow: "#9A7FCB" };
+  if (code !== undefined && [45,48].includes(code)) return { label: "Paisaje entre brumas", message: "La niebla dibuja otro horizonte. Más atención al desplazarte.", tint: "#D5E5ED", glow: "#7AABC6" };
+  if (code !== undefined && [51,53,55,56,57,61,63,65,66,67,80,81,82].includes(code)) return { label: "El paraguas entra en escena", message: "Nubes y lluvia en el pronóstico. Un día para los planes bajo techo.", tint: "#B8D6F5", glow: "#5686C8" };
+  if (code !== undefined && [71,73,75,77,85,86].includes(code)) return { label: "Día de paisaje blanco", message: "La nieve gana protagonismo. Abrígate y consulta los avisos locales.", tint: "#E5F5FF", glow: "#9FC8EA" };
+  if (code !== undefined && [95,96,99].includes(code)) return { label: "El cielo se hace notar", message: "Posibilidad de tormenta. Conviene seguir la evolución del tiempo.", tint: "#D6C6EA", glow: "#7665AF" };
+  return { label: "Cielo en movimiento", message: "Observa cómo evoluciona el día en tu región.", tint: "#E6D7ED", glow: "#AC86BA" };
+}
+function forecastDay(date: string) {
+  const parsed = new Date(date + "T12:00:00Z");
+  return Number.isNaN(parsed.getTime()) ? date : new Intl.DateTimeFormat("es-ES", { weekday: "short", timeZone: "UTC" }).format(parsed);
+}
+const STATEMENT_STORAGE_KEY = "artispanis-home-declaracion-v1";
+const ROTATION_INTERVAL_MS = 8000;
+
+/** La zona IANA procede de la coordenada meteorológica, NO del nombre ficticio de la región. */
+function formatRegionalTime(date: Date, timezone: string | undefined, offset: number | undefined, options: Intl.DateTimeFormatOptions) {
+  try {
+    if (timezone) return new Intl.DateTimeFormat("es-ES", { ...options, timeZone: timezone }).format(date);
+  } catch { /* Zona desconocida: usar el desplazamiento UTC proporcionado por la API. */ }
+  if (typeof offset === "number" && Number.isFinite(offset)) {
+    return new Intl.DateTimeFormat("es-ES", { ...options, timeZone: "UTC" }).format(new Date(date.getTime() + offset * 1000));
+  }
+  return "—";
+}
+
+function RegionalClock({ region, compact = false }: { region: RegionWeather; compact?: boolean }) {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    // El reloj solo actualiza este componente, sin volver a renderizar la Home completa.
+    const id = window.setInterval(() => setNow(new Date()), compact ? 30_000 : 1000);
+    return () => window.clearInterval(id);
+  }, [compact]);
+  const time = formatRegionalTime(now, region.timezone, region.utcOffsetSeconds, {
+    hour: "2-digit", minute: "2-digit", ...(compact ? {} : { second: "2-digit" }), hourCycle: "h23",
+  });
+  if (compact) return <span className="hm-sky-local-mini"><Clock3 size={12} aria-hidden="true" /> {time} h</span>;
+  const date = formatRegionalTime(now, region.timezone, region.utcOffsetSeconds, { weekday: "long", day: "numeric", month: "long" });
+  return (
+    <div className="hm-sky-clock" aria-label={`Hora local de ${region.ciudad}`}>
+      <div className="hm-sky-clock-label"><Clock3 size={14} aria-hidden="true" /> HORA LOCAL · {region.region}</div>
+      <time className="hm-sky-clock-time">{time}</time>
+      <div className="hm-sky-clock-date">{date}</div>
+    </div>
+  );
+}
+
+function formatSolarHour(value?: string) {
+  return value?.includes("T") ? `${value.split("T")[1].slice(0, 5)} h` : "—";
+}
+
+function formatLocalObservation(value: string | undefined) {
+  if (!value || !value.includes("T")) return "Última observación disponible";
+  return "Observación de las " + (value.split("T")[1] || "").slice(0, 5) + " h locales";
+}
+
 export default function Home() {
   const [mainNews, setMainNews] = useState<NewsItem | null>(null);
   const [secondaryNews, setSecondaryNews] = useState<NewsItem[]>([]);
   const [newsStatus, setNewsStatus] = useState<"loading" | "ready" | "offline">("loading");
   const [weather, setWeather] = useState<RegionWeather[]>([]);
   const [weatherStatus, setWeatherStatus] = useState<"loading" | "ready" | "offline">("loading");
-  const [markets, setMarkets] = useState<MarketState>({ ibex: null, nikkei: null, status: "loading" });
+  const [markets, setMarkets] = useState<MarketState>({ ibex: null, nikkei: null, status: "loading", source: "", fetchedAt: null, stale: false, refreshing: false });
+  const [marketRetry, setMarketRetry] = useState(0);
+  const [weatherRetry, setWeatherRetry] = useState(0);
+  const [featuredRegionIndex, setFeaturedRegionIndex] = useState(0);
+  const [weatherRotationPaused, setWeatherRotationPaused] = useState(false);
+  const [weatherHovering, setWeatherHovering] = useState(false);
+  const [statementOpen, setStatementOpen] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try { return window.sessionStorage.getItem(STATEMENT_STORAGE_KEY) !== "dismissed"; }
+    catch { return true; }
+  });
+  const modalRef = useRef<HTMLDivElement | null>(null);
+  const modalCloseRef = useRef<HTMLButtonElement | null>(null);
+  const [leaders, setLeaders] = useState<LeaderboardState>({ status: "loading", top3: [] });
+  const [leaderRetry, setLeaderRetry] = useState(0);
   const [songs, setSongs] = useState<Song[]>(SONG_FILES);
   const [selected, setSelected] = useState(1);
   const [playing, setPlaying] = useState(false);
@@ -97,6 +211,49 @@ export default function Home() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const objectUrls = useRef<string[]>([]);
   const activeSong = songs.find(s => s.id === selected) ?? songs[0];
+  const featuredRegion = weather.length ? weather[featuredRegionIndex % weather.length] : null;
+
+  const changeFeaturedRegion = (direction: number) => {
+    setFeaturedRegionIndex(prev => (prev + direction + REGIONS.length) % REGIONS.length);
+  };
+  useEffect(() => {
+    if (weather.length <= 1 || weatherRotationPaused || weatherHovering || statementOpen) return;
+    if (typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const id = window.setInterval(() => {
+      if (!document.hidden) setFeaturedRegionIndex(prev => (prev + 1) % weather.length);
+    }, ROTATION_INTERVAL_MS);
+    return () => window.clearInterval(id);
+  }, [weather.length, weatherRotationPaused, weatherHovering, statementOpen, featuredRegionIndex]);
+
+  const closeStatement = () => {
+    setStatementOpen(false);
+    try { window.sessionStorage.setItem(STATEMENT_STORAGE_KEY, "dismissed"); } catch { /* Almacenamiento restringido */ }
+  };
+  useEffect(() => {
+    if (!statementOpen) return;
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const oldOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    modalCloseRef.current?.focus();
+    const handleKeyboard = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); closeStatement(); return; }
+      if (event.key !== "Tab" || !modalRef.current) return;
+      const focusable = Array.from(modalRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )).filter(node => node.getClientRects().length > 0);
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener("keydown", handleKeyboard);
+    return () => {
+      document.body.style.overflow = oldOverflow;
+      document.removeEventListener("keydown", handleKeyboard);
+      previouslyFocused?.focus();
+    };
+  }, [statementOpen]);
 
   // Noticias reales: no se muestran noticias inventadas ni rótulos ficticios de última hora.
   useEffect(() => {
@@ -130,15 +287,16 @@ export default function Home() {
     return () => { mounted = false; };
   }, []);
 
-  // Open-Meteo devuelve un objeto por ubicación en consultas con varios pares lat/lon.
+  // Una consulta con seis coordenadas devuelve seis objetos, uno por cada región.
   useEffect(() => {
     let mounted = true;
     const controller = new AbortController();
     async function getWeather() {
+      setWeatherStatus(previous => previous === "ready" ? "ready" : "loading");
       try {
         const lats = REGIONS.map(r => r.lat).join(",");
         const lons = REGIONS.map(r => r.lon).join(",");
-        const endpoint = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
+        const endpoint = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=temperature_2m,weather_code,apparent_temperature,relative_humidity_2m,wind_speed_10m,is_day&daily=temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset&forecast_days=3&timezone=auto`;
         const response = await fetch(endpoint, { signal: controller.signal });
         if (!response.ok) throw new Error("Error meteorológico HTTP " + response.status);
         const raw: unknown = await response.json();
@@ -148,52 +306,101 @@ export default function Home() {
           const entry = entries[index];
           const value = entry?.current?.temperature_2m;
           const code = entry?.current?.weather_code;
-          if (typeof value !== "number" || typeof code !== "number") throw new Error("Datos meteorológicos no válidos");
+          if (typeof value !== "number" || typeof code !== "number") throw new Error("Lectura no válida");
           const summary = weatherDescription(code);
-          return {
-            ...region, temp: Math.round(value), ...summary,
-            max: entry?.daily?.temperature_2m_max?.[0],
-            min: entry?.daily?.temperature_2m_min?.[0],
+          const days = Array.isArray(entry?.daily?.time) ? entry.daily.time.map((day: string, dayIndex: number) => ({
+            date: day,
+            max: entry.daily.temperature_2m_max?.[dayIndex],
+            min: entry.daily.temperature_2m_min?.[dayIndex],
+            code: entry.daily.weather_code?.[dayIndex],
+          })).filter((day: WeatherDay) => Number.isFinite(day.max) && Number.isFinite(day.min) && typeof day.code === "number") : [];
+          return { ...region, temp: Math.round(value), code, ...summary,
+            max: entry?.daily?.temperature_2m_max?.[0], min: entry?.daily?.temperature_2m_min?.[0],
+            feel: entry.current.apparent_temperature, wind: entry.current.wind_speed_10m,
+            humidity: entry.current.relative_humidity_2m, observation: entry.current.time,
+            timezone: typeof entry.timezone === "string" ? entry.timezone : undefined,
+            utcOffsetSeconds: typeof entry.utc_offset_seconds === "number" ? entry.utc_offset_seconds : undefined,
+            isDay: entry.current.is_day === 1,
+            sunrise: entry.daily?.sunrise?.[0], sunset: entry.daily?.sunset?.[0],
+            forecast: days as WeatherDay[],
           };
         });
         if (mounted) { setWeather(updated); setWeatherStatus("ready"); }
       } catch (error) {
         if (controller.signal.aborted) return;
         console.warn("No se pudo consultar el tiempo:", error);
-        if (mounted) setWeatherStatus("offline");
+        if (mounted) { setWeather([]); setWeatherStatus("offline"); }
       }
     }
-    getWeather();
-    const interval = window.setInterval(getWeather, 10 * 60 * 1000);
+    void getWeather();
+    const interval = window.setInterval(() => { void getWeather(); }, 10 * 60 * 1000);
     return () => { mounted = false; controller.abort(); window.clearInterval(interval); };
-  }, []);
+  }, [weatherRetry]);
 
-  // Yahoo Finance puede bloquear peticiones directas desde el navegador (CORS).
-  // Si falla, mostrar indisponible en vez de cotizaciones antiguas como si fueran nuevas.
+  // /api/markets consulta el proveedor DESDE EL SERVIDOR, con caché y sin CORS de navegador.
   useEffect(() => {
     let mounted = true;
+    const controller = new AbortController();
     async function getMarkets() {
+      if (mounted) setMarkets(prev => ({ ...prev, refreshing: true }));
       try {
-        const response = await fetch("https://query1.finance.yahoo.com/v7/finance/quote?symbols=%5EIBEX,%5EN225");
-        if (!response.ok) throw new Error("Cotizaciones no disponibles");
+        const response = await fetch("/api/markets", { signal: controller.signal, cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const payload = await response.json();
-        const quotes = payload?.quoteResponse?.result;
-        const quote = (symbol: string): MarketQuote | null => {
-          const row = Array.isArray(quotes) ? quotes.find(q => q.symbol === symbol) : undefined;
-          return typeof row?.regularMarketPrice === "number" && typeof row?.regularMarketChangePercent === "number"
-            ? { price: row.regularMarketPrice, change: row.regularMarketChangePercent } : null;
-        };
-        const ibex = quote("^IBEX"); const nikkei = quote("^N225");
-        if (!ibex || !nikkei) throw new Error("Respuesta bursátil incompleta");
-        if (mounted) setMarkets({ ibex, nikkei, status: "live" });
-      } catch {
-        if (mounted) setMarkets({ ibex: null, nikkei: null, status: "offline" });
+        const parse = (value: any): MarketQuote | null =>
+          typeof value?.price === "number" && Number.isFinite(value.price) &&
+          typeof value?.change === "number" && Number.isFinite(value.change)
+            ? { price: value.price, change: value.change, currency: typeof value.currency === "string" ? value.currency : "",
+                timestamp: typeof value.timestamp === "string" ? value.timestamp : null }
+            : null;
+        const ibex = parse(payload?.quotes?.ibex);
+        const nikkei = parse(payload?.quotes?.nikkei);
+        if (!ibex && !nikkei) throw new Error("Sin precios de proveedor");
+        if (mounted) setMarkets({ ibex, nikkei, status: ibex && nikkei ? "ready" : "partial",
+          source: typeof payload.source === "string" ? payload.source : "Fuente bursátil",
+          fetchedAt: typeof payload.fetchedAt === "string" ? payload.fetchedAt : null,
+          stale: Boolean(payload.stale), refreshing: false });
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        console.warn("Servicio de mercados no disponible:", error);
+        if (mounted) setMarkets(prev => ({ ...prev, ibex: null, nikkei: null, status: "offline", refreshing: false }));
       }
     }
-    getMarkets();
-    const interval = window.setInterval(getMarkets, 60_000);
-    return () => { mounted = false; window.clearInterval(interval); };
-  }, []);
+    void getMarkets();
+    const interval = window.setInterval(() => { void getMarkets(); }, 2 * 60 * 1000);
+    return () => { mounted = false; controller.abort(); window.clearInterval(interval); };
+  }, [marketRetry]);
+
+  // Reutiliza el MISMO endpoint, formato y roles de la página Level.tsx.
+  useEffect(() => {
+    let mounted = true;
+    const controller = new AbortController();
+    async function getLeaders() {
+      try {
+        const response = await fetch("/api/leaderboard", { signal: controller.signal });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const payload = await response.json();
+        const all = Array.isArray(payload?.top5) ? payload.top5 : Array.isArray(payload?.rankingCompleto) ? payload.rankingCompleto : null;
+        if (!all) throw new Error("Respuesta inválida de clasificación");
+        const top3 = all.filter((item: any) =>
+          item && typeof item.username === "string" && Number.isFinite(Number(item.posicion)) && Number(item.posicion) >= 1 && Number(item.posicion) <= 3
+        ).map((item: any): RankUser => ({
+          posicion: Number(item.posicion), id: String(item.id || ""), username: item.username,
+          level: Number(item.level || 0), total_xp: Number(item.total_xp || 0), avatar: String(item.avatar || ""),
+        })).sort((a: RankUser, b: RankUser) => a.posicion - b.posicion).slice(0, 3);
+        if (mounted) setLeaders({ status: "ready", top3 });
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        console.warn("Clasificación no disponible:", error);
+        if (mounted) setLeaders({ status: "offline", top3: [] });
+      }
+    }
+    void getLeaders();
+    const interval = window.setInterval(() => { void getLeaders(); }, 5 * 60 * 1000);
+    return () => { mounted = false; controller.abort(); window.clearInterval(interval); };
+  }, [leaderRetry]);
+
+
 
   useEffect(() => {
     let active = true;
@@ -362,6 +569,114 @@ export default function Home() {
         .hm-news-small>img{width:110px;height:100%;min-height:125px;object-fit:cover}
         .hm-news-small .hm-news-body{padding:12px 12px 12px 0}
         .hm-soft-panel{border-radius:21px;padding:22px;text-align:center;background:#fff8;border:1px dashed #ccabc6;color:#765b70;line-height:1.7}
+
+        /* Financiación: fecha de mercado y refresco real sin valores falsos. */
+        .hm-market-row{gap:14px}
+        .hm-market-source{margin-top:17px;padding:12px 14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);border-radius:15px;color:#D3C4D4;font-size:11px;line-height:1.7}
+        .hm-market-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10px!important;color:#BBAEC0!important}
+        .hm-refresh{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 11px;color:#EED6E9;border:1px solid rgba(233,192,226,.27);border-radius:11px;background:rgba(255,255,255,.065);font-size:11px;font-weight:750;cursor:pointer;transition:background .2s}
+        .hm-refresh:hover{background:rgba(255,255,255,.14)}.hm-refresh:disabled{opacity:.6;cursor:wait}
+        .hm-market-value .hm-market-date{display:block;font-size:10px;color:#BAA8C1;white-space:normal;max-width:190px;margin-top:5px;line-height:1.4}
+        /* Podio del reino: 2 - 1 - 3 en escritorio y 1 - 2 - 3 en móvil. */
+        .hm-leaders{position:relative;overflow:hidden;background:linear-gradient(140deg,#f8f0f7 0%,#faf7fb 55%,#f4e3f2 100%)}
+        .hm-leaders::before{content:"";position:absolute;right:-8%;top:1%;width:320px;height:320px;border-radius:50%;background:#e8c8e9;filter:blur(100px);opacity:.55;pointer-events:none}
+        .hm-rank-header{position:relative;display:flex;align-items:end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:25px}
+        .hm-rank-rail{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px;align-items:end}
+        .hm-rank-card{position:relative;display:flex;align-items:center;flex-direction:column;text-align:center;min-width:0;padding:30px 18px 0;border-radius:27px 27px 20px 20px;isolation:isolate;overflow:hidden;text-decoration:none;transition:transform .25s ease,box-shadow .25s ease}
+        .hm-rank-card:hover{transform:translateY(-5px);box-shadow:0 18px 45px rgba(81,27,72,.16)}
+        .hm-rank-card[data-place="1"]{min-height:350px;--rank-color:#E5B464;--rank-fade:#FBF0D8;z-index:2}
+        .hm-rank-card[data-place="2"]{min-height:310px;--rank-color:#9CA4B9;--rank-fade:#ECEFF6}
+        .hm-rank-card[data-place="3"]{min-height:285px;--rank-color:#BB8878;--rank-fade:#F5E7DE}
+        .hm-rank-card::before{content:"";position:absolute;top:0;left:0;right:0;height:5px;background:var(--rank-color)}
+        .hm-rank-medal{width:39px;height:39px;display:grid;place-items:center;border-radius:14px;background:var(--rank-fade);color:#503047;font-weight:900;margin-bottom:13px}
+        .hm-rank-avatar{height:82px;width:82px;object-fit:cover;border-radius:25px;border:3px solid var(--rank-color);box-shadow:0 8px 20px rgba(80,27,64,.14);background:#eadcec}
+        .hm-rank-name{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(15px,2vw,20px);color:#321D31;font-weight:850;margin-top:15px}
+        .hm-rank-level{color:#7B6477;font-size:12px;margin-top:5px;font-weight:650}
+        .hm-rank-points{color:#630B57;font-size:12px;font-weight:800;margin-top:11px;letter-spacing:.02em}
+        .hm-rank-foot{margin-top:auto;width:calc(100% + 36px);min-height:62px;background:linear-gradient(100deg,var(--rank-fade),rgba(255,255,255,.5));display:flex;align-items:center;justify-content:center;gap:10px;border-top:1px solid rgba(99,11,87,.09)}
+        .hm-rank-foot strong{font:900 29px/1 var(--body-font,Inter,system-ui,sans-serif);font-size-adjust:none}
+        .hm-rank-foot span{font-size:11px;font-weight:800;color:#81667A;letter-spacing:.12em;text-transform:uppercase}
+        .hm-rank-status{position:relative;text-align:center;padding:30px 20px;border-radius:22px;border:1px dashed #d7b9d1;background:#fff9;color:#6E5C6B;font-size:13px;line-height:1.7}
+        .hm-rank-bottom{position:relative;display:flex;justify-content:center;margin-top:24px}
+        /* Observatorio meteorológico con identidad propia. */
+        .hm-sky{background:linear-gradient(175deg,#F8F2FA 0%,#F1E6F4 62%,#FCF8FD 100%);position:relative;overflow:hidden}
+        .hm-sky::before{content:"";position:absolute;top:-140px;right:-100px;height:430px;width:430px;border-radius:50%;background:rgba(210,163,209,.2);filter:blur(60px);pointer-events:none}
+        .hm-sky-grid{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:15px;align-items:stretch}
+        .hm-sky-feature{border:1px solid rgba(255,255,255,.7);background:linear-gradient(140deg,#2C1637 0%,#4B1D50 55%,#3B1A45 100%);color:white;min-height:440px;position:relative;overflow:hidden;padding:clamp(22px,3.2vw,37px);border-radius:30px;box-shadow:0 22px 55px rgba(92,36,87,.17)}
+        .hm-sky-glow{position:absolute;width:250px;height:250px;border-radius:50%;right:-72px;top:-42px;background:var(--sky-glow,#E2AB6A);filter:blur(30px);opacity:.18}
+        .hm-sky-disc{position:absolute;top:50px;right:38px;width:115px;height:115px;border:1px solid rgba(255,255,255,.20);border-radius:50%;display:grid;place-items:center;font-size:64px;box-shadow:0 0 0 24px rgba(255,255,255,.04),0 0 0 48px rgba(255,255,255,.025);pointer-events:none}
+        .hm-sky-eyebrow{font-size:10px;letter-spacing:.17em;text-transform:uppercase;font-weight:800;color:#EDC7E9}
+        .hm-sky-city{font-size:clamp(30px,4vw,47px)!important;line-height:1.12!important;color:#fff;margin-top:14px}
+        .hm-sky-sub{font-size:12px;color:#D9C0DC;line-height:1.6;margin-top:6px}
+        .hm-sky-temp{font-size:clamp(66px,9vw,108px);font-weight:850;letter-spacing:-.09em;line-height:1;font-size-adjust:none;margin-top:32px}
+        .hm-sky-mood{font-size:clamp(16px,2.2vw,23px)!important;color:#F1D7EE;margin-top:13px}
+        .hm-sky-phrase{font-size:12px;color:#E4D6E3;line-height:1.65;margin-top:7px;max-width:400px}
+        .hm-sky-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:20px}
+        .hm-sky-fact{border-radius:13px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);padding:11px 9px}
+        .hm-sky-fact span{display:block;font-size:10px;color:#D7BDD8;margin-bottom:7px;line-height:1.25}
+        .hm-sky-fact strong{color:#fff;font-size:14px;font-weight:850;font-size-adjust:none}
+        .hm-sky-days{margin-top:24px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+        .hm-sky-day{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;padding:10px 5px;border-radius:12px;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.055);font-size:11px;color:#E9D9E9}
+        .hm-sky-day strong{font-weight:800;color:white}
+        .hm-sky-stations{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+        .hm-sky-station{--sky-accent:#CFB1DB;position:relative;display:flex;flex-direction:column;min-width:0;min-height:162px;border-radius:24px;overflow:hidden;padding:17px;background:linear-gradient(135deg,#fffefed9,#ffffff8c);border:1px solid #fff;box-shadow:inset 0 1px #fff,0 9px 22px rgba(64,20,64,.05);transition:transform .2s}
+        .hm-sky-station:hover{transform:translateY(-3px)}
+        .hm-sky-station::before{content:"";position:absolute;top:-34px;right:-44px;width:125px;height:125px;border-radius:50%;background:var(--sky-accent);opacity:.24;filter:blur(16px);pointer-events:none}
+        .hm-sky-station-top{position:relative;display:flex;align-items:start;justify-content:space-between;gap:8px}
+        .hm-sky-station .hm-sky-station-label{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#916786;line-height:1.4;display:block}
+        .hm-sky-station strong{font-size:17px;color:#362338;line-height:1.25;font-weight:850;display:block;margin-top:5px;font-size-adjust:none}
+        .hm-sky-station-icon{font-size:31px;line-height:1}
+        .hm-sky-station-bottom{position:relative;display:flex;justify-content:space-between;align-items:end;gap:8px;margin-top:auto;padding-top:14px}
+        .hm-sky-station-temp{font-size:38px;letter-spacing:-.065em;line-height:1;color:#630B57;font-weight:850;font-size-adjust:none}
+        .hm-sky-station-caption{font-size:11px;line-height:1.55;color:#7C6978;text-align:right}
+        /* Observatorio rotatorio: accesible, con pausado y hora de cada coordenada. */
+        .hm-sky-feature[data-night="true"]{background:linear-gradient(145deg,#15152d 0%,#2b2349 55%,#26172f 100%)}
+        .hm-sky-feature[data-night="true"] .hm-sky-disc{background:rgba(201,185,244,.035)}
+        .hm-sky-feature[data-night="false"]{background:linear-gradient(140deg,#321838 0%,#5D2859 56%,#46204A 100%)}
+        .hm-sky-feature-body{position:relative;z-index:2;animation:hmSkyEnter .45s cubic-bezier(.2,.8,.2,1) both}
+        @keyframes hmSkyEnter{from{opacity:.1;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+        .hm-sky-nav{position:relative;z-index:3;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:17px}
+        .hm-sky-nav-btn{display:grid;place-items:center;height:34px;width:34px;border-radius:12px;background:#ffffff18;border:1px solid #ffffff37;color:white;cursor:pointer;transition:background .2s,transform .2s}
+        .hm-sky-nav-btn:hover{background:#ffffff31;transform:translateY(-1px)}
+        .hm-sky-nav-pause{display:inline-flex;align-items:center;gap:7px;padding:0 11px;height:34px;border-radius:12px;background:#ffffff12;border:1px solid #ffffff30;color:#F4DAEF;font-size:11px;font-weight:700;cursor:pointer}
+        .hm-sky-nav-counter{font-size:11px;font-variant-numeric:tabular-nums;color:#EDC7E9;letter-spacing:.14em;font-weight:800;margin-right:auto}
+        .hm-sky-nav-dots{display:flex;gap:5px;align-items:center}
+        .hm-sky-nav-dot{border:none;border-radius:999px;width:8px;height:8px;background:#ffffff62;cursor:pointer;transition:width .25s,background .25s}
+        .hm-sky-nav-dot[data-active="true"]{background:#FFD3E9;width:24px}
+        .hm-sky-clock{margin:17px 0 12px;padding:13px 15px;border:1px solid #ffffff30;border-radius:17px;background:linear-gradient(120deg,#ffffff19,#ffffff07);display:grid;grid-template-columns:1fr auto;gap:2px 12px;max-width:380px}
+        .hm-sky-clock-label{font-size:10px;font-weight:750;color:#F1D4F0;display:flex;align-items:center;gap:6px;letter-spacing:.1em}
+        .hm-sky-clock-time{font:800 clamp(23px,3vw,31px)/1.2 ui-monospace,SFMono-Regular,Consolas,monospace;color:#fff;font-variant-numeric:tabular-nums;grid-row:1 / 3;grid-column:2;align-self:center;white-space:nowrap}
+        .hm-sky-clock-date{color:#DBC7DF;font-size:11px;text-transform:capitalize}
+        .hm-sky-solar{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}
+        .hm-sky-solar span{display:inline-flex;gap:7px;align-items:center;border-radius:11px;background:#ffffff10;border:1px solid #ffffff22;padding:9px 12px;color:#F1DEED;font-size:11px}
+        .hm-sky-solar strong{color:white;font-variant-numeric:tabular-nums}
+        .hm-sky-local-mini{display:inline-flex;align-items:center;gap:4px;color:#83527D;font-size:11px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums;margin-top:7px}
+        .hm-sky-station{width:100%;text-align:left;font:inherit;cursor:pointer}
+        .hm-sky-station:focus-visible{outline:3px solid #A96FA2;outline-offset:3px}
+        .hm-sky-station:hover{border-color:#CBA6C9;transform:translateY(-3px)}
+        .hm-statement-launch{background:#ffffff13;color:#F7E0F1;font-size:11px}
+        .hm-statement-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:clamp(12px,3vw,24px);background:rgba(11,6,14,.76);-webkit-backdrop-filter:blur(17px);backdrop-filter:blur(17px)}
+        .hm-statement-modal{position:relative;isolation:isolate;width:min(620px,100%);max-height:min(88dvh,740px);overflow:auto;border-radius:clamp(22px,3vw,34px);border:1px solid #ffffff30;background:linear-gradient(132deg,#1C1621 0%,#28122B 65%,#4C1644 100%);color:white;padding:clamp(25px,5vw,47px);box-shadow:0 25px 90px rgba(0,0,0,.45),inset 0 1px 0 #ffffff28;animation:hmStatementIn .34s cubic-bezier(.2,.8,.2,1) both}
+        @keyframes hmStatementIn{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+        .hm-statement-modal::before{content:"";position:absolute;right:-140px;top:-120px;width:380px;height:380px;background:#AC3D90;opacity:.25;filter:blur(100px);pointer-events:none}
+        .hm-statement-top{display:flex;align-items:center;justify-content:space-between;gap:15px;position:relative}
+        .hm-statement-mark{font-size:13px;font-weight:950;letter-spacing:-.07em;color:#FFB184}
+        .hm-statement-close{height:38px;width:38px;border-radius:13px;background:#ffffff11;border:1px solid #ffffff28;color:white;display:grid;place-items:center}
+        .hm-statement-label{margin-top:26px;display:flex;align-items:center;gap:8px;color:#FFB184;letter-spacing:.15em;font-size:10px;font-weight:850;text-transform:uppercase}
+        .hm-statement-title{font-family:var(--body-font,Inter,system-ui,sans-serif)!important;font-size:clamp(36px,7vw,66px)!important;font-weight:850!important;font-size-adjust:none!important;line-height:1.04!important;letter-spacing:-.055em!important;overflow-wrap:normal!important;margin-top:17px;color:#FFFFFF}
+        .hm-statement-title span{display:block;color:#FF995A;margin-top:8px}
+        .hm-statement-actions{position:relative;margin-top:30px;padding-top:20px;border-top:1px solid #ffffff26;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+        .hm-statement-accept{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:#FF6A25;color:#1E1016;padding:13px 21px;border-radius:999px;font-size:12px;font-weight:900;letter-spacing:.08em}
+        .hm-statement-close:hover,.hm-statement-accept:hover{filter:brightness(1.12)}
+        .hm-statement-close:focus-visible,.hm-statement-accept:focus-visible{outline:3px solid white;outline-offset:3px}
+        @media(max-width:460px){.hm-sky-nav{gap:6px}.hm-sky-nav-counter{font-size:10px;letter-spacing:.03em}.hm-sky-nav-pause{padding:0 8px}.hm-sky-clock{grid-template-columns:1fr;gap:5px}.hm-sky-clock-time{grid-column:1;grid-row:auto}.hm-sky-disc{opacity:.5}.hm-statement-title{font-size:clamp(34px,10vw,45px)!important}}
+        @media(prefers-reduced-motion:reduce){.hm-sky-feature-body,.hm-statement-modal{animation:none!important}}
+        .hm-sky-footer{position:relative;margin-top:19px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;color:#806B7F;font-size:11px}
+        .hm-sky-footer span{display:inline-flex;align-items:center;gap:6px}
+        @media(max-width:1000px){.hm-sky-grid{grid-template-columns:1fr}.hm-sky-feature{min-height:360px}.hm-sky-stations{grid-template-columns:repeat(3,minmax(0,1fr))}.hm-rank-card[data-place="1"]{min-height:320px}.hm-rank-card[data-place="2"]{min-height:295px}.hm-rank-card[data-place="3"]{min-height:280px}}
+        @media(max-width:700px){.hm-sky-stations{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-rank-rail{gap:9px}.hm-rank-card{padding:23px 9px 0;border-radius:19px}.hm-rank-card[data-place="1"]{min-height:294px}.hm-rank-card[data-place="2"],.hm-rank-card[data-place="3"]{min-height:273px}.hm-rank-avatar{width:63px;height:63px;border-radius:18px}.hm-rank-foot{width:calc(100% + 18px)}.hm-rank-name{font-size:13px}.hm-sky-disc{width:88px;height:88px;font-size:45px;right:26px;top:25px}}
+        @media(max-width:460px){.hm-rank-rail{grid-template-columns:1fr;align-items:stretch}.hm-rank-card{min-height:auto!important;display:grid;grid-template-columns:58px minmax(0,1fr) auto;grid-template-rows:auto auto auto;gap:2px 13px;text-align:left;padding:17px;align-items:center}.hm-rank-medal{grid-column:1;grid-row:1;margin:0;position:absolute;z-index:2;left:52px;top:5px;width:26px;height:26px;font-size:12px;border-radius:9px}.hm-rank-avatar{grid-column:1;grid-row:1/4;width:54px;height:54px;border-radius:16px}.hm-rank-name{grid-column:2;grid-row:1;margin:0;font-size:15px}.hm-rank-level{grid-column:2;grid-row:2;margin:0}.hm-rank-points{grid-column:2;grid-row:3;margin:0}.hm-rank-foot{grid-column:3;grid-row:1/4;width:auto;min-height:auto;padding:8px;border:0;border-radius:12px;align-self:center;gap:3px;flex-direction:column;margin:0}.hm-rank-foot strong{font-size:20px}.hm-rank-foot span{font-size:8px}.hm-sky-feature{padding:22px;min-height:410px}.hm-sky-disc{right:15px;top:50px;width:65px;height:65px;font-size:36px}.hm-sky-temp{font-size:74px}.hm-sky-facts{gap:5px}.hm-sky-fact{padding:8px 6px}.hm-sky-fact span{font-size:9px}.hm-sky-fact strong{font-size:12px}.hm-sky-stations{grid-template-columns:1fr}.hm-sky-station{min-height:134px}}
+
         .home-v2 a:focus-visible,.home-v2 button:focus-visible,.home-v2 input:focus-visible{outline:3px solid #CB8AC0;outline-offset:3px}
         @media(max-width:1000px){.hm-hero-content{grid-template-columns:1fr}.hm-hero{min-height:auto}.hm-hero-overlay{background:linear-gradient(100deg,#110a14eF,#26182dd1)}.hm-weather-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-tvp-grid{grid-template-columns:1fr}.hm-news-others{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-news-small{grid-template-columns:1fr}.hm-news-small>img{width:100%;height:auto;min-height:0;aspect-ratio:16/9}.hm-news-small .hm-news-body{padding:17px}}
         @media(max-width:700px){.hm-intro{display:block}.hm-intro .hm-muted{margin-top:11px}.hm-duo{grid-template-columns:1fr}.hm-contest-grid{grid-template-columns:1fr}.hm-contest{min-height:218px}.hm-weather-grid{grid-template-columns:1fr 1fr}.hm-hero h1{font-size:clamp(34px,9vw,55px)!important}.hm-hero{padding-block:55px}.hm-metrics{gap:9px}.hm-metric{padding:16px}.hm-news-others{grid-template-columns:1fr}.hm-news-small{grid-template-columns:110px 1fr}.hm-news-small>img{width:110px;height:100%;min-height:120px;aspect-ratio:auto}.hm-news-small .hm-news-body{padding:13px 12px 13px 0}}
@@ -369,6 +684,24 @@ export default function Home() {
         @media(prefers-reduced-motion:reduce){.home-v2 *,.home-v2 *::before,.home-v2 *::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}.hm-ticker{animation:none!important}}
       `}</style>
       <Header />
+
+      {statementOpen && (
+        <div className="hm-statement-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) closeStatement(); }}>
+          <div className="hm-statement-modal" role="dialog" aria-modal="true" aria-labelledby="hm-statement-title" aria-describedby="hm-statement-caption" ref={modalRef}>
+            <div className="hm-statement-top">
+              <span className="hm-statement-mark">ARTIS PANIS · DECLARACIÓN</span>
+              <button ref={modalCloseRef} className="hm-statement-close" type="button" aria-label="Cerrar comunicado" onClick={closeStatement}><X size={18} /></button>
+            </div>
+            <div className="hm-statement-label"><Megaphone size={14} aria-hidden="true" /> Mensaje institucional</div>
+            <h2 className="hm-statement-title" id="hm-statement-title">Abajo el Monarca.{" "}<span>NOS TEMERÁN</span></h2>
+            <p id="hm-statement-caption" className="mt-5 text-xs leading-relaxed text-[#D9C4D7]">Mensaje del portal Artis Panis.</p>
+            <div className="hm-statement-actions">
+              <span className="text-[10px] tracking-widest text-[#BCA7BB] font-semibold">COMUNICADO · ARTIS PANIS</span>
+              <button className="hm-statement-accept" type="button" onClick={closeStatement}>ENTENDIDO <ArrowRight size={15} aria-hidden="true" /></button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="hm-marquee" role="region" aria-label="Tablón de anuncios institucionales">
         <div className="hm-ticker">
@@ -396,6 +729,7 @@ export default function Home() {
             <div className="hm-actions">
               <Link href="/about" className="hm-action hm-action-primary">Conocer el proyecto <ArrowRight size={16} /></Link>
               <Link href="/dpi" className="hm-action hm-action-secondary">Obtener DPI <ShieldCheck size={17} /></Link>
+              <button type="button" className="hm-action hm-statement-launch" onClick={() => setStatementOpen(true)}><Megaphone size={16} aria-hidden="true" /> Ver comunicado</button>
             </div>
           </div>
           <div className="hm-metrics">
@@ -440,40 +774,169 @@ export default function Home() {
               </div>
             </div>
             <div className="hm-night-glass hm-panel">
-              <div className="hm-panel-header"><span className="hm-pill" style={{ background: "#ffffff0f", borderColor: "#ffffff27", color: "#E6C1DF" }}><TrendingUp size={14} /> Panorama financiero</span><span className="text-[11px] text-white/60">{markets.status === "live" ? "Datos consultados" : markets.status === "loading" ? "Consultando…" : "Servicio no disponible"}</span></div>
-              <h3 className="hm-panel-title">Índices bursátiles</h3>
-              {markets.status === "offline" && <p className="text-sm text-white/60 leading-relaxed mb-4">No se han podido obtener cotizaciones verificadas desde el navegador. Se omiten los valores anteriores para evitar mostrar precios obsoletos.</p>}
-              <div className="hm-market" style={{ borderColor: "#C7A36E55", background: "#B4872E12" }}>
-                <div><span>Índice ficticio · Reino del Pan</span><strong>PANEX 75</strong></div>
-                <div className="hm-market-value"><b style={{ color: "#E5BA75" }}>Simulado</b><small style={{ color: "#CFC1C3" }}>Sin cotización real</small></div>
+              <div className="hm-panel-header">
+                <span className="hm-pill" style={{ background: "#ffffff0f", borderColor: "#ffffff27", color: "#E6C1DF" }}><TrendingUp size={14} /> Panorama financiero</span>
+                <button type="button" className="hm-refresh" onClick={() => setMarketRetry(v => v + 1)} disabled={markets.refreshing}><RefreshCw size={13} className={markets.refreshing ? "animate-spin" : ""} /> Actualizar</button>
               </div>
-              {[{ label: "España", title: "IBEX 35", quote: markets.ibex }, { label: "Japón", title: "Nikkei 225", quote: markets.nikkei }].map(row => (
-                <div key={row.title} className="hm-market">
-                  <div><span>{row.label}</span><strong>{row.title}</strong></div>
-                  <div className="hm-market-value"><b>{row.quote ? formatPrice(row.quote.price) : "—"}</b><small style={{ color: row.quote ? (row.quote.change >= 0 ? "#86E1B2" : "#FF9BA6") : "#BAAABB" }}>{row.quote ? `${row.quote.change >= 0 ? "+" : ""}${row.quote.change.toFixed(2)}%` : "No disponible"}</small></div>
+              <h3 className="hm-panel-title">Índices bursátiles</h3>
+              <div className="hm-market" style={{ borderColor: "#C7A36E55", background: "#B4872E12" }}>
+                <div><span>Índice del universo ficticio paniense</span><strong>PANEX 75</strong></div>
+                <div className="hm-market-value"><b style={{ color: "#E5BA75" }}>Simulado</b><small style={{ color: "#CFC1C3" }}>No negociable</small></div>
+              </div>
+              {([{ label: "España · Bolsa", title: "IBEX 35", quote: markets.ibex, currency: "EUR" },
+                { label: "Japón · Bolsa", title: "Nikkei 225", quote: markets.nikkei, currency: "JPY" }] as const).map(row => (
+                <div key={row.title} className="hm-market hm-market-row">
+                  <div className="min-w-0"><span>{row.label}</span><strong>{row.title}</strong>
+                    <div className="hm-market-meta"><Clock3 size={12} aria-hidden="true" />{row.quote ? marketTime(row.quote.timestamp) : "Pendiente de conexión"}</div>
+                  </div>
+                  <div className="hm-market-value">
+                    <b>{row.quote ? `${formatPrice(row.quote.price)} ${row.quote.currency || row.currency}` : "—"}</b>
+                    <small style={{ color: row.quote ? (row.quote.change >= 0 ? "#86E1B2" : "#FF9BA6") : "#BAAABB" }}>
+                      {row.quote ? <>{row.quote.change >= 0 ? <TrendingUp size={12} className="inline mr-1" /> : <TrendingDown size={12} className="inline mr-1" />}{row.quote.change >= 0 ? "+" : ""}{row.quote.change.toFixed(2)}%</> : "No disponible"}
+                    </small>
+                  </div>
                 </div>
               ))}
-              <p className="mt-5 text-xs text-white/50 leading-relaxed">Las cifras se actualizan únicamente cuando el proveedor responde correctamente. PANEX 75 es un elemento del universo ficticio paniense.</p>
+              <div className="hm-market-source" role="status" aria-live="polite">
+                <div className="flex gap-2 items-center justify-between flex-wrap">
+                  <span>{markets.status === "loading" ? "Conectando con la fuente bursátil…" :
+                    markets.status === "offline" ? "Cotizaciones temporalmente no disponibles" :
+                    markets.stale ? "Últimos datos conservados: servicio temporalmente no disponible" :
+                    markets.status === "partial" ? "Datos parciales del proveedor" : "Últimas cotizaciones publicadas por el proveedor"}</span>
+                  {markets.refreshing && <RefreshCw size={13} className="animate-spin" aria-label="Actualizando" />}
+                </div>
+                {markets.fetchedAt && <div>Consulta: {marketTime(markets.fetchedAt)}</div>}
+                <div className="opacity-70">{markets.source || "Fuente: servidor /api/markets"} · La última cotización puede corresponder al cierre anterior. Los valores no son asesoramiento financiero.</div>
+              </div>
+
             </div>
           </div>
         </div>
       </section>
 
-      <section className="hm-sponsor" aria-label="Anuncio institucional"><img src="/anunciosgov/seguimosavanzando.jpg" alt="Anuncio institucional: Seguimos avanzando" loading="lazy" /></section>
-
-      <section className="hm-section" aria-labelledby="weather-title">
+      <section className="hm-section hm-leaders" id="ranking" aria-labelledby="ranking-title">
         <div className="hm-wrap">
-          <div className="hm-intro"><div><span className="hm-pill"><CloudSun size={14} /> Servicio meteorológico</span><h2 id="weather-title" className="hm-heading">El tiempo en nuestras regiones.</h2></div><p className="hm-muted">Datos obtenidos de Open-Meteo para las coordenadas configuradas de cada región.</p></div>
-          {weatherStatus === "loading" ? <div className="hm-soft-panel" role="status">Consultando el servicio meteorológico…</div>
-            : weatherStatus === "offline" ? <div className="hm-soft-panel" role="status"><WifiOff size={24} className="mx-auto mb-3" />No hemos podido cargar la previsión. Vuelve a intentarlo más tarde.</div>
-            : <div className="hm-weather-grid">{weather.map(item => (
-              <article key={item.id} className="hm-weather hm-glass">
-                <div className="hm-weather-head"><div><small>REGIÓN {item.region}</small><strong>{item.ciudad}</strong></div><span className="text-3xl" aria-hidden="true">{item.icon}</span></div>
-                <div className="hm-weather-bottom"><div><div className="hm-weather-temperature">{item.temp}°</div><small>{item.description}<br />{typeof item.max === "number" && typeof item.min === "number" ? `Máx. ${Math.round(item.max)}° · Mín. ${Math.round(item.min)}°` : ""}</small></div><CloudSun size={21} color="#A06997" aria-hidden="true" /></div>
-              </article>
-            ))}</div>}
+          <div className="hm-rank-header">
+            <div><span className="hm-pill"><Crown size={15} /> Ranking ciudadano · Artis Panis</span>
+              <h2 id="ranking-title" className="hm-heading">Los tres que marcan el ritmo.</h2>
+              <p className="hm-muted mt-3">Los ciudadanos con mayor experiencia de la clasificación oficial. Sin datos inventados: conectamos con el ranking real del servidor.</p>
+            </div>
+            <Link href="/level" className="hm-action" style={{ background: "#630B57", color: "white", border: 0 }}>
+              Ver clasificación completa <ArrowUpRight size={16} />
+            </Link>
+          </div>
+          {leaders.status === "loading" ? <div className="hm-rank-status" role="status">Consultando el podio de ciudadanos…</div> :
+            leaders.status === "offline" ? <div className="hm-rank-status" role="status">No se ha podido contactar con el ranking.
+              <button type="button" className="hm-action mx-auto mt-4" style={{ background: "#630B57", color: "white", border: 0 }} onClick={() => { setLeaders({ status: "loading", top3: [] }); setLeaderRetry(v => v + 1); }}><RefreshCw size={14} /> Reintentar</button>
+            </div> : leaders.top3.length === 0 ? <div className="hm-rank-status">Todavía no hay ciudadanos en la clasificación.</div> :
+            <div className="hm-rank-rail" aria-label="Top 3 de ciudadanos por experiencia">
+              {[2, 1, 3].map(position => leaders.top3.find(user => user.posicion === position)).filter((user): user is RankUser => Boolean(user)).map(user => (
+                <Link href="/level" key={user.id || user.username} className="hm-rank-card hm-glass" data-place={user.posicion} aria-label={`Ver clasificación de ${user.username}, posición ${user.posicion}`}>
+                  <span className="hm-rank-medal">{user.posicion === 1 ? <Crown size={21} /> : user.posicion === 2 ? <Medal size={20} /> : <Trophy size={19} />}</span>
+                  <img className="hm-rank-avatar" src={avatarFor(user)} alt="" loading="lazy" onError={e => { if (e.currentTarget.src !== DEFAULT_AVATAR) e.currentTarget.src = DEFAULT_AVATAR; }} />
+                  <strong className="hm-rank-name" title={user.username}>@{user.username}</strong>
+                  <small className="hm-rank-level">Nivel {user.level}</small>
+                  <div className="hm-rank-points">{user.total_xp.toLocaleString("es-ES")} XP</div>
+                  <div className="hm-rank-foot"><strong>{String(user.posicion).padStart(2, "0")}</strong><span>{user.posicion === 1 ? "Líder" : user.posicion === 2 ? "Segundo" : "Tercero"}</span></div>
+                </Link>
+              ))}
+            </div>}
+          <div className="hm-rank-bottom"><span className="text-[11px] text-[#866B83]">Datos sincronizados con /api/leaderboard · Se actualizan cada cinco minutos</span></div>
         </div>
       </section>
+
+      <section className="hm-sponsor" aria-label="Anuncio institucional"><img src="/anunciosgov/seguimosavanzando.jpg" alt="Anuncio institucional: Seguimos avanzando" loading="lazy" /></section>
+
+      <section className="hm-section hm-sky" aria-labelledby="weather-title">
+        <div className="hm-wrap">
+          <div className="hm-intro">
+            <div><span className="hm-pill"><CloudSun size={14} /> Observatorio meteorológico paniense</span>
+              <h2 id="weather-title" className="hm-heading">El cielo también cuenta historias.</h2>
+              <p className="hm-muted mt-3">De Pantopía a Arepa: seis regiones, seis cielos y una misma mirada.</p>
+            </div>
+            <button className="hm-refresh" type="button" style={{ background: "white", color: "#630B57", borderColor: "#D9BFDA" }} onClick={() => setWeatherRetry(v => v + 1)} disabled={weatherStatus === "loading"}>
+              <RefreshCw size={14} className={weatherStatus === "loading" ? "animate-spin" : ""} /> Actualizar el tiempo
+            </button>
+          </div>
+          {weatherStatus === "loading" ? <div className="hm-soft-panel" role="status">Consultando los observatorios regionales…</div>
+            : weatherStatus === "offline" ? <div className="hm-soft-panel" role="status"><WifiOff size={24} className="mx-auto mb-3" />No hemos podido cargar los datos meteorológicos. Puedes reintentarlo cuando quieras.</div>
+            : <div className="hm-sky-grid">
+              {featuredRegion && (() => {
+                const region = featuredRegion;
+                const mood = weatherMood(region.code);
+                return (
+                  <article
+                    className="hm-sky-feature"
+                    data-night={region.isDay === false ? "true" : "false"}
+                    style={{ "--sky-glow": mood.glow } as CSSProperties}
+                    onMouseEnter={() => setWeatherHovering(true)}
+                    onMouseLeave={() => setWeatherHovering(false)}
+                    onFocusCapture={() => setWeatherHovering(true)}
+                    onBlurCapture={(event) => {
+                      if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setWeatherHovering(false);
+                    }}
+                    aria-label={`Observatorio meteorológico de ${region.ciudad}`}
+                  >
+                    <div className="hm-sky-glow" aria-hidden="true" />
+                    <div className="hm-sky-disc" aria-hidden="true">{region.isDay === false && region.code === 0 ? "🌙" : region.icon}</div>
+                    <nav className="hm-sky-nav" aria-label="Cambiar región del observatorio">
+                      <span className="hm-sky-nav-counter">{String(featuredRegionIndex + 1).padStart(2, "0")} / {String(weather.length).padStart(2, "0")}</span>
+                      <div className="hm-sky-nav-dots" aria-label="Elegir estación">
+                        {weather.map((entry, index) => (
+                          <button key={entry.id} type="button" className="hm-sky-nav-dot" data-active={index === featuredRegionIndex} onClick={() => setFeaturedRegionIndex(index)} aria-label={`Ver estación ${entry.ciudad}`} aria-current={index === featuredRegionIndex ? "true" : undefined} />
+                        ))}
+                      </div>
+                      <button className="hm-sky-nav-btn" type="button" onClick={() => changeFeaturedRegion(-1)} aria-label="Región anterior"><ChevronLeft size={17} /></button>
+                      <button className="hm-sky-nav-btn" type="button" onClick={() => changeFeaturedRegion(1)} aria-label="Región siguiente"><ChevronRight size={17} /></button>
+                      <button className="hm-sky-nav-pause" type="button" onClick={() => setWeatherRotationPaused(value => !value)} aria-pressed={weatherRotationPaused}>
+                        {weatherRotationPaused ? <PlayCircle size={16} /> : <PauseCircle size={16} />}
+                        {weatherRotationPaused ? "Reanudar" : "Pausar"}
+                      </button>
+                    </nav>
+                    <div className="hm-sky-feature-body" key={region.id}>
+                      <div className="hm-sky-eyebrow">✦ Observatorio rotatorio · {region.region}</div>
+                      <h3 className="hm-sky-city">{region.ciudad}</h3>
+                      <div className="hm-sky-sub">{region.tagline} · {formatLocalObservation(region.observation)}</div>
+                      <RegionalClock region={region} />
+                      <div className="hm-sky-temp">{region.temp}°</div>
+                      <div className="text-xs text-[#E2CFE3] mt-1 inline-flex items-center gap-2">{region.isDay ? <Sunrise size={15} /> : <Moon size={15} />} {region.isDay ? "Ahora es de día" : "Ahora es de noche"}</div>
+                      <h4 className="hm-sky-mood">{mood.label}</h4>
+                      <p className="hm-sky-phrase">{region.description}. {mood.message}</p>
+                      <div className="hm-sky-facts">
+                        <div className="hm-sky-fact"><span><ThermometerSun size={12} className="inline mr-1" /> Sensación</span><strong>{typeof region.feel === "number" ? `${Math.round(region.feel)}°` : "—"}</strong></div>
+                        <div className="hm-sky-fact"><span><Wind size={12} className="inline mr-1" /> Viento</span><strong>{typeof region.wind === "number" ? `${Math.round(region.wind)} km/h` : "—"}</strong></div>
+                        <div className="hm-sky-fact"><span><Droplets size={12} className="inline mr-1" /> Humedad</span><strong>{typeof region.humidity === "number" ? `${Math.round(region.humidity)}%` : "—"}</strong></div>
+                      </div>
+                      <div className="hm-sky-solar">
+                        <span><Sunrise size={15} aria-hidden="true" /> Amanecer <strong>{formatSolarHour(region.sunrise)}</strong></span>
+                        <span><Sunset size={15} aria-hidden="true" /> Atardecer <strong>{formatSolarHour(region.sunset)}</strong></span>
+                      </div>
+                      {region.forecast && region.forecast.length > 0 && <div className="hm-sky-days" aria-label={`Previsión de tres días para ${region.ciudad}`}>{region.forecast.slice(0, 3).map(day => (
+                        <div className="hm-sky-day" key={day.date}><span className="capitalize">{forecastDay(day.date)}</span><span className="text-xl" aria-hidden="true">{weatherDescription(day.code).icon}</span><strong>{Math.round(day.max)}° / {Math.round(day.min)}°</strong></div>
+                      ))}</div>}
+                    </div>
+                  </article>
+                );
+              })()}
+              <div className="hm-sky-stations" aria-label="Otras estaciones meteorológicas">
+                {weather.filter((_, index) => index !== featuredRegionIndex).map(region => {
+                  const mood = weatherMood(region.code);
+                  const index = weather.findIndex(entry => entry.id === region.id);
+                  return <button type="button" className="hm-sky-station" key={region.id}
+                    onClick={() => setFeaturedRegionIndex(index)}
+                    aria-label={`Mostrar ${region.ciudad} como observatorio principal`}
+                    style={{ "--sky-accent": mood.tint } as CSSProperties}>
+                    <div className="hm-sky-station-top"><div><span className="hm-sky-station-label">{region.region}</span><strong>{region.ciudad}</strong><RegionalClock region={region} compact /></div><span className="hm-sky-station-icon" aria-hidden="true">{region.isDay === false && region.code === 0 ? "🌙" : region.icon}</span></div>
+                    <div className="hm-sky-station-bottom"><span className="hm-sky-station-temp">{region.temp}°</span><div className="hm-sky-station-caption">{region.description}<br />{typeof region.max === "number" && typeof region.min === "number" ? `Máx. ${Math.round(region.max)}° · Mín. ${Math.round(region.min)}°` : ""}</div></div>
+                  </button>;
+                })}
+              </div>
+            </div>}
+          <div className="hm-sky-footer"><span><CalendarDays size={14} /> Observaciones y pronósticos de Open-Meteo, actualizados periódicamente</span><span><Clock3 size={14} /> Hora local calculada con la zona horaria de cada coordenada · Sin geolocalización del visitante</span></div>
+        </div>
+      </section>
+
+
 
       <section className="hm-section" style={{ background: "linear-gradient(145deg,#F3E6F0,#F9F4F8)" }} aria-label="Actualidad y proyectos">
         <div className="hm-wrap hm-duo">
