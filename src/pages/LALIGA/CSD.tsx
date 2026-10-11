@@ -129,7 +129,7 @@ export default function CSD() {
               type="button"
               onClick={() => setComunicadoOpen(true)}
               className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-[#DD7F27]/25 bg-[#FFF4E7] px-3 text-[#9A5118] transition-colors hover:bg-[#FFE8C9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DD7F27] sm:px-4"
-              aria-label="Abrir comunicado de TVP"
+              aria-label="Abrir comunicado del CSD"
             >
               <Megaphone className="h-4 w-4" aria-hidden="true" />
               <span className="hidden text-xs font-bold sm:inline">Comunicado</span>
@@ -232,7 +232,7 @@ export default function CSD() {
             onClick={() => setComunicadoOpen(true)}
             className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-2 text-xs font-bold text-white/80 transition hover:border-[#FEC722] hover:text-white"
           >
-            <Megaphone className="h-4 w-4" aria-hidden="true" /> Consultar comunicado de TVP
+            <Megaphone className="h-4 w-4" aria-hidden="true" /> Consultar comunicado del CSD
           </button>
         </div>
       </footer>
@@ -273,7 +273,7 @@ export default function CSD() {
               </div>
 
               <div className="mb-4 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#FF9B6A]">
-                <Megaphone className="h-3.5 w-3.5" aria-hidden="true" /> Posicionamiento institucional de TVP
+                <Megaphone className="h-3.5 w-3.5" aria-hidden="true" /> Posicionamiento institucional del CSD
               </div>
               <h2 id="csd-tvp-dialog-title" className="csd-announcement-title mb-5 text-white">
                 Comunicado oficial del CSD
