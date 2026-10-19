@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -16,13 +17,15 @@ export default defineConfig({
       },
     }),
   ],
+  publicDir: path.resolve(import.meta.dirname, "public"),
   resolve: {
     alias: {
-      "@": path.resolve(import.meta.dirname, "src"), // <-- Modificado aquí
+      "@": path.resolve(import.meta.dirname, "src"),
     },
   },
   build: {
     outDir: "dist",
     emptyOutDir: true,
+    copyPublicDir: true,
   },
 });
