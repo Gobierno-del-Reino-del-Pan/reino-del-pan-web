@@ -1,4 +1,4 @@
-import { Route, Switch } from "wouter";
+import { Router, Route, Switch } from "wouter";
 
 import Home from "./pages/Home";
 import About from "./pages/About";
@@ -43,6 +43,7 @@ import ePAN from "./pages/PDRN/ePAN.tsx";
 function App() {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <Router>
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/about" component={About} />
@@ -85,7 +86,7 @@ function App() {
         <Route path="/Pandora" component={Pandora} />
 
         <Route component={NotFound} />
-      </Switch>
+      </Switch></Router>
     </div>
   );
 }
