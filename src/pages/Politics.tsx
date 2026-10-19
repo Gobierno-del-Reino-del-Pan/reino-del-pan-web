@@ -49,6 +49,11 @@ export default function PoliticsPage() {
 
   useEffect(() => {
     async function fetchParties() {
+      if (!supabase) {
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from("electa_partidos")
         .select("*")
