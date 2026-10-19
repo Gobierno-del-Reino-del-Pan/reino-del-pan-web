@@ -2,172 +2,130 @@
   "roles": {
     "profesiones": [
       {
-        "id": "rol_policia",
-        "nombre": "Policía Panacional",
-        "descripcion": "Podrás asegurarte que los usuarios cumplan la Constitución del Reino y capturar a sinvergüenzas",
-        "emoji": "👮",
-        "discord_role_id": "1506369608020394154"
-      },
-      {
-        "id": "rol_guardia",
-        "nombre": "Guardia Panadera",
-        "descripcion": "Podrás asegurarte que los usuarios cumplan la Constitución del Reino y podrás poner multas a diestro",
-        "emoji": "🍞",
-        "discord_role_id": "1506042666398515283"
-      },
-      {
-        "id": "rol_militar",
-        "nombre": "Militar",
-        "descripcion": "Tu función será proteger a los ciudadanos en periodos de guerra o de incidencias climáticas graves.",
-        "emoji": "🪖",
-        "discord_role_id": "1506310531173318900"
-      },
-      {
-        "id": "rol_medico",
-        "nombre": "Médico",
-        "descripcion": "Tu trabajo es asegurar que se mantenga el buen estado de salud de los ciudadanos.",
+        "nombre": "Médicos",
+        "id": "rol_medicos",
+        "discord_role_id": "1559527104549359676",
         "emoji": "🩺",
-        "discord_role_id": "1506309465509728427"
+        "descripcion": "Tu trabajo será cuidar y mantener la salud de los ciudadanos del Reino."
       },
       {
-        "id": "rol_profesor",
+        "nombre": "Militares",
+        "id": "rol_militares",
+        "discord_role_id": "1559527104654213164",
+        "emoji": "🪖",
+        "descripcion": "Tu función será proteger a los ciudadanos en guerras y situaciones de emergencia."
+      },
+      {
         "nombre": "Profesor",
-        "descripcion": "Tu labor será enseñar a los niños, adolescentes y adultos todo lo que sea necesario.",
+        "id": "rol_profesor",
+        "discord_role_id": "1559527104549359677",
         "emoji": "📚",
-        "discord_role_id": "1506311016777126142"
+        "descripcion": "Tu labor será enseñar a niños, adolescentes y adultos del Reino."
       },
       {
-        "id": "rol_informatico",
-        "nombre": "Informático",
-        "descripcion": "Tu labor será la de programar, vigilar posibles vulnerabilidades y todo lo necesario para proteger.",
-        "emoji": "💻",
-        "discord_role_id": "1506311242376286410"
-      },
-      {
-        "id": "rol_futbolista",
-        "nombre": "Futbolista",
-        "descripcion": "Tu función es clara, ganar y ganar partidos. Pero para poder ganar necesitarás un equipo ¿No?",
-        "emoji": "⚽",
-        "discord_role_id": "1506311569590714490"
-      },
-      {
-        "id": "rol_politico",
         "nombre": "Político",
-        "descripcion": "Buscarás el bienestar de los ciudadanos (y seguro que a poder ser el tuyo). Funda, construye, haz.",
+        "id": "rol_político",
+        "discord_role_id": "1559527104654213160",
         "emoji": "🏛️",
-        "discord_role_id": "1506312544388775986"
+        "descripcion": "Tu labor será mejorar la vida de los ciudadanos y a poder ser la tuya."
       },
       {
-        "id": "rol_reportero",
+        "nombre": "Futbolista",
+        "id": "rol_futbolista",
+        "discord_role_id": "1559527104549359678",
+        "emoji": "⚽",
+        "descripcion": "Tu labor será jugar al fútbol y divertirte."
+      },
+      {
+        "nombre": "Informático",
+        "id": "rol_informatico",
+        "discord_role_id": "1559527104549359679",
+        "emoji": "💻",
+        "descripcion": "Tu labor será mantener la tecnología del Reino funcionando."
+      },
+      {
         "nombre": "Reportero de la Televisión Paniense",
-        "descripcion": "Tu labor será la de informar con RIGOR y IMPARCIALIDAD. Tienes de presidente al Sr. Alegre, niénsalo.",
-        "imagen": "/roles/tvp.png",
-        "discord_role_id": "1507784487084363858"
+        "id": "rol_reporterotvp",
+        "discord_role_id": "1559527104549359681",
+        "emoji": "📰",
+        "descripcion": "Tu labor será mantener informados a los ciudadanos del Reino sobre lo que pasa en el Reino."
       },
       {
-        "id": "rol_veterinario",
+        "nombre": "Entrenador Pokemon",
+        "id": "rol_entrenadorPokemon",
+        "discord_role_id": "1559527104549359680",
+        "emoji": "<:pokemon:1538951938018648114>",
+        "descripcion": "Tu labor será entrenar y cuidar a tus Pokémon."
+      },
+      {
+        "nombre": "Guardia Panadera",
+        "id": "rol_guardiapanadero",
+        "discord_role_id": "1559527104624722005",
+        "emoji": "🎖️",
+        "descripcion": "Tu labor será cuidar y mantener la seguridad  del Reino."
+      },
+      {
         "nombre": "Veterinario",
-        "descripcion": "Tu labor es la de curar a los pobres animalitos que sufren tras enfermedades o abandonos.",
-        "emoji": "🐾",
-        "discord_role_id": "1507830871225401535"
+        "id": "rol_veterinario",
+        "discord_role_id": "1559527104549359684",
+        "emoji": "😺",
+        "descripcion": "Tu labor será cuidar y mantener la salud de los animales del Reino."
       },
       {
-        "id": "rol_entrenador",
-        "nombre": "Entrenador Pokémon",
-        "descripcion": "Son personas que se encargan de capturar, criar, entrenar y cuidar de dichas criaturas. Lucha.",
-        "imagen": "/roles/pokeball.png",
-        "discord_role_id": "1508081112230920402"
+        "nombre": "Policía Panacional",
+        "id": "rol_policia",
+        "discord_role_id": "1559527104624722006",
+        "emoji": "<:policia:1528349020098134076>",
+        "descripcion": "Podrás asegurarte de que los ciudadanos cumplan la Constitución del Reino."
       },
       {
-        "id": "rol_director_reformas",
-        "nombre": "Director de Reformas",
-        "descripcion": "Ostenta el cargo de la presidencia y se encarga de las reformas",
-        "imagen": "/roles/gobierno.png",
-        "discord_role_id": "1525567587944235130"
+        "nombre": "Aduanas",
+        "id": "rol_aduanas",
+        "discord_role_id": "1559527103420965020",
+        "emoji": "🛃",
+        "descripcion": "Tu labor será controlar la entrada y salida de mercancías y personas del Reino."
       },
       {
-        "id": "rol_secretario_comunicacion",
-        "nombre": "Secretario de Comunicación y Portavoz de la Dirección",
-        "descripcion": "Ostenta el cargo de Sec. de Comunicación y Portavoz de la Dirección",
-        "imagen": "/roles/gobierno.png",
-        "discord_role_id": "1528432674077937664"
+        "nombre": "Abogado",
+        "id": "rol_abogado",
+        "discord_role_id": "1559527104624722003",
+        "emoji": "⚖️",
+        "descripcion": "Tu labor será asistir a los ciudadanos en asuntos legales y representarlos en el tribunal."
       },
       {
-        "id": "rol_ministro_desregulacion",
-        "nombre": "Ministro de Desregulación y Pokémon",
-        "descripcion": "Ostenta el cargo de M. de Desregulación y Pokémon",
-        "imagen": "/roles/gobierno.png",
-        "discord_role_id": "1525566559660277883"
+        "nombre": "Juez",
+        "id": "rol_juez",
+        "discord_role_id": "1559527104624722004",
+        "emoji": "👨‍⚖️",
+        "descripcion": "Tu labor será juzgar los casos legales y tomar decisiones justas."
       },
       {
-        "id": "rol_ministro_cultura",
-        "nombre": "Ministro de Cultura, Música y Deportes",
-        "descripcion": "Ostenta el cargo de M. de Cultura, Música y Deportes",
-        "imagen": "/roles/gobierno.png",
-        "discord_role_id": "1525922710696230972"
+        "nombre": "Cura",
+        "id": "rol_cura",
+        "discord_role_id": "1559527104549359683",
+        "emoji": "⛪",
+        "descripcion": "Tu labor será asistir a los ciudadanos en asuntos espirituales y brindar consuelo."
       },
       {
-        "id": "rol_ministro_industria",
-        "nombre": "Ministro de Industria y Turismo",
-        "descripcion": "Ostenta el cargo de M. de Industria y Turismo",
-        "imagen": "/roles/gobierno.png",
-        "discord_role_id": "1528432433584803970"
+        "nombre": "Tenista",
+        "id": "rol_tenista",
+        "discord_role_id": "1559527104624722000",
+        "emoji": "🎾",
+        "descripcion": "Tu labor será jugar tenis y representar al Reino en competencias deportivas."
       },
       {
-        "id": "rol_ministro_seguridad",
-        "nombre": "Ministro de Seguridad Social y Migraciones",
-        "descripcion": "Ostenta el cargo de M. de Seguridad Social y Migraciones",
-        "imagen": "/roles/gobierno.png",
-        "discord_role_id": "1533157446246338802"
+        "nombre": "Chef",
+        "id": "rol_chef",
+        "discord_role_id": "1559527104549359685",
+        "emoji": "👨‍🍳",
+        "descripcion": "Tu labor será preparar comidas deliciosas para los ciudadanos del Reino."
       },
       {
-        "id": "rol_ministro_economia",
-        "nombre": "Ministro de Economía, Comercio y Empresa",
-        "descripcion": "Ostenta el cargo de M. de Economía, Comercio y Empresa",
-        "imagen": "/roles/gobierno.png",
-        "discord_role_id": "1525915723963043913"
-      },
-      {
-        "id": "rol_ministro_territorial",
-        "nombre": "Ministro de Política Territorial y Cohesión Democrática",
-        "descripcion": "Ostenta el cargo de M. de Política Territorial y Cohesión Democrática",
-        "imagen": "/roles/gobierno.png",
-        "discord_role_id": "1525567188835111092"
-      },
-      {
-        "id": "rol_ministro_interior",
-        "nombre": "Ministro del Interior y Defensa",
-        "descripcion": "Ostenta el cargo de M. de Interior y Defensa",
-        "imagen": "/roles/gobierno.png",
-        "discord_role_id": "1525567958431305800"
-      },
-      {
-        "id": "rol_ministro_exteriores",
-        "nombre": "Ministro de Asuntos Exteriores y Cooperación Internacional",
-        "descripcion": "Ostenta el cargo de M. de Asuntos Exteriores y Cooperación Internacional",
-        "imagen": "/roles/gobierno.png",
-        "discord_role_id": "1525920559618326578"
-      },
-      {
-        "id": "rol_ministra_transformacion",
-        "nombre": "Ministra para la Transformación del Estado y Medio Ambiente",
-        "descripcion": "Ostenta el cargo de M. para la Transformación del Estado y Medio Ambiente",
-        "imagen": "/roles/gobierno.png",
-        "discord_role_id": "1525922496334004285"
-      },
-      {
-        "id": "rol_ministra_perreria",
-        "nombre": "Ministra para la Perrería del Estado, Trabajo y Libertades",
-        "descripcion": "Ostenta el cargo de M. para la Perrería del Estado, Trabajo y Libertades",
-        "imagen": "/roles/gobierno.png",
-        "discord_role_id": "1525916066562441279"
-      },
-      {
-        "id": "rol_ministra_sanidad",
-        "nombre": "Ministra de Sanidad",
-        "descripcion": "Ostenta el cargo de M. de Sanidad",
-        "imagen": "/roles/gobierno.png",
-        "discord_role_id": "1525883507102978240"
+        "nombre": "Psicólogo",
+        "id": "rol_psicólogo",
+        "discord_role_id": "1559527104624722002",
+        "emoji": "🧠",
+        "descripcion": "Tu labor será asistir a los ciudadanos en asuntos psicológicos y brindar apoyo emocional."
       }
     ],
     "regiones": [
@@ -175,37 +133,37 @@
         "id": "rol_region_baguette",
         "nombre": "Baguette",
         "emoji": "🥖",
-        "discord_role_id": "1505999177728004256"
+        "discord_role_id": "1559527104339517466"
       },
       {
         "id": "rol_region_pimbo",
         "nombre": "Pimbo",
         "emoji": "🍞",
-        "discord_role_id": "1505999483346096178"
+        "discord_role_id": "1559527104339517465"
       },
       {
         "id": "rol_region_pretzel",
         "nombre": "Pretzel",
         "emoji": "🥨",
-        "discord_role_id": "1505999600920559866"
+        "discord_role_id": "1559527104339517464"
       },
       {
         "id": "rol_region_croissant",
         "nombre": "Croissant",
         "emoji": "🥐",
-        "discord_role_id": "1505999687713427476"
+        "discord_role_id": "1559527104339517463"
       },
       {
         "id": "rol_region_singluten",
         "nombre": "Sin Gluten",
         "emoji": "🌾",
-        "discord_role_id": "1505999895486533722"
+        "discord_role_id": "1559527104339517462"
       },
       {
         "id": "rol_region_panplano",
         "nombre": "Pan Plano/Arepa",
         "emoji": "🫓",
-        "discord_role_id": "1505999993335451720"
+        "discord_role_id": "1559527104339517461"
       }
     ],
     "estado_ciudadano": [
@@ -213,13 +171,13 @@
         "id": "rol_ciudadano",
         "nombre": "Ciudadano",
         "imagen": "/roles/logo.png",
-        "discord_role_id": "1381611108812460034"
+        "discord_role_id": "1559527104339517460"
       },
       {
         "id": "rol_regularizacion",
         "nombre": "Proceso de Regularización",
         "imagen": "/roles/regularizacion.png",
-        "discord_role_id": "1506046752740999178"
+        "discord_role_id": "1559527104201097333"
       }
     ],
     "especiales": [
@@ -227,31 +185,31 @@
         "id": "rol_alto_mando",
         "nombre": "Alto Mando",
         "imagen": "/roles/masterball.png",
-        "discord_role_id": "1508080141501333576"
+        "discord_role_id": null
       },
       {
         "id": "rol_entrenadores_gimnasio",
         "nombre": "Entrenadores de Gimnasio Pokémon",
         "imagen": "/roles/ultraball.png",
-        "discord_role_id": "1508080870303596604"
+        "discord_role_id": null
       },
       {
         "id": "rol_administrador",
         "nombre": "Administrador",
         "emoji": "👑",
-        "discord_role_id": "1398358560295096341"
+        "discord_role_id": "1559527105509720080"
       },
       {
         "id": "rol_perra_del_estado",
         "nombre": "Perra del Estado",
         "imagen": "/roles/perradelestado.png",
-        "discord_role_id": "1510772727433138297"
+        "discord_role_id": null
       },
       {
         "id": "rol_presidente_parlamento",
         "nombre": "Presidente del Parlamento",
         "emoji": "🪑",
-        "discord_role_id": "1506037487254900908"
+        "discord_role_id": "1559541390419955742"
       }
     ],
     "equipos": [
@@ -259,13 +217,13 @@
         "id": "rol_EQUIPOMZ",
         "nombre": "Equipo MZ",
         "imagen": "/roles/equipoMZ.png",
-        "discord_role_id": "1515390908248621359"
+        "discord_role_id": null
       },
       {
         "id": "rol_EPG",
         "nombre": "EPG",
         "imagen": "/roles/EPG.png",
-        "discord_role_id": "1510764607936008393"
+        "discord_role_id": null
       }
     ],
     "mafia": [
@@ -273,13 +231,13 @@
         "id": "rol_mafioso",
         "nombre": "Mafiosos",
         "emoji": "♠️",
-        "discord_role_id": "1506394893201707068"
+        "discord_role_id": null
       },
       {
         "id": "rol_jefe_mafia",
         "nombre": "Jefe de la Mafia",
         "imagen": "/roles/jefemafia.png",
-        "discord_role_id": "1506395165290401843"
+        "discord_role_id": null
       }
     ],
     "servicios": [
@@ -287,7 +245,7 @@
         "id": "rol_abono_transporte",
         "nombre": "Tarjeta de Transporte del Consorcio",
         "imagen": "/roles/consorcio.png",
-        "discord_role_id": "1515829072209510603"
+        "discord_role_id": null
       }
     ]
   }
