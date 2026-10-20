@@ -4,7 +4,8 @@
  * NUNCA importar aquí un cliente Supabase con clave pública para las transferencias.
  * @see ../INSTRUCCIONES.md
  */
-import { Router, json } from 'express';
+import { Router, json, raw } from 'express';
+import { randomUUID } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -13,6 +14,7 @@ const BRIDGE_PATH = path.join(path.dirname(fileURLToPath(import.meta.url)), 'reg
 const DISCORD_ID = /^\d{15,22}$/;
 const DEFAULT_AVATAR = 'https://cdn.discordapp.com/embed/avatars/0.png';
 const STRING_FIELDS = ['cantante_favorito', 'cantante_imagen', 'animal_favorito'];
+const IMAGE_BUCKET = 'carpeta-cantantes';
 
 function appError(status, message) { const e = new Error(message); e.status = status; return e; }
 function optionalHttps(value) {
@@ -102,6 +104,123 @@ export function createCitizenRouter({ supabaseAdmin, getViewerId, guildId = proc
         .select('cantante_favorito,cantante_imagen,animal_favorito,pokemon_favorito,equipo_futbol,insta,tiktok,x_twitter'));
       if (!data?.length) throw appError(404, 'Tu perfil no existe todavía en usuarios. Usa el bot para inicializarlo.');
       res.json({ profile: data[0] });
+    } catch (error) { next(error); }
+  });
+
+  // Las fotos se suben desde el dispositivo al Storage del proyecto. No se piden URLs.
+  // Crear antes el bucket público `carpeta-cantantes` (SQL incluido).
+  router.post('/profile/image', raw({ type: ['image/png', 'image/jpeg', 'image/webp'], limit: '2mb' }), async (req, res, next) => {
+    let filePath = null;
+    try {
+      const buf = req.body;
+      if (!Buffer.isBuffer(buf) || !buf.length || buf.length > 2 * 1024 * 1024)
+        throw appError(400, 'Selecciona una imagen JPG, PNG o WebP de hasta 2 MB.');
+      const ct = (req.get('content-type') || '').split(';')[0].toLowerCase();
+      const png = ct === 'image/png' && buf.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]));
+      const jpg = ct === 'image/jpeg' && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+      const webp = ct === 'image/webp' && buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WEBP';
+      if (!png && !jpg && !webp) throw appError(400, 'El archivo no es una imagen JPG, PNG o WebP válida.');
+      filePath = `${req.citizenId}/${randomUUID()}.${png ? 'png' : jpg ? 'jpg' : 'webp'}`;
+      const { error: uploadError } = await supabaseAdmin.storage.from(IMAGE_BUCKET).upload(filePath, buf, {
+        contentType: ct, upsert: false, cacheControl: '3600',
+      });
+      if (uploadError) {
+        if (/not found|bucket/i.test(uploadError.message || ''))
+          throw appError(503, 'Falta crear el bucket de fotos. Ejecuta el SQL de Storage incluido en el paquete.');
+        throw uploadError;
+      }
+      const { data: urlData } = supabaseAdmin.storage.from(IMAGE_BUCKET).getPublicUrl(filePath);
+      if (!urlData?.publicUrl?.startsWith('https://')) throw appError(500, 'No se pudo obtener la imagen publicada.');
+      const data = requireResult(await supabaseAdmin.from('usuarios')
+        .update({ cantante_imagen: urlData.publicUrl }).eq('discord_id', req.citizenId)
+        .select('cantante_favorito,cantante_imagen,animal_favorito,pokemon_favorito,equipo_futbol,insta,tiktok,x_twitter'));
+      if (!data?.length) throw appError(404, 'Tu perfil aún no existe en usuarios.');
+      res.json({ profile: data[0] });
+    } catch (error) {
+      if (filePath) await supabaseAdmin.storage.from(IMAGE_BUCKET).remove([filePath]).catch(() => {});
+      next(error);
+    }
+  });
+
+  // Búsqueda exclusivamente por nombre, limitada a ciudadanos con DPI validado.
+  // Nunca devolvemos DPI, fechas, dinero, familia ni datos de documentos.
+  router.get('/directory', async (req, res, next) => {
+    try {
+      const q = String(req.query.q || '').trim().replace(/^@/, '');
+      if (q.length < 2) return res.json({ users: [] });
+      if (q.length > 40 || /[%_*(),]/.test(q)) throw appError(400, 'Introduce al menos dos letras de usuario.');
+      const people = requireResult(await supabaseAdmin.from('usuarios')
+        .select('discord_id,username,avatar_url').ilike('username', `%${q}%`)
+        .order('username', { ascending: true }).limit(30));
+      const peopleIds = (people || []).map(p => String(p.discord_id)).filter(id => DISCORD_ID.test(id));
+      if (!peopleIds.length) return res.json({ users: [] });
+      const verified = requireResult(await supabaseAdmin.from('verificados')
+        .select('discord_id,dpi').in('discord_id', peopleIds));
+      const dpiNumbers = [...new Set((verified || []).map(row => row.dpi).filter(Boolean))];
+      if (!dpiNumbers.length) return res.json({ users: [] });
+      const dpIs = requireResult(await supabaseAdmin.from('dpis')
+        .select('dpi_number').in('dpi_number', dpiNumbers));
+      const dpiSet = new Set((dpIs || []).map(row => row.dpi_number));
+      const allowed = new Set((verified || []).filter(row => dpiSet.has(row.dpi)).map(row => String(row.discord_id)));
+      res.json({ users: (people || []).filter(p => allowed.has(String(p.discord_id)))
+        .slice(0, 12).map(p => ({ id: String(p.discord_id), username: p.username,
+          avatar: p.avatar_url || DEFAULT_AVATAR })) });
+    } catch (error) { next(error); }
+  });
+
+  router.get('/public/:id', async (req, res, next) => {
+    try {
+      const id = String(req.params.id || '');
+      if (!DISCORD_ID.test(id)) throw appError(400, 'Carpeta no válida.');
+      const verified = requireResult(await supabaseAdmin.from('verificados')
+        .select('dpi').eq('discord_id', id).limit(1));
+      if (!verified?.[0]?.dpi) throw appError(404, 'No existe una carpeta pública verificada.');
+      const dpi = requireResult(await supabaseAdmin.from('dpis')
+        .select('dpi_number').eq('dpi_number', verified[0].dpi).limit(1));
+      if (!dpi?.length) throw appError(404, 'No existe una carpeta pública verificada.');
+      const rows = requireResult(await supabaseAdmin.from('usuarios')
+        .select('username,avatar_url,cantante_favorito,cantante_imagen,animal_favorito,pokemon_favorito')
+        .eq('discord_id', id).limit(1));
+      if (!rows?.length) throw appError(404, 'No se ha encontrado la carpeta.');
+      const levels = await supabaseAdmin.from('user_levels').select('level').eq('user_id', id).limit(1);
+      const u = rows[0];
+      res.setHeader('Cache-Control', 'private, no-store');
+      res.json({ profile: {
+        username: u.username, avatar: u.avatar_url || DEFAULT_AVATAR,
+        cantante_favorito: u.cantante_favorito || null,
+        cantante_imagen: u.cantante_imagen || null,
+        animal_favorito: u.animal_favorito || null,
+        pokemon_favorito: u.pokemon_favorito || null,
+        level: levels.error ? null : Number(levels.data?.[0]?.level ?? 0),
+      } });
+    } catch (error) { next(error); }
+  });
+
+  // Prioriza el objetivo REAL si ya existe en user_levels; si no, permite
+  // configurar la fórmula con variables. Sin datos, se identifica como estimación.
+  router.get('/progress', async (req, res, next) => {
+    try {
+      const rows = requireResult(await supabaseAdmin.from('user_levels')
+        .select('*').eq('user_id', req.citizenId).limit(1));
+      const lvl = rows?.[0] || {};
+      const level = Math.max(0, Number(lvl.level) || 0);
+      const xp = Math.max(0, Number(lvl.xp) || 0);
+      const keys = ['xp_next_level', 'xp_required', 'xp_requerida', 'xp_para_subir', 'xp_siguiente_nivel', 'next_level_xp'];
+      let target = keys.map(k => Number(lvl[k])).find(v => Number.isFinite(v) && v > 0);
+      let estimated = false;
+      if (!target) {
+        const base = Number(process.env.PANIENSE_XP_BASE);
+        const factor = Number(process.env.PANIENSE_XP_FACTOR);
+        if (base > 0 && factor >= 0 && Number.isFinite(base) && Number.isFinite(factor)) {
+          target = Math.round(base + factor * level);
+        } else {
+          target = Math.max(100, Math.round(100 + 50 * level));
+          estimated = true;
+        }
+      }
+      const remaining = Math.max(0, target - xp);
+      res.json({ progress: { level, xp, target, remaining,
+        percent: Math.max(0, Math.min(100, Math.round((xp / target) * 100))), estimated } });
     } catch (error) { next(error); }
   });
 
@@ -243,7 +362,7 @@ export function createCitizenRouter({ supabaseAdmin, getViewerId, guildId = proc
       if (result.error) {
         if (result.error.code === 'P0001') throw appError(409, result.error.message);
         if (result.error.code === 'PGRST202' || result.error.code === '42883')
-          throw appError(503, 'La función SQL de transferencias aún no está instalada. Ejecuta la migración Rotomi en Supabase.');
+          throw appError(503, 'Rotomi no puede transferir: falta la función SQL transferir_captura_paniense. Ejecuta sql/001_rotomi_transferencias.sql en Supabase y comprueba capturas.id.');
         throw result.error;
       }
       res.json({ ok: true });
@@ -254,7 +373,7 @@ export function createCitizenRouter({ supabaseAdmin, getViewerId, guildId = proc
     const err = asError(error);
     const code = Number(err.status) || 500;
     if (code >= 500) console.error('[Carpeta Ciudadana]', err);
-    res.status(code).json({ error: code >= 500 ? 'El servicio está temporalmente indisponible.' : err.message });
+    res.status(code).json({ error: code >= 500 && !(code === 503 && err.status === 503) ? 'El servicio está temporalmente indisponible.' : err.message });
   });
   return router;
 }
