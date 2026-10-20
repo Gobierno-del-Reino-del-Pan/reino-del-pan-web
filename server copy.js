@@ -155,14 +155,18 @@ async function getNextDPINumber() {
 // ── Express ───────────────────────────────────────────────────────────────────
 const app = express();
 const port = process.env.PORT || 3344;
-const staticFolder = path.resolve(__dirname, "dist", "public");
 
 app.set('trust proxy', 1);
 
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 
-app.use(express.static(staticFolder));
+// Solo servir estáticos si NO estamos en Vercel (por ejemplo, en desarrollo local con node server.js)
+if (!process.env.VERCEL) {
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, "dist", "public", "index.html"));
+  });
+}
 
 function getIP(req) {
   return (
@@ -865,6 +869,259 @@ app.post("/api/news", requireAuth, async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ENDPOINTS DE SISTEMA ELECTORAL (INTEGRACIÓN CON ELECTORAL.PY)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/electoral/procesos
+ * Lista todos los procesos electorales activos/abiertos.
+ */
+app.get("/api/electoral/procesos", async (req, res) => {
+  try {
+    const { estado, tipo } = req.query;
+    let query = supabase.from("electa_procesos_electorales").select("*");
+
+    if (estado) {
+      query = query.eq("estado", estado);
+    } else {
+      query = query.eq("estado", "abierto");
+    }
+
+    if (tipo) {
+      query = query.eq("tipo", tipo);
+    }
+
+    const { data: procesos, error } = await query.order("fecha_inicio", { ascending: false });
+
+    if (error) throw error;
+    return res.json({ procesos });
+  } catch (err) {
+    console.error("[GET /api/electoral/procesos]", err);
+    return res.status(500).json({ error: "Error interno al obtener los procesos electorales." });
+  }
+});
+
+/**
+ * GET /api/electoral/procesos/:id
+ * Obtiene los detalles de un proceso electoral concreto con sus candidaturas.
+ */
+app.get("/api/electoral/procesos/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { data: proceso, error: pErr } = await supabase
+      .from("electa_procesos_electorales")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (pErr || !proceso) {
+      return res.status(404).json({ error: "Proceso electoral no encontrado." });
+    }
+
+    const { data: candidaturas, error: cErr } = await supabase
+      .from("electa_candidaturas")
+      .select("*")
+      .eq("proceso_id", id);
+
+    if (cErr) throw cErr;
+
+    return res.json({ proceso, candidaturas: candidaturas || [] });
+  } catch (err) {
+    console.error("[GET /api/electoral/procesos/:id]", err);
+    return res.status(500).json({ error: "Error interno al obtener detalle del proceso." });
+  }
+});
+
+/**
+ * POST /api/electoral/votar
+ * Permite emitir un voto web sincronizado con la tabla `electa_votos`.
+ */
+app.post("/api/electoral/votar", requireAuth, async (req, res) => {
+  try {
+    const voterId = req.user.id;
+    const { proceso_id, opcion, opcion_idx = 0, voto_publico = false } = req.body ?? {};
+
+    if (!proceso_id || !opcion) {
+      return res.status(400).json({ error: "Faltan parámetros de votación (proceso_id, opcion)." });
+    }
+
+    // 1. Validar que el proceso esté abierto
+    const { data: proceso, error: pErr } = await supabase
+      .from("electa_procesos_electorales")
+      .select("estado, tipo")
+      .eq("id", proceso_id)
+      .maybeSingle();
+
+    if (pErr || !proceso) {
+      return res.status(404).json({ error: "Proceso electoral no encontrado." });
+    }
+
+    if (proceso.estado !== "abierto") {
+      return res.status(400).json({ error: "Este proceso electoral no está abierto a votación." });
+    }
+
+    // 2. Insertar el voto en la tabla `electa_votos`
+    const { error: insertErr } = await supabase.from("electa_votos").insert({
+      proceso_id,
+      voter_id: voterId,
+      opcion,
+      opcion_idx,
+      voto_publico,
+      timestamp: new Date().toISOString()
+    });
+
+    if (insertErr) {
+      if (insertErr.message.includes("unique") || insertErr.message.includes("uq_electa_votos")) {
+        return res.status(400).json({ error: "Ya has emitido un voto en este proceso electoral." });
+      }
+      throw insertErr;
+    }
+
+    // 3. Si es de tipo partido, actualizar los votos totales en la candidatura elegida
+    if (proceso.tipo !== "referendum") {
+      const { count, error: countErr } = await supabase
+        .from("electa_votos")
+        .select("id", { count: "exact", head: true })
+        .eq("proceso_id", proceso_id)
+        .eq("opcion", opcion);
+
+      if (!countErr && count !== null) {
+        await supabase
+          .from("electa_candidaturas")
+          .update({ votos_totales: count })
+          .eq("id", opcion);
+      }
+    }
+
+    return res.json({ success: true, message: "¡Voto registrado con éxito!" });
+  } catch (err) {
+    console.error("[POST /api/electoral/votar]", err);
+    return res.status(500).json({ error: "Error interno al procesar el voto." });
+  }
+});
+
+/**
+ * GET /api/electoral/partidos
+ * Lista de partidos políticos activos en el sistema.
+ */
+app.get("/api/electoral/partidos", async (req, res) => {
+  try {
+    const { data: partidos, error } = await supabase
+      .from("electa_partidos")
+      .select("*")
+      .eq("guild_id", GUILD_ID)
+      .eq("activo", true);
+
+    if (error) throw error;
+    return res.json({ partidos: partidos || [] });
+  } catch (err) {
+    console.error("[GET /api/electoral/partidos]", err);
+    return res.status(500).json({ error: "Error interno al obtener los partidos." });
+  }
+});
+
+/**
+ * GET /api/electoral/partidos/:siglas
+ * Muestra los detalles de un partido específico por sus siglas.
+ */
+app.get("/api/electoral/partidos/:siglas", async (req, res) => {
+  try {
+    const siglas = req.params.siglas.toUpperCase();
+    const { data: partido, error } = await supabase
+      .from("electa_partidos")
+      .select("*")
+      .eq("guild_id", GUILD_ID)
+      .eq("siglas", siglas)
+      .eq("activo", true)
+      .maybeSingle();
+
+    if (error || !partido) {
+      return res.status(404).json({ error: "Partido no encontrado o inactivo." });
+    }
+
+    return res.json({ partido });
+  } catch (err) {
+    console.error("[GET /api/electoral/partidos/:siglas]", err);
+    return res.status(500).json({ error: "Error interno al obtener la información del partido." });
+  }
+});
+
+// ── ENDPOINTS ELECTORALES ADAPTADOS A ELECTA.TSX ───────────────────────────
+
+/**
+ * GET /api/electoral/procesos-abiertos
+ * Alias para que Electa.tsx reciba un Array directo de procesos abiertos
+ */
+app.get("/api/electoral/procesos-abiertos", async (req, res) => {
+  try {
+    const { data: procesos, error } = await supabase
+      .from("electa_procesos_electorales")
+      .select("*")
+      .eq("estado", "abierto")
+      .order("fecha_inicio", { ascending: false });
+
+    if (error) throw error;
+    // Retornamos directamente el Array para que d.length y Array.isArray() funcionen en el cliente
+    return res.json(procesos || []);
+  } catch (err) {
+    console.error("[GET /api/electoral/procesos-abiertos]", err);
+    return res.status(500).json({ error: "Error al obtener procesos abiertos." });
+  }
+});
+
+/**
+ * GET /api/electoral/comprobar-voto
+ * Comprueba si el usuario autenticado ya ha votado en un proceso
+ */
+app.get("/api/electoral/comprobar-voto", requireAuth, async (req, res) => {
+  try {
+    const voterId = req.user.id;
+    const { proceso_id } = req.query;
+
+    if (!proceso_id) {
+      return res.status(400).json({ error: "Falta el parámetro proceso_id" });
+    }
+
+    const { data: voto, error } = await supabase
+      .from("electa_votos")
+      .select("id")
+      .eq("proceso_id", proceso_id)
+      .eq("voter_id", voterId)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    return res.json({ haVotado: !!voto });
+  } catch (err) {
+    console.error("[GET /api/electoral/comprobar-voto]", err);
+    return res.json({ haVotado: false });
+  }
+});
+
+/**
+ * GET /api/electoral/candidaturas
+ * Retorna las candidaturas de un proceso en formato Array
+ */
+app.get("/api/electoral/candidaturas", async (req, res) => {
+  try {
+    const { proceso_id } = req.query;
+    if (!proceso_id) return res.json([]);
+
+    const { data: candidaturas, error } = await supabase
+      .from("electa_candidaturas")
+      .select("*")
+      .eq("proceso_id", proceso_id);
+
+    if (error) throw error;
+    return res.json(candidaturas || []);
+  } catch (err) {
+    console.error("[GET /api/electoral/candidaturas]", err);
+    return res.status(500).json({ error: "Error al obtener candidaturas." });
+  }
+});
+
 app.get("/health", (_req, res) => res.json({ status: "OK" }));
 
 function escHtml(str) {
@@ -968,9 +1225,17 @@ app.get("/api/roles", async (req, res) => {
   }
 });
 
-app.get("*", (_req, res) => {
-  res.sendFile(path.join(staticFolder, "index.html"));
-});
+if (!process.env.VERCEL) {
+  const staticFolder = path.resolve(__dirname, "dist", "public");
+
+  // Servir archivos estáticos del build
+  app.use(express.static(staticFolder));
+
+  // Fallback para SPA (index.html)
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(staticFolder, "index.html"));
+  });
+}
 
 export default app;
 
