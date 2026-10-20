@@ -9,12 +9,12 @@ import {
   ArrowRight, ArrowUpRight, Banknote, CloudSun, Coins,
   Headphones, Landmark, Megaphone, Music2, Pause, Play, Radio,
   ShieldCheck, Sparkles, TrendingUp, Trophy, Volume2, WifiOff,
-  RefreshCw, Crown, Wind, Droplets, ThermometerSun, TrendingDown,
+  RefreshCw, Crown, Wind, Droplets, ThermometerSun,
   Clock3, CalendarDays, Medal, ExternalLink,
-  ChevronLeft, ChevronRight, PauseCircle, PlayCircle, Sunrise, Sunset, Moon, X,
+  ChevronLeft, ChevronRight, PauseCircle, PlayCircle, Sunrise, Sunset, Moon,
 } from "lucide-react";
 
-// Página Inicio | Liquid Glass v3 | Cotizaciones mediante API propia + podio + observatorio.
+// Página Inicio | Liquid Glass v3 | Cotizaciones de TradingView + podio + observatorio.
 // Se conservan las rutas, los archivos multimedia y los servicios originales.
 // Importante: el PANEX es un índice ficticio; no se presenta como cotización real.
 
@@ -40,15 +40,6 @@ type NewsRow = {
 type Song = {
   id: number; src: string; title: string; artist: string; cover: string | null;
   startTime?: number; endTime?: number;
-};
-type MarketQuote = {
-  price: number; change: number; currency: string;
-  timestamp: string | null;
-};
-type MarketState = {
-  ibex: MarketQuote | null; nikkei: MarketQuote | null;
-  status: "loading" | "ready" | "partial" | "offline";
-  source: string; fetchedAt: string | null; stale: boolean; refreshing: boolean;
 };
 type RankUser = {
   posicion: number; id: string; username: string; level: number;
@@ -103,10 +94,6 @@ function formatTime(value: number) {
   if (!Number.isFinite(value) || value < 0) return "0:00";
   return `${Math.floor(value / 60)}:${String(Math.floor(value % 60)).padStart(2, "0")}`;
 }
-function formatPrice(price: number) {
-  return price.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
 
 const DEFAULT_AVATAR = "https://cdn.discordapp.com/embed/avatars/0.png";
 function avatarFor(user: RankUser) {
@@ -116,13 +103,6 @@ function avatarFor(user: RankUser) {
     return `https://cdn.discordapp.com/avatars/${encodeURIComponent(user.id)}/${image}.${image.startsWith("a_") ? "gif" : "png"}?size=128`;
   }
   return DEFAULT_AVATAR;
-}
-function marketTime(value: string | null) {
-  if (!value) return "Horario no disponible";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "Horario no disponible" : new Intl.DateTimeFormat("es-ES", {
-    day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Madrid"
-  }).format(date) + " (hora peninsular)";
 }
 function weatherMood(code: number | undefined) {
   if (code === 0) return { label: "Un cielo para disfrutar", message: "Jornada despejada. Buen momento para salir a descubrir la región.", tint: "#FFD19A", glow: "#F4AC56" };
@@ -137,7 +117,6 @@ function forecastDay(date: string) {
   const parsed = new Date(date + "T12:00:00Z");
   return Number.isNaN(parsed.getTime()) ? date : new Intl.DateTimeFormat("es-ES", { weekday: "short", timeZone: "UTC" }).format(parsed);
 }
-const STATEMENT_STORAGE_KEY = "artispanis-home-declaracion-v1";
 const ROTATION_INTERVAL_MS = 8000;
 
 /** La zona IANA procede de la coordenada meteorológica, NO del nombre ficticio de la región. */
@@ -181,25 +160,56 @@ function formatLocalObservation(value: string | undefined) {
   return "Observación de las " + (value.split("T")[1] || "").slice(0, 5) + " h locales";
 }
 
+/**
+ * Widget gratuito oficial de TradingView. Muestra la cotización y variación
+ * desde su propio proveedor, sin claves ni peticiones CORS desde React.
+ * Los datos pueden aparecer retrasados según la bolsa/proveedor.
+ */
+function TradingViewQuote({ symbol, title, href }: { symbol: string; title: string; href: string }) {
+  const hostRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+
+    const widget = document.createElement("div");
+    widget.className = "tradingview-widget-container__widget";
+    const script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js";
+    script.async = true;
+    script.textContent = JSON.stringify({
+      symbol, width: "100%", isTransparent: true, colorTheme: "dark", locale: "es"
+    });
+
+    host.replaceChildren(widget, script);
+    return () => { host.replaceChildren(); };
+  }, [symbol]);
+
+  return (
+    <div className="hm-tv-market">
+      <div className="hm-tv-market-heading">
+        <strong>{title}</strong>
+        <a href={href} target="_blank" rel="noopener noreferrer" aria-label={`Consultar ${title} en TradingView`}>
+          Ver cotización <ExternalLink size={13} aria-hidden="true" />
+        </a>
+      </div>
+      <div ref={hostRef} className="tradingview-widget-container hm-tv-embed" aria-label={`Cotización de ${title} proporcionada por TradingView`} />
+    </div>
+  );
+}
+
 export default function Home() {
   const [mainNews, setMainNews] = useState<NewsItem | null>(null);
   const [secondaryNews, setSecondaryNews] = useState<NewsItem[]>([]);
   const [newsStatus, setNewsStatus] = useState<"loading" | "ready" | "offline">("loading");
   const [weather, setWeather] = useState<RegionWeather[]>([]);
   const [weatherStatus, setWeatherStatus] = useState<"loading" | "ready" | "offline">("loading");
-  const [markets, setMarkets] = useState<MarketState>({ ibex: null, nikkei: null, status: "loading", source: "", fetchedAt: null, stale: false, refreshing: false });
-  const [marketRetry, setMarketRetry] = useState(0);
+  const [marketRefresh, setMarketRefresh] = useState(0);
   const [weatherRetry, setWeatherRetry] = useState(0);
   const [featuredRegionIndex, setFeaturedRegionIndex] = useState(0);
   const [weatherRotationPaused, setWeatherRotationPaused] = useState(false);
   const [weatherHovering, setWeatherHovering] = useState(false);
-  const [statementOpen, setStatementOpen] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    try { return window.sessionStorage.getItem(STATEMENT_STORAGE_KEY) !== "dismissed"; }
-    catch { return true; }
-  });
-  const modalRef = useRef<HTMLDivElement | null>(null);
-  const modalCloseRef = useRef<HTMLButtonElement | null>(null);
   const [leaders, setLeaders] = useState<LeaderboardState>({ status: "loading", top3: [] });
   const [leaderRetry, setLeaderRetry] = useState(0);
   const [songs, setSongs] = useState<Song[]>(SONG_FILES);
@@ -217,43 +227,13 @@ export default function Home() {
     setFeaturedRegionIndex(prev => (prev + direction + REGIONS.length) % REGIONS.length);
   };
   useEffect(() => {
-    if (weather.length <= 1 || weatherRotationPaused || weatherHovering || statementOpen) return;
+    if (weather.length <= 1 || weatherRotationPaused || weatherHovering) return;
     if (typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const id = window.setInterval(() => {
       if (!document.hidden) setFeaturedRegionIndex(prev => (prev + 1) % weather.length);
     }, ROTATION_INTERVAL_MS);
     return () => window.clearInterval(id);
-  }, [weather.length, weatherRotationPaused, weatherHovering, statementOpen, featuredRegionIndex]);
-
-  const closeStatement = () => {
-    setStatementOpen(false);
-    try { window.sessionStorage.setItem(STATEMENT_STORAGE_KEY, "dismissed"); } catch { /* Almacenamiento restringido */ }
-  };
-  useEffect(() => {
-    if (!statementOpen) return;
-    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const oldOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    modalCloseRef.current?.focus();
-    const handleKeyboard = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { event.preventDefault(); closeStatement(); return; }
-      if (event.key !== "Tab" || !modalRef.current) return;
-      const focusable = Array.from(modalRef.current.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      )).filter(node => node.getClientRects().length > 0);
-      if (!focusable.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-    };
-    document.addEventListener("keydown", handleKeyboard);
-    return () => {
-      document.body.style.overflow = oldOverflow;
-      document.removeEventListener("keydown", handleKeyboard);
-      previouslyFocused?.focus();
-    };
-  }, [statementOpen]);
+  }, [weather.length, weatherRotationPaused, weatherHovering]);
 
   // Noticias reales: no se muestran noticias inventadas ni rótulos ficticios de última hora.
   useEffect(() => {
@@ -337,44 +317,6 @@ export default function Home() {
     const interval = window.setInterval(() => { void getWeather(); }, 10 * 60 * 1000);
     return () => { mounted = false; controller.abort(); window.clearInterval(interval); };
   }, [weatherRetry]);
-
-  // /api/markets consulta el proveedor DESDE EL SERVIDOR, con caché y sin CORS de navegador.
-  useEffect(() => {
-    let mounted = true;
-    const controller = new AbortController();
-    async function getMarkets() {
-      if (mounted) setMarkets(prev => ({ ...prev, refreshing: true }));
-      try {
-        const response = await fetch("/api/markets", { signal: controller.signal, cache: "no-store" });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const payload = await response.json();
-        const parse = (value: any): MarketQuote | null =>
-          typeof value?.price === "number" && Number.isFinite(value.price) &&
-            typeof value?.change === "number" && Number.isFinite(value.change)
-            ? {
-              price: value.price, change: value.change, currency: typeof value.currency === "string" ? value.currency : "",
-              timestamp: typeof value.timestamp === "string" ? value.timestamp : null
-            }
-            : null;
-        const ibex = parse(payload?.quotes?.ibex);
-        const nikkei = parse(payload?.quotes?.nikkei);
-        if (!ibex && !nikkei) throw new Error("Sin precios de proveedor");
-        if (mounted) setMarkets({
-          ibex, nikkei, status: ibex && nikkei ? "ready" : "partial",
-          source: typeof payload.source === "string" ? payload.source : "Fuente bursátil",
-          fetchedAt: typeof payload.fetchedAt === "string" ? payload.fetchedAt : null,
-          stale: Boolean(payload.stale), refreshing: false
-        });
-      } catch (error) {
-        if (controller.signal.aborted) return;
-        console.warn("Servicio de mercados no disponible:", error);
-        if (mounted) setMarkets(prev => ({ ...prev, ibex: null, nikkei: null, status: "offline", refreshing: false }));
-      }
-    }
-    void getMarkets();
-    const interval = window.setInterval(() => { void getMarkets(); }, 2 * 60 * 1000);
-    return () => { mounted = false; controller.abort(); window.clearInterval(interval); };
-  }, [marketRetry]);
 
   // Reutiliza el MISMO endpoint, formato y roles de la página Level.tsx.
   useEffect(() => {
@@ -480,7 +422,7 @@ export default function Home() {
   return (
     <div className="home-v2 min-h-screen flex flex-col">
       <style>{`
-        .home-v2{--hm-purple:#630B57;--hm-soft:#AB72A3;--hm-ink:#251C26;background:#FAF5F9;color:var(--hm-ink);overflow-x:clip;font-family:var(--body-font,Inter,system-ui,sans-serif)}
+        .home-v2{--hm-purple:#630B57;--hm-soft:#AB72A3;--hm-ink:#251C26;background:#FAF5F9;color:var(--hm-ink);overflow-x:clip;overflow-y:visible;height:auto;min-height:100vh;font-family:var(--body-font,Inter,system-ui,sans-serif)}
         .home-v2 *, .home-v2 *::before,.home-v2 *::after{box-sizing:border-box}
         .home-v2 main h1,.home-v2 section h2,.home-v2 section h3,.home-v2 section h4{font-size-adjust:none!important;line-height:1.17;letter-spacing:-.035em;font-family:var(--body-font,Inter,system-ui,sans-serif);font-weight:800;overflow-wrap:break-word}
         .hm-wrap{width:min(1220px,100%);margin-inline:auto;padding-inline:clamp(16px,3vw,32px)}
@@ -577,7 +519,14 @@ export default function Home() {
         .hm-news-small .hm-news-body{padding:12px 12px 12px 0}
         .hm-soft-panel{border-radius:21px;padding:22px;text-align:center;background:#fff8;border:1px dashed #ccabc6;color:#765b70;line-height:1.7}
 
-        /* Financiación: fecha de mercado y refresco real sin valores falsos. */
+        /* Las cotizaciones se cargan en los widgets oficiales de TradingView. */
+        .hm-tv-market{padding:14px 15px 12px;border-radius:16px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.09);margin-top:10px;min-width:0}
+        .hm-tv-market-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;margin-bottom:10px}
+        .hm-tv-market-heading strong{font-size:13px;color:#fff}
+        .hm-tv-market-heading a{color:#F3C9EC;font-size:11px;display:inline-flex;align-items:center;gap:5px;text-decoration:underline;text-underline-offset:3px}
+        .hm-tv-embed{width:100%;min-height:95px;overflow:hidden}
+        .hm-tv-embed iframe{max-width:100%}
+        /* Nota de proveedor y controles de actualización de cotizaciones. */
         .hm-market-row{gap:14px}
         .hm-market-source{margin-top:17px;padding:12px 14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);border-radius:15px;color:#D3C4D4;font-size:11px;line-height:1.7}
         .hm-market-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10px!important;color:#BBAEC0!important}
@@ -661,23 +610,6 @@ export default function Home() {
         .hm-sky-station{width:100%;text-align:left;font:inherit;cursor:pointer}
         .hm-sky-station:focus-visible{outline:3px solid #A96FA2;outline-offset:3px}
         .hm-sky-station:hover{border-color:#CBA6C9;transform:translateY(-3px)}
-        .hm-statement-launch{background:#ffffff13;color:#F7E0F1;font-size:11px}
-        .hm-statement-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:clamp(12px,3vw,24px);background:rgba(11,6,14,.76);-webkit-backdrop-filter:blur(17px);backdrop-filter:blur(17px)}
-        .hm-statement-modal{position:relative;isolation:isolate;width:min(620px,100%);max-height:min(88dvh,740px);overflow:auto;border-radius:clamp(22px,3vw,34px);border:1px solid #ffffff30;background:linear-gradient(132deg,#1C1621 0%,#28122B 65%,#4C1644 100%);color:white;padding:clamp(25px,5vw,47px);box-shadow:0 25px 90px rgba(0,0,0,.45),inset 0 1px 0 #ffffff28;animation:hmStatementIn .34s cubic-bezier(.2,.8,.2,1) both}
-        @keyframes hmStatementIn{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
-        .hm-statement-modal::before{content:"";position:absolute;right:-140px;top:-120px;width:380px;height:380px;background:#AC3D90;opacity:.25;filter:blur(100px);pointer-events:none}
-        .hm-statement-top{display:flex;align-items:center;justify-content:space-between;gap:15px;position:relative}
-        .hm-statement-mark{font-size:13px;font-weight:950;letter-spacing:-.07em;color:#FFB184}
-        .hm-statement-close{height:38px;width:38px;border-radius:13px;background:#ffffff11;border:1px solid #ffffff28;color:white;display:grid;place-items:center}
-        .hm-statement-label{margin-top:26px;display:flex;align-items:center;gap:8px;color:#FFB184;letter-spacing:.15em;font-size:10px;font-weight:850;text-transform:uppercase}
-        .hm-statement-title{font-family:var(--body-font,Inter,system-ui,sans-serif)!important;font-size:clamp(36px,7vw,66px)!important;font-weight:850!important;font-size-adjust:none!important;line-height:1.04!important;letter-spacing:-.055em!important;overflow-wrap:normal!important;margin-top:17px;color:#FFFFFF}
-        .hm-statement-title span{display:block;color:#FF995A;margin-top:8px}
-        .hm-statement-actions{position:relative;margin-top:30px;padding-top:20px;border-top:1px solid #ffffff26;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-        .hm-statement-accept{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:#FF6A25;color:#1E1016;padding:13px 21px;border-radius:999px;font-size:12px;font-weight:900;letter-spacing:.08em}
-        .hm-statement-close:hover,.hm-statement-accept:hover{filter:brightness(1.12)}
-        .hm-statement-close:focus-visible,.hm-statement-accept:focus-visible{outline:3px solid white;outline-offset:3px}
-        @media(max-width:460px){.hm-sky-nav{gap:6px}.hm-sky-nav-counter{font-size:10px;letter-spacing:.03em}.hm-sky-nav-pause{padding:0 8px}.hm-sky-clock{grid-template-columns:1fr;gap:5px}.hm-sky-clock-time{grid-column:1;grid-row:auto}.hm-sky-disc{opacity:.5}.hm-statement-title{font-size:clamp(34px,10vw,45px)!important}}
-        @media(prefers-reduced-motion:reduce){.hm-sky-feature-body,.hm-statement-modal{animation:none!important}}
         .hm-sky-footer{position:relative;margin-top:19px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;color:#806B7F;font-size:11px}
         .hm-sky-footer span{display:inline-flex;align-items:center;gap:6px}
         @media(max-width:1000px){.hm-sky-grid{grid-template-columns:1fr}.hm-sky-feature{min-height:360px}.hm-sky-stations{grid-template-columns:repeat(3,minmax(0,1fr))}.hm-rank-card[data-place="1"]{min-height:320px}.hm-rank-card[data-place="2"]{min-height:295px}.hm-rank-card[data-place="3"]{min-height:280px}}
@@ -765,37 +697,18 @@ export default function Home() {
             <div className="hm-night-glass hm-panel">
               <div className="hm-panel-header">
                 <span className="hm-pill" style={{ background: "#ffffff0f", borderColor: "#ffffff27", color: "#E6C1DF" }}><TrendingUp size={14} /> Panorama financiero</span>
-                <button type="button" className="hm-refresh" onClick={() => setMarketRetry(v => v + 1)} disabled={markets.refreshing}><RefreshCw size={13} className={markets.refreshing ? "animate-spin" : ""} /> Actualizar</button>
+                <button type="button" className="hm-refresh" onClick={() => setMarketRefresh(v => v + 1)}><RefreshCw size={13} /> Recargar cotizaciones</button>
               </div>
               <h3 className="hm-panel-title">Índices bursátiles</h3>
               <div className="hm-market" style={{ borderColor: "#C7A36E55", background: "#B4872E12" }}>
                 <div><span>Índice del universo ficticio paniense</span><strong>PANEX 75</strong></div>
                 <div className="hm-market-value"><b style={{ color: "#E5BA75" }}>Simulado</b><small style={{ color: "#CFC1C3" }}>No negociable</small></div>
               </div>
-              {([{ label: "España · Bolsa", title: "IBEX 35", quote: markets.ibex, currency: "EUR" },
-              { label: "Japón · Bolsa", title: "Nikkei 225", quote: markets.nikkei, currency: "JPY" }] as const).map(row => (
-                <div key={row.title} className="hm-market hm-market-row">
-                  <div className="min-w-0"><span>{row.label}</span><strong>{row.title}</strong>
-                    <div className="hm-market-meta"><Clock3 size={12} aria-hidden="true" />{row.quote ? marketTime(row.quote.timestamp) : "Pendiente de conexión"}</div>
-                  </div>
-                  <div className="hm-market-value">
-                    <b>{row.quote ? `${formatPrice(row.quote.price)} ${row.quote.currency || row.currency}` : "—"}</b>
-                    <small style={{ color: row.quote ? (row.quote.change >= 0 ? "#86E1B2" : "#FF9BA6") : "#BAAABB" }}>
-                      {row.quote ? <>{row.quote.change >= 0 ? <TrendingUp size={12} className="inline mr-1" /> : <TrendingDown size={12} className="inline mr-1" />}{row.quote.change >= 0 ? "+" : ""}{row.quote.change.toFixed(2)}%</> : "No disponible"}
-                    </small>
-                  </div>
-                </div>
-              ))}
-              <div className="hm-market-source" role="status" aria-live="polite">
-                <div className="flex gap-2 items-center justify-between flex-wrap">
-                  <span>{markets.status === "loading" ? "Conectando con la fuente bursátil…" :
-                    markets.status === "offline" ? "Cotizaciones temporalmente no disponibles" :
-                      markets.stale ? "Últimos datos conservados: servicio temporalmente no disponible" :
-                        markets.status === "partial" ? "Datos parciales del proveedor" : "Últimas cotizaciones publicadas por el proveedor"}</span>
-                  {markets.refreshing && <RefreshCw size={13} className="animate-spin" aria-label="Actualizando" />}
-                </div>
-                {markets.fetchedAt && <div>Consulta: {marketTime(markets.fetchedAt)}</div>}
-                <div className="opacity-70">{markets.source || "Fuente: servidor /api/markets"} · La última cotización puede corresponder al cierre anterior. Los valores no son asesoramiento financiero.</div>
+              <TradingViewQuote key={`ibex-${marketRefresh}`} symbol="BME:IBC" title="IBEX 35 · España" href="https://es.tradingview.com/symbols/BME-IBC/" />
+              <TradingViewQuote key={`nikkei-${marketRefresh}`} symbol="TVC:NI225" title="Nikkei 225 · Japón" href="https://es.tradingview.com/symbols/TVC-NI225/" />
+              <div className="hm-market-source">
+                <strong>Fuente: TradingView.</strong> Cotizaciones proporcionadas por un servicio externo; pueden estar retrasadas y depender de la sesión bursátil.
+                Si el navegador bloquea el widget, utiliza los enlaces «Ver cotización». No constituye asesoramiento financiero.
               </div>
 
             </div>
