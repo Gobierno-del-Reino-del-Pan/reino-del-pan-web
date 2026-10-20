@@ -196,31 +196,46 @@ export function createCitizenRouter({ supabaseAdmin, getViewerId, guildId = proc
     } catch (error) { next(error); }
   });
 
-  // Prioriza el objetivo REAL si ya existe en user_levels; si no, permite
-  // configurar la fórmula con variables. Sin datos, se identifica como estimación.
+  // Mismo motor XP que el cog AEPT del bot: curva MEE6.
+  // Python: xp_needed_for_next(level) = 5*level**2 + 50*level + 100
+  //         total_xp_for_level(level) =
+  //           5*level*(level-1)*(2*level-1)//6 + 25*level*(level-1) + 100*level
+  //         progress_xp(total,level) = total - total_xp_for_level(level)
+  // No se usan fórmulas aproximadas ni variables de entorno para la XP.
+  function xpNeededForNext(level) {
+    return 5 * level ** 2 + 50 * level + 100;
+  }
+  function totalXpForLevel(level) {
+    return Math.floor(5 * level * (level - 1) * (2 * level - 1) / 6) +
+      25 * level * (level - 1) + 100 * level;
+  }
+  function levelFromTotalXp(total) {
+    let lo = 0, hi = 1;
+    while (totalXpForLevel(hi) <= total) hi *= 2;
+    while (lo + 1 < hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      if (totalXpForLevel(mid) <= total) lo = mid;
+      else hi = mid;
+    }
+    return lo;
+  }
   router.get('/progress', async (req, res, next) => {
     try {
       const rows = requireResult(await supabaseAdmin.from('user_levels')
-        .select('*').eq('user_id', req.citizenId).limit(1));
-      const lvl = rows?.[0] || {};
-      const level = Math.max(0, Number(lvl.level) || 0);
-      const xp = Math.max(0, Number(lvl.xp) || 0);
-      const keys = ['xp_next_level', 'xp_required', 'xp_requerida', 'xp_para_subir', 'xp_siguiente_nivel', 'next_level_xp'];
-      let target = keys.map(k => Number(lvl[k])).find(v => Number.isFinite(v) && v > 0);
-      let estimated = false;
-      if (!target) {
-        const base = Number(process.env.PANIENSE_XP_BASE);
-        const factor = Number(process.env.PANIENSE_XP_FACTOR);
-        if (base > 0 && factor >= 0 && Number.isFinite(base) && Number.isFinite(factor)) {
-          target = Math.round(base + factor * level);
-        } else {
-          target = Math.max(100, Math.round(100 + 50 * level));
-          estimated = true;
-        }
-      }
+        .select('level,xp,total_xp').eq('user_id', req.citizenId).limit(1));
+      const row = rows?.[0] || {};
+      const total = Math.max(0, Math.floor(Number(row.total_xp) || 0));
+      // El bot calcula el nivel desde el total acumulado y persiste "xp" como XP del nivel.
+      // Volver a calcularlo evita mostrar datos parciales si hubo un cambio reciente de nivel.
+      const level = levelFromTotalXp(total);
+      const target = xpNeededForNext(level);
+      const xp = Math.max(0, total - totalXpForLevel(level));
       const remaining = Math.max(0, target - xp);
-      res.json({ progress: { level, xp, target, remaining,
-        percent: Math.max(0, Math.min(100, Math.round((xp / target) * 100))), estimated } });
+      res.json({ progress: {
+        level, xp, target, remaining, total_xp: total,
+        percent: Math.max(0, Math.min(100, Math.round(xp * 100 / target))),
+        estimated: false,
+      } });
     } catch (error) { next(error); }
   });
 
