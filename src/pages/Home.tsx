@@ -692,23 +692,6 @@ export default function Home() {
       `}</style>
       <Header />
 
-      {statementOpen && (
-        <div className="hm-statement-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) closeStatement(); }}>
-          <div className="hm-statement-modal" role="dialog" aria-modal="true" aria-labelledby="hm-statement-title" aria-describedby="hm-statement-caption" ref={modalRef}>
-            <div className="hm-statement-top">
-              <span className="hm-statement-mark">ARTIS PANIS · DECLARACIÓN</span>
-              <button ref={modalCloseRef} className="hm-statement-close" type="button" aria-label="Cerrar comunicado" onClick={closeStatement}><X size={18} /></button>
-            </div>
-            <div className="hm-statement-label"><Megaphone size={14} aria-hidden="true" /> Mensaje institucional</div>
-            <h2 className="hm-statement-title" id="hm-statement-title">Abajo el Monarca.{" "}<span>NOS TEMERÁN</span></h2>
-            <p id="hm-statement-caption" className="mt-5 text-xs leading-relaxed text-[#D9C4D7]">Mensaje del portal Artis Panis.</p>
-            <div className="hm-statement-actions">
-              <span className="text-[10px] tracking-widest text-[#BCA7BB] font-semibold">COMUNICADO · ARTIS PANIS</span>
-              <button className="hm-statement-accept" type="button" onClick={closeStatement}>ENTENDIDO <ArrowRight size={15} aria-hidden="true" /></button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="hm-marquee" role="region" aria-label="Tablón de anuncios institucionales">
         <div className="hm-ticker">
@@ -736,7 +719,6 @@ export default function Home() {
             <div className="hm-actions">
               <Link href="/about" className="hm-action hm-action-primary">Conocer el proyecto <ArrowRight size={16} /></Link>
               <Link href="/dpi" className="hm-action hm-action-secondary">Obtener DPI <ShieldCheck size={17} /></Link>
-              <button type="button" className="hm-action hm-statement-launch" onClick={() => setStatementOpen(true)}><Megaphone size={16} aria-hidden="true" /> Ver comunicado</button>
             </div>
           </div>
           <div className="hm-metrics">
