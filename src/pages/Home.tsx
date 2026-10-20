@@ -72,7 +72,7 @@ const METRICS = [
 ];
 const REGIONS: RegionWeather[] = [
   { id: "baguette", region: "Baguette 🥖", ciudad: "Pantopía", lat: 37.3828, lon: -5.9732, tagline: "Observatorio de Pantopía", phrase: "El cielo de nuestra capital" },
-  { id: "pimbo", region: "Pimbo 🍞", ciudad: "Pimbolandia", lat: 40.9688, lon: -5.6639, tagline: "Estación Pimbo", phrase: "Un día para descubrir la ciudad" },
+  { id: "pimbo", region: "Pimbo 🍞", ciudad: "Pimbolandia", lat: 39.6953, lon: 3.0176, tagline: "Estación Pimbo", phrase: "Un día para descubrir la ciudad" },
   { id: "pretzel", region: "Pretzel 🥨", ciudad: "Pretzelópolis", lat: 39.4698, lon: -0.3763, tagline: "Estación Pretzel", phrase: "El cielo marca el ritmo" },
   { id: "croissant", region: "Croissant 🥐", ciudad: "Vila Croissant", lat: 43.4832, lon: -1.5586, tagline: "Estación Croissant", phrase: "Así amanece por aquí" },
   { id: "singluten", region: "Sin Glúten 🌾", ciudad: "ChinPan", lat: 34.0522, lon: -118.2437, tagline: "Estación ChinPan", phrase: "Entre nubes y horizontes" },
