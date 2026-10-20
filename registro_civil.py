@@ -19,7 +19,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
 ROOT = Path(__file__).resolve().parent
-ASSETS = ROOT / "src"
+ASSETS = ROOT / "/src"
 W, H = A4
 INK = colors.HexColor('#192b38')
 TEAL = colors.HexColor('#147d77')
