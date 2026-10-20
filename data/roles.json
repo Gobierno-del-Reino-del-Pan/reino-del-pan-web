@@ -185,13 +185,13 @@
         "id": "rol_alto_mando",
         "nombre": "Alto Mando",
         "imagen": "/roles/masterball.png",
-        "discord_role_id": null
+        "discord_role_id": "1559527104654213169"
       },
       {
         "id": "rol_entrenadores_gimnasio",
         "nombre": "Entrenadores de Gimnasio Pokémon",
         "imagen": "/roles/ultraball.png",
-        "discord_role_id": null
+        "discord_role_id": "1559527104654213166"
       },
       {
         "id": "rol_administrador",
@@ -217,13 +217,19 @@
         "id": "rol_EQUIPOMZ",
         "nombre": "Equipo MZ",
         "imagen": "/roles/equipoMZ.png",
-        "discord_role_id": null
+        "discord_role_id": "1559527103420965023"
+      },
+      {
+        "id": "rol_Rizo Maffia",
+        "nombre": "Rizo Maffia",
+        "imagen": "/roles/rizomaffia.png",
+        "discord_role_id": "1559527104276856898"
       },
       {
         "id": "rol_EPG",
-        "nombre": "EPG",
+        "nombre": "Team SubnormalesS",
         "imagen": "/roles/EPG.png",
-        "discord_role_id": null
+        "discord_role_id": "1559527104654213162"
       }
     ],
     "mafia": [
@@ -231,13 +237,13 @@
         "id": "rol_mafioso",
         "nombre": "Mafiosos",
         "emoji": "♠️",
-        "discord_role_id": null
+        "discord_role_id": "1559527104654213161"
       },
       {
         "id": "rol_jefe_mafia",
         "nombre": "Jefe de la Mafia",
         "imagen": "/roles/jefemafia.png",
-        "discord_role_id": null
+        "discord_role_id": "1559527105509720074"
       }
     ],
     "servicios": [
@@ -245,7 +251,7 @@
         "id": "rol_abono_transporte",
         "nombre": "Tarjeta de Transporte del Consorcio",
         "imagen": "/roles/consorcio.png",
-        "discord_role_id": null
+        "discord_role_id": "1559527103999905898"
       }
     ]
   }
