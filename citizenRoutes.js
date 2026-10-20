@@ -177,14 +177,38 @@ export function createCitizenRouter({ supabaseAdmin, getViewerId, guildId = proc
     } catch (error) { next(error); }
   });
 
+  // Datos económicos de la cuenta: mismos registros que usa el bot, consultados en servidor.
+  router.get('/economy', async (req, res, next) => {
+    try {
+      const [money, score] = await Promise.all([
+        supabaseAdmin.from('users_economy').select('cash,bank').eq('id', req.citizenId).limit(1),
+        supabaseAdmin.from('usuarios').select('puntos_elo').eq('discord_id', req.citizenId).limit(1),
+      ]);
+      const coins = requireResult(money)?.[0];
+      const elo = requireResult(score)?.[0];
+      res.json({ economy: coins ? { cash: Number(coins.cash) || 0, bank: Number(coins.bank) || 0 } : null,
+        puntos_elo: elo?.puntos_elo ?? null });
+    } catch (error) { next(error); }
+  });
+
   router.get('/pokemon', async (req, res, next) => {
     try {
+      // El bot inserta los campos Pokémon pero no garantiza created_at ni id.
+      // Consultar 'created_at' directamente o ordenar por él provocaba HTTP 500
+      // en proyectos donde esas columnas no existen.
       const rows = requireResult(await supabaseAdmin.from('capturas')
-        .select('id,pokemon_id,pokemon_name,level,is_shiny,ball_used,created_at')
-        .eq('discord_id', req.citizenId)
-        .order('created_at', { ascending: false }).limit(300));
-      res.json({ captures: (rows || []).map(p => ({ id: p.id, pokemon_id: p.pokemon_id, pokemon_name: p.pokemon_name,
-        level: p.level, is_shiny: Boolean(p.is_shiny), ball_used: p.ball_used, created_at: p.created_at })) });
+        .select('*').eq('discord_id', req.citizenId).limit(300));
+      const captures = (rows || []).map(p => ({
+        id: /^\d+$/.test(String(p.id ?? '')) ? Number(p.id) : null,
+        pokemon_id: Number(p.pokemon_id) || 0,
+        pokemon_name: String(p.pokemon_name || `Pokémon #${p.pokemon_id || '?'}`),
+        level: Number(p.level) || 1,
+        is_shiny: Boolean(p.is_shiny),
+        ball_used: String(p.ball_used || 'pokeball'),
+        created_at: p.created_at || null,
+      }));
+      captures.sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+      res.json({ captures, canTransfer: captures.every(p => Number.isSafeInteger(p.id) && p.id > 0) });
     } catch (error) { next(error); }
   });
 
@@ -213,11 +237,13 @@ export function createCitizenRouter({ supabaseAdmin, getViewerId, guildId = proc
       if (!Number.isSafeInteger(captureId) || captureId <= 0 || !DISCORD_ID.test(String(recipientId || '')))
         throw appError(400, 'Selecciona una captura y un usuario válidos.');
       if (String(recipientId) === req.citizenId) throw appError(400, 'No puedes transferirte un Pokémon a ti mismo.');
-      const result = await supabaseAdmin.rpc('transferir_captura_paniana', {
+      const result = await supabaseAdmin.rpc('transferir_captura_paniense', {
         p_capture_id: captureId, p_sender_id: req.citizenId, p_recipient_id: String(recipientId),
       });
       if (result.error) {
         if (result.error.code === 'P0001') throw appError(409, result.error.message);
+        if (result.error.code === 'PGRST202' || result.error.code === '42883')
+          throw appError(503, 'La función SQL de transferencias aún no está instalada. Ejecuta la migración Rotomi en Supabase.');
         throw result.error;
       }
       res.json({ ok: true });
