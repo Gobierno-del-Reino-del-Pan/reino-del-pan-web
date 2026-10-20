@@ -10,7 +10,7 @@
     "preview": "vite preview --host",
     "check": "tsc --noEmit",
     "format": "prettier --write .",
-    "vercel-build": "npm install --legacy-peer-deps && npm run build"
+    "vercel-build": "vite build"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
