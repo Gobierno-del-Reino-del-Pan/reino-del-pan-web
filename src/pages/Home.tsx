@@ -82,7 +82,7 @@ const REGIONS: RegionWeather[] = [
 const SONG_FILES = [
   { id: 1, src: "/canciones/1.mp3", title: "Sin Explicacion3s", artist: "Dellafuente", cover: "/canciones/1.jpg", startTime: 30, endTime: 190 },
   { id: 2, src: "/canciones/2.m4a", title: "Te quiero olvidar 💔", artist: "Daviles de Novelda, Omar Montes y RVFV", cover: "/canciones/2.avif" },
-  { id: 3, src: "/canciones/3.mp3", title: "Shakira: BZRP Music Sessions, Vol. 53", artist: "BZRP, Shakira", cover: "/canciones/3.jpg" },
+  { id: 3, src: "/canciones/3.flac", title: "Shakira: BZRP Music Sessions, Vol. 53", artist: "BZRP, Shakira", cover: "/canciones/3.jpg" },
 ] satisfies Song[];
 const CONTESTS = [
   { href: "/concursos/paneda", eyebrow: "Economía nacional", title: "Diseño de la Paneda", description: "Diseña los billetes oficiales y la identidad visual de la moneda paniense.", icon: Coins, color: "#C18A35" },
