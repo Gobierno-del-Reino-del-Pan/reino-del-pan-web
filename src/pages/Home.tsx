@@ -14,7 +14,7 @@ import {
   ChevronLeft, ChevronRight, PauseCircle, PlayCircle, Sunrise, Sunset, Moon,
 } from "lucide-react";
 
-// Página Inicio | Liquid Glass v3 | Cotizaciones de TradingView + podio + observatorio.
+// Página Inicio | Liquid Glass v3 | Índices con Yahoo Finance + respaldo TradingView.
 // Se conservan las rutas, los archivos multimedia y los servicios originales.
 // Importante: el PANEX es un índice ficticio; no se presenta como cotización real.
 
@@ -41,6 +41,93 @@ type Song = {
   id: number; src: string; title: string; artist: string; cover: string | null;
   startTime?: number; endTime?: number;
 };
+type MarketQuote = {
+  price: number;
+  previousClose: number;
+  changePercent: number;
+  currency: string;
+  timestamp: string | null;
+};
+type MarketState = {
+  ibex: MarketQuote | null;
+  nikkei: MarketQuote | null;
+  refreshing: boolean;
+  checkedAt: string | null;
+};
+
+// El PANEX 75 es ficticio: su nivel se calcula como IBEX 35 x 2,5.
+// Si la regla del proyecto cambia, modifica exclusivamente este coeficiente.
+const PANEX_MULTIPLIER = 2.5;
+
+function formatMarketNumber(value: number) {
+  return value.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function formatMarketChange(value: number) {
+  return `${value > 0 ? "+" : ""}${value.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} %`;
+}
+function formatMarketDate(value: string | null) {
+  if (!value) return "Fecha no disponible";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Fecha no disponible";
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Madrid"
+  }).format(date) + " (Madrid)";
+}
+
+/**
+ * Yahoo Finance Chart, sin clave. Yahoo no publica CORS para navegadores,
+ * por lo que se consulta a través de un proxy gratuito externo (cors.dev).
+ * La segunda URL es un proxy alternativo; ninguno garantiza disponibilidad.
+ * No mostrar valores ficticios si las dos peticiones fallan.
+ */
+async function fetchMarketQuote(symbol: "^IBEX" | "^N225", signal: AbortSignal): Promise<MarketQuote> {
+  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d`;
+  const endpoints = [
+    `https://proxy.cors.dev/${yahooUrl}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`,
+  ];
+  let lastError: unknown;
+  for (const endpoint of endpoints) {
+    if (signal.aborted) throw new Error("Consulta cancelada");
+    try {
+      // Acotar el tiempo de espera para no mantener indefinidamente «Actualizando…».
+      const request = new AbortController();
+      const stop = () => request.abort();
+      const timeout = window.setTimeout(stop, 8_000);
+      signal.addEventListener("abort", stop, { once: true });
+      let data: any;
+      try {
+        const response = await fetch(endpoint, { signal: request.signal, credentials: "omit", cache: "no-store" });
+        if (!response.ok) throw new Error(`Error de mercados HTTP ${response.status}`);
+        data = await response.json();
+      } finally {
+        window.clearTimeout(timeout);
+        signal.removeEventListener("abort", stop);
+      }
+      const meta = data?.chart?.result?.[0]?.meta;
+      const price = meta?.regularMarketPrice;
+      const previousClose = meta?.chartPreviousClose ?? meta?.previousClose;
+      if (!(typeof price === "number" && Number.isFinite(price) && price > 0 &&
+        typeof previousClose === "number" && Number.isFinite(previousClose) && previousClose > 0)) {
+        throw new Error("La fuente no ha devuelto precio y cierre anterior válidos");
+      }
+      const timestamp = typeof meta.regularMarketTime === "number" && Number.isFinite(meta.regularMarketTime)
+        ? new Date(meta.regularMarketTime * 1000).toISOString() : null;
+      return {
+        price,
+        previousClose,
+        changePercent: (price / previousClose - 1) * 100,
+        currency: typeof meta.currency === "string" ? meta.currency : "",
+        timestamp,
+      };
+    } catch (err) {
+      if (signal.aborted) throw err;
+      lastError = err;
+    }
+  }
+  throw lastError ?? new Error("Mercados no disponibles");
+}
+
 type RankUser = {
   posicion: number; id: string; username: string; level: number;
   total_xp: number; avatar: string;
@@ -199,6 +286,27 @@ function TradingViewQuote({ symbol, title, href }: { symbol: string; title: stri
   );
 }
 
+/** Cotización obtenida de Yahoo Finance, con indicador de subida/bajada. */
+function YahooMarketQuote({ quote, name, href }: { quote: MarketQuote; name: string; href: string }) {
+  const changeColor = quote.changePercent >= 0 ? "#91D7AA" : "#F19BA1";
+  return (
+    <div className="hm-market hm-market-row">
+      <div style={{ minWidth: 0 }}>
+        <span>Índice bursátil</span>
+        <strong>{name}</strong>
+        <a className="hm-quote-source-link" href={href} target="_blank" rel="noopener noreferrer">
+          Ver en Yahoo Finanzas <ExternalLink size={12} aria-hidden="true" />
+        </a>
+      </div>
+      <div className="hm-market-value">
+        <b>{formatMarketNumber(quote.price)} <small>{quote.currency}</small></b>
+        <small style={{ color: changeColor, fontWeight: 800 }}>{formatMarketChange(quote.changePercent)}</small>
+        <span className="hm-market-date">{formatMarketDate(quote.timestamp)}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [mainNews, setMainNews] = useState<NewsItem | null>(null);
   const [secondaryNews, setSecondaryNews] = useState<NewsItem[]>([]);
@@ -206,6 +314,7 @@ export default function Home() {
   const [weather, setWeather] = useState<RegionWeather[]>([]);
   const [weatherStatus, setWeatherStatus] = useState<"loading" | "ready" | "offline">("loading");
   const [marketRefresh, setMarketRefresh] = useState(0);
+  const [markets, setMarkets] = useState<MarketState>({ ibex: null, nikkei: null, refreshing: true, checkedAt: null });
   const [weatherRetry, setWeatherRetry] = useState(0);
   const [featuredRegionIndex, setFeaturedRegionIndex] = useState(0);
   const [weatherRotationPaused, setWeatherRotationPaused] = useState(false);
@@ -317,6 +426,29 @@ export default function Home() {
     const interval = window.setInterval(() => { void getWeather(); }, 10 * 60 * 1000);
     return () => { mounted = false; controller.abort(); window.clearInterval(interval); };
   }, [weatherRetry]);
+
+  // IBEX 35 y Nikkei 225: datos Yahoo Finance a través de proxy CORS, refresco cada 2 min.
+  // Si una cotización falla, mostramos un widget alternativo (no inventamos cifras).
+  useEffect(() => {
+    const controller = new AbortController();
+    let mounted = true;
+    const getMarkets = async () => {
+      if (mounted) setMarkets(prev => ({ ...prev, refreshing: true }));
+      const results = await Promise.allSettled([
+        fetchMarketQuote("^IBEX", controller.signal),
+        fetchMarketQuote("^N225", controller.signal),
+      ]);
+      if (!mounted || controller.signal.aborted) return;
+      const ibex = results[0].status === "fulfilled" ? results[0].value : null;
+      const nikkei = results[1].status === "fulfilled" ? results[1].value : null;
+      if (!ibex) console.warn("IBEX: la consulta a Yahoo no está disponible", results[0].status === "rejected" ? results[0].reason : "");
+      if (!nikkei) console.warn("Nikkei: la consulta a Yahoo no está disponible", results[1].status === "rejected" ? results[1].reason : "");
+      setMarkets({ ibex, nikkei, refreshing: false, checkedAt: new Date().toISOString() });
+    };
+    void getMarkets();
+    const interval = window.setInterval(() => { if (!document.hidden) void getMarkets(); }, 2 * 60 * 1000);
+    return () => { mounted = false; controller.abort(); window.clearInterval(interval); };
+  }, [marketRefresh]);
 
   // Reutiliza el MISMO endpoint, formato y roles de la página Level.tsx.
   useEffect(() => {
@@ -526,6 +658,8 @@ export default function Home() {
         .hm-tv-market-heading a{color:#F3C9EC;font-size:11px;display:inline-flex;align-items:center;gap:5px;text-decoration:underline;text-underline-offset:3px}
         .hm-tv-embed{width:100%;min-height:95px;overflow:hidden}
         .hm-tv-embed iframe{max-width:100%}
+        .hm-quote-source-link{display:inline-flex;align-items:center;gap:5px;margin-top:7px;font-size:10px;color:#D5BDD4;text-decoration:underline;text-underline-offset:2px}
+        .hm-quote-source-link:hover{color:white}
         /* Nota de proveedor y controles de actualización de cotizaciones. */
         .hm-market-row{gap:14px}
         .hm-market-source{margin-top:17px;padding:12px 14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);border-radius:15px;color:#D3C4D4;font-size:11px;line-height:1.7}
@@ -697,19 +831,32 @@ export default function Home() {
             <div className="hm-night-glass hm-panel">
               <div className="hm-panel-header">
                 <span className="hm-pill" style={{ background: "#ffffff0f", borderColor: "#ffffff27", color: "#E6C1DF" }}><TrendingUp size={14} /> Panorama financiero</span>
-                <button type="button" className="hm-refresh" onClick={() => setMarketRefresh(v => v + 1)}><RefreshCw size={13} /> Recargar cotizaciones</button>
+                <button type="button" className="hm-refresh" onClick={() => setMarketRefresh(v => v + 1)} disabled={markets.refreshing}><RefreshCw size={13} className={markets.refreshing ? "animate-spin" : ""} /> {markets.refreshing ? "Actualizando…" : "Actualizar"}</button>
               </div>
               <h3 className="hm-panel-title">Índices bursátiles</h3>
-              <div className="hm-market" style={{ borderColor: "#C7A36E55", background: "#B4872E12" }}>
-                <div><span>Índice del universo ficticio paniense</span><strong>PANEX 75</strong></div>
-                <div className="hm-market-value"><b style={{ color: "#E5BA75" }}>Simulado</b><small style={{ color: "#CFC1C3" }}>No negociable</small></div>
+              <div className="hm-market hm-market-row" style={{ borderColor: "#C7A36E55", background: "#B4872E12" }}>
+                <div style={{ minWidth: 0 }}>
+                  <span></span><strong>PANEX 75</strong>
+                  <small style={{ display: "block", color: "#D0B6CF", marginTop: 5, fontSize: 10 }}>Nuestro nivel de cotización</small>
+                </div>
+                <div className="hm-market-value" aria-live="polite">
+                  {markets.ibex ? <>
+                    <b style={{ color: "#E5BA75" }}>{formatMarketNumber(markets.ibex.price * PANEX_MULTIPLIER)} <small>pts.</small></b>
+                    <small style={{ color: markets.ibex.changePercent >= 0 ? "#91D7AA" : "#F19BA1", fontWeight: 800 }}>{formatMarketChange(markets.ibex.changePercent)}</small>
+                    <span className="hm-market-date">{formatMarketDate(markets.ibex.timestamp)}</span>
+                  </> : <>
+                    <b style={{ color: "#E5BA75" }}>{markets.refreshing ? "Calculando…" : "No disponible"}</b>
+                    <small>Esperando cotización del IBEX 35</small>
+                  </>}
+                </div>
               </div>
-              <TradingViewQuote key={`ibex-${marketRefresh}`} symbol="BME:IBC" title="IBEX 35 · España" href="https://es.tradingview.com/symbols/BME-IBC/" />
-              <TradingViewQuote key={`nikkei-${marketRefresh}`} symbol="TVC:NI225" title="Nikkei 225 · Japón" href="https://es.tradingview.com/symbols/TVC-NI225/" />
-              <div className="hm-market-source">
-                <strong>Fuente: TradingView.</strong> Cotizaciones proporcionadas por un servicio externo; pueden estar retrasadas y depender de la sesión bursátil.
-                Si el navegador bloquea el widget, utiliza los enlaces «Ver cotización». No constituye asesoramiento financiero.
-              </div>
+              {markets.ibex ?
+                <YahooMarketQuote quote={markets.ibex} name="IBEX 35 · España" href="https://es.finance.yahoo.com/quote/%5EIBEX/" /> :
+                <TradingViewQuote key={`ibex-${marketRefresh}`} symbol="BME:IBC" title="IBEX 35 · España" href="https://es.tradingview.com/symbols/BME-IBC/" />}
+              {markets.nikkei ?
+                <YahooMarketQuote quote={markets.nikkei} name="Nikkei 225 · Japón" href="https://es.finance.yahoo.com/quote/%5EN225/" /> :
+                <TradingViewQuote key={`nikkei-${marketRefresh}`} symbol="INDEX:NKY" title="Nikkei 225 · Japón" href="https://es.tradingview.com/symbols/INDEX-NKY/" />}
+
 
             </div>
           </div>
