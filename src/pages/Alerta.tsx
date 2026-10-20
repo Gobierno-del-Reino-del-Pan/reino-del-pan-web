@@ -8,7 +8,7 @@ export interface BorderGatewayProps {
 
 export const BorderGateway: React.FC<BorderGatewayProps> = ({
     onAccessGranted,
-    discordInviteUrl = 'https://discord.gg/xkdGSb9djv',
+    discordInviteUrl = 'https://discord.gg/B4KqM9fjP',
 }) => {
     const [acknowledged, setAcknowledged] = useState(false);
 
