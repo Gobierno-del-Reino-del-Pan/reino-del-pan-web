@@ -1,6 +1,6 @@
-"""Emisor de certificados ficticios del Registro Civil del Reino del Pan.
+"""Emisor de certificados del Registro Civil del Estado Panisense.
 
-No son documentos públicos oficiales ni sustituyen certificados españoles.
+.
 Requiere reportlab; acepta logos locales en ./src.
 """
 from __future__ import annotations
@@ -19,7 +19,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
 ROOT = Path(__file__).resolve().parent
-ASSETS = ROOT / "/src"
+ASSETS = ROOT / "src"
 W, H = A4
 INK = colors.HexColor('#192b38')
 TEAL = colors.HexColor('#147d77')
@@ -157,8 +157,8 @@ def crear_pdf(tipo: str, datos: dict, *, muestra: bool = False) -> bytes:
     font, bold = _font_setup()
     buf = BytesIO()
     c = canvas.Canvas(buf, pagesize=A4, pageCompression=1)
-    c.setTitle(f'Registro Civil ficticio - {tipo}')
-    c.setAuthor('Registro Civil del Reino del Pan - Discord')
+    c.setTitle(f'Registro Civil - {tipo}')
+    c.setAuthor('Registro Civil del Estado Panisense')
     margin = 53
     c.setStrokeColor(TEAL)
     c.setLineWidth(2)
@@ -169,12 +169,12 @@ def crear_pdf(tipo: str, datos: dict, *, muestra: bool = False) -> bytes:
     _logo(c, right_logo, W - margin - 72, H - 98, 72, 63)
     c.setFont(bold, 13)
     c.setFillColor(INK)
-    c.drawCentredString(W / 2, H - 57, 'REINO DEL PAN')
+    c.drawCentredString(W / 2, H - 57, 'ESTADO PANIENSE')
     c.setFont(font, 9)
     c.drawCentredString(W / 2, H - 74, 'REGISTRO CIVIL · SERVICIO DE INSCRIPCIONES')
     c.setFont(bold, 7.5)
     c.setFillColor(TEAL)
-    c.drawCentredString(W / 2, H - 91, 'DOCUMENTO FICTICIO · USO INTERNO DEL SERVIDOR')
+    c.drawCentredString(W / 2, H - 91, 'DOCUMENTO OFICIAL EXCLUSIVAMENTE EN EL ESTADO PANIENSE')
 
     titles = {
         'nacimiento': 'CERTIFICACIÓN DE INSCRIPCIÓN DE NACIMIENTO',
@@ -243,13 +243,13 @@ def crear_pdf(tipo: str, datos: dict, *, muestra: bool = False) -> bytes:
         raise ValueError('El contenido excede el espacio disponible del certificado')
     c.setFont(font, 8)
     c.setFillColor(MUTED)
-    c.drawString(margin + 2, 91, 'Certifica exclusivamente hechos ficticios registrados en la comunidad de Discord.')
-    c.drawString(margin + 2, 78, 'No acredita identidad legal, filiación, estado civil ni resolución judicial.')
+    c.drawString(margin + 2, 91, 'Certifica exclusivamente hechos registrados en la comunidad de Discord.')
+    c.drawString(margin + 2, 78, 'Acredita identidad legal, filiación, estado civil ni resolución judicial EXCLUSIVAMENTE en el ESTADO PANIENSE.')
     c.setStrokeColor(BORDER)
     c.line(margin, 58, W-margin, 58)
     c.setFont(font, 7.5)
-    c.drawString(margin, 43, 'REGISTRO CIVIL DEL REINO DEL PAN · EMISIÓN DIGITAL')
-    c.drawRightString(W-margin, 43, 'MUESTRA / SIN VALIDEZ' if muestra else 'REGISTRO FICTICIO')
+    c.drawString(margin, 43, 'REGISTRO CIVIL DEL ESTADO PANIENSE · EMISIÓN DIGITAL')
+    c.drawRightString(W-margin, 43, 'MUESTRA / SIN VALIDEZ' if muestra else 'REGISTRO CIVIL DEL ESTADO PANIENSE · EMISIÓN DIGITAL')
     if muestra:
         c.saveState()
         c.translate(W/2, H/2)
