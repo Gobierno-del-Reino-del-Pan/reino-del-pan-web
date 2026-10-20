@@ -152,7 +152,7 @@ export default function Terms() {
 
               <p>
 
-                Al acceder y utilizar el sitio web del Reino del Pan, aceptas cumplir con estos términos y condiciones en su totalidad. Si no estás de acuerdo con alguna parte, debes abstenerte de usar este sitio y sus servicios.
+                Al acceder y utilizar el sitio web del Estado Paniense, aceptas cumplir con estos términos y condiciones en su totalidad. Si no estás de acuerdo con alguna parte, debes abstenerte de usar este sitio y sus servicios.
 
               </p>
 
@@ -168,7 +168,7 @@ export default function Terms() {
 
               <p className="mb-4">
 
-                El sitio web del Reino del Pan es de uso personal e informativo. Queda expresamente prohibido:
+                El sitio web del Estado Paniense es de uso personal e informativo. Queda expresamente prohibido:
 
               </p>
 
@@ -220,7 +220,7 @@ export default function Terms() {
 
               <p className="mb-4">
 
-                Al solicitar el Documento Personal de Identidad (DPI), el usuario confirma que toda la información proporcionada es verídica y cumple con las normas del Reino del Pan.
+                Al solicitar el Documento Personal de Identidad (DPI), el usuario confirma que toda la información proporcionada es verídica y cumple con las normas del Estado Paniense.
 
               </p>
 
@@ -336,7 +336,7 @@ export default function Terms() {
 
               <p className="mb-3">
 
-                La foto de perfil y la firma manuscrita se procesan y renderizan íntegramente en el navegador del usuario. Estos datos <strong className="text-[#630B57] border-b border-[#A6659D]/40 font-semibold">no se transmiten ni se almacenan</strong> en ningún servidor del Reino del Pan.
+                La foto de perfil y la firma manuscrita se procesan y renderizan íntegramente en el navegador del usuario. Estos datos <strong className="text-[#630B57] border-b border-[#A6659D]/40 font-semibold">no se transmiten ni se almacenan</strong> en ningún servidor del Estado Paniense.
 
               </p>
 
@@ -358,7 +358,7 @@ export default function Terms() {
 
               <p className="mb-3">
 
-                El Reino del Pan dispone de un bot oficial en su servidor de Discord que permite verificar la ciudadanía mediante el DPI. Al verificarse, el usuario acepta que su ID y nombre de usuario de Discord queden vinculados a su número de DPI en la base de datos del Reino.
+                El Estado Paniense dispone de un bot oficial en su servidor de Discord que permite verificar la ciudadanía mediante el DPI. Al verificarse, el usuario acepta que su ID y nombre de usuario de Discord queden vinculados a su número de DPI en la base de datos del Estado Paniense.
 
               </p>
 
@@ -380,7 +380,7 @@ export default function Terms() {
 
               <p className="mb-4">
 
-                Todo DPI generado en la plataforma del Reino del Pan debe ser verificado en el servidor oficial de Discord en un plazo máximo de <strong className="text-[#4E2048] font-semibold">30 días naturales</strong> desde su creación.
+                Todo DPI generado en la plataforma del Estado Paniense debe ser verificado en el servidor oficial de Discord en un plazo máximo de <strong className="text-[#4E2048] font-semibold">30 días naturales</strong> desde su creación.
 
               </p>
 
@@ -484,7 +484,7 @@ export default function Terms() {
 
                 <li className="flex items-center gap-2.5"><span className="w-1.5 h-1.5 rounded-full bg-rose-600" /> Bloqueo temporal o permanente del acceso a la plataforma.</li>
 
-                <li className="flex items-center gap-2.5"><span className="w-1.5 h-1.5 rounded-full bg-rose-600" /> Expulsión del servidor de Discord del Reino del Pan.</li>
+                <li className="flex items-center gap-2.5"><span className="w-1.5 h-1.5 rounded-full bg-rose-600" /> Expulsión del servidor de Discord del Estado Paniense.</li>
 
               </ul>
 
@@ -500,7 +500,7 @@ export default function Terms() {
 
               <p>
 
-                El sistema se proporciona "tal cual", sin garantías de disponibilidad continua ni ausencia de errores. El Reino del Pan no se hace responsable de pérdidas de datos, interrupciones del servicio ni daños derivados del uso o imposibilidad de uso de la plataforma.
+                El sistema se proporciona "tal cual", sin garantías de disponibilidad continua ni ausencia de errores. El Estado Paniense no se hace responsable de pérdidas de datos, interrupciones del servicio ni daños derivados del uso o imposibilidad de uso de la plataforma.
 
               </p>
 

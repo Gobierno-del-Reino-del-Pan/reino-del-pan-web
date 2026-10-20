@@ -27,7 +27,7 @@ import {
 
 // ────────────────────────────────────────────────────────────────
 // ePOB — Padrón Oficial de Panienses
-// Panel de gestión del Reino del Pan (requiere sesión M@SA)
+// Panel de gestión del Estado Paniense (requiere sesión M@SA)
 // ────────────────────────────────────────────────────────────────
 
 type FiltroEstado = "TODOS" | EstadoPadron;
@@ -149,14 +149,14 @@ function PadronDashboard() {
         <div className="container mx-auto max-w-7xl flex flex-col lg:flex-row lg:items-end justify-between gap-6">
           <div>
             <span className="text-xs uppercase tracking-[0.35em] text-accent font-bold bg-black/40 border border-white/10 px-4 py-1.5 rounded-full inline-block">
-              Sistema M@SA · Gobierno del Reino del Pan
+              Sistema M@SA · Gobierno del Estado Paniense
             </span>
             <h1 className="mt-4 text-3xl sm:text-4xl font-black text-white tracking-tight">
               ePOB — Padrón Oficial de Panienses
             </h1>
             <p className="mt-2 text-sm text-white/50 max-w-xl">
               Registro y mantenimiento de la situación padronal de quienes forman parte del
-              Reino del Pan, sean panienses de nacimiento o extranjeros residentes.
+              Estado Paniense, sean panienses de nacimiento o extranjeros residentes.
             </p>
           </div>
 

@@ -26,11 +26,11 @@ export default function PatrimonioPanacional() {
                     <div className="max-w-7xl mx-auto flex items-center justify-center gap-3 text-center">
                         <img
                             src="/flag.png"
-                            alt="Bandera del Reino del Pan"
+                            alt="Bandera del Estado Paniense"
                             className="h-3 w-5 opacity-90"
                         />
                         <span className="font-semibold tracking-wider uppercase">
-                            Gobierno del Reino del Pan · Ministerio de Industria y Turismo
+                            Gobierno del Estado Paniense · Ministerio de Industria y Turismo
                         </span>
                     </div>
                 </div>
@@ -77,12 +77,12 @@ export default function PatrimonioPanacional() {
                                     Apertura de Reservas Oficiales 2026
                                 </span>
                                 <h2 className="font-title text-3xl md:text-5xl font-extrabold tracking-normal leading-relaxed text-white">
-                                    Explora la memoria viva, los <span className="text-amber-400">palacios reales</span> y monasterios del Reino.
+                                    Explora la memoria viva, los <span className="text-amber-400">palacios reales</span> y monasterios del Estado Paniense.
                                 </h2>
                             </div>
 
                             <p className="text-zinc-400 text-sm md:text-base max-w-xl leading-loose font-normal mt-2">
-                                Patrimonio Panacional custodia de forma activa los monumentos e hitos arquitectónicos heredados de la historia dinástica del Reino del Pan. Espacios singulares llenos de arte, tapices milenarios, jardines botánicos e imponentes conjuntos monásticos accesibles hoy al ciudadano.
+                                Patrimonio Panacional custodia de forma activa los monumentos e hitos arquitectónicos heredados de la historia dinástica del Estado Paniense. Espacios singulares llenos de arte, tapices milenarios, jardines botánicos e imponentes conjuntos monásticos accesibles hoy al ciudadano.
                             </p>
                         </div>
 
@@ -90,7 +90,7 @@ export default function PatrimonioPanacional() {
                         <div className="lg:col-span-5 relative min-h-[380px] flex flex-col items-center justify-center p-8 text-center overflow-hidden">
                             <img
                                 src="https://www.metalocus.es/sites/default/files/styles/mopis_fullslider_desktop/public/lead-images/metalocus_10-edificios-memoria-historica_24_p.jpg?itok=3r-QPmwG"
-                                alt="Fachada Clásica de Palacio del Reino"
+                                alt="Fachada Clásica de Palacio del Estado Paniense"
                                 className="absolute inset-0 w-full h-full object-cover opacity-60"
                             />
                             {/* Overlay corporativo degradado */}
@@ -133,7 +133,7 @@ export default function PatrimonioPanacional() {
                                 </div>
                                 <div className="p-6 flex flex-col flex-1">
                                     <h4 className="font-title text-xl font-bold text-zinc-900 leading-relaxed mb-4">
-                                        Palacio Real del Reino del Pan
+                                        Palacio Real del Estado Paniense
                                     </h4>
                                     <p className="text-xs md:text-sm text-zinc-600 leading-loose font-normal flex-1 mb-6">
                                         Testigo de los grandes concilios históricos. Visita los salones oficiales de la corte, la imponente armería dinástica y las galerías de arte que albergan frescos renacentistas únicos.
@@ -216,7 +216,7 @@ export default function PatrimonioPanacional() {
                                         Recuperación de los Tapices del Siglo XVII
                                     </h4>
                                     <p className="text-xs md:text-sm text-zinc-600 leading-loose font-normal mt-1">
-                                        Los maestros artesanos del Reino finalizan la meticulosa restauración del tapiz dinástico central, expuesto ahora en la Gran Galería de Honor.
+                                        Los maestros artesanos del Estado Paniense finalizan la meticulosa restauración del tapiz dinástico central, expuesto ahora en la Gran Galería de Honor.
                                     </p>
                                 </div>
                                 <span className="text-[11px] font-semibold text-zinc-400 mt-8 block border-t border-zinc-100 pt-4">Taller de Palacio</span>

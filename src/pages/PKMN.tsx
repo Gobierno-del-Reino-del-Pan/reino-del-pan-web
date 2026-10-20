@@ -60,7 +60,7 @@ const starters = [
     key: "fuego", name: "Cyndaquil", number: "#0155", caption: "Tercer inicial descubierto",
     img: "/pkmn/cyndaquil.png", typeImg: "/pkmn/tipos/fuego.png", type: "Fuego",
     biome: "Área Volcánica Paniense", color: "#C65C26", tint: "#FFF0E5",
-    description: "Es tímido y suele estar acurrucado. Se protege soltando llamas por el lomo; cuando está enfadado, estas son fieras e infernales para intimidar a sus rivales, pero si está cansado sólo consigo echar algunas chispas. Los Cyndaquil del Reino del Pan han podido mantener su ADN de Hisui.",
+    description: "Es tímido y suele estar acurrucado. Se protege soltando llamas por el lomo; cuando está enfadado, estas son fieras e infernales para intimidar a sus rivales, pero si está cansado sólo consigo echar algunas chispas. Los Cyndaquil del Estado Paniense han podido mantener su ADN de Hisui.",
   },
 ] as const;
 
@@ -291,7 +291,7 @@ export default function PKMN() {
       <div className="pk-utility">
         <div className="pk-utility-inner">
           <img src="/flag.png" alt="Bandera paniense" />
-          <span>Web oficial del Gobierno del <s>Reino del</s> Pan · Ministerio de Desregulación y Pokémon</span>
+          <span>Web oficial del Gobierno del Estado Paniense · Ministerio de Desregulación y Pokémon</span>
         </div>
       </div>
 
@@ -320,7 +320,7 @@ export default function PKMN() {
             <motion.div {...appear()} className="pk-intro">
               <span className="pk-overline"><Sparkles size={13} aria-hidden="true" /> Proyecto oficial · Liga Paniense</span>
               <h1 id="pkmn-title">Pokémon <span>Pania</span> Edition.</h1>
-              <p>Bienvenido a la delegación oficial de la Liga Pokémon del Reino del Pan. Un ecosistema soberano donde la estrategia, la constancia y la convivencia armónica definen a los mejores entrenadores del territorio.</p>
+              <p>Bienvenido a la delegación oficial de la Liga Pokémon del Estado Paniense. Un ecosistema soberano donde la estrategia, la constancia y la convivencia armónica definen a los mejores entrenadores del territorio.</p>
               <div className="pk-hero-actions">
                 <a href="/PKMN/pokedex" className="pk-action"><BookOpen size={16} aria-hidden="true" /> Explorar Pokédex <ArrowRight size={16} aria-hidden="true" /></a>
                 <a href="#liga" className="pk-quiet-action"><Trophy size={16} aria-hidden="true" /> Conocer la Liga</a>

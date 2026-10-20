@@ -271,7 +271,7 @@ export default function Electa() {
                         <div className="text-5xl">🍞</div>
                         <h1 className="text-2xl font-bold">Acceso Denegado a Electa</h1>
                         <p className="text-foreground/60 text-sm leading-relaxed">
-                            Para ejercer tu derecho al voto en el Reino del Pan necesitas formar parte del servidor oficial de Discord.
+                            Para ejercer tu derecho al voto en el Estado Paniense necesitas formar parte del servidor oficial de Discord.
                         </p>
                         <div className="space-y-3">
                             <a
@@ -495,7 +495,7 @@ export default function Electa() {
                                     <span className="text-3xl">🗳️</span>
                                     <h3 className="text-lg font-bold text-green-400">Ya has emitido tu voto</h3>
                                     <p className="text-xs text-foreground/60">
-                                        Tu participación en este proceso electoral ha quedado registrada de forma segura en las urnas del Reino.
+                                        Tu participación en este proceso electoral ha quedado registrada de forma segura en las urnas del Estado Paniense.
                                     </p>
                                 </div>
                             ) : (

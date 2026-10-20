@@ -88,7 +88,7 @@ export default function Borp() {
                         <div className="h-10 w-[1px] bg-border hidden md:block" />
                         <div className="hidden md:block">
                             <h1 className="text-sm font-mono font-bold uppercase tracking-wider text-foreground">Boletín Oficial</h1>
-                            <p className="text-[11px] font-mono text-muted-foreground">Reino del Pan</p>
+                            <p className="text-[11px] font-mono text-muted-foreground">Estado Paniense</p>
                         </div>
                     </div>
                     <div className="text-left md:text-right font-mono text-xs text-muted-foreground bg-secondary/60 border border-border px-5 py-3 rounded-xl shadow-inner w-full md:w-auto">

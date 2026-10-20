@@ -53,7 +53,7 @@ export default function Donations() {
               <div className="mt-4 w-12 h-0.5 bg-accent/60 rounded-full" />
 
               <p className="mt-5 max-w-2xl text-[15px] sm:text-base leading-relaxed text-foreground/70">
-                Apoya al desarrollo y sostenimiento del Reino del Pan donando Panedas directamente
+                Apoya al desarrollo y sostenimiento del Estado Paniense donando Panedas directamente
                 al <strong className="text-foreground font-semibold">Gobierno</strong>, a través del
                 comando oficial en Discord o mediante transferencia bancaria con Laboral Panian Bank (LPB).
               </p>
@@ -93,7 +93,7 @@ export default function Donations() {
                 <div className="sm:border-l border-border/60 sm:pl-6 h-full flex flex-col justify-center">
                   <p className="text-xs text-foreground/50 leading-relaxed">
                     Escribe el comando en el canal de economía sustituyendo (cantidad) por el número
-                    de Panedas que deseas donar al Gobierno del Reino del Pan.
+                    de Panedas que deseas donar al Gobierno del Estado Paniense.
                   </p>
                 </div>
               </div>

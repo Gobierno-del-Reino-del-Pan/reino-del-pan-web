@@ -19,7 +19,7 @@ export default function PanedaContest() {
                     </Link>
 
                     <span className="text-xs uppercase tracking-[0.4em] text-white/50 font-bold block mb-3">
-                        Concurso Oficial del Reino del Pan
+                        Concurso Oficial del Estado Paniense
                     </span>
 
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight drop-heading uppercase leading-tight">
@@ -27,7 +27,7 @@ export default function PanedaContest() {
                     </h1>
 
                     <p className="text-sm sm:text-base text-white/60 mt-6 max-w-2xl mx-auto font-light leading-relaxed">
-                        Bases oficiales para la selección de la primera familia oficial de billetes que respaldará la soberanía financiera del Reino.
+                        Bases oficiales para la selección de la primera familia oficial de billetes que respaldará la soberanía financiera del Estado Paniense.
                     </p>
                 </div>
             </section>
@@ -42,7 +42,7 @@ export default function PanedaContest() {
                             <span className="text-amber-500 font-mono text-lg">I.</span> Objeto
                         </h2>
                         <p className="text-sm sm:text-base leading-relaxed text-white/70">
-                            El Gobierno del Reino del Pan convoca el Concurso Nacional para el Diseño de la Primera Familia Oficial de Billetes de la Paneda, con el objetivo de seleccionar el diseño que representará a la moneda nacional.
+                            El Gobierno del Estado Paniense convoca el Concurso Nacional para el Diseño de la Primera Familia Oficial de Billetes de la Paneda, con el objetivo de seleccionar el diseño que representará a la moneda nacional.
                         </p>
                         <p className="text-sm font-semibold text-white/90">La colección estará compuesta por ocho denominaciones:</p>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
@@ -60,7 +60,7 @@ export default function PanedaContest() {
                             <span className="text-amber-500 font-mono text-lg">II.</span> Participantes
                         </h2>
                         <ul className="list-disc list-inside space-y-2 text-sm sm:text-base text-white/70">
-                            <li>Podrá participar cualquier ciudadano o residente del Reino del Pan que presente un diseño original e inédito.</li>
+                            <li>Podrá participar cualquier ciudadano o residente del Estado Paniense que presente un diseño original e inédito.</li>
                             <li>Cada participante podrá presentar una o varias propuestas.</li>
                         </ul>
                     </section>
@@ -78,7 +78,7 @@ export default function PanedaContest() {
                             <li>No existe un estilo artístico obligatorio.</li>
                             <li>No existen personajes, edificios, monumentos o paisajes obligatorios.</li>
                             <li>Se permite representar elementos históricos, culturales, naturales, científicos, tecnológicos o completamente abstractos.</li>
-                            <li>El objetivo es reflejar la identidad del Reino del Pan mediante propuestas originales.</li>
+                            <li>El objetivo es reflejar la identidad del Estado Paniense mediante propuestas originales.</li>
                         </ul>
                     </section>
 
@@ -145,7 +145,7 @@ export default function PanedaContest() {
                             <li>Legibilidad.</li>
                             <li>Facilidad de reconocimiento.</li>
                             <li>Coherencia de la colección.</li>
-                            <li>Representación de la identidad del Reino del Pan.</li>
+                            <li>Representación de la identidad del Estado Paniense.</li>
                             <li>Potencial para convertirse en una serie monetaria reconocible.</li>
                         </ul>
                     </section>
@@ -161,13 +161,13 @@ export default function PanedaContest() {
                             <div className="bg-black/30 border border-white/5 rounded-2xl p-5">
                                 <h3 className="font-bold text-white mb-2 text-sm uppercase tracking-wider text-amber-500">Primera fase</h3>
                                 <p className="text-xs sm:text-sm text-white/60 leading-relaxed">
-                                    Todas las propuestas serán evaluadas por el Consejo de Estado del Reino del Pan, que realizará una criba técnica y artística. El Consejo seleccionará las candidaturas finalistas para cada denominación.
+                                    Todas las propuestas serán evaluadas por el Consejo de Estado del Estado Paniense, que realizará una criba técnica y artística. El Consejo seleccionará las candidaturas finalistas para cada denominación.
                                 </p>
                             </div>
                             <div className="bg-black/30 border border-white/5 rounded-2xl p-5">
                                 <h3 className="font-bold text-white mb-2 text-sm uppercase tracking-wider text-amber-500">Segunda fase</h3>
                                 <p className="text-xs sm:text-sm text-white/60 leading-relaxed">
-                                    Las propuestas finalistas serán sometidas a votación popular, en la que podrá participar toda la ciudadanía del Reino del Pan. El diseño que obtenga el mayor respaldo ciudadano será proclamado ganador para su correspondiente denominación.
+                                    Las propuestas finalistas serán sometidas a votación popular, en la que podrá participar toda la ciudadanía del Estado Paniense. El diseño que obtenga el mayor respaldo ciudadano será proclamado ganador para su correspondiente denominación.
                                 </p>
                             </div>
                         </div>
@@ -189,7 +189,7 @@ export default function PanedaContest() {
                             <span className="text-amber-500 font-mono text-lg">X.</span> Derechos de las obras ganadoras
                         </h2>
                         <p className="text-sm sm:text-base leading-relaxed text-white/70">
-                            Los diseños ganadores pasarán a formar parte del patrimonio gráfico oficial del Reino del Pan. El Gobierno del Reino del Pan podrá reproducirlos, adaptarlos o incorporarlos a futuras emisiones de la Paneda, citando al autor cuando proceda.
+                            Los diseños ganadores pasarán a formar parte del patrimonio gráfico oficial del Estado Paniense. El Gobierno del Estado Paniense podrá reproducirlos, adaptarlos o incorporarlos a futuras emisiones de la Paneda, citando al autor cuando proceda.
                         </p>
                     </section>
 

@@ -634,7 +634,7 @@ app.get("/api/dpi/verify/:code", async (req, res) => {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ENDPOINTS: CONSORCIO DE TRANSPORTES (REINO DEL PAN)
+// ENDPOINTS: CONSORCIO DE TRANSPORTES (ESTADO PANIENSE)
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Asegúrate de tener DISCORD_BOT_TOKEN y GUILD_ID en tu .env)

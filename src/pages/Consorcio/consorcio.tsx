@@ -839,7 +839,7 @@ export default function Consorcio() {
           <img src="/CONSORCIO/consorcio.png" alt="Consorcio Transportes" />
           <div className="header-title">
             Consorcio de Transportes
-            <span>Reino del Pan · Sede Electrónica</span>
+            <span>Estado Paniense · Sede Electrónica</span>
           </div>
         </div>
       </header>
@@ -861,7 +861,7 @@ export default function Consorcio() {
             <div className="empty-icon">🪪</div>
             <div className="empty-title">No dispones de ninguna tarjeta registrada</div>
             <p className="empty-sub">
-              El sistema vinculará automáticamente tu firma oficial y tus datos del DPI verificado del Reino del Pan.
+              El sistema vinculará automáticamente tu firma oficial y tus datos del DPI verificado del Estado Paniense.
             </p>
             <button className="btn-primary" onClick={emitirTarjeta} disabled={emitiendo}>
               {emitiendo ? "⏳ Procesando Alta…" : "🪪 Solicitar alta del abono"}

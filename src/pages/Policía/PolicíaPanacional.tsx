@@ -150,7 +150,7 @@ export default function PoliciaNacional() {
         <div className="border-b border-[#011E64]/10 bg-white/55 px-4 py-2.5">
           <div className="cpnp-body flex items-center justify-center gap-2 text-center text-[10px] sm:text-xs font-semibold tracking-[.06em] text-[#465171]">
             <img src="/flag.png" alt="" className="h-3.5 w-[21px] shrink-0 rounded-[2px] object-cover" />
-            <span>Web oficial del Gobierno del <span className="cpnp-strike">Reino del</span> Pan · Ministerio del Interior y Defensa</span>
+            <span>Web oficial del Gobierno del Estado Paniense · Ministerio del Interior y Defensa</span>
           </div>
         </div>
 
@@ -164,7 +164,7 @@ export default function PoliciaNacional() {
               <span className="min-w-0">
                 <span className="cpnp-type block text-[22px] leading-[1.05] font-bold tracking-tight text-[#011E64] sm:text-[29px]">CPNP</span>
                 <span className="mt-1 block text-[9px] font-bold uppercase tracking-[.12em] text-[#630B57] sm:text-[11px]">
-                  <span className="cpnp-strike">Reino del</span> Pan
+                  Estado Paniense
                 </span>
               </span>
             </a>
@@ -204,7 +204,7 @@ export default function PoliciaNacional() {
               </span>
               <h1 id="tramites-heading" className="cpnp-type mt-5 text-[clamp(2.5rem,6vw,5.2rem)] font-bold leading-[1.03] tracking-[-.03em]">DPI</h1>
               <p className="mt-5 max-w-xl text-sm leading-7 text-white/85 sm:text-base">
-                Es obligatorio para todos los ciudadanos del Reino portar su acreditación vigente. Realiza tu solicitud de manera segura o recupera un documento existente.
+                Es obligatorio para todos los ciudadanos del Estado Paniense portar su acreditación vigente. Realiza tu solicitud de manera segura o recupera un documento existente.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <a href="/dpi/create" className="cpnp-action cpnp-action-primary cpnp-focus">

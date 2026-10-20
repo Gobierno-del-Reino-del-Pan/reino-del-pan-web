@@ -20,7 +20,7 @@ import {
 const recursos = [
   {
     titulo: "Ministerio de Economía, Comercio y Empresa",
-    descripcion: "Portal oficial del Ministerio de Economía, Comercio y Empresa del Reino del Pan.",
+    descripcion: "Portal oficial del Ministerio de Economía, Comercio y Empresa del Estado Paniense.",
     url: "https://mineco.duckdns.org",
     icon: Landmark,
     numero: "01",
@@ -29,7 +29,7 @@ const recursos = [
   {
     titulo: "Ministerio de Transformación Digital",
     descripcion:
-      "Portal oficial del Ministerio de Transformación Digital del Reino del Pan. Impulsamos la digitalización y el desarrollo de servicios digitales.",
+      "Portal oficial del Ministerio de Transformación Digital del Estado Paniense. Impulsamos la digitalización y el desarrollo de servicios digitales.",
     url: "https://mitd.duckdns.org",
     icon: Cpu,
     numero: "02",
@@ -38,7 +38,7 @@ const recursos = [
   {
     titulo: "Enciclopan",
     descripcion:
-      "La enciclopedia libre y oficial del Reino del Pan. Consulta historia, leyes, cultura y más.",
+      "La enciclopedia libre y oficial del Estado Paniense. Consulta historia, leyes, cultura y más.",
     url: "https://enciclopan.duckdns.org",
     icon: BookOpen,
     numero: "03",
@@ -104,7 +104,7 @@ export default function Gobierno() {
               <span className="gov-eyebrow"><span className="gov-eyebrow-dot" /> ARTIS PANIS · GOBIERNO OFICIAL</span>
               <h1 id="gov-page-title">Estructura del <span>Gobierno.</span></h1>
               <p className="gov-lead">
-                El Reino del Pan organiza su estructura institucional a través de documentos y referencias oficiales que definen su funcionamiento interno.
+                El Estado Paniense organiza su estructura institucional a través de documentos y referencias oficiales que definen su funcionamiento interno.
               </p>
               <div className="gov-hero-actions">
                 <a href="#situacion-institucional" className="gov-primary-action">
@@ -134,7 +134,7 @@ export default function Gobierno() {
                   <h2 id="gov-status-title">Estado institucional <span>actual</span></h2>
                   <div className="gov-rule" />
                   <p>
-                    Actualmente no existe un gobierno formalmente estructurado ni un gabinete en funciones dentro del Reino del Pan. Sin embargo, se mantiene un <strong>gobierno provisional</strong> encargado de la administración y supervisión del orden general.
+                    Actualmente no existe un gobierno formalmente estructurado ni un gabinete en funciones dentro del Estado Paniense. Sin embargo, se mantiene un <strong>gobierno provisional</strong> encargado de la administración y supervisión del orden general.
                   </p>
                   <p>
                     Este se encuentra formado por los <strong>Moderadores y Vigilantes</strong>, quienes velan por el cumplimiento de las leyes y el funcionamiento básico del sistema bajo la autoridad de <strong>Martini</strong>, el actual <strong>Director de Reformas y Coordinador del Estado</strong>.
@@ -195,7 +195,7 @@ export default function Gobierno() {
             </motion.section>
           </motion.div>
 
-          <div className="gov-endmark" aria-label="Artis Panis. Reino del Pan">
+          <div className="gov-endmark" aria-label="Artis Panis. Estado Paniense">
             <span>ARTIS PANIS</span>
             <span className="gov-endmark-line" />
             <span className="gov-crossed">REINO DEL</span>

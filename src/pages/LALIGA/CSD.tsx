@@ -179,7 +179,7 @@ export default function CSD() {
           <span className="mb-4 inline-block text-xs font-bold uppercase tracking-[.2em] text-[#B46B23]">Institución deportiva</span>
           <h1 className="mb-6 text-4xl font-black leading-tight tracking-tight sm:text-5xl">El Comité</h1>
           <p className="max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
-            Somos el órgano rector del deporte en el Reino del Pan. Nuestra misión es fomentar la actividad física y el alto rendimiento desde la transparencia y la excelencia institucional.
+            Somos el órgano rector del deporte en el Estado Paniense. Nuestra misión es fomentar la actividad física y el alto rendimiento desde la transparencia y la excelencia institucional.
           </p>
         </section>
 

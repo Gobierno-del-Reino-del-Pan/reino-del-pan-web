@@ -140,7 +140,7 @@ type LeaderboardState = {
 const MARQUEE = [
   "El sistema de generación de DPIs está totalmente operativo",
   "Convocatoria de concursos: billetes de Panedas, imagen de TVP y línea evolutiva Pokémon",
-  "Feliz primer aniversario del Reino del Pan. A por el segundo",
+  "Feliz primer aniversario del Estado Paniense. A por el segundo",
 ];
 const METRICS = [
   { number: "2025", label: "Año de fundación", detail: "El proyecto comenzó el 23 de julio de 2025", icon: Landmark },
@@ -779,7 +779,7 @@ export default function Home() {
             <span className="hm-pill" style={{ background: "#ffffff17", color: "#F2C5EA", borderColor: "#ffffff38" }}><Landmark size={13} /> Portal institucional</span>
             <h1 className="mt-6">
               <span>Nuestra tierra.</span><span>Nuestra gente.</span>
-              <span className="hm-brandline"><s className="hm-strike">REINO DEL</s> PAN</span>
+              <span className="hm-brandline">ESTADO PANIENSE</span>
             </h1>
             <p className="hm-hero-desc">Un estado digital y territorial dedicado a la paz, la reconciliación social, la ecología activa y la gobernanza del siglo XXI. Sé parte de la construcción de una nueva nación soberana.</p>
             <div className="hm-actions">
@@ -989,7 +989,7 @@ export default function Home() {
 
       <section className="hm-section" style={{ background: "linear-gradient(145deg,#F3E6F0,#F9F4F8)" }} aria-label="Actualidad y proyectos">
         <div className="hm-wrap hm-duo">
-          <article className="hm-feature hm-glass"><div><span className="hm-pill"><Banknote size={14} /> Alianza financiera</span><h3>Laboral Panian Bank</h3><p>El Gobierno del Reino del Pan y Laboral Kutxa han alcanzado un acuerdo para crear Laboral Panian Bank, una entidad destinada al ahorro, la inversión y el crecimiento económico paniense.</p></div><div className="hm-feature-bottom"><span className="text-xs font-bold" style={{ color: "#630B57" }}>El futuro de la banca paniense</span><img src="/LK.png" alt="Laboral Kutxa" loading="lazy" /></div></article>
+          <article className="hm-feature hm-glass"><div><span className="hm-pill"><Banknote size={14} /> Alianza financiera</span><h3>Laboral Panian Bank</h3><p>El Gobierno del Estado Paniense y Laboral Kutxa han alcanzado un acuerdo para crear Laboral Panian Bank, una entidad destinada al ahorro, la inversión y el crecimiento económico paniense.</p></div><div className="hm-feature-bottom"><span className="text-xs font-bold" style={{ color: "#630B57" }}>El futuro de la banca paniense</span><img src="/LK.png" alt="Laboral Kutxa" loading="lazy" /></div></article>
           <article className="hm-feature hm-glass"><div><span className="hm-pill"><Trophy size={14} /> Descubrimiento Pokémon</span><h3>Tercer inicial revelado</h3><p>Cyndaquil es oficialmente el tercer inicial anunciado para el ecosistema paniense. Su naturaleza y sus capacidades abren una nueva etapa de exploración.</p></div><div className="hm-feature-bottom"><Link href="/pkmn" className="text-xs font-bold inline-flex items-center gap-1" style={{ color: "#630B57" }}>Explorar Pokémon Pania <ArrowUpRight size={15} /></Link><img src="/pkmn/cyndaquil.png" alt="Cyndaquil" loading="lazy" /></div></article>
         </div>
       </section>

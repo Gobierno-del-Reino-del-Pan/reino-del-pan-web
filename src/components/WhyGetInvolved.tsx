@@ -26,7 +26,7 @@ export default function WhyGetInvolved() {
         <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
           <motion.div initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.55 }}>
             <p className="text-sm uppercase tracking-[0.35em] text-accent">¿Por qué involucrarse?</p>
-            <h2 className="display-font mt-4 text-4xl font-semibold">El Reino del Pan crece gracias a su comunidad global.</h2>
+            <h2 className="display-font mt-4 text-4xl font-semibold">El Estado Paniense crece gracias a su comunidad global.</h2>
             <p className="mt-6 max-w-xl text-foreground/70 leading-8">
               Explora los diferentes canales a través de los cuales puedes dejar tu huella y apoyar nuestra soberanía.
             </p>

@@ -4,7 +4,7 @@ const items = [
   {
     title: "Ciudadanía y DPI",
     description:
-      "Obtén tu Documento Personal de Identidad (DPI) del Reino del Pan. Únete como ciudadano digital y participa en las decisiones democráticas.",
+      "Obtén tu Documento Personal de Identidad (DPI) del Estado Paniense. Únete como ciudadano digital y participa en las decisiones democráticas.",
   },
   {
     title: "Donaciones Oficiales",
@@ -14,7 +14,7 @@ const items = [
   {
     title: "Eventos y Apoyo",
     description:
-      "Asiste a las reuniones diplomáticas y apoya las iniciativas globales. Conéctate con otros partidarios del Reino del Pan en tu región.",
+      "Asiste a las reuniones diplomáticas y apoya las iniciativas globales. Conéctate con otros partidarios del Estado Paniense en tu región.",
   },
 ];
 

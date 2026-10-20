@@ -131,7 +131,7 @@ export default function SeleccionPanienseWeb() {
     const resultadosFiltrados = useMemo(() => {
         const partidoPan: PartidoProcesado = {
             id: "pan-match",
-            local: "Reino del Pan",
+            local: "Estado Paniense",
             visitante: "Portugal",
             golesL: golesPan,
             golesV: golesRival,
@@ -804,7 +804,7 @@ export default function SeleccionPanienseWeb() {
 
                     </div>
 
-                    <center><img src={PAN_CREST_PATH} alt="Reino del Pan" className="pan-footer-logo" />
+                    <center><img src={PAN_CREST_PATH} alt="Estado Paniense" className="pan-footer-logo" />
                         <p>© 2026 Federación Paniense de Fútbol. Todos los derechos reservados.</p></center>
                 </footer>
             </div>

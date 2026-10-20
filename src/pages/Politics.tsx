@@ -182,7 +182,7 @@ export default function PoliticsPage() {
           {/* ========================================================================= */}
           {loading && (
             <div className="text-center text-foreground/50 py-24 text-xl font-medium tracking-wide animate-pulse">
-              Sincronizando con el censo del Reino...
+              Sincronizando con el censo del Estado Paniense...
             </div>
           )}
 
@@ -419,7 +419,7 @@ export default function PoliticsPage() {
           )}
 
           <p className="text-center text-xs text-foreground/30 pt-10 border-t border-border/40 tracking-wider">
-            • Datos en tiempo real del censo del Reino del Pan •
+            • Datos en tiempo real del censo del Estado Paniense •
           </p>
         </div>
       </main>
