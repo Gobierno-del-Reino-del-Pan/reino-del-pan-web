@@ -1,566 +1,492 @@
-import { useEffect, useState } from "react";
-import { Link, useLocation } from "wouter";
+import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
+import { Link } from "wouter";
+import { motion } from "framer-motion";
+import {
+  ArrowLeftRight, BadgeCheck, Check, ChevronLeft, ChevronRight,
+  Copy, Download, Eye, EyeOff, FileBadge2, Filter, ImagePlus, LockKeyhole,
+  LogOut, RefreshCw, Search, ShieldCheck, Star, Users, Wallet,
+  X, Zap, Database, ScrollText, Gem, Award,
+} from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { motion } from "framer-motion";
 import { supabase } from "../lib/supabaseClient";
 
-interface DPIData {
-  dpi_number: string;
-  nombre: string;
-  apellidos: string;
-  genero: string;
-  fecha_nac: string;
-  region: string;
-  issued_at: string;
-  valid_until: string;
-}
+// Esta página usa /api/me (existente) y /api/citizen/* (router adjunto).
+// Los cambios de propietario de un Pokémon NUNCA se hacen desde el navegador.
 
-interface Rol {
-  id: string;
-  nombre: string;
-  descripcion?: string;
-  emoji?: string;
-  imagen?: string | null;
-  categoria?: "profesiones" | "regiones" | "estado_ciudadano" | "especiales" | "equipos" | "mafia";
-  discord_role_id: string;
-}
-
-interface Matrimonio {
-  conyuge_id: string;
-  conyuge_username: string;
-  conyuge_avatar: string;
-  fecha_boda: string;
-}
-
-interface Hijo {
-  hijo_id: string;
-  hijo_username: string;
-  hijo_avatar: string;
-  tipo: "adoptivo" | "creado";
-}
-
-interface EconomyData {
-  cash: number;
-  bank: number;
-}
-
-interface DiscordUser {
-  id: string;
-  username: string;
-  avatar: string;
-  inGuild: boolean;
-  verificado: boolean;
-  dpi: DPIData | null;
-  roles: Rol[];
-  matrimonio: Matrimonio | null;
-  hijos: Hijo[];
-  level?: number;
-  xp?: number;
-  total_xp?: number;
-  messages?: number;
-
-  economy?: EconomyData | null;
-  puntos_elo?: string | number | null;
-  pokemon_favorito?: string | null;
-}
-
-// ── HELPER PARA PARSEAR PUNTOS BASE (PB) ──
-function parsePuntosElo(rawVal: string | number | null | undefined): string {
-  if (rawVal === null || rawVal === undefined) return "0";
-  const strVal = String(rawVal);
-  // Si contiene comas (ej. "1000,1000,1,216,0,0"), toma solo el primer valor
-  return strVal.split(",")[0].trim() || "0";
-}
-
-// ── COMPONENTE PARA EL POKÉMON FAVORITO ──
-function PokemonAvatar({ pokemonName }: { pokemonName: string }) {
-  const [spriteUrl, setSpriteUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!pokemonName) return;
-
-    const formattedName = pokemonName.trim().toLowerCase().replace(/\s+/g, "-");
-    fetch(`https://pokeapi.co/api/v2/pokemon/${formattedName}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Pokémon no encontrado");
-        return res.json();
-      })
-      .then((data) => {
-        const homeSprite =
-          data?.sprites?.other?.home?.front_default ||
-          data?.sprites?.other?.["official-artwork"]?.front_default ||
-          data?.sprites?.front_default;
-        setSpriteUrl(homeSprite);
-      })
-      .catch(() => setSpriteUrl(null))
-      .finally(() => setLoading(false));
-  }, [pokemonName]);
-
-  return (
-    <div
-      className="flex items-center gap-2 bg-[var(--accent)]/5 border border-[var(--border)] rounded-xl px-3 py-2"
-      title={`Pokémon favorito: ${pokemonName}`}
-    >
-      <div className="w-10 h-10 flex items-center justify-center bg-accent/10 rounded-lg overflow-hidden">
-        {loading ? (
-          <div className="w-4 h-4 border-2 border-accent/40 border-t-accent rounded-full animate-spin" />
-        ) : spriteUrl ? (
-          <img
-            src={spriteUrl}
-            alt={pokemonName}
-            className="w-10 h-10 object-contain drop-shadow-md transition-transform hover:scale-110"
-          />
-        ) : (
-          <span className="text-lg">🐾</span>
-        )}
-      </div>
-      <div className="hidden sm:block text-left">
-        <p className="text-[9px] uppercase tracking-wider text-foreground/50">Pokémon</p>
-        <p className="text-xs font-semibold capitalize text-foreground">{pokemonName}</p>
-      </div>
-    </div>
-  );
-}
-
-function RolIcono({ rol }: { rol: Rol }) {
-  if (rol.emoji) {
-    return <div className="text-4xl drop-shadow-sm leading-none">{rol.emoji}</div>;
-  }
-  if (rol.imagen) {
-    return (
-      <img
-        src={rol.imagen}
-        alt={rol.nombre}
-        className="w-10 h-10 object-contain drop-shadow-sm"
-      />
-    );
-  }
-  return <div className="text-4xl drop-shadow-sm leading-none">💼</div>;
-}
-
-function RolCard({ rol }: { rol: Rol }) {
-  return (
-    <div className="group flex items-start gap-4 p-4 rounded-xl border border-border bg-background/40 hover:border-accent/40 hover:bg-accent/5 transition-all duration-200">
-      <RolIcono rol={rol} />
-      <div className="flex-1">
-        <h3 className="font-semibold text-foreground flex items-center gap-2">
-          {rol.nombre}
-        </h3>
-        {rol.descripcion && (
-          <p className="text-xs text-foreground/60 mt-1 leading-relaxed">
-            {rol.descripcion}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function RolSeccion({ titulo, roles }: { titulo: string; roles: Rol[] }) {
-  if (roles.length === 0) return null;
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 }}
-      className="rounded-2xl border border-border bg-card overflow-hidden"
-    >
-      <div className="px-6 py-4 border-b border-border">
-        <p className="text-xs uppercase tracking-[0.3em] text-accent font-medium">
-          {titulo}
-        </p>
-      </div>
-      <div className="px-6 py-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {roles.map((rol) => (
-            <RolCard key={rol.discord_role_id} rol={rol} />
-          ))}
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-const CATEGORIAS: { key: string; titulo: string }[] = [
-  { key: "profesiones", titulo: "Mi profesión" },
-  { key: "regiones", titulo: "Mi región" },
-  { key: "estado_ciudadano", titulo: "Estado ciudadano" },
-  { key: "equipos", titulo: "Mi Equipo" },
-  { key: "mafia", titulo: "Registros de Familia / Mafia" },
-  { key: "especiales", titulo: "Roles especiales" },
-  { key: "servicios", titulo: "Servicios" }
+type DPIData = {
+  dpi_number: string; nombre: string; apellidos: string; genero?: string;
+  fecha_nac?: string; region?: string; issued_at?: string; valid_until?: string;
+};
+type Rol = {
+  id: string; nombre: string; descripcion?: string; emoji?: string; imagen?: string | null;
+  categoria?: string; discord_role_id: string;
+};
+type Matrimonio = { conyuge_id: string; conyuge_username: string; conyuge_avatar?: string; fecha_boda?: string };
+type Hijo = { hijo_id: string; hijo_username: string; hijo_avatar?: string; tipo: "adoptivo" | "creado" };
+type Profile = {
+  cantante_favorito: string | null; cantante_imagen: string | null; animal_favorito: string | null;
+  pokemon_favorito: string | null; equipo_futbol: string | null;
+  insta: string | null; tiktok: string | null; x_twitter: string | null;
+};
+type Citizen = {
+  id: string; username: string; avatar: string; inGuild: boolean; verificado: boolean;
+  dpi: DPIData | null; roles: Rol[]; matrimonio: Matrimonio | null; hijos: Hijo[];
+  level?: number; xp?: number; total_xp?: number; messages?: number;
+  economy?: { cash: number; bank: number } | null; puntos_elo?: string | number | null;
+};
+type Acta = { numero: string; tipo: string; created_at: string | null; fecha: string | null };
+type FamilyState = { matrimonio: Matrimonio | null; hijos: Hijo[]; actas: Acta[] };
+type PokemonCatch = {
+  id: number; pokemon_id: number; pokemon_name: string; level: number;
+  is_shiny: boolean; ball_used: string; created_at: string | null;
+};
+type Tab = "identidad" | "familia" | "rotomi" | "roles";
+const UNKNOWN_AVATAR = "https://cdn.discordapp.com/embed/avatars/0.png";
+const CATEGORY_TITLES: Record<string, string> = {
+  profesiones: "💼 Profesiones", regiones: "🗺️ Regiones", estado_ciudadano: "🪪 Estado ciudadano",
+  equipos: "🏟️ Equipos", especiales: "✨ Roles especiales", mafia: "🕶️ Registros de familia / mafia",
+  servicios: "🛎️ Servicios", otros: "🏅 Otros roles",
+};
+const PETS: Array<{ words: string[]; emoji: string; label: string }> = [
+  { words: ["perro", "dog", "can"], emoji: "🐕", label: "Perrito" },
+  { words: ["gato", "cat", "felino"], emoji: "🐈", label: "Gatito" },
+  { words: ["conejo"], emoji: "🐇", label: "Conejito" },
+  { words: ["zorro"], emoji: "🦊", label: "Zorro" },
+  { words: ["panda"], emoji: "🐼", label: "Panda" },
+  { words: ["lobo"], emoji: "🐺", label: "Lobo" },
+  { words: ["leon", "león"], emoji: "🦁", label: "León" },
+  { words: ["tigre"], emoji: "🐅", label: "Tigre" },
+  { words: ["oso"], emoji: "🐻", label: "Oso" },
+  { words: ["caballo"], emoji: "🐎", label: "Caballo" },
+  { words: ["mariposa"], emoji: "🦋", label: "Mariposa" },
+  { words: ["delfin", "delfín"], emoji: "🐬", label: "Delfín" },
+  { words: ["tortuga"], emoji: "🐢", label: "Tortuga" },
+  { words: ["pinguino", "pingüino"], emoji: "🐧", label: "Pingüino" },
+  { words: ["hamster", "hámster"], emoji: "🐹", label: "Hámster" },
+  { words: ["ajolote", "axolotl"], emoji: "🦎", label: "Ajolote" },
+  { words: ["abeja"], emoji: "🐝", label: "Abeja" },
+  { words: ["elefante"], emoji: "🐘", label: "Elefante" },
+  { words: ["serpiente"], emoji: "🐍", label: "Serpiente" },
+  { words: ["vaca"], emoji: "🐄", label: "Vaca" },
+  { words: ["dragon", "dragón"], emoji: "🐉", label: "Dragón" },
 ];
-
+function petEmoji(name: string) {
+  const normal = name.toLocaleLowerCase("es").trim();
+  return PETS.find(p => p.words.some(word => normal.includes(word)))?.emoji || "🐾";
+}
+function safeImageUrl(input: string | null | undefined) {
+  if (!input) return null;
+  if (input.startsWith("/")) return input.startsWith("//") ? null : input;
+  try {
+    const url = new URL(input);
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch { return null; }
+}
+function fmtDate(input?: string | null) {
+  if (!input) return "No consta";
+  const date = new Date(input);
+  return Number.isNaN(date.getTime()) ? input : new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "long", year: "numeric" }).format(date);
+}
+function fmtNum(value?: number | null) { return new Intl.NumberFormat("es-ES").format(value || 0); }
+function pbValue(input?: number | string | null) { return Number(String(input ?? "0").split(",")[0]) || 0; }
+function maskDpi(value: string) { return value.length < 5 ? "••••" : `${"•".repeat(Math.min(9, value.length - 4))}${value.slice(-4)}`; }
+async function api<T>(url: string, options?: RequestInit): Promise<T> {
+  const response = await fetch(url, { ...options, credentials: "same-origin", headers: { ...(options?.body ? { "Content-Type": "application/json" } : {}), ...options?.headers }, cache: "no-store" });
+  const json = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(typeof json?.error === "string" ? json.error : `Error HTTP ${response.status}`);
+  return json as T;
+}
+function RoleBadge({ role, compact = false }: { role: Rol; compact?: boolean }) {
+  const discordEmoji = role.emoji?.match(/^<a?:\w+:(\d+)>$/);
+  const iconUrl = discordEmoji ? `https://cdn.discordapp.com/emojis/${discordEmoji[1]}.png` : safeImageUrl(role.imagen);
+  const fallback = role.categoria === "equipos" ? "⚽" : role.categoria === "especiales" ? "✨" : "🎖️";
+  return (
+    <span className={`cp-role ${compact ? "cp-role-small" : ""}`} title={role.descripcion || role.nombre}>
+      {iconUrl ? <img src={iconUrl} alt="" loading="lazy" onError={e => { e.currentTarget.style.display = "none"; }} />
+        : <span aria-hidden="true">{role.emoji && !discordEmoji ? role.emoji : fallback}</span>}
+      <span>{role.nombre}</span>
+    </span>
+  );
+}
+const pokemonArtCache = new Map<string, string>();
+function PokemonArt({ id, shiny, label, size = "large" }: { id: number; shiny: boolean; label: string; size?: "large" | "small" }) {
+  const cacheKey = `${id}-${shiny}`;
+  const [source, setSource] = useState<string | null>(() => pokemonArtCache.get(cacheKey) || null);
+  useEffect(() => {
+    setSource(pokemonArtCache.get(cacheKey) || null);
+    if (!id || pokemonArtCache.has(cacheKey)) return;
+    const controller = new AbortController();
+    fetch(`https://pokeapi.co/api/v2/pokemon/${id}`, { signal: controller.signal })
+      .then(r => { if (!r.ok) throw new Error("PokéAPI"); return r.json(); })
+      .then(data => {
+        const s = data?.sprites;
+        const image = (shiny ? s?.other?.["official-artwork"]?.front_shiny || s?.front_shiny : s?.other?.["official-artwork"]?.front_default || s?.other?.home?.front_default || s?.front_default) as string | undefined;
+        if (image && !controller.signal.aborted) { pokemonArtCache.set(cacheKey, image); setSource(image); }
+      }).catch(() => {});
+    return () => controller.abort();
+  }, [id, shiny, cacheKey]);
+  return <img loading="lazy" className={`cp-pokemon-art ${size === "small" ? "cp-pokemon-small" : ""}`}
+    src={source || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${shiny ? "shiny/" : ""}${id}.png`}
+    alt={label} onError={e => { e.currentTarget.style.opacity = "0.2"; }} />;
+}
+function FavoritePokemon({ name }: { name: string }) {
+  const [info, setInfo] = useState<{ id: number; shiny: boolean } | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    setInfo(null);
+    const key = name.trim().toLowerCase().replace(/\s+/g, "-");
+    fetch(`https://pokeapi.co/api/v2/pokemon/${encodeURIComponent(key)}`, { signal: controller.signal })
+      .then(r => { if (!r.ok) throw new Error("Sin Pokémon"); return r.json(); })
+      .then(data => { if (!controller.signal.aborted) setInfo({ id: data.id, shiny: false }); }).catch(() => {});
+    return () => controller.abort();
+  }, [name]);
+  return <span className="cp-favorite-poke">{info ? <PokemonArt id={info.id} shiny={false} label={name} size="small" /> : "⚡"}<span>{name}</span></span>;
+}
+function Panel({ title, eyebrow, children, action, className = "" }: { title: string; eyebrow?: string; children: ReactNode; action?: React.ReactNode; className?: string }) {
+  return <section className={`cp-glass cp-panel ${className}`}>
+    <header className="cp-panel-header"><div>{eyebrow && <p className="cp-eyebrow">{eyebrow}</p>}<h2>{title}</h2></div>{action}</header>
+    {children}
+  </section>;
+}
 export default function Carpeta() {
-  const [, navigate] = useLocation();
-  const [user, setUser] = useState<DiscordUser | null>(null);
+  const [citizen, setCitizen] = useState<Citizen | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>("identidad");
+  const [dpiVisible, setDpiVisible] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [family, setFamily] = useState<FamilyState>({ matrimonio: null, hijos: [], actas: [] });
+  const [familyLoading, setFamilyLoading] = useState(false);
+  const [familyError, setFamilyError] = useState("");
+  const [certBusy, setCertBusy] = useState<string | null>(null);
+  const [captures, setCaptures] = useState<PokemonCatch[]>([]);
+  const [pcLoading, setPcLoading] = useState(false);
+  const [pcError, setPcError] = useState("");
+  const [search, setSearch] = useState("");
+  const [onlyShiny, setOnlyShiny] = useState(false);
+  const [page, setPage] = useState(0);
+  const [transfer, setTransfer] = useState<PokemonCatch | null>(null);
+  const [recipient, setRecipient] = useState("");
+  const [recipientVerified, setRecipientVerified] = useState<{ id: string; username: string; avatar: string } | null>(null);
+  const [recipientChecking, setRecipientChecking] = useState(false);
+  const [transferBusy, setTransferBusy] = useState(false);
+  const [transferMessage, setTransferMessage] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({ cantante_favorito: "", cantante_imagen: "", animal_favorito: "" });
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
 
   useEffect(() => {
-    async function loadUserData() {
-      try {
-        const res = await fetch("/api/me");
-        if (res.status === 401) {
-          window.location.href = "/auth/discord";
-          return;
-        }
-        const d = await res.json();
-        if (!d || !d.user) {
-          navigate("/");
-          return;
-        }
-
-        const baseUser: DiscordUser = d.user;
-        const discordId = baseUser.id;
-
-        const { data: economyData } = await supabase
-          .from("users_economy")
-          .select("cash, bank")
-          .eq("id", discordId)
-          .maybeSingle();
-
-        const { data: usuarioData } = await supabase
-          .from("usuarios")
-          .select("puntos_elo, pokemon_favorito")
-          .eq("discord_id", discordId)
-          .maybeSingle();
-
-        setUser({
-          ...baseUser,
-          economy: economyData ? { cash: Number(economyData.cash) || 0, bank: Number(economyData.bank) || 0 } : null,
-          puntos_elo: usuarioData?.puntos_elo ?? 0,
-          pokemon_favorito: usuarioData?.pokemon_favorito ?? null,
-        });
-      } catch (err) {
-        console.error("Error al cargar datos:", err);
-        navigate("/");
-      } finally {
-        setLoading(false);
+    let alive = true;
+    api<{ user: Citizen }>("/api/me").then(async data => {
+      if (!alive) return;
+      if (!data?.user?.id) throw new Error("No se ha encontrado tu sesión.");
+      setCitizen(data.user);
+      // Mantiene los datos económicos del componente original, si la política
+      // de lectura de Supabase permite consultar la propia ficha.
+      if (supabase) {
+        void Promise.all([
+          supabase.from("users_economy").select("cash,bank").eq("id", data.user.id).maybeSingle(),
+          supabase.from("usuarios").select("puntos_elo").eq("discord_id", data.user.id).maybeSingle(),
+        ]).then(([eco, own]) => {
+          if (!alive) return;
+          setCitizen(previous => previous?.id === data.user.id ? {
+            ...previous,
+            economy: eco.data ? { cash: Number(eco.data.cash) || 0, bank: Number(eco.data.bank) || 0 } : null,
+            puntos_elo: own.data?.puntos_elo ?? 0,
+          } : previous);
+        }).catch(() => {});
       }
+      // El perfil adicional se recupera a través del mismo backend autenticado.
+      try {
+        const d = await api<{ profile: Profile | null }>("/api/citizen/profile");
+        if (alive && d.profile) {
+          setProfile(d.profile);
+          setForm({ cantante_favorito: d.profile.cantante_favorito || "", cantante_imagen: d.profile.cantante_imagen || "", animal_favorito: d.profile.animal_favorito || "" });
+        }
+      } catch (e) { if (alive) console.warn("Perfil ampliado:", e); }
+    }).catch(e => { if (alive) { setError(e.message); } }).finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, []);
+
+  async function refreshFamily() {
+    setFamilyLoading(true); setFamilyError("");
+    try { setFamily(await api<FamilyState>("/api/citizen/registry")); }
+    catch (e) { setFamilyError(e instanceof Error ? e.message : "No se pudo consultar el Registro Civil."); }
+    finally { setFamilyLoading(false); }
+  }
+  async function refreshPc() {
+    setPcLoading(true); setPcError("");
+    try { const result = await api<{ captures: PokemonCatch[] }>("/api/citizen/pokemon"); setCaptures(result.captures || []); }
+    catch (e) { setPcError(e instanceof Error ? e.message : "Rotomi no está disponible."); }
+    finally { setPcLoading(false); }
+  }
+  useEffect(() => { if (citizen?.dpi && tab === "familia") void refreshFamily(); }, [tab, citizen?.id]);
+  useEffect(() => { if (citizen?.dpi && tab === "rotomi") void refreshPc(); }, [tab, citizen?.id]);
+  const roles = citizen?.roles || [];
+  const featuredRoles = roles.filter(r => ["equipos", "especiales"].includes(r.categoria || ""));
+  const groupedRoles = useMemo(() => roles.reduce<Record<string, Rol[]>>((acc, r) => {
+    const category = r.categoria || "otros";
+    (acc[category] ||= []).push(r);
+    return acc;
+  }, {}), [roles]);
+  const filtered = useMemo(() => captures.filter(c => (!onlyShiny || c.is_shiny) &&
+    (!search.trim() || `${c.pokemon_name} ${c.pokemon_id}`.toLowerCase().includes(search.trim().toLowerCase()))), [captures, search, onlyShiny]);
+  const perPage = 12;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const visible = filtered.slice(Math.min(page, totalPages - 1) * perPage, (Math.min(page, totalPages - 1) + 1) * perPage);
+  const tabList: Array<{ key: Tab; label: string; icon: typeof ShieldCheck }> = [
+    { key: "identidad", label: "Mi identidad", icon: BadgeCheck },
+    { key: "familia", label: "Registro Civil", icon: Users },
+    { key: "rotomi", label: "Rotomi PC", icon: Database },
+    { key: "roles", label: "Mis roles", icon: Award },
+  ];
+
+  async function downloadCertificate(acta: Acta) {
+    setCertBusy(acta.numero); setFamilyError("");
+    try {
+      const response = await fetch(`/api/citizen/certificates/${encodeURIComponent(acta.numero)}`, { credentials: "same-origin", cache: "no-store" });
+      if (!response.ok) { const e = await response.json().catch(() => ({})); throw new Error(e.error || `Error HTTP ${response.status}`); }
+      const blob = await response.blob();
+      if (blob.type !== "application/pdf") throw new Error("El servidor no devolvió un PDF.");
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = `RegistroCivil_${acta.tipo}_${acta.numero}.pdf`; a.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 30000);
+    } catch (e) { setFamilyError(e instanceof Error ? e.message : "No se pudo generar el certificado."); }
+    finally { setCertBusy(null); }
+  }
+  async function saveProfile() {
+    setSaveMessage("");
+    if (form.cantante_imagen && !safeImageUrl(form.cantante_imagen)) { setSaveMessage("La imagen debe ser una URL HTTPS válida."); return; }
+    setSaving(true);
+    try {
+      const result = await api<{ profile: Profile }>("/api/citizen/profile", { method: "PATCH", body: JSON.stringify(form) });
+      setProfile(result.profile); setEditing(false); setSaveMessage("¡Perfil actualizado!");
+    } catch (e) { setSaveMessage(e instanceof Error ? e.message : "No se pudo guardar."); }
+    finally { setSaving(false); }
+  }
+  async function verifyRecipient() {
+    const id = recipient.trim();
+    setRecipientVerified(null);
+    setTransferMessage("");
+    if (!/^[0-9]{15,22}$/.test(id) || id === citizen?.id) {
+      setTransferMessage("Introduce el ID de Discord de otra persona."); return;
     }
+    setRecipientChecking(true);
+    try {
+      const response = await api<{ recipient: { id: string; username: string; avatar: string } }>(`/api/citizen/pokemon/recipient/${id}`);
+      if (response.recipient.id === id) setRecipientVerified(response.recipient);
+    } catch (e) { setTransferMessage(e instanceof Error ? e.message : "No se pudo verificar el destinatario."); }
+    finally { setRecipientChecking(false); }
+  }
+  async function transferPokemon() {
+    if (!transfer || !recipientVerified || recipientVerified.id !== recipient.trim() || !/^[0-9]{15,22}$/.test(recipient.trim()) || recipient.trim() === citizen?.id) {
+      setTransferMessage("Introduce el ID de Discord válido de otro ciudadano."); return;
+    }
+    setTransferBusy(true); setTransferMessage("");
+    try {
+      await api("/api/citizen/pokemon/transfer", { method: "POST", body: JSON.stringify({ captureId: transfer.id, recipientId: recipient.trim() }) });
+      setTransfer(null); setRecipient(""); setRecipientVerified(null); setTransferMessage("¡Transferencia completada! Rotomi ya está actualizado.");
+      await refreshPc();
+    } catch (e) { setTransferMessage(e instanceof Error ? e.message : "No se pudo transferir el Pokémon."); }
+    finally { setTransferBusy(false); }
+  }
 
-    loadUserData();
-  }, [navigate]);
-
-  const handleLogout = () => {
-    window.location.href = "/auth/logout";
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col bg-background text-foreground">
-        <Header />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-center space-y-3">
-            <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin mx-auto" />
-            <p className="text-foreground/50 text-sm">Cargando tu carpeta…</p>
+  return <div className="cp-page">
+    <style>{`
+      .cp-page{--cp-purple:#79356d;--cp-ink:#2e2332;--cp-border:rgba(255,255,255,.76);--cp-mute:#756c7a;color:var(--cp-ink);background:radial-gradient(ellipse at 85% 1%,#e5d1f7 0%,transparent 32%),radial-gradient(ellipse at 0% 52%,#f3d5e8 0%,transparent 32%),linear-gradient(160deg,#f9f5ff,#f7edf5 70%,#eae0f1);min-height:100vh;overflow-x:clip}
+      .cp-main{width:min(1240px,100%);margin:auto;padding:35px clamp(16px,3vw,32px) 90px}
+      .cp-glass{position:relative;isolation:isolate;border:1px solid var(--cp-border);background:linear-gradient(137deg,rgba(255,255,255,.82) 0%,rgba(255,255,255,.46) 44%,rgba(255,255,255,.35) 100%);box-shadow:inset 0 1px rgba(255,255,255,.98),inset 1px 0 rgba(255,255,255,.46),0 16px 45px rgba(70,33,79,.085),0 2px 8px rgba(70,33,79,.06);backdrop-filter:blur(23px) saturate(155%);-webkit-backdrop-filter:blur(23px) saturate(155%);border-radius:27px}
+      .cp-glass::before{content:"";position:absolute;inset:0 0 auto 0;height:48%;pointer-events:none;z-index:-1;border-radius:inherit;background:linear-gradient(180deg,rgba(255,255,255,.28),transparent)}
+      .cp-hero{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(260px,.7fr);gap:28px;align-items:center;padding:clamp(25px,4vw,43px);overflow:hidden}
+      .cp-hero::after{content:"";pointer-events:none;position:absolute;right:-70px;top:-100px;height:370px;width:370px;border-radius:50%;background:linear-gradient(140deg,rgba(229,179,230,.6),rgba(255,255,255,.15));filter:blur(7px);z-index:-1}
+      .cp-eyebrow{text-transform:uppercase;letter-spacing:.21em;font-size:10px;font-weight:850;color:#8a5687}
+      .cp-title{font-size:clamp(30px,4.6vw,51px);font-weight:880;letter-spacing:-.057em;line-height:1.08;margin:10px 0;color:#35223c}
+      .cp-sub{color:var(--cp-mute);font-size:13px;line-height:1.7}
+      .cp-avatar{width:78px;height:78px;object-fit:cover;border:4px solid rgba(255,255,255,.9);box-shadow:0 8px 23px #6b376228;border-radius:24px;flex-shrink:0}
+      .cp-person{display:flex;gap:19px;align-items:center;margin-top:25px}
+      .cp-name{font-size:clamp(20px,2.8vw,29px);font-weight:850;letter-spacing:-.04em}
+      .cp-role-list{display:flex;flex-wrap:wrap;gap:7px;margin-top:18px}
+      .cp-role{display:inline-flex;gap:7px;align-items:center;max-width:100%;border:1px solid rgba(143,90,141,.2);border-radius:999px;background:rgba(255,255,255,.56);padding:8px 11px;font-size:12px;font-weight:740;box-shadow:inset 0 1px #fff;line-height:1.4}
+      .cp-role img{width:20px;height:20px;object-fit:contain}.cp-role-small{font-size:11px;padding:6px 9px}
+      .cp-hero-side{display:grid;gap:13px}.cp-id-chip{padding:18px 19px;background:rgba(54,26,60,.88);border:1px solid #ffffff37;border-radius:20px;color:#fff;box-shadow:0 10px 26px #36173a30;position:relative;overflow:hidden}
+      .cp-id-chip::after{content:"";position:absolute;width:200px;height:200px;border-radius:50%;background:#b679ac30;right:-80px;top:-115px;pointer-events:none}
+      .cp-chip-label{display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:.17em;color:#f2d3ef;text-transform:uppercase;font-weight:800}
+      .cp-chip-number{font-size:25px;letter-spacing:.09em;font-weight:850;font-variant-numeric:tabular-nums;margin-top:15px;word-break:break-word}
+      .cp-chip-bottom{display:flex;gap:10px;justify-content:space-between;align-items:center;margin-top:13px;font-size:11px;color:#e0c6e1}
+      .cp-icon-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;border-radius:11px;padding:9px;border:1px solid #ffffff54;background:#ffffff20;color:inherit;transition:background .2s}
+      .cp-icon-btn:hover{background:#ffffff45}.cp-icon-btn:focus-visible,.cp-btn:focus-visible,.cp-tab:focus-visible{outline:3px solid #b362a3;outline-offset:3px}
+      .cp-mini-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+      .cp-mini{padding:15px;border:1px solid #ffffffbb;background:#ffffff8f;border-radius:17px}.cp-mini small{display:block;color:#836d83;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.cp-mini strong{display:block;margin-top:6px;font-size:21px;color:#462448;font-weight:850}
+      .cp-tabs{display:flex;gap:9px;overflow-x:auto;scrollbar-width:thin;margin:22px 0;padding:5px}.cp-tab{white-space:nowrap;display:flex;align-items:center;gap:8px;border:1px solid rgba(112,59,107,.16);border-radius:15px;padding:12px 17px;background:#ffffff8a;color:#5b4a60;font-weight:780;font-size:12px;cursor:pointer;transition:.2s}
+      .cp-tab[data-active="true"]{background:#60305f;color:white;border-color:#60305f;box-shadow:0 7px 17px #51264a3b}
+      .cp-content{display:grid;gap:19px;min-width:0}.cp-panel{padding:clamp(20px,3vw,29px);min-width:0}.cp-panel-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:15px;margin-bottom:22px}.cp-panel h2{font-weight:850;letter-spacing:-.04em;font-size:clamp(22px,3vw,29px);margin:5px 0}
+      .cp-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.cp-three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+      .cp-fact{padding:14px;border:1px solid #d2bad033;background:#ffffff63;border-radius:16px;min-width:0}.cp-fact small{display:block;color:#7e7180;font-size:10px;font-weight:800;letter-spacing:.11em;text-transform:uppercase}.cp-fact strong{display:block;font-size:14px;margin-top:8px;word-wrap:break-word}
+      .cp-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:13px;padding:11px 15px;background:#633261;color:#fff;font-weight:800;font-size:12px;border:1px solid #633261;cursor:pointer;transition:transform .2s,opacity .2s}.cp-btn:hover{transform:translateY(-1px)}.cp-btn:disabled{opacity:.45;cursor:not-allowed;transform:none}.cp-btn-light{background:#ffffffa6;color:#643563;border:1px solid #be9ab7}.cp-btn-red{background:#9e3a54;border-color:#9e3a54}
+      .cp-notice{font-size:13px;line-height:1.65;border-radius:15px;padding:13px 16px;background:rgba(109,57,111,.075);border:1px solid rgba(109,57,111,.13);color:#644866}.cp-danger{background:#ffe8ee;color:#9a3450;border-color:#eeb2c4}
+      .cp-personal{display:grid;grid-template-columns:180px 1fr;gap:19px;align-items:center}.cp-singer{width:100%;aspect-ratio:1;object-fit:cover;border-radius:23px;border:2px solid #fff;box-shadow:0 14px 30px #643c7422;background:#dec8df}
+      .cp-input{width:100%;padding:12px 13px;font-size:13px;border-radius:13px;border:1px solid #d1b7cf;background:#ffffffc9;color:#2d2634;outline-offset:2px}.cp-input:focus{outline:2px solid #ac74ac}.cp-label{display:block;margin-bottom:7px;color:#69576b;font-size:11px;font-weight:800}.cp-form{display:grid;gap:15px}
+      .cp-pet-area{min-height:120px;position:relative;border-radius:18px;overflow:hidden;background:linear-gradient(180deg,#e2ddf9,#fcf7ff 66%,#d5eecf 67%);border:1px solid #c9b9d9;padding:14px}.cp-pet-walker{font-size:52px;position:absolute;bottom:19px;left:0;animation:cpWalk 11s ease-in-out infinite;filter:drop-shadow(0 8px 5px #251a2922);transform-origin:bottom center}.cp-pet-name{position:relative;z-index:2;font-size:11px;color:#4a405b;font-weight:850;text-transform:capitalize;background:#ffffffad;border-radius:30px;padding:6px 10px;display:inline-flex}
+      @keyframes cpWalk{0%{left:5%;transform:translateY(0) scaleX(1)}25%{transform:translateY(-9px) scaleX(1)}48%{left:78%;transform:translateY(0) scaleX(1)}52%{transform:scaleX(-1)}75%{transform:translateY(-6px) scaleX(-1)}98%{left:5%;transform:scaleX(-1)}100%{left:5%;transform:scaleX(1)}}
+      .cp-registry-top{display:flex;align-items:center;gap:20px;flex-wrap:wrap}.cp-registry-logo{width:78px;height:78px;object-fit:contain;border-radius:18px;background:#fff;padding:10px;border:1px solid #fff;box-shadow:0 5px 20px #42204d18}
+      .cp-person-row{display:flex;align-items:center;gap:13px;padding:14px;background:#ffffff7a;border:1px solid #fff;border-radius:17px}.cp-person-row img{width:44px;height:44px;object-fit:cover;border-radius:13px}.cp-person-row p{font-weight:750;font-size:13px}.cp-person-row small{display:block;font-size:11px;color:#786b7b;margin-top:3px}
+      .cp-certificate{display:flex;align-items:center;gap:14px;justify-content:space-between;background:#ffffff94;border:1px solid #fff;border-radius:17px;padding:15px}.cp-certificate strong{font-size:13px}.cp-certificate small{display:block;color:#827084;font-size:11px;margin-top:5px}
+      .cp-rotomi-head{display:flex;gap:17px;align-items:center}.cp-rotomi-logo{width:78px;height:78px;object-fit:contain;background:#ffffffb0;padding:6px;border-radius:20px;border:1px solid white}
+      .cp-filter-row{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:20px}.cp-search{flex:1;min-width:170px;max-width:420px}.cp-search-wrap{position:relative}.cp-search-wrap svg{position:absolute;left:12px;top:14px;color:#8a758b}.cp-search-wrap input{padding-left:38px}
+      .cp-poke-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}.cp-poke-card{position:relative;text-align:center;min-width:0;padding:13px;border:1px solid #ffffffeb;border-radius:19px;background:linear-gradient(140deg,#ffffffcb,#f6eafa91);box-shadow:0 7px 18px #52314b0c}
+      .cp-poke-card[data-shiny="true"]{background:linear-gradient(140deg,#fff8d0,#fffcef80);border-color:#e8c36c}.cp-pokemon-art{height:113px;max-width:100%;width:100%;object-fit:contain;filter:drop-shadow(0 9px 6px #563b501c)}.cp-pokemon-small{width:32px;height:32px}
+      .cp-poke-card h3{font-size:13px;font-weight:850;text-transform:capitalize;overflow-wrap:anywhere;margin-top:2px}.cp-poke-meta{font-size:11px;color:#817083;margin:7px 0 13px}.cp-shiny-label{font-size:10px;font-weight:800;color:#9e692c}
+      .cp-favorite-poke{display:inline-flex;align-items:center;gap:6px;background:#ffffffac;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:780;text-transform:capitalize;border:1px solid #fff}
+      .cp-pagination{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:20px}.cp-footer-action{margin-top:22px;display:flex;justify-content:center}.cp-overlay{position:fixed;z-index:10001;inset:0;background:#180e20bd;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)}.cp-dialog{background:#fff;max-width:460px;width:100%;padding:27px;border-radius:26px;box-shadow:0 30px 95px #0006;color:#302638}
+      @media(max-width:900px){.cp-hero{grid-template-columns:1fr}.cp-poke-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.cp-three{grid-template-columns:repeat(2,minmax(0,1fr))}}
+      @media(max-width:620px){.cp-main{padding-top:18px}.cp-hero{padding:20px}.cp-two,.cp-three{grid-template-columns:1fr}.cp-poke-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cp-personal{grid-template-columns:1fr}.cp-singer{max-width:185px}.cp-certificate{flex-wrap:wrap}.cp-chip-number{font-size:20px}.cp-person{align-items:flex-start}.cp-avatar{height:65px;width:65px}}
+      @media(prefers-reduced-motion:reduce){.cp-pet-walker{animation:none;left:40%}.cp-tab,.cp-btn{transition:none}}
+    `}</style>
+    <Header />
+    <main className="cp-main">
+      {loading ? <Panel title="Cargando tu carpeta..." eyebrow="Reino del Pan"><p className="cp-sub">Verificando la sesión y el Registro Civil.</p></Panel>
+      : error ? <Panel title="No se pudo abrir tu carpeta" eyebrow="Acceso"><p className="cp-notice cp-danger">{error}</p><a className="cp-btn" style={{ marginTop: 15 }} href="/auth/discord">Entrar con Discord</a></Panel>
+      : !citizen ? null
+      : !citizen.inGuild ? <Panel title="Únete al Reino del Pan" eyebrow="Acceso ciudadano"><p className="cp-sub">Para acceder necesitas pertenecer al servidor oficial de Discord.</p><a className="cp-btn" style={{ marginTop: 17 }} href="https://discord.gg/reino-del-pan-1381359904731693056" target="_blank" rel="noreferrer">Unirme al Reino</a></Panel>
+      : !citizen.dpi ? <Panel title="Todavía no tienes DPI" eyebrow="Registro de identidad"><p className="cp-sub">Crea tu documento, verifícalo en Discord y regresa a esta carpeta.</p><Link className="cp-btn" style={{ marginTop: 16 }} href="/dpi/create">Crear mi DPI</Link></Panel>
+      : <>
+        <motion.section className="cp-glass cp-hero" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+          <div>
+            <p className="cp-eyebrow"><ShieldCheck size={14} style={{ display: "inline", marginRight: 5 }} /> Portal ciudadano oficial · Reino del Pan</p>
+            <h1 className="cp-title">Tu rincón en el Reino <span style={{ color: "#9c5f9a" }}>🍞</span></h1>
+            <p className="cp-sub">Identidad, familia, Pokémon y logros. Todo lo tuyo, en un mismo lugar.</p>
+            <div className="cp-person">
+              <img className="cp-avatar" src={safeImageUrl(citizen.avatar) || UNKNOWN_AVATAR} alt="Avatar de Discord" />
+              <div style={{ minWidth: 0 }}><p className="cp-eyebrow">Ciudadano registrado {citizen.verificado ? "· ✓ Verificado" : ""}</p><p className="cp-name">{citizen.dpi.nombre} {citizen.dpi.apellidos}</p><p className="cp-sub">@{citizen.username}</p></div>
+            </div>
+            <div className="cp-role-list">
+              {featuredRoles.length ? featuredRoles.map(r => <RoleBadge key={r.discord_role_id} role={r} compact />) : <span className="cp-role cp-role-small">🪪 Ciudadano del Reino</span>}
+            </div>
           </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (!user) return null;
-
-  if (!user.inGuild) {
-    return (
-      <div className="min-h-screen flex flex-col bg-background text-foreground">
-        <Header />
-        <main className="flex-1 flex items-center justify-center py-16 px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-w-md w-full text-center space-y-6"
-          >
-            <div className="text-5xl">🍞</div>
-            <h1 className="text-2xl font-bold">Necesitas unirte al Reino</h1>
-            <p className="text-foreground/60 text-sm leading-relaxed">
-              Para acceder a tu carpeta de ciudadano necesitas formar parte del servidor oficial del Reino del Pan y tener un DPI registrado.
-            </p>
-            <div className="space-y-3">
-              <a
-                href="https://discord.gg/reino-del-pan-1381359904731693056"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-sm"
-                style={{ background: "#5865F2", color: "#fff" }}
-              >
-                Unirme al servidor
-              </a>
-              <button
-                onClick={handleLogout}
-                className="w-full py-3 rounded-xl border border-border text-foreground/60 text-sm hover:border-accent/50 transition"
-              >
-                Cerrar sesión
-              </button>
+          <div className="cp-hero-side">
+            <div className="cp-id-chip"><p className="cp-chip-label"><FileBadge2 size={15} /> Documento de identidad paniano</p>
+              <p className="cp-chip-number">{dpiVisible ? citizen.dpi.dpi_number : maskDpi(citizen.dpi.dpi_number)}</p>
+              <div className="cp-chip-bottom"><span>Región: {citizen.dpi.region || "—"}</span><div style={{ display: "flex", gap: 7 }}>
+                <button className="cp-icon-btn" aria-label={dpiVisible ? "Ocultar DPI" : "Mostrar DPI"} title="Mostrar u ocultar DPI" onClick={() => setDpiVisible(v => !v)}>{dpiVisible ? <EyeOff size={16} /> : <Eye size={16} />}</button>
+                <button className="cp-icon-btn" aria-label="Copiar número DPI" title="Copiar DPI" onClick={() => { void navigator.clipboard?.writeText(citizen.dpi!.dpi_number).then(() => { setCopied(true); window.setTimeout(() => setCopied(false), 1800); }).catch(() => {}); }}>{copied ? <Check size={16} /> : <Copy size={16} />}</button>
+              </div></div>
             </div>
-          </motion.div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
+            <div className="cp-mini-stats"><div className="cp-mini"><small>Nivel</small><strong>{fmtNum(citizen.level)}</strong></div><div className="cp-mini"><small>Puntos base</small><strong>{fmtNum(pbValue(citizen.puntos_elo))}</strong></div></div>
+          </div>
+        </motion.section>
 
-  if (!user.dpi) {
-    return (
-      <div className="min-h-screen flex flex-col bg-background text-foreground">
-        <Header />
-        <main className="flex-1 flex items-center justify-center py-16 px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-w-md w-full text-center space-y-6"
-          >
-            <div className="text-5xl">📋</div>
-            <h1 className="text-2xl font-bold">Sin DPI registrado</h1>
-            <p className="text-foreground/60 text-sm leading-relaxed">
-              Hola <strong className="text-foreground">{user.username}</strong>, para acceder a tu carpeta necesitas crear tu DPI y verificarte en Discord.
-            </p>
-            <div className="space-y-3">
-              <Link
-                href="/dpi/create"
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-accent bg-accent text-background font-semibold text-sm hover:opacity-90 transition"
-              >
-                Crear mi DPI
-              </Link>
-              <a
-                href="https://discord.gg/reino-del-pan-1381359904731693056"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-border text-foreground/70 text-sm hover:border-[#5865F2]/50 hover:text-[#5865F2] transition"
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03z" />
-                </svg>
-                Verificarme en Discord
-              </a>
-              <button
-                onClick={handleLogout}
-                className="w-full py-3 rounded-xl border border-border text-foreground/60 text-sm hover:border-red-500/50 hover:text-red-400 transition"
-              >
-                Cerrar sesión
-              </button>
+        <nav className="cp-tabs" aria-label="Secciones de carpeta ciudadana">
+          {tabList.map(t => <button key={t.key} className="cp-tab" data-active={tab === t.key} aria-current={tab === t.key ? "page" : undefined} onClick={() => { setTab(t.key); setTransferMessage(""); }}><t.icon size={16} />{t.label}</button>)}
+        </nav>
+        <div className="cp-content">
+          {tab === "identidad" && <>
+            <div className="cp-two">
+              <Panel title="Mi DPI" eyebrow="Identificación ciudadana" action={<BadgeCheck size={25} color="#9d6290" />}>
+                <div className="cp-two"><div className="cp-fact"><small>Nombre</small><strong>{citizen.dpi.nombre} {citizen.dpi.apellidos}</strong></div><div className="cp-fact"><small>Región</small><strong>{citizen.dpi.region || "—"}</strong></div><div className="cp-fact"><small>Fecha de nacimiento</small><strong>{fmtDate(citizen.dpi.fecha_nac)}</strong></div><div className="cp-fact"><small>Género</small><strong>{citizen.dpi.genero || "—"}</strong></div><div className="cp-fact"><small>Emisión</small><strong>{fmtDate(citizen.dpi.issued_at)}</strong></div><div className="cp-fact"><small>Validez</small><strong>{fmtDate(citizen.dpi.valid_until)}</strong></div></div>
+                <p className="cp-sub" style={{ marginTop: 15 }}><LockKeyhole size={13} style={{ display: "inline" }} /> El número de DPI está oculto inicialmente para proteger tu privacidad.</p>
+              </Panel>
+              <Panel title="Economía y trayectoria" eyebrow="Resumen del ciudadano" action={<Wallet size={25} color="#9d6290" />}>
+                <div className="cp-two"><div className="cp-fact"><small>Banco Paniano</small><strong>{fmtNum(citizen.economy?.bank)} Ᵽ</strong></div><div className="cp-fact"><small>Efectivo</small><strong>{fmtNum(citizen.economy?.cash)} Ᵽ</strong></div><div className="cp-fact"><small>Experiencia</small><strong>{fmtNum(citizen.total_xp ?? citizen.xp)} XP</strong></div><div className="cp-fact"><small>Roles</small><strong>{roles.length} asignados</strong></div></div>
+                <div style={{ marginTop: 16, display: "flex", gap: 9, flexWrap: "wrap" }}><img src="/LaboralBank/LPB.png" alt="Banco Paniano" style={{ width: 35, height: 35, objectFit: "contain" }} onError={e => { e.currentTarget.style.display = "none"; }} />{profile?.pokemon_favorito && <FavoritePokemon name={profile.pokemon_favorito} />}</div>
+              </Panel>
             </div>
-          </motion.div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  const dpi = user.dpi;
-  const nombreCompleto = `${dpi.nombre} ${dpi.apellidos}`.toLowerCase()
-    .replace(/(^\w{1})|(\s+\w{1})/g, (letter) => letter.toUpperCase());
-
-  const rolesPorCategoria: Record<string, Rol[]> = {};
-  for (const rol of user.roles) {
-    const cat = rol.categoria || "otros";
-    if (!rolesPorCategoria[cat]) rolesPorCategoria[cat] = [];
-    rolesPorCategoria[cat].push(rol);
-  }
-  const otros = rolesPorCategoria["otros"] || [];
-
-  return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <Header />
-
-      <main className="flex-1 py-12 px-4 md:px-0">
-        <div className="container mx-auto max-w-2xl space-y-8">
-
-          {/* Ficha Perfil Principal */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 p-6 rounded-2xl border border-border bg-card"
-          >
-            {/* LADO IZQUIERDO: Avatar e Información básica */}
-            <div className="flex items-center gap-5">
-              <img
-                src={user.avatar}
-                alt={user.username}
-                className="w-16 h-16 rounded-full border-2 border-accent/30 object-cover"
-              />
-              <div>
-                <p className="text-xs uppercase tracking-[0.4em] text-accent">Ciudadano Registrado</p>
-                <h1 className="mt-1 text-2xl font-semibold display-font text-foreground">{nombreCompleto}</h1>
-                <p className="text-xs text-foreground/40 font-mono mt-1.5">@{user.username}</p>
-              </div>
-            </div>
-
-            {/* LADO DERECHO: Pokémon Favorito + Nivel del Ciudadano */}
-            <div className="flex items-center gap-3">
-              {user.pokemon_favorito && (
-                <PokemonAvatar pokemonName={user.pokemon_favorito} />
-              )}
-
-              <div className="flex flex-col items-center justify-center bg-[var(--accent)]/5 border border-[var(--border)] rounded-xl px-5 py-3.5 min-w-[120px] text-center sm:text-right sm:items-end gap-1">
-                <span className="text-[10px] uppercase tracking-[0.25em] text-[var(--muted-foreground)] font-medium font-[var(--body-font)]">
-                  Nivel
-                </span>
-                <span className="text-4xl font-normal text-[var(--primary)] leading-none font-[var(--display-font)]">
-                  {user.level ?? 0}
-                </span>
-
-                {user.xp !== undefined && (
-                  <div className="w-full mt-1 space-y-1">
-                    <div className="w-full h-1 bg-[var(--border)] rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[var(--primary)] transition-all duration-500"
-                        style={{ width: `${Math.min(((user.xp ?? 0) % 1000) / 10, 100)}%` }}
-                      />
-                    </div>
-                    <p className="text-[8px] font-mono tracking-widest text-[var(--muted-foreground)] opacity-70">
-                      {user.xp} XP
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </motion.div>
-
-          {/* MÓDULO: Finanzas y Puntos Base (PB) */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
-          >
-            {/* Laboral Panian Bank */}
-            <div className="p-5 rounded-2xl border border-border bg-card flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <img
-                  src="/LaboralBank/LPB.png"
-                  alt="Laboral Panian Bank"
-                  className="w-10 h-10 object-contain"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                  }}
-                />
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-foreground/50">
-                    Laboral Panian Bank
-                  </p>
-                  <p className="text-lg font-bold font-mono text-emerald-400">
-                    {user.economy?.bank ?? 0} <span className="font-sans">Ᵽ</span>
-                  </p>
+            <Panel title="Tu pequeño universo" eyebrow="Personalización de perfil" action={<button className="cp-btn cp-btn-light" onClick={() => { setEditing(e => !e); setSaveMessage(""); }}><ImagePlus size={15} />{editing ? "Cerrar editor" : "Personalizar"}</button>}>
+              {editing ? <div className="cp-form">
+                <label><span className="cp-label">Cantante favorito</span><input className="cp-input" maxLength={90} value={form.cantante_favorito} onChange={e => setForm({ ...form, cantante_favorito: e.target.value })} placeholder="Ej. Aitana" /></label>
+                <label><span className="cp-label">Imagen del cantante (URL HTTPS de una foto)</span><input className="cp-input" type="url" maxLength={500} value={form.cantante_imagen} onChange={e => setForm({ ...form, cantante_imagen: e.target.value })} placeholder="https://.../foto.jpg" /></label>
+                {safeImageUrl(form.cantante_imagen) && <img className="cp-singer" src={form.cantante_imagen} alt="Previsualización de cantante" onError={e => { e.currentTarget.style.opacity = "0.3"; }} />}
+                <label><span className="cp-label">Animal favorito (se animará en el jardín)</span><input className="cp-input" list="cp-pets" maxLength={60} value={form.animal_favorito} onChange={e => setForm({ ...form, animal_favorito: e.target.value })} placeholder="Ej. Gato, perro, delfín..." /><datalist id="cp-pets">{PETS.map(p => <option key={p.label} value={p.words[0]} />)}</datalist></label>
+                <div><button className="cp-btn" onClick={() => void saveProfile()} disabled={saving}>{saving ? "Guardando..." : "Guardar cambios"}</button></div>
+              </div> : <div className="cp-two" style={{ alignItems: "center" }}>
+                <div className="cp-personal">
+                  {safeImageUrl(profile?.cantante_imagen) ? <img src={safeImageUrl(profile?.cantante_imagen)!} className="cp-singer" alt={`Imagen de ${profile?.cantante_favorito || "cantante"}`} onError={e => { e.currentTarget.style.opacity = "0.35"; }} /> : <div className="cp-singer" style={{ display: "grid", placeItems: "center", fontSize: 55 }}>🎤</div>}
+                  <div><p className="cp-eyebrow">La banda sonora de tu vida</p><p style={{ fontSize: 21, fontWeight: 850, marginTop: 8 }}>{profile?.cantante_favorito || "Sin cantante favorito"}</p><p className="cp-sub">Pon una URL de imagen para personalizar tu perfil.</p></div>
                 </div>
-              </div>
-              <div className="text-right">
-                <p className="text-[9px] uppercase text-foreground/40 font-mono">Efectivo</p>
-                <p className="text-xs font-mono text-foreground/70">
-                  {user.economy?.cash ?? 0} Ᵽ
-                </p>
-              </div>
-            </div>
+                <div className="cp-pet-area"><span className="cp-pet-name">{profile?.animal_favorito ? `🐾 ${profile.animal_favorito}` : "Elige a tu mascota favorita"}</span><span className="cp-pet-walker" role="img" aria-label={`Animal favorito: ${profile?.animal_favorito || "sin elegir"}`}>{petEmoji(profile?.animal_favorito || "")}</span></div>
+              </div>}
+              {saveMessage && <p role="status" className={`cp-notice ${saveMessage.includes("actualizado") ? "" : "cp-danger"}`} style={{ marginTop: 13 }}>{saveMessage}</p>}
+            </Panel>
+            <Panel title="Tus próximos destinos" eyebrow="Acceso rápido"><div className="cp-three">
+              <button className="cp-btn cp-btn-light" onClick={() => setTab("familia")}><Users size={16} />Mi núcleo familiar</button>
+              <button className="cp-btn cp-btn-light" onClick={() => setTab("rotomi")}><Zap size={16} />Mi PC Pokémon</button>
+              <button className="cp-btn cp-btn-light" onClick={() => setTab("roles")}><Star size={16} />Mis distintivos</button>
+            </div></Panel>
+          </>}
 
-            {/* Puntos Base (PB) */}
-            <div className="p-5 rounded-2xl border border-border bg-card flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 font-bold text-lg">
-                PB
-              </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-foreground/50">
-                  Puntos Base Ciudadanía
-                </p>
-                <p className="text-lg font-bold font-mono text-amber-400">
-                  {parsePuntosElo(user.puntos_elo)} <span className="text-xs font-normal text-foreground/60">PB</span>
-                </p>
-              </div>
-            </div>
-          </motion.div>
+          {tab === "familia" && <>
+            <Panel title="Registro Civil del Reino" eyebrow="Patrocinado por el Registro Civil" action={<button className="cp-btn cp-btn-light" onClick={() => void refreshFamily()} disabled={familyLoading}><RefreshCw size={15} />Actualizar</button>}>
+              <div className="cp-registry-top"><img src="/reg.png" className="cp-registry-logo" alt="Emblema del Registro Civil" />
+                <div><p style={{ fontSize: 17, fontWeight: 850 }}>Tu núcleo familiar oficial</p><p className="cp-sub">Matrimonios, hijos inscritos y actas emitidas desde el mismo registro que utiliza el bot.</p></div></div>
+              {familyError && <p className="cp-notice cp-danger" role="alert" style={{ marginTop: 17 }}>{familyError}</p>}
+              {familyLoading && <p className="cp-sub" style={{ marginTop: 15 }}>Consultando asientos del Registro...</p>}
+            </Panel>
+            <Panel title="Mi familia" eyebrow="Vínculos familiares">
+              {(family.matrimonio || citizen.matrimonio) && <div className="cp-person-row" style={{ marginBottom: 11 }}><span style={{ fontSize: 29 }}>💍</span><img src={safeImageUrl((family.matrimonio || citizen.matrimonio)?.conyuge_avatar) || UNKNOWN_AVATAR} alt="Cónyuge" /><div><p>{(family.matrimonio || citizen.matrimonio)?.conyuge_username}</p><small>Mi pareja · Matrimonio desde {fmtDate((family.matrimonio || citizen.matrimonio)?.fecha_boda)}</small></div></div>}
+              <div className="cp-two">{(family.hijos.length ? family.hijos : citizen.hijos || []).map((h, i) => <div className="cp-person-row" key={`${h.hijo_id}-${i}`}><span style={{ fontSize: 25 }}>{h.tipo === "creado" ? "🍼" : "🧒"}</span><img src={safeImageUrl(h.hijo_avatar) || UNKNOWN_AVATAR} alt="" /><div><p>{h.hijo_username}</p><small>{h.tipo === "creado" ? "Hijo ficticio inscrito" : "Hijo adoptivo"}</small></div></div>)}</div>
+              {!family.matrimonio && !citizen.matrimonio && !family.hijos.length && !(citizen.hijos || []).length && !familyLoading && <p className="cp-notice">Todavía no constan vínculos familiares. Puedes iniciar trámites en el bot del Registro Civil de Discord.</p>}
+            </Panel>
+            <Panel title="Mis certificados" eyebrow="Documentos registrales" action={<ScrollText size={25} color="#9d6290" />}>
+              {family.actas.length ? <div style={{ display: "grid", gap: 11 }}>{family.actas.map(acta => <div className="cp-certificate" key={acta.numero}>
+                <div style={{ display: "flex", gap: 12, alignItems: "center" }}><FileBadge2 color="#8b6084" size={23} /><div><strong style={{ textTransform: "capitalize" }}>Certificado de {acta.tipo}</strong><small>N.º {acta.numero} · {fmtDate(acta.fecha || acta.created_at)}</small></div></div>
+                <button className="cp-btn" disabled={certBusy !== null} onClick={() => void downloadCertificate(acta)}><Download size={15} />{certBusy === acta.numero ? "Generando" : "PDF"}</button>
+              </div>)}</div> : <p className="cp-notice">{familyLoading ? "Buscando certificados..." : familyError ? "No se pudieron comprobar las actas." : "No hay actas emitidas a tu nombre en el registro consultado."}</p>}
+              <p className="cp-sub" style={{ marginTop: 12 }}>Los certificados solo se descargan para la cuenta autenticada y se generan con el mismo módulo Python del bot cuando está configurado en el servidor.</p>
+            </Panel>
+          </>}
 
-          {/* MÓDULO: Relaciones Familiares (Matrimonio e Hijos) */}
-          {(user.matrimonio || (user.hijos && user.hijos.length > 0)) && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-6 rounded-2xl border border-border bg-card space-y-4"
-            >
-              <p className="text-xs uppercase tracking-[0.3em] text-accent font-medium border-b border-border pb-2">
-                Núcleo Familiar
-              </p>
+          {tab === "rotomi" && <>
+            <Panel title="Rotomi · Mi PC Pokémon" eyebrow="Sistema de almacenamiento oficial" action={<button className="cp-btn cp-btn-light" onClick={() => void refreshPc()} disabled={pcLoading}><RefreshCw size={15} />Actualizar</button>}>
+              <div className="cp-rotomi-head"><img src="/rotomi.png" alt="Rotomi" className="cp-rotomi-logo" /><div><p className="cp-sub">Tus capturas reales, sincronizadas con la tabla <strong>capturas</strong> del bot.</p><div className="cp-role-list"><span className="cp-role cp-role-small">📦 {captures.length} Pokémon</span><span className="cp-role cp-role-small">✨ {captures.filter(c => c.is_shiny).length} shiny</span><span className="cp-role cp-role-small">🧬 {new Set(captures.map(c => c.pokemon_id)).size} especies</span></div></div></div>
+              <p className="cp-sub" style={{ marginTop: 12 }}>Arte de los Pokémon mediante PokéAPI. Se muestran hasta 300 capturas recientes por consulta.</p>
+            </Panel>
+            <Panel title="Mi colección" eyebrow="Cajas Rotomi" action={<Gem color="#ad8a40" size={25} />}>
+              <div className="cp-filter-row"><div className="cp-search cp-search-wrap"><Search size={16} /><input className="cp-input" placeholder="Buscar Pokémon por nombre o número" value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} /></div>
+                <button className={`cp-btn ${onlyShiny ? "" : "cp-btn-light"}`} onClick={() => { setOnlyShiny(v => !v); setPage(0); }}><Filter size={14} />{onlyShiny ? "✨ Solo shiny" : "Todos / shiny"}</button></div>
+              {pcError && <p className="cp-notice cp-danger" role="alert">{pcError}</p>}
+              {pcLoading ? <p className="cp-notice">Rotomi está sincronizando tus cajas...</p> : <>
+                <div className="cp-poke-grid">{visible.map(c => <article key={c.id} className="cp-poke-card" data-shiny={c.is_shiny}>
+                  {c.is_shiny && <span className="cp-shiny-label">✨ SHINY</span>}
+                  <PokemonArt id={c.pokemon_id} shiny={c.is_shiny} label={c.pokemon_name} />
+                  <h3>{c.pokemon_name}</h3><p className="cp-poke-meta">#{c.pokemon_id} · Nv. {c.level} · {c.ball_used}</p>
+                  <button className="cp-btn cp-btn-light" style={{ width: "100%", padding: "9px 7px" }} onClick={() => { setTransfer(c); setRecipient(""); setRecipientVerified(null); setTransferMessage(""); }}><ArrowLeftRight size={13} /> Transferir</button>
+                </article>)}</div>
+                {!visible.length && <p className="cp-notice">{captures.length ? "No hay Pokémon que coincidan con los filtros." : "Tu PC está vacío. ¡Captura Pokémon con el bot para llenar las cajas!"}</p>}
+                {totalPages > 1 && <div className="cp-pagination"><button className="cp-btn cp-btn-light" disabled={page === 0} onClick={() => setPage(p => Math.max(0, p - 1))} aria-label="Página anterior"><ChevronLeft size={18} /></button><span className="cp-sub">Caja {page + 1} de {totalPages}</span><button className="cp-btn cp-btn-light" disabled={page >= totalPages - 1} onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} aria-label="Página siguiente"><ChevronRight size={18} /></button></div>}
+              </>}
+              {transferMessage && !transfer && <p className="cp-notice" role="status" style={{ marginTop: 13 }}>{transferMessage}</p>}
+            </Panel>
+          </>}
 
-              {user.matrimonio && (
-                <div className="flex items-center gap-4 bg-background/30 p-3 rounded-xl border border-border/60">
-                  <span className="text-2xl">💍</span>
-                  <div className="flex items-center gap-3 flex-1">
-                    <img
-                      src={user.matrimonio.conyuge_avatar}
-                      alt={user.matrimonio.conyuge_username}
-                      className="w-9 h-9 rounded-full object-cover border border-accent/20"
-                    />
-                    <div>
-                      <p className="text-xs text-foreground/50">Casado/a con:</p>
-                      <p className="text-sm font-medium text-foreground">@{user.matrimonio.conyuge_username}</p>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-mono text-foreground/30 hidden sm:block">
-                    Desde: {new Date(user.matrimonio.fecha_boda).toLocaleDateString()}
-                  </span>
-                </div>
-              )}
-
-              {user.hijos && user.hijos.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs text-foreground/50 font-medium pl-1">Hijos registrados:</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {user.hijos.map((hijo) => (
-                      <div key={hijo.hijo_id} className="flex items-center gap-3 bg-background/20 p-2.5 rounded-xl border border-border/40">
-                        <span className="text-xl">{hijo.tipo === "adoptivo" ? "🧒" : "🍼"}</span>
-                        <img
-                          src={hijo.hijo_avatar}
-                          alt={hijo.hijo_username}
-                          className="w-8 h-8 rounded-full object-cover"
-                        />
-                        <div>
-                          <p className="text-xs font-medium text-foreground">@{hijo.hijo_username}</p>
-                          <p className="text-[10px] text-accent/70 capitalize">{hijo.tipo}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          )}
-
-          {/* Secciones de Roles del Servidor */}
-          {user.roles.length > 0 ? (
-            <>
-              {CATEGORIAS.map(({ key, titulo }) => (
-                <RolSeccion key={key} titulo={titulo} roles={rolesPorCategoria[key] || []} />
-              ))}
-              <RolSeccion titulo="Otros roles" roles={otros} />
-            </>
-          ) : (
-            <div className="rounded-2xl border border-border bg-card overflow-hidden">
-              <div className="px-6 py-4 border-b border-border">
-                <p className="text-xs uppercase tracking-[0.3em] text-accent font-medium">Mi profesión</p>
-              </div>
-              <div className="px-6 py-5 text-center">
-                <p className="text-foreground/40 text-sm">Aún no tienes una profesión asignada.</p>
-              </div>
-            </div>
-          )}
-
-          {/* Cierre de sesión */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-center pt-4">
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-foreground/30 hover:text-red-400 transition-colors duration-200 group"
-            >
-              <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              Cerrar sesión
-            </button>
-          </motion.div>
+          {tab === "roles" && <Panel title="Mis distintivos y roles" eyebrow="Identidad dentro del Reino" action={<Award color="#9d6290" size={26} />}>
+            <p className="cp-sub" style={{ marginBottom: 18 }}>Los emblemas especiales y de equipos son los mismos que aparecen junto a tu nombre de ciudadano registrado.</p>
+            {roles.length ? Object.entries(groupedRoles).sort(([a], [b]) => (a === "equipos" ? -1 : b === "equipos" ? 1 : a === "especiales" ? -1 : b === "especiales" ? 1 : 0)).map(([category, group]) => <div key={category} style={{ marginBottom: 23 }}><p className="cp-eyebrow" style={{ marginBottom: 10 }}>{CATEGORY_TITLES[category] || category}</p><div className="cp-role-list">{group.map(r => <RoleBadge key={r.discord_role_id} role={r} />)}</div></div>) : <p className="cp-notice">Todavía no tienes roles registrados.</p>}
+          </Panel>}
+          <div className="cp-footer-action"><a href="/auth/logout" className="cp-btn cp-btn-light"><LogOut size={15} /> Cerrar sesión de Discord</a></div>
         </div>
-      </main>
-
-      <Footer />
-    </div>
-  );
+      </>}
+    </main>
+    <Footer />
+    {transfer && <div className="cp-overlay" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget && !transferBusy) setTransfer(null); }}>
+      <section className="cp-dialog" role="dialog" aria-modal="true" aria-labelledby="cp-transfer-title">
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}><div><p className="cp-eyebrow">Rotomi · Transferencia segura</p><h2 id="cp-transfer-title" style={{ fontSize: 24, fontWeight: 850, marginTop: 5 }}>Enviar un Pokémon</h2></div><button className="cp-btn cp-btn-light" style={{ padding: 9 }} onClick={() => setTransfer(null)} disabled={transferBusy} aria-label="Cerrar"><X size={18} /></button></div>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, margin: "18px 0" }}><PokemonArt id={transfer.pokemon_id} shiny={transfer.is_shiny} label={transfer.pokemon_name} size="small" /><div><strong style={{ textTransform: "capitalize" }}>{transfer.pokemon_name} {transfer.is_shiny ? "✨" : ""}</strong><p className="cp-sub">Nivel {transfer.level} · Captura #{transfer.id}</p></div></div>
+        <label><span className="cp-label">ID de Discord del destinatario (debe tener DPI verificado)</span><input className="cp-input" inputMode="numeric" placeholder="123456789012345678" value={recipient} maxLength={22} onChange={e => { setRecipient(e.target.value.replace(/\D/g, "")); setRecipientVerified(null); setTransferMessage(""); }} /></label>
+        <button className="cp-btn cp-btn-light" type="button" style={{ marginTop: 12, width: "100%" }} onClick={() => void verifyRecipient()}
+          disabled={recipientChecking || !/^[0-9]{15,22}$/.test(recipient) || recipient === citizen?.id}>
+          <ShieldCheck size={16} />{recipientChecking ? "Verificando destinatario..." : "Verificar destinatario"}
+        </button>
+        {recipientVerified && <div className="cp-person-row" style={{ marginTop: 12 }}>
+          <img src={safeImageUrl(recipientVerified.avatar) || UNKNOWN_AVATAR} alt="" />
+          <div><p>{recipientVerified.username}</p><small>DPI verificado · Confirma que es la persona correcta</small></div>
+        </div>}
+        <p className="cp-notice" style={{ marginTop: 13 }}>La transferencia es definitiva. El Pokémon desaparecerá de tu PC y pasará al del destinatario; no se duplicará.</p>
+        {transferMessage && <p role="alert" className="cp-notice cp-danger" style={{ marginTop: 12 }}>{transferMessage}</p>}
+        <button className="cp-btn" style={{ width: "100%", marginTop: 16 }} onClick={() => void transferPokemon()} disabled={transferBusy || !recipientVerified || recipientVerified.id !== recipient || recipient === citizen?.id}><ArrowLeftRight size={16} />{transferBusy ? "Procesando..." : "Confirmar transferencia"}</button>
+      </section>
+    </div>}
+  </div>;
 }

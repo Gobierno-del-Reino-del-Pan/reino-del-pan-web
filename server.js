@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { createCitizenRouter } from "./citizenRoutes.js";
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -160,6 +161,19 @@ app.set('trust proxy', 1);
 
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
+
+// ── CARPETA CIUDADANA · NUEVAS RUTAS (sin tocar las ya existentes) ──
+// Montar ANTES del primer app.get('*'): ese fallback ya existe en el original.
+app.use("/api/citizen", (req, res, next) => {
+  // No permitir operaciones sensibles con el JWT secreto de emergencia.
+  if (!process.env.JWT_SECRET) return res.status(503).json({ error: "Falta JWT_SECRET seguro en el servidor." });
+  next();
+}, requireAuth, createCitizenRouter({
+  supabaseAdmin: supabase,
+  getViewerId: req => req.user?.id,
+  guildId: GUILD_ID,
+}));
+// ── FIN RUTAS AÑADIDAS ──
 
 // Solo servir estáticos si NO estamos en Vercel (por ejemplo, en desarrollo local con node server.js)
 if (!process.env.VERCEL) {

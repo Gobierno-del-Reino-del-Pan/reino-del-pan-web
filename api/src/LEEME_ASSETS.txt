@@ -1,0 +1,1 @@
+Copia aquí los logos public/gob.png y public/reg.png antes de desplegar en Vercel.
