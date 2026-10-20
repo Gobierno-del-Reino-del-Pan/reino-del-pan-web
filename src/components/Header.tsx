@@ -17,7 +17,7 @@ const MAIN_LINKS = [
 
 const COMMUNITY_LINKS = [
   { href: "/Politics", label: "Grupos Políticos" },
-  { href: "https://www.mafiadepan.com/", label: "La Mafia", external: true },
+  { href: "https://mafiadepan.vercel.app/", label: "La Mafia", external: true },
   { href: "/pkmn", label: "PKMN" },
   { href: "/Pandora", label: "Conf. Episcopal de Pandora" },
   { href: "/turismo", label: "Turismo" },
@@ -247,7 +247,7 @@ export default function Header() {
           </nav>
 
           <nav className="ap-quick-nav" aria-label="Accesos rápidos">
-            {MAIN_LINKS.slice(0,3).map(item => <Link key={item.href} href={item.href} className="ap-nav-link" data-active={active(item.href)} aria-current={active(item.href) ? "page" : undefined}>{item.label}</Link>)}
+            {MAIN_LINKS.slice(0, 3).map(item => <Link key={item.href} href={item.href} className="ap-nav-link" data-active={active(item.href)} aria-current={active(item.href) ? "page" : undefined}>{item.label}</Link>)}
           </nav>
 
           <div className="ap-actions">
@@ -259,18 +259,18 @@ export default function Header() {
                 {drop === "account" && <div id="ap-account-menu" className="ap-glass ap-popover"><div className="ap-pop-title"><span className="ap-pop-meta">{isReporter ? "🎥 Reportero TVP" : "Ciudadano"}</span><span className="ap-pop-name">{user.username}</span></div>{accountLinks}</div>}
               </div>
             ) : (
-              <a href="/auth/discord" className="ap-cta" aria-label="Iniciar sesión con Discord para acceder a Mi Carpeta"><Icon name="login" size={16}/><span className="ap-cta-label">Mi Carpeta</span></a>
+              <a href="/auth/discord" className="ap-cta" aria-label="Iniciar sesión con Discord para acceder a Mi Carpeta"><Icon name="login" size={16} /><span className="ap-cta-label">Mi Carpeta</span></a>
             )}
-            <button className="ap-icon-button ap-menu-button" type="button" aria-label={drawerOpen ? "Cerrar menú" : "Abrir menú"} aria-controls="ap-mobile-drawer" aria-expanded={drawerOpen} onClick={() => {setDrawerOpen(v => !v);setDrop(null);}}><Icon name={drawerOpen ? "close" : "menu"} size={21}/></button>
+            <button className="ap-icon-button ap-menu-button" type="button" aria-label={drawerOpen ? "Cerrar menú" : "Abrir menú"} aria-controls="ap-mobile-drawer" aria-expanded={drawerOpen} onClick={() => { setDrawerOpen(v => !v); setDrop(null); }}><Icon name={drawerOpen ? "close" : "menu"} size={21} /></button>
           </div>
         </div>
 
         {drawerOpen && <div id="ap-mobile-drawer" className="ap-glass ap-drawer">
-          {user && <Link href="/carpeta" className="ap-drawer-quick" onClick={() => setDrawerOpen(false)}><span>Mi Carpeta · {user.username}</span><Icon name="arrow" size={16}/></Link>}
+          {user && <Link href="/carpeta" className="ap-drawer-quick" onClick={() => setDrawerOpen(false)}><span>Mi Carpeta · {user.username}</span><Icon name="arrow" size={16} /></Link>}
           <nav aria-label="Navegación adaptada">
-            <section className="ap-drawer-section"><span className="ap-drawer-heading">Navegación</span><div className="ap-drawer-grid">{MAIN_LINKS.map(item => renderLink(item,"ap-drawer-link"))}</div></section>
-            <section className="ap-drawer-section"><span className="ap-drawer-heading">Comunidad</span><div className="ap-drawer-grid">{COMMUNITY_LINKS.map(item => renderLink(item,"ap-drawer-link"))}</div></section>
-            <section className="ap-drawer-section"><span className="ap-drawer-heading">Información y servicios</span><div className="ap-drawer-grid">{INFO_LINKS.map(item => renderLink(item,"ap-drawer-link"))}</div></section>
+            <section className="ap-drawer-section"><span className="ap-drawer-heading">Navegación</span><div className="ap-drawer-grid">{MAIN_LINKS.map(item => renderLink(item, "ap-drawer-link"))}</div></section>
+            <section className="ap-drawer-section"><span className="ap-drawer-heading">Comunidad</span><div className="ap-drawer-grid">{COMMUNITY_LINKS.map(item => renderLink(item, "ap-drawer-link"))}</div></section>
+            <section className="ap-drawer-section"><span className="ap-drawer-heading">Información y servicios</span><div className="ap-drawer-grid">{INFO_LINKS.map(item => renderLink(item, "ap-drawer-link"))}</div></section>
           </nav>
         </div>}
       </header>
