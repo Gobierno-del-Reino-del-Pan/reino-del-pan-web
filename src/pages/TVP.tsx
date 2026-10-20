@@ -8,151 +8,151 @@ import {
 
 interface PlayItem {
 
-    id: string;
+  id: string;
 
-    title: string;
+  title: string;
 
-    subtitle: string;
+  subtitle: string;
 
-    img: string;
+  img: string;
 
-    progress?: number;
+  progress?: number;
 
 }
 
 interface PlayCategory {
 
-    title: string;
+  title: string;
 
-    items: PlayItem[];
+  items: PlayItem[];
 
 }
 
 const PLAY_CONTENT: { hero: { title: string; category: string; description: string; duration: string; image: string }; categories: PlayCategory[] } = {
 
-    hero: {
+  hero: {
 
-        title: "La Promesa",
+    title: "La Promesa",
 
-        category: "SERIE DE ÉXITO",
+    category: "SERIE DE ÉXITO",
 
-        description: "El gran drama de época que tiene en vilo a todo el Reino del Pan. Intriga, amor y traición en el palacio más custodiado del estado.",
+    description: "El gran drama de época que tiene en vilo a todo el Reino del Pan. Intriga, amor y traición en el palacio más custodiado del estado.",
 
-        duration: "1h 45min",
+    duration: "1h 45min",
 
-        image: "https://img.rtve.es/imagenes/la-promesa/01773410920378.jpg"
+    image: "https://img.rtve.es/imagenes/la-promesa/01773410920378.jpg"
 
-    },
+  },
 
-    categories: [
+  categories: [
+
+    {
+
+      title: "Seguir viendo en TVP Play",
+
+      items: [
 
         {
 
-            title: "Seguir viendo en TVP Play",
+          id: "sv1",
 
-            items: [
+          title: "Telediario 2",
 
-                {
+          progress: 75,
 
-                    id: "sv1",
+          subtitle: "Informativo nocturno paniense con Angels Barceló y María José Sáez",
 
-                    title: "Telediario 2",
-
-                    progress: 75,
-
-                    subtitle: "Informativo nocturno paniense con Angels Barceló y María José Sáez",
-
-                    img: "TVP/Telediario2.png"
-
-                },
-
-                {
-
-                    id: "sv2",
-
-                    title: "NO ME DIGAS",
-
-                    progress: 40,
-
-                    subtitle: "Programa vespertino de los viernes donde se habla de toda la actualidad del Corazón con Yurena de presentadora",
-
-                    img: "https://imagenes.atresplayer.com/atp/clipping/cmsimages01/2025/09/11/E8170CEA-0E08-4A61-B7EB-269C9973142D//386x217.jpg?optimize=low&format=webply"
-
-                },
-
-                {
-
-                    id: "sv3",
-
-                    title: "Y Ahora Santaolalla",
-
-                    progress: 90,
-
-                    subtitle: "Magacín que aborda la crónica social y toda la actualidad del día con un grupo de colaboradores de diversos ámbitos. El espacio se divide en diferentes secciones y cuenta con un equipo de reporteros a pie de calle",
-
-                    img: "TVP/SANTAOLALLA.png"
-
-                }
-
-            ]
+          img: "TVP/Telediario2.png"
 
         },
 
         {
 
-            title: "Series y Ficción Panienses",
+          id: "sv2",
 
-            items: [
+          title: "NO ME DIGAS",
 
-                { id: "sf1", title: "La Moderna", subtitle: "Nuevos capítulos", img: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=400&auto=format&fit=crop" },
+          progress: 40,
 
-                { id: "sf2", title: "Cuéntame cómo pasó", subtitle: "Temporada Final", img: "https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=400&auto=format&fit=crop" },
+          subtitle: "Programa vespertino de los viernes donde se habla de toda la actualidad del Corazón con Yurena de presentadora",
 
-                { id: "sf3", title: "Operación Barrio Inglés", subtitle: "Serie Completa", img: "https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=400&auto=format&fit=crop" }
+          img: "https://imagenes.atresplayer.com/atp/clipping/cmsimages01/2025/09/11/E8170CEA-0E08-4A61-B7EB-269C9973142D//386x217.jpg?optimize=low&format=webply"
 
-            ]
+        },
+
+        {
+
+          id: "sv3",
+
+          title: "Y Ahora Santaolalla",
+
+          progress: 90,
+
+          subtitle: "Magacín que aborda la crónica social y toda la actualidad del día con un grupo de colaboradores de diversos ámbitos. El espacio se divide en diferentes secciones y cuenta con un equipo de reporteros a pie de calle",
+
+          img: "TVP/SANTAOLALLA.png"
 
         }
 
-    ]
+      ]
+
+    },
+
+    {
+
+      title: "Series y Ficción Panienses",
+
+      items: [
+
+        { id: "sf1", title: "La Moderna", subtitle: "Nuevos capítulos", img: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=400&auto=format&fit=crop" },
+
+        { id: "sf2", title: "Cuéntame cómo pasó", subtitle: "Temporada Final", img: "https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=400&auto=format&fit=crop" },
+
+        { id: "sf3", title: "Operación Barrio Inglés", subtitle: "Serie Completa", img: "https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=400&auto=format&fit=crop" }
+
+      ]
+
+    }
+
+  ]
 
 };
 
 const LOCAL_NEWS_FALLBACK = {
 
-    breaking: "Urgente: El temporal obliga a activar la alerta naranja en todo el litoral del Reino del Pan",
+  breaking: "Urgente: El temporal obliga a activar la alerta naranja en todo el litoral del Reino del Pan",
 
-    main: {
+  main: {
 
-        category: "POLÍTICA",
+    category: "POLÍTICA",
 
-        title: "Histórico acuerdo de infraestructuras para la conexión ferroviaria en el Reino del Pan",
+    title: "Histórico acuerdo de infraestructuras para la conexión ferroviaria en el Reino del Pan",
 
-        summary: "El Gobierno y las administraciones regionales sellan un plan de inversión de más de 3.000 millones de euros para acelerar la transición del transporte nacional paniense.",
+    summary: "El Gobierno y las administraciones regionales sellan un plan de inversión de más de 3.000 millones de euros para acelerar la transición del transporte nacional paniense.",
 
-        time: "Hace 12 min",
+    time: "Hace 12 min",
 
-        img: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=800&auto=format&fit=crop"
+    img: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=800&auto=format&fit=crop"
 
-    },
+  },
 
-    secondary: [
+  secondary: [
 
-        { id: "n1", category: "SOCIEDAD", title: "La ola de calor invernal bate récords en el este del país", time: "Hace 45 min", img: "https://images.unsplash.com/photo-1504370805625-d32c54b16100?q=80&w=400&auto=format&fit=crop" },
+    { id: "n1", category: "SOCIEDAD", title: "La ola de calor invernal bate récords en el este del país", time: "Hace 45 min", img: "https://images.unsplash.com/photo-1504370805625-d32c54b16100?q=80&w=400&auto=format&fit=crop" },
 
-        { id: "n2", category: "DEPORTES", title: "El TVP Paniense F.C. se clasifica para la gran final continental tras una prórroga agónica", time: "Hace 1 hora", img: "https://images.unsplash.com/photo-1518063319789-7217e6706b04?q=80&w=400&auto=format&fit=crop" }
+    { id: "n2", category: "DEPORTES", title: "El TVP Paniense F.C. se clasifica para la gran final continental tras una prórroga agónica", time: "Hace 1 hora", img: "https://images.unsplash.com/photo-1518063319789-7217e6706b04?q=80&w=400&auto=format&fit=crop" }
 
-    ],
+  ],
 
-    trending: [
+  trending: [
 
-        { id: "t1", number: "01", title: "Los trucos del nuevo borrador fiscal para autónomos del Reino" },
+    { id: "t1", number: "01", title: "Los trucos del nuevo borrador fiscal para autónomos del Reino" },
 
-        { id: "t2", number: "02", title: "Las 5 series más vistas de TVP Play este mes" },
+    { id: "t2", number: "02", title: "Las 5 series más vistas de TVP Play este mes" },
 
-        { id: "t3", number: "03", title: "Previsión del tiempo: ¿Cuándo llegarán las lluvias al norte?" }
+    { id: "t3", number: "03", title: "Previsión del tiempo: ¿Cuándo llegarán las lluvias al norte?" }
 
-    ]
+  ]
 
 };
 
@@ -160,7 +160,6 @@ const LOCAL_NEWS_FALLBACK = {
 type Tab = "play" | "directo" | "noticias";
 type NewsCard = { id: string; category: string; title: string; time: string; img: string; summary?: string };
 
-const COMUNICADO = 'La Corporación de Radio y Televisión Paniense (tvp) estamos en contra de los actos y corruptelas del denominado "monarca". Apoyamos y apoyaremos al gobierno hasta la última gota de sudor, esfuerzo y lágrimas. No lo permitamos. Avanzamos hacia un verdadero cambio. Nos temerán';
 
 const TABS: { id: Tab; label: string; icon: typeof Play }[] = [
   { id: "play", label: "TVP Play", icon: Play },
@@ -367,12 +366,6 @@ export default function TVPPortal() {
               </button>
             ))}
           </nav>
-          <button type="button" onClick={() => setNoticeOpen(true)}
-            className="tvp-glass flex min-h-10 shrink-0 items-center gap-2 rounded-[14px] px-3 text-[11px] font-bold uppercase tracking-[.08em] text-[#ff9c71] transition hover:bg-[#ff4d00]/15 sm:px-4">
-            <Megaphone size={16} aria-hidden="true" />
-            <span className="hidden min-[405px]:inline">Comunicado</span>
-            <span className="sr-only min-[405px]:hidden">Abrir comunicado</span>
-          </button>
         </div>
       </header>
 
@@ -515,7 +508,6 @@ export default function TVPPortal() {
           <div className="flex flex-wrap items-center gap-4">
             <Link href="/" aria-label="Volver al inicio"><img src="/logo.png" alt="Artis Panis" className="h-8 w-auto object-contain" /></Link>
             <a href="https://discord.com/invite/reino-del-pan-1381359904731693056" target="_blank" rel="noopener noreferrer" className="tvp-glass rounded-full px-4 py-2 text-[11px] font-bold text-white/80 transition hover:text-[#ffa77b]">Comunidad Discord ↗</a>
-            <button type="button" onClick={() => setNoticeOpen(true)} className="text-[11px] font-bold text-[#ff9c71] underline-offset-4 hover:underline">Comunicado de TVP</button>
           </div>
           <p className="max-w-xl leading-6 text-white/50">© {new Date().getFullYear()} Corporación de Radio y Televisión Paniense (TVP). Todos los derechos reservados.</p>
         </div>
@@ -532,29 +524,11 @@ export default function TVPPortal() {
       </nav>
       <div aria-hidden="true" className="h-[calc(70px+env(safe-area-inset-bottom))] shrink-0 min-[900px]:hidden" />
 
-      {/* Automatic corporate statement. Can be dismissed and reopened any time. */}
-      {noticeOpen && (
-        <Modal title="Comunicado oficial de TVP" labelledBy="tvp-notice-title" onClose={() => setNoticeOpen(false)}>
-          <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-[#630B57]/40 blur-[65px]" />
-          <div className="relative flex items-center justify-between gap-4">
-            <img src="/TVP/TVP.png" alt="TVP" className="h-10 w-auto max-w-[130px] object-contain" />
-            <IconButton onClick={() => setNoticeOpen(false)} label="Cerrar comunicado"><X size={19} /></IconButton>
-          </div>
-          <div className="relative mt-6 inline-flex max-w-full flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-[.12em] text-[#ffad7b] sm:tracking-[.18em]"><Megaphone size={15} /> Posicionamiento institucional</div>
-          <h2 id="tvp-notice-title" className="tvp-modal-title relative mt-4">Comunicado oficial de TVP</h2>
-          <div className="mt-5 h-px w-full bg-gradient-to-r from-[#ff4d00]/80 via-white/15 to-transparent" />
-          <p className="relative mt-6 max-h-[45dvh] overflow-y-auto pr-1 text-[14px] leading-[1.9] text-white/85 sm:text-[16px]">{COMUNICADO}</p>
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-[.12em] text-white/40">Corporación de Radio y Televisión Paniense</span>
-            <button type="button" onClick={() => setNoticeOpen(false)} className="tvp-primary inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-6 text-xs font-black uppercase tracking-[.09em] transition hover:brightness-110">Entendido <ChevronRight size={17} /></button>
-          </div>
-        </Modal>
-      )}
 
       {/* Preview modal avoids fake article navigation where no article URL exists. */}
       {selectedNews && !noticeOpen && (
         <Modal title={selectedNews.title} labelledBy="tvp-news-title" onClose={() => setSelectedNews(null)}>
-          <div className="flex items-center justify-between gap-2"><span className="text-[10px] font-bold uppercase tracking-[.15em] text-[#ff9f75]">{selectedNews.category} · {selectedNews.time}</span><IconButton onClick={() => setSelectedNews(null)} label="Cerrar noticia"><X size={19}/></IconButton></div>
+          <div className="flex items-center justify-between gap-2"><span className="text-[10px] font-bold uppercase tracking-[.15em] text-[#ff9f75]">{selectedNews.category} · {selectedNews.time}</span><IconButton onClick={() => setSelectedNews(null)} label="Cerrar noticia"><X size={19} /></IconButton></div>
           <h2 id="tvp-news-title" className="tvp-head mt-5 text-2xl font-bold leading-snug sm:text-3xl">{selectedNews.title}</h2>
           <img src={selectedNews.img} alt="" className="mt-5 aspect-video w-full rounded-[18px] object-cover" />
           <p className="mt-5 text-sm leading-7 text-white/70">{selectedNews.summary || "Este titular aún no dispone de un artículo ampliado."}</p>
