@@ -200,10 +200,16 @@
         "discord_role_id": "1559527105509720080"
       },
       {
-        "id": "rol_perra_del_estado",
-        "nombre": "Perra del Estado",
-        "imagen": "/roles/perradelestado.png",
-        "discord_role_id": null
+        "id": "rol_girls",
+        "nombre": "Chicas del Reino",
+        "imagen": "👚",
+        "discord_role_id": "1559527104918585408"
+      },
+      {
+        "id": "rol_boys",
+        "nombre": "Chicos del Reino",
+        "imagen": "👕",
+        "discord_role_id": "1561491526956097546"
       },
       {
         "id": "rol_presidente_parlamento",
