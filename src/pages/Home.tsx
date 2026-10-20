@@ -68,7 +68,7 @@ const METRICS = [
   { number: "2025", label: "Año de fundación", detail: "El proyecto comenzó el 23 de julio de 2025", icon: Landmark },
   { number: "500+", label: "Solicitudes de DPI", detail: "Cifra de referencia publicada por el proyecto", icon: ShieldCheck },
   { number: "100%", label: "Compromiso", detail: "Libertad, convivencia y renovación", icon: Sparkles },
-  { number: "Aviso", label: "Situación fronteriza", detail: "Fronteras cerradas hasta nuevo aviso", icon: Megaphone },
+  { number: "⚠️", label: "Situación fronteriza", detail: "Las fronteras vuelvean a abrirse", icon: Megaphone },
 ];
 const REGIONS: RegionWeather[] = [
   { id: "baguette", region: "Baguette 🥖", ciudad: "Pantopía", lat: 37.3828, lon: -5.9732, tagline: "Observatorio de Pantopía", phrase: "El cielo de nuestra capital" },
@@ -81,8 +81,8 @@ const REGIONS: RegionWeather[] = [
 
 const SONG_FILES = [
   { id: 1, src: "/canciones/1.mp3", title: "Sin Explicacion3s", artist: "Dellafuente", cover: "/canciones/1.jpg", startTime: 30, endTime: 190 },
-  { id: 2, src: "/canciones/2.m4a", title: "Perro", artist: "Bad Gyal y Victor Mendivil", cover: "/canciones/2.avif" },
-  { id: 3, src: "/canciones/3.mp3", title: "Conexión", artist: "Cano y JC Reyes", cover: "/canciones/3.jpg" },
+  { id: 2, src: "/canciones/2.m4a", title: "Te quiero olvidar 💔", artist: "Daviles de Novelda, Omar Montes y RVFV", cover: "/canciones/2.avif" },
+  { id: 3, src: "/canciones/3.mp3", title: "Shakira: BZRP Music Sessions, Vol. 53", artist: "BZRP, Shakira", cover: "/canciones/3.jpg" },
 ] satisfies Song[];
 const CONTESTS = [
   { href: "/concursos/paneda", eyebrow: "Economía nacional", title: "Diseño de la Paneda", description: "Diseña los billetes oficiales y la identidad visual de la moneda paniense.", icon: Coins, color: "#C18A35" },
@@ -126,11 +126,11 @@ function marketTime(value: string | null) {
 }
 function weatherMood(code: number | undefined) {
   if (code === 0) return { label: "Un cielo para disfrutar", message: "Jornada despejada. Buen momento para salir a descubrir la región.", tint: "#FFD19A", glow: "#F4AC56" };
-  if (code !== undefined && [1,2,3].includes(code)) return { label: "Nubes con personalidad", message: "El cielo cambia de aspecto. Planes al aire libre, con un ojo puesto arriba.", tint: "#E0D2F4", glow: "#9A7FCB" };
-  if (code !== undefined && [45,48].includes(code)) return { label: "Paisaje entre brumas", message: "La niebla dibuja otro horizonte. Más atención al desplazarte.", tint: "#D5E5ED", glow: "#7AABC6" };
-  if (code !== undefined && [51,53,55,56,57,61,63,65,66,67,80,81,82].includes(code)) return { label: "El paraguas entra en escena", message: "Nubes y lluvia en el pronóstico. Un día para los planes bajo techo.", tint: "#B8D6F5", glow: "#5686C8" };
-  if (code !== undefined && [71,73,75,77,85,86].includes(code)) return { label: "Día de paisaje blanco", message: "La nieve gana protagonismo. Abrígate y consulta los avisos locales.", tint: "#E5F5FF", glow: "#9FC8EA" };
-  if (code !== undefined && [95,96,99].includes(code)) return { label: "El cielo se hace notar", message: "Posibilidad de tormenta. Conviene seguir la evolución del tiempo.", tint: "#D6C6EA", glow: "#7665AF" };
+  if (code !== undefined && [1, 2, 3].includes(code)) return { label: "Nubes con personalidad", message: "El cielo cambia de aspecto. Planes al aire libre, con un ojo puesto arriba.", tint: "#E0D2F4", glow: "#9A7FCB" };
+  if (code !== undefined && [45, 48].includes(code)) return { label: "Paisaje entre brumas", message: "La niebla dibuja otro horizonte. Más atención al desplazarte.", tint: "#D5E5ED", glow: "#7AABC6" };
+  if (code !== undefined && [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return { label: "El paraguas entra en escena", message: "Nubes y lluvia en el pronóstico. Un día para los planes bajo techo.", tint: "#B8D6F5", glow: "#5686C8" };
+  if (code !== undefined && [71, 73, 75, 77, 85, 86].includes(code)) return { label: "Día de paisaje blanco", message: "La nieve gana protagonismo. Abrígate y consulta los avisos locales.", tint: "#E5F5FF", glow: "#9FC8EA" };
+  if (code !== undefined && [95, 96, 99].includes(code)) return { label: "El cielo se hace notar", message: "Posibilidad de tormenta. Conviene seguir la evolución del tiempo.", tint: "#D6C6EA", glow: "#7665AF" };
   return { label: "Cielo en movimiento", message: "Observa cómo evoluciona el día en tu región.", tint: "#E6D7ED", glow: "#AC86BA" };
 }
 function forecastDay(date: string) {
@@ -314,7 +314,8 @@ export default function Home() {
             min: entry.daily.temperature_2m_min?.[dayIndex],
             code: entry.daily.weather_code?.[dayIndex],
           })).filter((day: WeatherDay) => Number.isFinite(day.max) && Number.isFinite(day.min) && typeof day.code === "number") : [];
-          return { ...region, temp: Math.round(value), code, ...summary,
+          return {
+            ...region, temp: Math.round(value), code, ...summary,
             max: entry?.daily?.temperature_2m_max?.[0], min: entry?.daily?.temperature_2m_min?.[0],
             feel: entry.current.apparent_temperature, wind: entry.current.wind_speed_10m,
             humidity: entry.current.relative_humidity_2m, observation: entry.current.time,
@@ -349,17 +350,21 @@ export default function Home() {
         const payload = await response.json();
         const parse = (value: any): MarketQuote | null =>
           typeof value?.price === "number" && Number.isFinite(value.price) &&
-          typeof value?.change === "number" && Number.isFinite(value.change)
-            ? { price: value.price, change: value.change, currency: typeof value.currency === "string" ? value.currency : "",
-                timestamp: typeof value.timestamp === "string" ? value.timestamp : null }
+            typeof value?.change === "number" && Number.isFinite(value.change)
+            ? {
+              price: value.price, change: value.change, currency: typeof value.currency === "string" ? value.currency : "",
+              timestamp: typeof value.timestamp === "string" ? value.timestamp : null
+            }
             : null;
         const ibex = parse(payload?.quotes?.ibex);
         const nikkei = parse(payload?.quotes?.nikkei);
         if (!ibex && !nikkei) throw new Error("Sin precios de proveedor");
-        if (mounted) setMarkets({ ibex, nikkei, status: ibex && nikkei ? "ready" : "partial",
+        if (mounted) setMarkets({
+          ibex, nikkei, status: ibex && nikkei ? "ready" : "partial",
           source: typeof payload.source === "string" ? payload.source : "Fuente bursátil",
           fetchedAt: typeof payload.fetchedAt === "string" ? payload.fetchedAt : null,
-          stale: Boolean(payload.stale), refreshing: false });
+          stale: Boolean(payload.stale), refreshing: false
+        });
       } catch (error) {
         if (controller.signal.aborted) return;
         console.warn("Servicio de mercados no disponible:", error);
@@ -418,8 +423,10 @@ export default function Home() {
             cover = URL.createObjectURL(blob);
             objectUrls.current.push(cover);
           }
-          return { ...fallback, title: metadata.common.title || fallback.title,
-            artist: metadata.common.artist || fallback.artist, cover };
+          return {
+            ...fallback, title: metadata.common.title || fallback.title,
+            artist: metadata.common.artist || fallback.artist, cover
+          };
         } catch { return fallback; }
       }));
       if (active) setSongs(loaded);
@@ -784,7 +791,7 @@ export default function Home() {
                 <div className="hm-market-value"><b style={{ color: "#E5BA75" }}>Simulado</b><small style={{ color: "#CFC1C3" }}>No negociable</small></div>
               </div>
               {([{ label: "España · Bolsa", title: "IBEX 35", quote: markets.ibex, currency: "EUR" },
-                { label: "Japón · Bolsa", title: "Nikkei 225", quote: markets.nikkei, currency: "JPY" }] as const).map(row => (
+              { label: "Japón · Bolsa", title: "Nikkei 225", quote: markets.nikkei, currency: "JPY" }] as const).map(row => (
                 <div key={row.title} className="hm-market hm-market-row">
                   <div className="min-w-0"><span>{row.label}</span><strong>{row.title}</strong>
                     <div className="hm-market-meta"><Clock3 size={12} aria-hidden="true" />{row.quote ? marketTime(row.quote.timestamp) : "Pendiente de conexión"}</div>
@@ -801,8 +808,8 @@ export default function Home() {
                 <div className="flex gap-2 items-center justify-between flex-wrap">
                   <span>{markets.status === "loading" ? "Conectando con la fuente bursátil…" :
                     markets.status === "offline" ? "Cotizaciones temporalmente no disponibles" :
-                    markets.stale ? "Últimos datos conservados: servicio temporalmente no disponible" :
-                    markets.status === "partial" ? "Datos parciales del proveedor" : "Últimas cotizaciones publicadas por el proveedor"}</span>
+                      markets.stale ? "Últimos datos conservados: servicio temporalmente no disponible" :
+                        markets.status === "partial" ? "Datos parciales del proveedor" : "Últimas cotizaciones publicadas por el proveedor"}</span>
                   {markets.refreshing && <RefreshCw size={13} className="animate-spin" aria-label="Actualizando" />}
                 </div>
                 {markets.fetchedAt && <div>Consulta: {marketTime(markets.fetchedAt)}</div>}
@@ -829,18 +836,18 @@ export default function Home() {
             leaders.status === "offline" ? <div className="hm-rank-status" role="status">No se ha podido contactar con el ranking.
               <button type="button" className="hm-action mx-auto mt-4" style={{ background: "#630B57", color: "white", border: 0 }} onClick={() => { setLeaders({ status: "loading", top3: [] }); setLeaderRetry(v => v + 1); }}><RefreshCw size={14} /> Reintentar</button>
             </div> : leaders.top3.length === 0 ? <div className="hm-rank-status">Todavía no hay ciudadanos en la clasificación.</div> :
-            <div className="hm-rank-rail" aria-label="Top 3 de ciudadanos por experiencia">
-              {[2, 1, 3].map(position => leaders.top3.find(user => user.posicion === position)).filter((user): user is RankUser => Boolean(user)).map(user => (
-                <Link href="/level" key={user.id || user.username} className="hm-rank-card hm-glass" data-place={user.posicion} aria-label={`Ver clasificación de ${user.username}, posición ${user.posicion}`}>
-                  <span className="hm-rank-medal">{user.posicion === 1 ? <Crown size={21} /> : user.posicion === 2 ? <Medal size={20} /> : <Trophy size={19} />}</span>
-                  <img className="hm-rank-avatar" src={avatarFor(user)} alt="" loading="lazy" onError={e => { if (e.currentTarget.src !== DEFAULT_AVATAR) e.currentTarget.src = DEFAULT_AVATAR; }} />
-                  <strong className="hm-rank-name" title={user.username}>@{user.username}</strong>
-                  <small className="hm-rank-level">Nivel {user.level}</small>
-                  <div className="hm-rank-points">{user.total_xp.toLocaleString("es-ES")} XP</div>
-                  <div className="hm-rank-foot"><strong>{String(user.posicion).padStart(2, "0")}</strong><span>{user.posicion === 1 ? "Líder" : user.posicion === 2 ? "Segundo" : "Tercero"}</span></div>
-                </Link>
-              ))}
-            </div>}
+              <div className="hm-rank-rail" aria-label="Top 3 de ciudadanos por experiencia">
+                {[2, 1, 3].map(position => leaders.top3.find(user => user.posicion === position)).filter((user): user is RankUser => Boolean(user)).map(user => (
+                  <Link href="/level" key={user.id || user.username} className="hm-rank-card hm-glass" data-place={user.posicion} aria-label={`Ver clasificación de ${user.username}, posición ${user.posicion}`}>
+                    <span className="hm-rank-medal">{user.posicion === 1 ? <Crown size={21} /> : user.posicion === 2 ? <Medal size={20} /> : <Trophy size={19} />}</span>
+                    <img className="hm-rank-avatar" src={avatarFor(user)} alt="" loading="lazy" onError={e => { if (e.currentTarget.src !== DEFAULT_AVATAR) e.currentTarget.src = DEFAULT_AVATAR; }} />
+                    <strong className="hm-rank-name" title={user.username}>@{user.username}</strong>
+                    <small className="hm-rank-level">Nivel {user.level}</small>
+                    <div className="hm-rank-points">{user.total_xp.toLocaleString("es-ES")} XP</div>
+                    <div className="hm-rank-foot"><strong>{String(user.posicion).padStart(2, "0")}</strong><span>{user.posicion === 1 ? "Líder" : user.posicion === 2 ? "Segundo" : "Tercero"}</span></div>
+                  </Link>
+                ))}
+              </div>}
           <div className="hm-rank-bottom"><span className="text-[11px] text-[#866B83]">Datos sincronizados con /api/leaderboard · Se actualizan cada cinco minutos</span></div>
         </div>
       </section>
@@ -860,78 +867,78 @@ export default function Home() {
           </div>
           {weatherStatus === "loading" ? <div className="hm-soft-panel" role="status">Consultando los observatorios regionales…</div>
             : weatherStatus === "offline" ? <div className="hm-soft-panel" role="status"><WifiOff size={24} className="mx-auto mb-3" />No hemos podido cargar los datos meteorológicos. Puedes reintentarlo cuando quieras.</div>
-            : <div className="hm-sky-grid">
-              {featuredRegion && (() => {
-                const region = featuredRegion;
-                const mood = weatherMood(region.code);
-                return (
-                  <article
-                    className="hm-sky-feature"
-                    data-night={region.isDay === false ? "true" : "false"}
-                    style={{ "--sky-glow": mood.glow } as CSSProperties}
-                    onMouseEnter={() => setWeatherHovering(true)}
-                    onMouseLeave={() => setWeatherHovering(false)}
-                    onFocusCapture={() => setWeatherHovering(true)}
-                    onBlurCapture={(event) => {
-                      if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setWeatherHovering(false);
-                    }}
-                    aria-label={`Observatorio meteorológico de ${region.ciudad}`}
-                  >
-                    <div className="hm-sky-glow" aria-hidden="true" />
-                    <div className="hm-sky-disc" aria-hidden="true">{region.isDay === false && region.code === 0 ? "🌙" : region.icon}</div>
-                    <nav className="hm-sky-nav" aria-label="Cambiar región del observatorio">
-                      <span className="hm-sky-nav-counter">{String(featuredRegionIndex + 1).padStart(2, "0")} / {String(weather.length).padStart(2, "0")}</span>
-                      <div className="hm-sky-nav-dots" aria-label="Elegir estación">
-                        {weather.map((entry, index) => (
-                          <button key={entry.id} type="button" className="hm-sky-nav-dot" data-active={index === featuredRegionIndex} onClick={() => setFeaturedRegionIndex(index)} aria-label={`Ver estación ${entry.ciudad}`} aria-current={index === featuredRegionIndex ? "true" : undefined} />
-                        ))}
-                      </div>
-                      <button className="hm-sky-nav-btn" type="button" onClick={() => changeFeaturedRegion(-1)} aria-label="Región anterior"><ChevronLeft size={17} /></button>
-                      <button className="hm-sky-nav-btn" type="button" onClick={() => changeFeaturedRegion(1)} aria-label="Región siguiente"><ChevronRight size={17} /></button>
-                      <button className="hm-sky-nav-pause" type="button" onClick={() => setWeatherRotationPaused(value => !value)} aria-pressed={weatherRotationPaused}>
-                        {weatherRotationPaused ? <PlayCircle size={16} /> : <PauseCircle size={16} />}
-                        {weatherRotationPaused ? "Reanudar" : "Pausar"}
-                      </button>
-                    </nav>
-                    <div className="hm-sky-feature-body" key={region.id}>
-                      <div className="hm-sky-eyebrow">✦ Observatorio rotatorio · {region.region}</div>
-                      <h3 className="hm-sky-city">{region.ciudad}</h3>
-                      <div className="hm-sky-sub">{region.tagline} · {formatLocalObservation(region.observation)}</div>
-                      <RegionalClock region={region} />
-                      <div className="hm-sky-temp">{region.temp}°</div>
-                      <div className="text-xs text-[#E2CFE3] mt-1 inline-flex items-center gap-2">{region.isDay ? <Sunrise size={15} /> : <Moon size={15} />} {region.isDay ? "Ahora es de día" : "Ahora es de noche"}</div>
-                      <h4 className="hm-sky-mood">{mood.label}</h4>
-                      <p className="hm-sky-phrase">{region.description}. {mood.message}</p>
-                      <div className="hm-sky-facts">
-                        <div className="hm-sky-fact"><span><ThermometerSun size={12} className="inline mr-1" /> Sensación</span><strong>{typeof region.feel === "number" ? `${Math.round(region.feel)}°` : "—"}</strong></div>
-                        <div className="hm-sky-fact"><span><Wind size={12} className="inline mr-1" /> Viento</span><strong>{typeof region.wind === "number" ? `${Math.round(region.wind)} km/h` : "—"}</strong></div>
-                        <div className="hm-sky-fact"><span><Droplets size={12} className="inline mr-1" /> Humedad</span><strong>{typeof region.humidity === "number" ? `${Math.round(region.humidity)}%` : "—"}</strong></div>
-                      </div>
-                      <div className="hm-sky-solar">
-                        <span><Sunrise size={15} aria-hidden="true" /> Amanecer <strong>{formatSolarHour(region.sunrise)}</strong></span>
-                        <span><Sunset size={15} aria-hidden="true" /> Atardecer <strong>{formatSolarHour(region.sunset)}</strong></span>
-                      </div>
-                      {region.forecast && region.forecast.length > 0 && <div className="hm-sky-days" aria-label={`Previsión de tres días para ${region.ciudad}`}>{region.forecast.slice(0, 3).map(day => (
-                        <div className="hm-sky-day" key={day.date}><span className="capitalize">{forecastDay(day.date)}</span><span className="text-xl" aria-hidden="true">{weatherDescription(day.code).icon}</span><strong>{Math.round(day.max)}° / {Math.round(day.min)}°</strong></div>
-                      ))}</div>}
-                    </div>
-                  </article>
-                );
-              })()}
-              <div className="hm-sky-stations" aria-label="Otras estaciones meteorológicas">
-                {weather.filter((_, index) => index !== featuredRegionIndex).map(region => {
+              : <div className="hm-sky-grid">
+                {featuredRegion && (() => {
+                  const region = featuredRegion;
                   const mood = weatherMood(region.code);
-                  const index = weather.findIndex(entry => entry.id === region.id);
-                  return <button type="button" className="hm-sky-station" key={region.id}
-                    onClick={() => setFeaturedRegionIndex(index)}
-                    aria-label={`Mostrar ${region.ciudad} como observatorio principal`}
-                    style={{ "--sky-accent": mood.tint } as CSSProperties}>
-                    <div className="hm-sky-station-top"><div><span className="hm-sky-station-label">{region.region}</span><strong>{region.ciudad}</strong><RegionalClock region={region} compact /></div><span className="hm-sky-station-icon" aria-hidden="true">{region.isDay === false && region.code === 0 ? "🌙" : region.icon}</span></div>
-                    <div className="hm-sky-station-bottom"><span className="hm-sky-station-temp">{region.temp}°</span><div className="hm-sky-station-caption">{region.description}<br />{typeof region.max === "number" && typeof region.min === "number" ? `Máx. ${Math.round(region.max)}° · Mín. ${Math.round(region.min)}°` : ""}</div></div>
-                  </button>;
-                })}
-              </div>
-            </div>}
+                  return (
+                    <article
+                      className="hm-sky-feature"
+                      data-night={region.isDay === false ? "true" : "false"}
+                      style={{ "--sky-glow": mood.glow } as CSSProperties}
+                      onMouseEnter={() => setWeatherHovering(true)}
+                      onMouseLeave={() => setWeatherHovering(false)}
+                      onFocusCapture={() => setWeatherHovering(true)}
+                      onBlurCapture={(event) => {
+                        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setWeatherHovering(false);
+                      }}
+                      aria-label={`Observatorio meteorológico de ${region.ciudad}`}
+                    >
+                      <div className="hm-sky-glow" aria-hidden="true" />
+                      <div className="hm-sky-disc" aria-hidden="true">{region.isDay === false && region.code === 0 ? "🌙" : region.icon}</div>
+                      <nav className="hm-sky-nav" aria-label="Cambiar región del observatorio">
+                        <span className="hm-sky-nav-counter">{String(featuredRegionIndex + 1).padStart(2, "0")} / {String(weather.length).padStart(2, "0")}</span>
+                        <div className="hm-sky-nav-dots" aria-label="Elegir estación">
+                          {weather.map((entry, index) => (
+                            <button key={entry.id} type="button" className="hm-sky-nav-dot" data-active={index === featuredRegionIndex} onClick={() => setFeaturedRegionIndex(index)} aria-label={`Ver estación ${entry.ciudad}`} aria-current={index === featuredRegionIndex ? "true" : undefined} />
+                          ))}
+                        </div>
+                        <button className="hm-sky-nav-btn" type="button" onClick={() => changeFeaturedRegion(-1)} aria-label="Región anterior"><ChevronLeft size={17} /></button>
+                        <button className="hm-sky-nav-btn" type="button" onClick={() => changeFeaturedRegion(1)} aria-label="Región siguiente"><ChevronRight size={17} /></button>
+                        <button className="hm-sky-nav-pause" type="button" onClick={() => setWeatherRotationPaused(value => !value)} aria-pressed={weatherRotationPaused}>
+                          {weatherRotationPaused ? <PlayCircle size={16} /> : <PauseCircle size={16} />}
+                          {weatherRotationPaused ? "Reanudar" : "Pausar"}
+                        </button>
+                      </nav>
+                      <div className="hm-sky-feature-body" key={region.id}>
+                        <div className="hm-sky-eyebrow">✦ Observatorio rotatorio · {region.region}</div>
+                        <h3 className="hm-sky-city">{region.ciudad}</h3>
+                        <div className="hm-sky-sub">{region.tagline} · {formatLocalObservation(region.observation)}</div>
+                        <RegionalClock region={region} />
+                        <div className="hm-sky-temp">{region.temp}°</div>
+                        <div className="text-xs text-[#E2CFE3] mt-1 inline-flex items-center gap-2">{region.isDay ? <Sunrise size={15} /> : <Moon size={15} />} {region.isDay ? "Ahora es de día" : "Ahora es de noche"}</div>
+                        <h4 className="hm-sky-mood">{mood.label}</h4>
+                        <p className="hm-sky-phrase">{region.description}. {mood.message}</p>
+                        <div className="hm-sky-facts">
+                          <div className="hm-sky-fact"><span><ThermometerSun size={12} className="inline mr-1" /> Sensación</span><strong>{typeof region.feel === "number" ? `${Math.round(region.feel)}°` : "—"}</strong></div>
+                          <div className="hm-sky-fact"><span><Wind size={12} className="inline mr-1" /> Viento</span><strong>{typeof region.wind === "number" ? `${Math.round(region.wind)} km/h` : "—"}</strong></div>
+                          <div className="hm-sky-fact"><span><Droplets size={12} className="inline mr-1" /> Humedad</span><strong>{typeof region.humidity === "number" ? `${Math.round(region.humidity)}%` : "—"}</strong></div>
+                        </div>
+                        <div className="hm-sky-solar">
+                          <span><Sunrise size={15} aria-hidden="true" /> Amanecer <strong>{formatSolarHour(region.sunrise)}</strong></span>
+                          <span><Sunset size={15} aria-hidden="true" /> Atardecer <strong>{formatSolarHour(region.sunset)}</strong></span>
+                        </div>
+                        {region.forecast && region.forecast.length > 0 && <div className="hm-sky-days" aria-label={`Previsión de tres días para ${region.ciudad}`}>{region.forecast.slice(0, 3).map(day => (
+                          <div className="hm-sky-day" key={day.date}><span className="capitalize">{forecastDay(day.date)}</span><span className="text-xl" aria-hidden="true">{weatherDescription(day.code).icon}</span><strong>{Math.round(day.max)}° / {Math.round(day.min)}°</strong></div>
+                        ))}</div>}
+                      </div>
+                    </article>
+                  );
+                })()}
+                <div className="hm-sky-stations" aria-label="Otras estaciones meteorológicas">
+                  {weather.filter((_, index) => index !== featuredRegionIndex).map(region => {
+                    const mood = weatherMood(region.code);
+                    const index = weather.findIndex(entry => entry.id === region.id);
+                    return <button type="button" className="hm-sky-station" key={region.id}
+                      onClick={() => setFeaturedRegionIndex(index)}
+                      aria-label={`Mostrar ${region.ciudad} como observatorio principal`}
+                      style={{ "--sky-accent": mood.tint } as CSSProperties}>
+                      <div className="hm-sky-station-top"><div><span className="hm-sky-station-label">{region.region}</span><strong>{region.ciudad}</strong><RegionalClock region={region} compact /></div><span className="hm-sky-station-icon" aria-hidden="true">{region.isDay === false && region.code === 0 ? "🌙" : region.icon}</span></div>
+                      <div className="hm-sky-station-bottom"><span className="hm-sky-station-temp">{region.temp}°</span><div className="hm-sky-station-caption">{region.description}<br />{typeof region.max === "number" && typeof region.min === "number" ? `Máx. ${Math.round(region.max)}° · Mín. ${Math.round(region.min)}°` : ""}</div></div>
+                    </button>;
+                  })}
+                </div>
+              </div>}
           <div className="hm-sky-footer"><span><CalendarDays size={14} /> Observaciones y pronósticos de Open-Meteo, actualizados periódicamente</span><span><Clock3 size={14} /> Hora local calculada con la zona horaria de cada coordenada · Sin geolocalización del visitante</span></div>
         </div>
       </section>
@@ -957,9 +964,9 @@ export default function Home() {
         <div className="hm-wrap"><div className="hm-tvp"><div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/15 pb-5 mb-5"><div className="flex gap-3 items-center"><img src="/TVP/TVP.png" alt="TVP" className="h-8 w-auto object-contain" loading="lazy" /><div><div className="text-[10px] uppercase tracking-widest text-[#FF8C5E] font-bold">Corporación paniense</div><h2 id="tvp-news-title" className="text-white text-xl mt-1">TVP Noticias</h2></div></div><Link href="/tvp" className="hm-action" style={{ background: "#FF4D00", color: "#1E0B07", border: "none", minHeight: 41 }}>Portal TVP <ArrowUpRight size={15} /></Link></div>
           {newsStatus === "loading" ? <div className="text-sm text-white/70 py-12 text-center" role="status">Cargando las noticias del servidor de TVP…</div>
             : newsStatus === "offline" ? <div className="text-sm text-white/70 py-12 text-center">No hay noticias disponibles en este momento. Puedes consultar el <Link href="/tvp" className="text-[#FF8C5E] underline">portal TVP</Link>.</div>
-            : <div className="hm-tvp-grid">{mainNews ? <article className="hm-news-card"><img src={mainNews.img} alt="" loading="lazy" /><div className="hm-news-body"><div className="hm-news-tag">{mainNews.category} · {mainNews.time}</div><h3>{mainNews.title}</h3><p>{mainNews.summary}</p></div></article> : <div className="hm-news-card hm-news-body text-white/65">Sin noticia principal publicada.</div>}
-              <div className="hm-news-others">{secondaryNews.length ? secondaryNews.map(news => <article key={news.id} className="hm-news-card hm-news-small"><img src={news.img} alt="" loading="lazy" /><div className="hm-news-body"><span className="hm-news-tag">{news.category}</span><h4>{news.title}</h4><span className="text-[11px] text-white/45 mt-2 block">{news.time}</span></div></article>) : <div className="hm-news-card hm-news-body text-white/60">Sin noticias secundarias publicadas.</div>}</div>
-            </div>}
+              : <div className="hm-tvp-grid">{mainNews ? <article className="hm-news-card"><img src={mainNews.img} alt="" loading="lazy" /><div className="hm-news-body"><div className="hm-news-tag">{mainNews.category} · {mainNews.time}</div><h3>{mainNews.title}</h3><p>{mainNews.summary}</p></div></article> : <div className="hm-news-card hm-news-body text-white/65">Sin noticia principal publicada.</div>}
+                <div className="hm-news-others">{secondaryNews.length ? secondaryNews.map(news => <article key={news.id} className="hm-news-card hm-news-small"><img src={news.img} alt="" loading="lazy" /><div className="hm-news-body"><span className="hm-news-tag">{news.category}</span><h4>{news.title}</h4><span className="text-[11px] text-white/45 mt-2 block">{news.time}</span></div></article>) : <div className="hm-news-card hm-news-body text-white/60">Sin noticias secundarias publicadas.</div>}</div>
+              </div>}
         </div></div>
       </section>
       <Footer />
