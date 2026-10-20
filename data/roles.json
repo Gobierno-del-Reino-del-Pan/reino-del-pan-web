@@ -202,13 +202,13 @@
       {
         "id": "rol_girls",
         "nombre": "Chicas del Reino",
-        "imagen": "👚",
+        "emoji": "👚",
         "discord_role_id": "1559527104918585408"
       },
       {
         "id": "rol_boys",
         "nombre": "Chicos del Reino",
-        "imagen": "👕",
+        "emoji": "👕",
         "discord_role_id": "1561491526956097546"
       },
       {
