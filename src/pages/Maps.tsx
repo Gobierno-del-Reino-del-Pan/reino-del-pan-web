@@ -8,7 +8,7 @@ import "leaflet/dist/leaflet.css";
 import "./TerritorialDivisions.css";
 
 /*
- * ESTADO PANIENSE — Atlas territorial v2.0
+ * ESTADO PANIENSE — Atlas territorial v2.1
  * Los polígonos de /public/atlas/ proceden de fuentes cartográficas REALES.
  * La agrupación de parroquias/municipios como regiones panienses es FICTICIA
  * y permanece provisional hasta su ratificación. No se interpolan fronteras.
@@ -73,24 +73,37 @@ const CAPA_INFO: { id: DatosCapa; label: string; emoji: string }[] = [
 ];
 const VACIA: Coleccion = { type: "FeatureCollection", features: [] };
 const PANE_ORIGEN: L.LatLngTuple = [42.533, 1.568];
-const BG: Record<Modo, { url: string; attribution: string; maxZoom: number }> = {
-  politico: {
-    url: "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    maxZoom: 19,
-  },
-  geografico: {
-    // World Shaded Relief no incluye nombres urbanos como capa principal.
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}",
-    attribution: "Tiles &copy; Esri · Esri, USGS, NOAA",
-    maxZoom: 13,
-  },
-  gta: {
-    url: "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    maxZoom: 19,
-  },
+/**
+ * La clave de CARTO se entrega como VITE_CARTO_BASEMAPS_KEY en el build de Vite.
+ * Como toda URL de teselas se utiliza desde el navegador, la clave es PUBLICA.
+ * Restringir su uso por dominio desde el panel CARTO; no utilizar credenciales privadas.
+ */
+const CARTO_KEY = String(import.meta.env.VITE_CARTO_BASEMAPS_KEY ?? "").trim();
+const CARTO_CONFIGURADO = CARTO_KEY.length > 0;
+const ESRI_RELIEVE = {
+  url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}",
+  attribution: 'Teselas &copy; Esri, USGS, NOAA',
+  maxZoom: 19,
+  maxNativeZoom: 13,
 };
+type Fondo = { url: string; attribution: string; maxZoom: number; maxNativeZoom: number };
+
+function fondoCartografico(modo: Modo): Fondo {
+  // Geográfico: sombreado de relieve sin nombres de localidades.
+  if (modo === "geografico") return ESRI_RELIEVE;
+
+  // Desde septiembre de 2026 CARTO estampa marcas de agua si no hay API key.
+  // No enviamos peticiones sin clave: mantenemos el atlas utilizable con relieve.
+  if (!CARTO_CONFIGURADO) return ESRI_RELIEVE;
+
+  const estilo = modo === "gta" ? "dark_nolabels" : "light_nolabels";
+  return {
+    url: `https://{s}.basemaps.cartocdn.com/${estilo}/{z}/{x}/{y}{r}.png?key=${encodeURIComponent(CARTO_KEY)}`,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attribution/">CARTO</a>',
+    maxZoom: 20,
+    maxNativeZoom: 20,
+  };
+}
 
 function useAtlas(): { atlas: Atlas | null; error: string | null } {
   const [atlas, setAtlas] = useState<Atlas | null>(null);
@@ -149,7 +162,7 @@ function geoEstilo(f: Feature | undefined, selected: Identificador | null, modo:
     weight: active ? 3.3 : modo === "gta" ? 2.3 : 1.8,
     opacity: show ? 0.95 : 0,
     fillColor: color,
-    fillOpacity: !show ? 0 : muted ? 0.09 : modo === "geografico" ? (active ? 0.24 : 0.12) : modo === "gta" ? (active ? 0.62 : 0.39) : active ? 0.58 : 0.40,
+    fillOpacity: !show ? 0 : muted ? 0.09 : modo === "geografico" ? (active ? 0.31 : 0.19) : modo === "gta" ? (active ? 0.70 : 0.54) : active ? 0.76 : 0.61,
   };
 }
 
@@ -170,10 +183,11 @@ export default function TerritorialDivisions() {
   const [seleccion, setSeleccion] = useState<Identificador | null>(null);
   const [reiniciar, setReiniciar] = useState(0);
   const [capas, setCapas] = useState<Record<DatosCapa, boolean>>({
-    regiones: true, capitales: true, especiales: true, carreteras: false,
+    regiones: true, capitales: true, especiales: true, carreteras: true,
     ferrocarriles: false, aeropuertos: false, estaciones: false, puertos: false, otros: false,
   });
   const [fichaAbierta, setFichaAbierta] = useState(true);
+  const mapaBase = useMemo(() => fondoCartografico(modo), [modo]);
   const activo = seleccion ? POR_ID[seleccion] : null;
   const vacio = (nombre: DatosCapa) => atlas?.[nombre] ?? VACIA;
   const provinciasActivas = useMemo(() => (atlas?.regiones.features ?? []).filter(f => seleccion === null || f.properties?.region_id === seleccion), [atlas, seleccion]);
@@ -186,10 +200,18 @@ export default function TerritorialDivisions() {
     <div className="ap-page">
       <Header />
       <main className="ap-main">
-        <div className="ap-kicker">ESTADO PANIENSE <span>/</span> CARTOGRAFÍA NACIONAL <span>/</span> v2.0</div>
+        <div className="ap-kicker">ESTADO PANIENSE <span>/</span> CARTOGRAFÍA NACIONAL <span>/</span> v2.1</div>
         <header className="ap-header">
-          <div><h1>Atlas territorial</h1><p>Mapa político, geográfico y urbano · Cartografía basada en límites reales · Nombres panienses</p></div>
-          <div className="ap-header-actions"><button onClick={() => exportar("regiones")} className="ap-export">↓ Descargar GeoJSON</button></div>
+          <div className="ap-brand">
+            <div className="ap-heading" role="heading" aria-level={1}>
+              <span>ATLAS</span> <span>TERRITORIAL</span>
+            </div>
+            <p>Cartografía paniense · Límites GeoJSON verificables · Capitales de denominación paniense</p>
+          </div>
+          <div className="ap-header-actions">
+            <span className="ap-data-pill">◉ GEOJSON · WGS84</span>
+            <button type="button" onClick={() => exportar("regiones")} className="ap-export">↓ Exportar regiones</button>
+          </div>
         </header>
         <nav className="ap-modes" aria-label="Tipo de mapa">
           {(["politico", "geografico", "gta"] as Modo[]).map((m) => (
@@ -197,7 +219,7 @@ export default function TerritorialDivisions() {
               {m === "politico" ? "◇ Político" : m === "geografico" ? "▲ Geográfico" : "◉ GTA V mode"}
             </button>
           ))}
-          <span className="ap-status">{error ? "Error de cartografía" : atlas ? "Geometrías verificadas · GeoJSON" : "Cargando datos..."}</span>
+          <span className="ap-status">{error ? "Error cargando GeoJSON" : atlas ? "Archivos GeoJSON cargados" : "Cargando datos..."}</span>
         </nav>
 
         <section className="ap-layout">
@@ -226,9 +248,16 @@ export default function TerritorialDivisions() {
           </aside>
 
           <div className="ap-mapcol">
-            <div className={`ap-map-shell ap-${modo}`}>
+            <div className={`ap-map-shell ap-${modo} ${CARTO_CONFIGURADO ? "ap-con-carto" : "ap-sin-carto"}`}>
               <MapContainer center={PANE_ORIGEN} zoom={10} zoomControl={false} className="ap-map" preferCanvas>
-                <TileLayer key={modo} url={BG[modo].url} attribution={BG[modo].attribution} maxZoom={BG[modo].maxZoom} />
+                <TileLayer
+                  key={`${modo}-${CARTO_CONFIGURADO ? "carto" : "relieve"}`}
+                  url={mapaBase.url}
+                  attribution={mapaBase.attribution}
+                  maxZoom={mapaBase.maxZoom}
+                  maxNativeZoom={mapaBase.maxNativeZoom}
+                  subdomains={CARTO_CONFIGURADO && modo !== "geografico" ? "abcd" : "abc"}
+                />
                 <Desplazamiento id={seleccion} atlas={atlas} reiniciar={reiniciar} />
                 {atlas && capas.regiones && <GeoJSON key={`${modo}-${seleccion}`} data={regionFeatureCollection}
                   style={f => geoEstilo(f, seleccion, modo, capas.regiones)}
@@ -270,9 +299,24 @@ export default function TerritorialDivisions() {
                 <ZoomControl position="bottomright" />
                 <ScaleControl position="bottomleft" metric imperial={false} />
               </MapContainer>
-              <div className="ap-map-legend"><span className="ap-indicator" /> {modo === "politico" ? "MAPA POLÍTICO" : modo === "geografico" ? "MAPA GEOGRÁFICO" : "MAPA ESTILO GTA V"}</div>
+              <div className="ap-map-legend"><span className="ap-indicator" /> {modo === "politico" ? "DIVISIÓN POLÍTICA" : modo === "geografico" ? "RELIEVE GEOGRÁFICO" : "MODO GTA V"}</div>
+              {!CARTO_CONFIGURADO && modo !== "geografico" && (
+                <div className="ap-map-provider-note">
+                  <strong>Fondo alternativo activo</strong>
+                  <span>Para CARTO, configura <code>VITE_CARTO_BASEMAPS_KEY</code>.</span>
+                  <a href="https://www.carto.com/basemaps/apikey/" target="_blank" rel="noopener noreferrer">Obtener clave CARTO ↗</a>
+                </div>
+              )}
               {!atlas && !error && <div className="ap-loading">Cargando cartografía georreferenciada…</div>}
               {error && <div className="ap-loading ap-error">Error: {error}<p>Comprueba que public/atlas/ contiene los archivos y vuelve a cargar la página.</p></div>}
+            </div>
+
+            <div className="ap-region-legend" aria-label="Leyenda regional">
+              {REGIONES.filter(r => r.id !== "sahara").map(r => (
+                <button key={r.id} type="button" onClick={() => elegir(r.id)} className={seleccion === r.id ? "is-selected" : ""}>
+                  <i style={{ backgroundColor: r.color }} aria-hidden="true" />{r.nombre}
+                </button>
+              ))}
             </div>
 
             <div className="ap-footpanels">
@@ -293,7 +337,7 @@ export default function TerritorialDivisions() {
             </div>
           </div>
         </section>
-        <footer className="ap-carto-footer">Fuentes de límites: geoBoundaries, IGN Admin Express · Fondo: OpenStreetMap / CARTO / Esri · Sistema WGS84 · Adscripciones políticas ficticias · v2.0</footer>
+        <footer className="ap-carto-footer">Fuentes de límites: geoBoundaries, IGN Admin Express · Fondo: OpenStreetMap / CARTO / Esri · Sistema WGS84 · Adscripciones políticas ficticias · v2.1</footer>
       </main>
       <Footer />
     </div>
