@@ -1,0 +1,131 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "pantopia",
+      "properties": {
+        "id": "pantopia",
+        "nombre": "Pantopía",
+        "region_id": "baguette",
+        "categoria": "capital",
+        "rango": "nacional_y_regional",
+        "ubicacion_real": "Ubicación propuesta en Baguette; coordenada exacta pendiente",
+        "estado": "definida",
+        "precision": "referencial"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1.555,
+          42.493
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "pimbolandia",
+      "properties": {
+        "id": "pimbolandia",
+        "nombre": "Pimbolandia",
+        "region_id": "pimbo",
+        "categoria": "capital",
+        "rango": "regional",
+        "ubicacion_real": "Ordino",
+        "estado": "definida",
+        "precision": "nucleo_urbano"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1.532,
+          42.556
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "vila-croissant",
+      "properties": {
+        "id": "vila-croissant",
+        "nombre": "Vila Croissant",
+        "region_id": "croissant",
+        "categoria": "capital",
+        "rango": "regional",
+        "ubicacion_real": "Meritxell",
+        "estado": "definida",
+        "precision": "nucleo_urbano"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1.59064,
+          42.55363
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "pretzelopolis",
+      "properties": {
+        "id": "pretzelopolis",
+        "nombre": "Pretzelópolis",
+        "region_id": "pretzel",
+        "categoria": "capital",
+        "rango": "regional",
+        "ubicacion_real": "Bayona",
+        "estado": "definida",
+        "precision": "nucleo_urbano"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -1.4748,
+          43.4929
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "chinpan",
+      "properties": {
+        "id": "chinpan",
+        "nombre": "ChinPan",
+        "region_id": "sin-gluten",
+        "categoria": "capital",
+        "rango": "regional",
+        "ubicacion_real": "Meda Gran, islas Medas",
+        "estado": "definida",
+        "precision": "nucleo_urbano"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.2225,
+          42.047222
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "arepa",
+      "properties": {
+        "id": "arepa",
+        "nombre": "Arepa",
+        "region_id": "pan-plano-arepa",
+        "categoria": "capital",
+        "rango": "regional",
+        "ubicacion_real": "Ushuaia",
+        "estado": "definida",
+        "precision": "nucleo_urbano"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -68.303,
+          -54.8019
+        ]
+      }
+    }
+  ]
+}

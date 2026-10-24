@@ -1,0 +1,43 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "atlantida-ref",
+      "properties": {
+        "id": "atlantida-ref",
+        "nombre": "Atlántida",
+        "region_id": "atlantida",
+        "categoria": "referencia_territorial",
+        "estado": "sin_delimitacion",
+        "nota": "Posición de referencia en el entorno de Base Belgrano II. La capital y los límites no están acordados."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -34.626,
+          -77.873
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "sahara-ref",
+      "properties": {
+        "id": "sahara-ref",
+        "nombre": "Sáhara Occidental",
+        "region_id": null,
+        "categoria": "territorio_en_negociaciones",
+        "estado": "en_negociaciones",
+        "nota": "Área representada con un punto de referencia, sin frontera política paniense."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -13.22,
+          25.35
+        ]
+      }
+    }
+  ]
+}

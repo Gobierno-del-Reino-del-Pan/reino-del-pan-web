@@ -1,0 +1,108 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "p-01",
+      "properties": {
+        "id": "p-01",
+        "nombre": "Corredor Pantopía–Pimbolandia",
+        "categoria": "carretera",
+        "estado": "esquematico",
+        "clase": "corredor_propuesto",
+        "nota": "Propuesta de planificación; NO es trazado carretero real ni ruta navegable."
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            1.555,
+            42.493
+          ],
+          [
+            1.5218,
+            42.5063
+          ],
+          [
+            1.511,
+            42.536
+          ],
+          [
+            1.532,
+            42.556
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "p-02",
+      "properties": {
+        "id": "p-02",
+        "nombre": "Corredor Pantopía–Vila Croissant",
+        "categoria": "carretera",
+        "estado": "esquematico",
+        "clase": "corredor_propuesto",
+        "nota": "Propuesta de planificación; NO es trazado carretero real ni ruta navegable."
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            1.555,
+            42.493
+          ],
+          [
+            1.534,
+            42.508
+          ],
+          [
+            1.565,
+            42.528
+          ],
+          [
+            1.578,
+            42.541
+          ],
+          [
+            1.59064,
+            42.55363
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "p-03",
+      "properties": {
+        "id": "p-03",
+        "nombre": "Eje de acceso oriental",
+        "categoria": "carretera",
+        "estado": "esquematico",
+        "clase": "corredor_propuesto",
+        "nota": "Propuesta de planificación; NO es trazado carretero real ni ruta navegable."
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            1.59064,
+            42.55363
+          ],
+          [
+            1.602,
+            42.568
+          ],
+          [
+            1.635,
+            42.57
+          ],
+          [
+            1.696,
+            42.542
+          ]
+        ]
+      }
+    }
+  ]
+}
