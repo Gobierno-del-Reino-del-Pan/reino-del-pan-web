@@ -26,11 +26,11 @@ interface DiscordMember {
   avatar: string;
 }
 
-const SERVER_ID = String(import.meta.env.VITE_GUILD_ID || "1381359904731693056");
+const SERVER_ID = String(import.meta.env.VITE_GUILD_ID || "1559527103420965016");
 const ROLES = {
-  GIMNASIO: String(import.meta.env.VITE_ROLE_GIMNASIO || "1508080870303596604"),
-  ALTO_MANDO: String(import.meta.env.VITE_ROLE_ALTO_MANDO || "1508080141501333576"),
-  ENTRENADORES_REGISTRADOS: String(import.meta.env.VITE_ROLE_ENTRENADORES || "1508081112230920402"),
+  GIMNASIO: String(import.meta.env.VITE_ROLE_GIMNASIO || "1559527104654213166"),
+  ALTO_MANDO: String(import.meta.env.VITE_ROLE_ALTO_MANDO || "1559527104654213169"),
+  ENTRENADORES_REGISTRADOS: String(import.meta.env.VITE_ROLE_ENTRENADORES || "1559527104549359680"),
 };
 
 const DEFAULT_AVATAR = "https://cdn.discordapp.com/embed/avatars/0.png";
@@ -363,15 +363,15 @@ export default function PKMN() {
                 <div className="pk-roster-top"><strong><Trophy size={19} color="#9A447F" aria-hidden="true" /> Miembros del Alto Mando</strong><span className="pk-roster-count">{loading || loadError ? "—" : elite4.length}</span></div>
                 {loading ? <div aria-label="Cargando Alto Mando"><div className="pk-skeleton" /><div className="pk-skeleton" /></div>
                   : loadError ? <p className="pk-empty">No se ha podido consultar el Alto Mando.</p>
-                  : elite4.length === 0 ? <p className="pk-empty">No hay miembros asignados al Alto Mando todavía.</p>
-                  : <div className="pk-roster-list">{elite4.map(m => <UserRow key={m.id} member={m} />)}</div>}
+                    : elite4.length === 0 ? <p className="pk-empty">No hay miembros asignados al Alto Mando todavía.</p>
+                      : <div className="pk-roster-list">{elite4.map(m => <UserRow key={m.id} member={m} />)}</div>}
               </motion.article>
               <motion.article {...appear(.06)} className="pk-roster pk-glass">
                 <div className="pk-roster-top"><strong><Swords size={19} color="#9A447F" aria-hidden="true" /> Líderes de Gimnasio</strong><span className="pk-roster-count">{loading || loadError ? "—" : leaders.length} / 8</span></div>
                 {loading ? <div aria-label="Cargando gimnasios"><div className="pk-skeleton" /><div className="pk-skeleton" /></div>
                   : loadError ? <p className="pk-empty">No se han podido consultar los gimnasios.</p>
-                  : leaders.length === 0 ? <p className="pk-empty">Los gimnasios están vacíos en este momento.</p>
-                  : <div className="pk-roster-list">{leaders.map(m => <UserRow key={m.id} member={m} />)}</div>}
+                    : leaders.length === 0 ? <p className="pk-empty">Los gimnasios están vacíos en este momento.</p>
+                      : <div className="pk-roster-list">{leaders.map(m => <UserRow key={m.id} member={m} />)}</div>}
               </motion.article>
             </div>
           </div>
@@ -412,7 +412,7 @@ export default function PKMN() {
                 <div>
                   <span className="pk-mafia-eyebrow">♠ ARCHIVO INFILTRADO · SEC_LEVEL: BLACK</span>
                   <h3>REPORTE: <span>[SUJETO_02-X]</span></h3>
-                  <p><strong style={{color:"#e4ab5f"}}>[EXTRACCIÓN]</strong> Información sustraída de los servidores del Laboratorio Central. Archivos clasificados detallan la alteración genética de un espécimen base felino-humanoide. Financiación conjunta entre <strong style={{color:"#e4ab5f"}}>La Mafia del Pan</strong> y la división científica del <strong>Team Rocket</strong>. Estructura celular reescrita para asimilar energía cinética destructiva. Estado actual: En fase de incubación biomecánica.</p>
+                  <p><strong style={{ color: "#e4ab5f" }}>[EXTRACCIÓN]</strong> Información sustraída de los servidores del Laboratorio Central. Archivos clasificados detallan la alteración genética de un espécimen base felino-humanoide. Financiación conjunta entre <strong style={{ color: "#e4ab5f" }}>La Mafia del Pan</strong> y la división científica del <strong>Team Rocket</strong>. Estructura celular reescrita para asimilar energía cinética destructiva. Estado actual: En fase de incubación biomecánica.</p>
                 </div>
               </div>
               <div className="pk-mafia-footer"><span>● MAFIA_NET // LINK_ESTABLISHED ♠</span><s>Especie verificada por el Laboratorio Central ★</s></div>
