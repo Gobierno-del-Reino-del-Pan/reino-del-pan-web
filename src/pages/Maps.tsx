@@ -1,15 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  GeoJSON,
-  MapContainer,
-  Marker,
-  Popup,
-  ScaleControl,
-  TileLayer,
-  Tooltip,
-  ZoomControl,
-  useMap,
-} from "react-leaflet";
+import { GeoJSON, MapContainer, Marker, Popup, ScaleControl, TileLayer, Tooltip, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { Feature, FeatureCollection, Geometry, Point } from "geojson";
 import Header from "../components/Header";
@@ -17,372 +7,293 @@ import Footer from "../components/Footer";
 import "leaflet/dist/leaflet.css";
 import "./TerritorialDivisions.css";
 
-/** Atlas Paniense v1.0 — fuentes GeoJSON almacenadas en /public/atlas.
- * Los polígonos son una propuesta política FICTICIA y provisional.
- * Ningún corredor esquemático constituye una ruta GPS ni implica que haya sido construido.
+/*
+ * ESTADO PANIENSE — Atlas territorial v2.0
+ * Los polígonos de /public/atlas/ proceden de fuentes cartográficas REALES.
+ * La agrupación de parroquias/municipios como regiones panienses es FICTICIA
+ * y permanece provisional hasta su ratificación. No se interpolan fronteras.
  */
-type Modo = "politico" | "geografico" | "gta";
-type RegionId =
-  | "pimbo" | "baguette" | "croissant" | "pretzel"
-  | "sin-gluten" | "pan-plano-arepa" | "atlantida";
-type CapaId = "capitales" | "carreteras" | "ferrocarriles" | "aeropuertos" |
-  "estaciones" | "puertos" | "otros" | "especiales" | "regiones";
 
-type AtlasProperties = {
+type Modo = "politico" | "geografico" | "gta";
+type Identificador = "pimbo" | "baguette" | "croissant" | "pretzel" |
+  "sin-gluten" | "pan-plano-arepa" | "atlantida" | "sahara";
+type DatosCapa = "regiones" | "capitales" | "especiales" | "carreteras" |
+  "ferrocarriles" | "aeropuertos" | "estaciones" | "puertos" | "otros";
+type Propiedades = {
   id?: string;
-  region_id?: string | null;
+  region_id?: string;
   nombre?: string;
   categoria?: string;
+  clase?: string;
+  rango?: string;
   estado?: string;
   estado_limite?: string;
-  rango?: string;
+  unidad_origen?: string;
+  source?: string;
   nota?: string;
-  ubicacion_real?: string;
-  clase?: string;
-  ambito?: string;
 };
-type AtlasCollection = FeatureCollection<Geometry, AtlasProperties>;
-type AtlasFeature = Feature<Geometry, AtlasProperties>;
-
-type AtlasData = {
-  regiones: AtlasCollection;
-  capitales: AtlasCollection;
-  carreteras: AtlasCollection;
-  ferrocarriles: AtlasCollection;
-  infraestructuras: AtlasCollection;
-  especiales: AtlasCollection;
-};
+type Coleccion = FeatureCollection<Geometry, Propiedades>;
+type Elemento = Feature<Geometry, Propiedades>;
+type Atlas = Record<DatosCapa, Coleccion>;
 
 type Region = {
-  id: RegionId;
+  id: Identificador;
   nombre: string;
   capital: string | null;
-  capitalLugar: string | null;
   descripcion: string;
   color: string;
-  emoji: string;
-  flagFile: string;
+  bandera: string;
   situacion: string;
+  centro: [number, number];
+  zoom: number;
 };
 
 const REGIONES: Region[] = [
-  { id: "pimbo", nombre: "Pimbo", capital: "Pimbolandia", capitalLugar: "Ordino", descripcion: "Occidente andorrano", color: "#9B7DE4", emoji: "🫓", flagFile: "Pimbo", situacion: "Límites interiores provisionales" },
-  { id: "baguette", nombre: "Baguette", capital: "Pantopía", capitalLugar: "Capital estatal y regional", descripcion: "Centro y sur andorrano", color: "#4F98DD", emoji: "🥖", flagFile: "Baguette", situacion: "Ubicación exacta de Pantopía pendiente" },
-  { id: "croissant", nombre: "Croissant", capital: "Vila Croissant", capitalLugar: "Meritxell", descripcion: "Oriente andorrano", color: "#D99014", emoji: "🥐", flagFile: "Croissant", situacion: "Límites interiores provisionales" },
-  { id: "pretzel", nombre: "Pretzel", capital: "Pretzelópolis", capitalLugar: "Bayona", descripcion: "Costa vasca francesa", color: "#F5804A", emoji: "🥨", flagFile: "Pretzel", situacion: "Perímetro costero provisional" },
-  { id: "sin-gluten", nombre: "Sin Glúten", capital: "ChinPan", capitalLugar: "Meda Gran (islas Medas)", descripcion: "Islas Medas y sector litoral de Girona", color: "#70D878", emoji: "🌿", flagFile: "Sin Glúten", situacion: "Parte continental pendiente de ratificar" },
-  { id: "pan-plano-arepa", nombre: "Pan Plano/Arepa", capital: "Arepa", capitalLugar: "Ushuaia", descripcion: "Tierra del Fuego", color: "#F56A72", emoji: "🫓", flagFile: "Pan Plano-Arepa", situacion: "Límites de ultramar provisionales" },
-  { id: "atlantida", nombre: "Atlántida", capital: null, capitalLugar: null, descripcion: "Territorio de ultramar antártico", color: "#32D3E8", emoji: "❄️", flagFile: "Atlántida", situacion: "Capital y perímetro sin determinar" },
+  { id: "pimbo", nombre: "Pimbo", capital: "Pimbolandia", descripcion: "Sector noroccidental y suroccidental andorrano", color: "#A17DEB", bandera: "Pimbo", situacion: "Ordino, La Massana y Sant Julià de Lòria · agrupación provisional", centro: [42.55, 1.49], zoom: 11 },
+  { id: "baguette", nombre: "Baguette", capital: "Pantopía", descripcion: "Sede del Gobierno del Estado Paniense", color: "#4B9DDD", bandera: "Baguette", situacion: "Andorra la Vella y Escaldes-Engordany · agrupación provisional", centro: [42.51, 1.54], zoom: 12 },
+  { id: "croissant", nombre: "Croissant", capital: "Vila Croissant", descripcion: "Sector oriental andorrano", color: "#E09A20", bandera: "Croissant", situacion: "Encamp y Canillo · agrupación provisional", centro: [42.555, 1.64], zoom: 11 },
+  { id: "pretzel", nombre: "Pretzel", capital: "Pretzelópolis", descripcion: "Franja litoral vascofrancesa", color: "#F47544", bandera: "Pretzel", situacion: "10 comunas costeras reales · selección provisional", centro: [43.36, -1.55], zoom: 10 },
+  { id: "sin-gluten", nombre: "Sin Glúten", capital: "ChinPan", descripcion: "Islas Medas y sector continental de Girona", color: "#67D58D", bandera: "Sin Glúten", situacion: "Límites insulares y continentales pendientes de aprobación", centro: [42.05, 3.225], zoom: 13 },
+  { id: "pan-plano-arepa", nombre: "Pan Plano / Arepa", capital: "Arepa", descripcion: "Sector argentino de Tierra del Fuego", color: "#F16F76", bandera: "Pan Plano-Arepa", situacion: "Contorno real histórico; precisión local de Ushuaia pendiente", centro: [-54.4, -67.5], zoom: 7 },
+  { id: "atlantida", nombre: "Atlántida", capital: null, descripcion: "Territorio de ultramar antártico", color: "#35CDE2", bandera: "Atlántida", situacion: "Perímetro y capital pendientes de definición", centro: [-77.87, -34.62], zoom: 5 },
+  { id: "sahara", nombre: "Sáhara Occidental", capital: null, descripcion: "Territorio en negociaciones", color: "#B5BEC9", bandera: "", situacion: "No es una región ratificada del Estado Paniense", centro: [24.21, -13.21], zoom: 6 },
 ];
-const REGIONES_POR_ID = Object.fromEntries(REGIONES.map((r) => [r.id, r])) as Record<RegionId, Region>;
-const COLECCIONES: (keyof AtlasData)[] = [
-  "regiones", "capitales", "carreteras", "ferrocarriles", "infraestructuras", "especiales",
+const POR_ID = Object.fromEntries(REGIONES.map(r => [r.id, r])) as Record<Identificador, Region>;
+const CAPAS: DatosCapa[] = ["regiones", "capitales", "especiales", "carreteras", "ferrocarriles", "aeropuertos", "estaciones", "puertos", "otros"];
+const CAPA_INFO: { id: DatosCapa; label: string; emoji: string }[] = [
+  { id: "regiones", label: "Límites territoriales", emoji: "◇" },
+  { id: "capitales", label: "Capitales", emoji: "★" },
+  { id: "carreteras", label: "Carreteras", emoji: "═" },
+  { id: "ferrocarriles", label: "Ferrocarriles", emoji: "≋" },
+  { id: "aeropuertos", label: "Aeropuertos", emoji: "✈" },
+  { id: "estaciones", label: "Estaciones", emoji: "▣" },
+  { id: "puertos", label: "Puertos", emoji: "⚓" },
+  { id: "otros", label: "Otros equipamientos", emoji: "◆" },
+  { id: "especiales", label: "Situaciones especiales", emoji: "◎" },
 ];
-const VACIA: AtlasCollection = { type: "FeatureCollection", features: [] };
-const ANDORRA: L.LatLngExpression = [42.535, 1.575];
-const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+const VACIA: Coleccion = { type: "FeatureCollection", features: [] };
+const PANE_ORIGEN: L.LatLngTuple = [42.533, 1.568];
+const BG: Record<Modo, { url: string; attribution: string; maxZoom: number }> = {
+  politico: {
+    url: "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    maxZoom: 19,
+  },
+  geografico: {
+    // World Shaded Relief no incluye nombres urbanos como capa principal.
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Tiles &copy; Esri · Esri, USGS, NOAA",
+    maxZoom: 13,
+  },
+  gta: {
+    url: "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    maxZoom: 19,
+  },
+};
 
-function escapar(texto: unknown): string {
-  return String(texto ?? "").replace(/[&<>"']/g, (c) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-  }[c] ?? c));
-}
-
-function useDatosAtlas() {
-  const [datos, setDatos] = useState<AtlasData | null>(null);
+function useAtlas(): { atlas: Atlas | null; error: string | null } {
+  const [atlas, setAtlas] = useState<Atlas | null>(null);
   const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
-    const controller = new AbortController();
-    async function cargar() {
+    const abort = new AbortController();
+    (async () => {
       try {
-        const colecciones = await Promise.all(COLECCIONES.map(async (nombre) => {
-          const respuesta = await fetch(`/atlas/${nombre}.geojson`, { signal: controller.signal });
-          if (!respuesta.ok) throw new Error(`No se puede cargar /atlas/${nombre}.geojson (${respuesta.status})`);
-          const json = (await respuesta.json()) as AtlasCollection;
-          if (json.type !== "FeatureCollection" || !Array.isArray(json.features)) {
-            throw new Error(`GeoJSON incorrecto: ${nombre}`);
-          }
-          return json;
+        const pairs = await Promise.all(CAPAS.map(async (capa) => {
+          const r = await fetch(`${import.meta.env.BASE_URL}atlas/${capa}.geojson`, { signal: abort.signal });
+          if (!r.ok) throw new Error(`No se encontró ${capa}.geojson (HTTP ${r.status})`);
+          const data = await r.json() as Coleccion;
+          if (data.type !== "FeatureCollection" || !Array.isArray(data.features)) throw new Error(`GeoJSON inválido: ${capa}`);
+          return [capa, data] as const;
         }));
-        if (controller.signal.aborted) return;
-        setDatos(Object.fromEntries(COLECCIONES.map((nombre, i) => [nombre, colecciones[i]])) as AtlasData);
-      } catch (ex) {
-        if (controller.signal.aborted) return;
-        setError(ex instanceof Error ? ex.message : "Error al cargar el atlas.");
+        if (!abort.signal.aborted) setAtlas(Object.fromEntries(pairs) as Atlas);
+      } catch (e) {
+        if (!abort.signal.aborted) setError(e instanceof Error ? e.message : "Error cargando GeoJSON");
       }
-    }
-    void cargar();
-    return () => controller.abort();
+    })();
+    return () => abort.abort();
   }, []);
-  return { datos, error };
+  return { atlas, error };
 }
 
-function Navegador({ seleccion, datos }: { seleccion: string | null; datos: AtlasData | null }) {
-  const mapa = useMap();
+function Desplazamiento({ id, atlas, reiniciar }: { id: Identificador | null; atlas: Atlas | null; reiniciar: number }) {
+  const map = useMap();
   useEffect(() => {
-    if (!datos) return;
-    if (!seleccion) {
-      mapa.flyTo(ANDORRA, 10, { duration: 0.9 });
-      return;
+    if (!atlas) return;
+    if (!id) { map.flyTo(PANE_ORIGEN, 10, { duration: 0.65 }); return; }
+    const region = POR_ID[id];
+    const fs = atlas.regiones.features.filter(f => f.properties?.region_id === id);
+    if (fs.length) {
+      const bounds = L.geoJSON({ type: "FeatureCollection", features: fs } as Coleccion).getBounds();
+      if (bounds.isValid()) { map.flyToBounds(bounds.pad(0.15), { maxZoom: region.zoom, duration: 0.8 }); return; }
     }
-    const region = datos.regiones.features.find((f) => f.properties?.region_id === seleccion);
-    if (region) {
-      const limites = L.geoJSON(region).getBounds();
-      if (limites.isValid()) {
-        mapa.flyToBounds(limites.pad(0.12), {
-          maxZoom: seleccion === "sin-gluten" ? 13 : seleccion === "pimbo" || seleccion === "baguette" || seleccion === "croissant" ? 11 : 10,
-          duration: 0.9,
-        });
-        return;
-      }
-    }
-    const especial = datos.especiales.features.find((f) =>
-      seleccion === "sahara" ? f.properties?.id === "sahara-ref" : f.properties?.region_id === seleccion);
-    if (especial?.geometry.type === "Point") {
-      const [lon, lat] = especial.geometry.coordinates;
-      mapa.flyTo([lat, lon], seleccion === "sahara" ? 5 : 7, { duration: 0.9 });
-    }
-  }, [mapa, seleccion, datos]);
+    map.flyTo(region.centro, region.zoom, { duration: 0.8 });
+  }, [map, id, atlas, reiniciar]);
   return null;
 }
 
-function IconoMarcador(categoria: string, regionId?: string | null) {
-  const iconos: Record<string, string> = {
-    capital: "★", aeropuerto: "✈", estacion_tren: "🚆", puerto: "⚓",
-    hospital: "+", monumento: "◆", recurso: "●", ciudad: "●",
-    referencia_territorial: "❄", territorio_en_negociaciones: "?",
-  };
-  const icono = iconos[categoria] ?? "•";
-  const color = regionId && regionId in REGIONES_POR_ID
-    ? REGIONES_POR_ID[regionId as RegionId].color : "#e2e8f0";
-  return L.divIcon({
-    className: "atlas-marker-wrapper",
-    html: `<span class="atlas-marker" style="--marker-color:${color}">${icono}</span>`,
-    iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -13],
-  });
+function iconoPunto(kind: string, regionId?: string): L.DivIcon {
+  const emoji = kind === "capital" ? "★" : kind === "aeropuerto" ? "✈" : kind === "estacion" ? "▣" :
+    kind === "puerto" ? "⚓" : kind === "negociaciones" ? "!" : kind === "territorio_ultramar" ? "❄" : "◆";
+  const color = regionId && (regionId as Identificador) in POR_ID ? POR_ID[regionId as Identificador].color : "#E5EBF5";
+  return L.divIcon({ className: "ap-icono-wrap", html: `<span class="ap-icono" style="--ap-color:${color}">${emoji}</span>`, iconSize: [34, 34], iconAnchor: [17, 17], popupAnchor: [0, -14] });
 }
 
-function PiezaMarcador({ f, alSeleccionar, etiqueta }: {
-  f: AtlasFeature;
-  alSeleccionar: (id: string) => void;
-  etiqueta?: boolean;
-}) {
-  if (f.geometry.type !== "Point") return null;
-  const propiedades = f.properties ?? {};
-  const [lon, lat] = (f.geometry as Point).coordinates;
-  const categoria = propiedades.categoria ?? "ciudad";
-  const region = propiedades.region_id ?? "";
-  const nombre = propiedades.nombre ?? "Punto sin nombre";
-  const r = region in REGIONES_POR_ID ? REGIONES_POR_ID[region as RegionId] : null;
-  return (
-    <Marker
-      key={String(f.id ?? propiedades.id ?? nombre)}
-      position={[lat, lon]}
-      icon={IconoMarcador(categoria, region)}
-      eventHandlers={{ click: () => { if (region) alSeleccionar(region); } }}
-    >
-      {etiqueta && <Tooltip permanent direction="top" offset={[0, -12]} className="atlas-capital-tooltip">{nombre}</Tooltip>}
-      <Popup>
-        <div className="atlas-popup">
-          <b>{nombre}</b>
-          <p>{r ? r.nombre : "Territorio especial"}</p>
-          {categoria === "capital" && <p><strong>{propiedades.rango === "nacional_y_regional" ? "Capital del Estado Paniense y de Baguette" : "Capital regional"}</strong></p>}
-          {propiedades.ubicacion_real && <p>Ubicación: {propiedades.ubicacion_real}</p>}
-          {propiedades.estado && <small>Estado: {propiedades.estado}</small>}
-          {propiedades.nota && <p>{propiedades.nota}</p>}
-        </div>
-      </Popup>
-    </Marker>
-  );
+function geoEstilo(f: Feature | undefined, selected: Identificador | null, modo: Modo, show: boolean): L.PathOptions {
+  const id = f?.properties?.region_id as Identificador | undefined;
+  const color = id && POR_ID[id] ? POR_ID[id].color : "#82909F";
+  const active = selected === id;
+  const muted = selected && !active;
+  return {
+    color: modo === "gta" ? (active ? "#FFFFFF" : color) : color,
+    weight: active ? 3.3 : modo === "gta" ? 2.3 : 1.8,
+    opacity: show ? 0.95 : 0,
+    fillColor: color,
+    fillOpacity: !show ? 0 : muted ? 0.09 : modo === "geografico" ? (active ? 0.24 : 0.12) : modo === "gta" ? (active ? 0.62 : 0.39) : active ? 0.58 : 0.40,
+  };
+}
+
+function capitalPopup(f: Elemento) {
+  const p = f.properties ?? {};
+  const id = p.region_id as Identificador | undefined;
+  return <div className="ap-popup">
+    <strong>{p.nombre}</strong>
+    <span>{id && POR_ID[id]?.nombre}</span>
+    <p>{p.rango === "capital_estado_y_region" ? "Capital del Estado Paniense y de Baguette" : "Capital regional"}</p>
+    {p.estado !== "emplazamiento_acordado" && <small>Emplazamiento cartográfico aproximado</small>}
+  </div>;
 }
 
 export default function TerritorialDivisions() {
-  const { datos, error } = useDatosAtlas();
+  const { atlas, error } = useAtlas();
   const [modo, setModo] = useState<Modo>("politico");
-  const [regionId, setRegionId] = useState<string | null>(null);
-  const [capas, setCapas] = useState<Record<CapaId, boolean>>({
-    regiones: true, capitales: true, carreteras: true, ferrocarriles: false,
-    aeropuertos: true, estaciones: true, puertos: true, otros: false, especiales: true,
+  const [seleccion, setSeleccion] = useState<Identificador | null>(null);
+  const [reiniciar, setReiniciar] = useState(0);
+  const [capas, setCapas] = useState<Record<DatosCapa, boolean>>({
+    regiones: true, capitales: true, especiales: true, carreteras: false,
+    ferrocarriles: false, aeropuertos: false, estaciones: false, puertos: false, otros: false,
   });
+  const [fichaAbierta, setFichaAbierta] = useState(true);
+  const activo = seleccion ? POR_ID[seleccion] : null;
+  const vacio = (nombre: DatosCapa) => atlas?.[nombre] ?? VACIA;
+  const provinciasActivas = useMemo(() => (atlas?.regiones.features ?? []).filter(f => seleccion === null || f.properties?.region_id === seleccion), [atlas, seleccion]);
+  const capitalesActivas = useMemo(() => (atlas?.capitales.features ?? []).filter(f => seleccion === null || f.properties?.region_id === seleccion), [atlas, seleccion]);
+  const regionFeatureCollection: Coleccion = useMemo(() => ({ type: "FeatureCollection", features: atlas?.regiones.features ?? [] }), [atlas]);
+  const elegir = useCallback((id: Identificador | null) => { setSeleccion(id); if (id === seleccion) setReiniciar(n => n + 1); }, [seleccion]);
+  const exportar = (n: DatosCapa) => { const base = import.meta.env.BASE_URL; window.open(`${base}atlas/${n}.geojson`, "_blank", "noopener,noreferrer"); };
 
-  const alternarCapa = useCallback((capa: CapaId) => setCapas((actual) => ({ ...actual, [capa]: !actual[capa] })), []);
-  const regionActual = regionId && regionId in REGIONES_POR_ID ? REGIONES_POR_ID[regionId as RegionId] : null;
-  const territorios = datos?.regiones ?? VACIA;
-  const carreteras = datos?.carreteras ?? VACIA;
-  const ferrocarriles = datos?.ferrocarriles ?? VACIA;
-  const especiales = datos?.especiales ?? VACIA;
-  const capitales = datos?.capitales ?? VACIA;
-
-  const puntosAdicionales = useMemo(() => (datos?.infraestructuras.features ?? []).filter((f) => {
-    if (f.geometry.type !== "Point") return false;
-    const tipo = f.properties?.categoria;
-    if (tipo === "aeropuerto") return capas.aeropuertos;
-    if (tipo === "estacion_tren") return capas.estaciones;
-    if (tipo === "puerto") return capas.puertos;
-    return capas.otros;
-  }), [datos, capas]);
-
-  const estiloRegion = useCallback((f?: Feature): L.PathOptions => {
-    const id = f?.properties?.region_id as string | undefined;
-    const region = id && id in REGIONES_POR_ID ? REGIONES_POR_ID[id as RegionId] : null;
-    const color = region?.color ?? "#94a3b8";
-    const activa = regionId === id;
-    const atenuada = regionId !== null && !activa;
-    return {
-      color: activa ? "#ffffff" : color,
-      weight: activa ? 3 : modo === "gta" ? 2.4 : 1.8,
-      fillColor: color,
-      fillOpacity: atenuada ? 0.06 : modo === "politico" ? 0.42 : modo === "geografico" ? 0.16 : 0.27,
-      opacity: atenuada ? 0.35 : 1,
-      dashArray: modo === "gta" ? "8 3" : undefined,
-    };
-  }, [modo, regionId]);
-
-  const onEachRegion = useCallback((f: Feature, layer: L.Layer) => {
-    const id = String(f.properties?.region_id ?? "");
-    const nombre = String(f.properties?.nombre ?? id);
-    const shape = layer as L.Path;
-    layer.bindTooltip(escapar(nombre), { className: "atlas-region-tooltip", sticky: true });
-    layer.bindPopup(`<strong>${escapar(nombre)}</strong><p>Límite político provisional. Selecciona la región para consultar su ficha.</p>`);
-    layer.on("click", () => setRegionId(id));
-    layer.on("mouseover", () => shape.setStyle({ weight: 3.6, fillOpacity: 0.55 }));
-    layer.on("mouseout", () => shape.setStyle(estiloRegion(f)));
-  }, [estiloRegion]);
-
-  const onEachVia = useCallback((f: Feature, layer: L.Layer) => {
-    const p = f.properties ?? {};
-    layer.bindPopup(`<b>${escapar(p.nombre)}</b><p>${escapar(p.nota ?? "Infraestructura de transporte")}</p>`);
-  }, []);
-
-  const capasLista: { id: CapaId; etiqueta: string; cuenta?: number }[] = [
-    { id: "regiones", etiqueta: "Fronteras políticas", cuenta: territorios.features.length },
-    { id: "capitales", etiqueta: "Capitales", cuenta: capitales.features.length },
-    { id: "carreteras", etiqueta: "Carreteras / corredores", cuenta: carreteras.features.length },
-    { id: "ferrocarriles", etiqueta: "Ferrocarriles", cuenta: ferrocarriles.features.length },
-    { id: "aeropuertos", etiqueta: "Aeropuertos" },
-    { id: "estaciones", etiqueta: "Estaciones" },
-    { id: "puertos", etiqueta: "Puertos" },
-    { id: "otros", etiqueta: "Otros servicios" },
-    { id: "especiales", etiqueta: "Territorios especiales" },
-  ];
-
-  const topografia = modo === "geografico";
   return (
-    <div className="atlas-pagina">
+    <div className="ap-page">
       <Header />
-      <main className="atlas-contenedor">
-        <header className="atlas-cabecera">
-          <div>
-            <p className="atlas-eyebrow">ESTADO PANIENSE / CARTOGRAFÍA NACIONAL</p>
-            <h1>Atlas Territorial <span className="atlas-version">v1.0</span></h1>
-            <p>Atlas político, geográfico y modo GTA · 7 regiones y territorios · límites en revisión</p>
-          </div>
-          <a className="atlas-descargar" href="/atlas/regiones.geojson" download="regiones-paniense.geojson">↓ GeoJSON territorial</a>
+      <main className="ap-main">
+        <div className="ap-kicker">ESTADO PANIENSE <span>/</span> CARTOGRAFÍA NACIONAL <span>/</span> v2.0</div>
+        <header className="ap-header">
+          <div><h1>Atlas territorial</h1><p>Mapa político, geográfico y urbano · Cartografía basada en límites reales · Nombres panienses</p></div>
+          <div className="ap-header-actions"><button onClick={() => exportar("regiones")} className="ap-export">↓ Descargar GeoJSON</button></div>
         </header>
-
-        <section className="atlas-botones-modo" aria-label="Modo cartográfico">
-          {(["politico", "geografico", "gta"] as const).map((valor) => (
-            <button key={valor} className={modo === valor ? "activo" : ""} onClick={() => setModo(valor)} aria-pressed={modo === valor}>
-              {valor === "politico" ? "◈ Político" : valor === "geografico" ? "▲ Geográfico" : "◉ GTA V mode"}
+        <nav className="ap-modes" aria-label="Tipo de mapa">
+          {(["politico", "geografico", "gta"] as Modo[]).map((m) => (
+            <button key={m} aria-pressed={modo === m} className={modo === m ? "activo" : ""} onClick={() => setModo(m)}>
+              {m === "politico" ? "◇ Político" : m === "geografico" ? "▲ Geográfico" : "◉ GTA V mode"}
             </button>
           ))}
-          <span className="atlas-estado">{!datos && !error ? "Cargando GeoJSON…" : error ? "Error de carga" : "GeoJSON cargados"}</span>
-        </section>
+          <span className="ap-status">{error ? "Error de cartografía" : atlas ? "Geometrías verificadas · GeoJSON" : "Cargando datos..."}</span>
+        </nav>
 
-        {error && <div className="atlas-error" role="alert"><b>Error:</b> {error}. Comprueba que la carpeta <code>public/atlas</code> está disponible.</div>}
-
-        <div className="atlas-grid">
-          <aside className="atlas-sidebar" aria-label="Regiones y capas">
-            <div className="atlas-panel-titulo">DIVISIÓN TERRITORIAL <small>7 unidades</small></div>
-            <button className={`atlas-region-todo ${!regionId ? "seleccionada" : ""}`} onClick={() => setRegionId(null)}>⌖ Ver territorio principal</button>
-            <div className="atlas-region-lista">
-              {REGIONES.map((r) => (
-                <button key={r.id} className={`atlas-region-opcion ${regionId === r.id ? "seleccionada" : ""}`} onClick={() => setRegionId(r.id)}>
-                  <span className="atlas-region-indicador" style={{ backgroundColor: r.color }} />
-                  <span className="atlas-region-nombre"><b>{r.nombre}</b><small>{r.capital ? `${r.capital} · ${r.capitalLugar}` : "Capital pendiente"}</small></span>
-                  <span className="atlas-chevron">›</span>
+        <section className="ap-layout">
+          <aside className="ap-side">
+            <div className="ap-side-top"><span>REGIONES Y TERRITORIOS</span><b>7 + negociación</b></div>
+            <button className={!seleccion ? "ap-region selected ap-home" : "ap-region ap-home"} onClick={() => elegir(null)}>◎ Vista general de Andorra <span>↗</span></button>
+            <div className="ap-lista-regiones">
+              {REGIONES.map(r => (
+                <button key={r.id} className={`ap-region ${seleccion === r.id ? "selected" : ""}`} onClick={() => elegir(r.id)} aria-pressed={seleccion === r.id}>
+                  <span className="ap-region-color" style={{ background: r.color }} />
+                  <span className="ap-region-text"><strong>{r.nombre}</strong><small>{r.id === "sahara" ? "Territorio en negociaciones" : r.capital ?? "Ultramar · sin capital definida"}</small></span>
+                  <span className="ap-chevron">›</span>
                 </button>
               ))}
-              <button className={`atlas-region-opcion atlas-zona-especial ${regionId === "sahara" ? "seleccionada" : ""}`} onClick={() => setRegionId("sahara")}>
-                <span className="atlas-region-indicador" style={{ backgroundColor: "#94a3b8" }} />
-                <span className="atlas-region-nombre"><b>Sáhara Occidental</b><small>Territorio en negociaciones</small></span>
-                <span className="atlas-chevron">›</span>
-              </button>
             </div>
-
-            <div className="atlas-panel-titulo atlas-capitulo">CAPAS DEL ATLAS <small>GeoJSON</small></div>
-            <div className="atlas-capas">
-              {capasLista.map((c) => (
-                <label key={c.id} className="atlas-capa-toggle">
-                  <input type="checkbox" checked={capas[c.id]} onChange={() => alternarCapa(c.id)} />
-                  <span>{c.etiqueta}</span>
-                  {c.cuenta !== undefined && <small>{c.cuenta}</small>}
+            <div className="ap-filters"><h2>CAPAS DE INFORMACIÓN</h2>
+              {CAPA_INFO.map(c => (
+                <label key={c.id} className="ap-layer">
+                  <input type="checkbox" checked={capas[c.id]} onChange={(e) => setCapas(actual => ({ ...actual, [c.id]: e.target.checked }))} />
+                  <span className="ap-layer-symbol">{c.emoji}</span><span>{c.label}</span>
+                  {atlas && c.id !== "regiones" && c.id !== "especiales" && c.id !== "capitales" && <small>{vacio(c.id).features.length || "—"}</small>}
                 </label>
               ))}
+              <p className="ap-sidebar-note">Las infraestructuras sin datos aparecen desactivadas. Se incorporarán trazados y ubicaciones reales o proyectos documentados, nunca líneas ficticias como si fueran carreteras construidas.</p>
             </div>
-            <p className="atlas-sidebar-nota">Las carreteras precargadas son corredores esquemáticos de planificación, no rutas navegables. Los aeropuertos y las estaciones están preparados para incorporar nuevos GeoJSON.</p>
           </aside>
 
-          <div className={`atlas-mapa-panel atlas-mapa-${modo}`}>
-            <MapContainer center={ANDORRA} zoom={10} minZoom={2} maxZoom={18} zoomControl={false} className="atlas-leaflet">
-              <Navegador seleccion={regionId} datos={datos} />
-              {topografia ? (
-                <TileLayer key="topo" url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png" maxNativeZoom={17} maxZoom={18}
-                  attribution={`${OSM_ATTRIBUTION} | © OpenTopoMap (CC-BY-SA)`} />
-              ) : (
-                <TileLayer key={modo} className={modo === "gta" ? "atlas-tiles-gta" : "atlas-tiles-politico"}
-                  url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" attribution={OSM_ATTRIBUTION} maxZoom={19} />
-              )}
-              <ZoomControl position="bottomright" />
-              <ScaleControl position="bottomleft" imperial={false} />
+          <div className="ap-mapcol">
+            <div className={`ap-map-shell ap-${modo}`}>
+              <MapContainer center={PANE_ORIGEN} zoom={10} zoomControl={false} className="ap-map" preferCanvas>
+                <TileLayer key={modo} url={BG[modo].url} attribution={BG[modo].attribution} maxZoom={BG[modo].maxZoom} />
+                <Desplazamiento id={seleccion} atlas={atlas} reiniciar={reiniciar} />
+                {atlas && capas.regiones && <GeoJSON key={`${modo}-${seleccion}`} data={regionFeatureCollection}
+                  style={f => geoEstilo(f, seleccion, modo, capas.regiones)}
+                  onEachFeature={(f, layer) => {
+                    const id = f.properties?.region_id as Identificador;
+                    layer.on({ click: () => elegir(id), mouseover: (evt) => (evt.target as L.Path).setStyle({ weight: 3.5, fillOpacity: 0.64 }), mouseout: (evt) => (evt.target as L.Path).setStyle(geoEstilo(f, seleccion, modo, true)) });
+                    layer.bindTooltip(POR_ID[id]?.nombre ?? "Región", { sticky: true, className: "ap-poly-tooltip" });
+                  }}
+                />}
+                {atlas && capas.capitales && capitalesActivas.map(f => {
+                  if (f.geometry.type !== "Point") return null;
+                  const p = f.properties ?? {}; const [lon, lat] = (f.geometry as Point).coordinates;
+                  return <Marker key={p.id} position={[lat, lon]} icon={iconoPunto("capital", p.region_id)}>
+                    <Tooltip className="ap-capital-tooltip" permanent direction="top" offset={[0, -20]}>{p.nombre}</Tooltip>
+                    <Popup>{capitalPopup(f)}</Popup>
+                  </Marker>;
+                })}
+                {atlas && capas.especiales && atlas.especiales.features.filter(f => {
+                  if (f.properties?.id === "medes-referencia" && (seleccion !== "sin-gluten" || capas.capitales)) return false;
+                  return (seleccion === null && f.properties?.id !== "medes-referencia") || f.properties?.region_id === seleccion;
+                }).map(f => {
+                  if (f.geometry.type !== "Point") return null;
+                  const [lon, lat] = f.geometry.coordinates;
+                  return <Marker key={f.properties?.id} position={[lat, lon]} icon={iconoPunto(f.properties?.categoria ?? "especial", f.properties?.region_id)}>
+                    <Popup><strong>{f.properties?.nombre}</strong><p>{f.properties?.nota ?? "Área pendiente de delimitar"}</p></Popup>
+                  </Marker>;
+                })}
+                {atlas && (["carreteras", "ferrocarriles"] as DatosCapa[]).filter(k => capas[k] && vacio(k).features.length).map(k => (
+                  <GeoJSON key={k} data={vacio(k)} style={(f) => ({ color: f?.properties?.estado === "propuesto" ? "#EBAA5C" : k === "ferrocarriles" ? "#D3E8EA" : modo === "gta" ? "#F4F8FA" : "#EBCB74", weight: k === "ferrocarriles" ? 2.5 : 3.5, dashArray: f?.properties?.estado === "propuesto" ? "7 6" : undefined })}
+                    onEachFeature={(f, layer) => layer.bindPopup(`<strong>${String(f.properties?.nombre ?? "Trazado").replaceAll("<", "&lt;")}</strong><p>${String(f.properties?.estado ?? "sin estado").replaceAll("<", "&lt;")}</p>`)} />
+                ))}
+                {atlas && (["aeropuertos", "estaciones", "puertos", "otros"] as DatosCapa[]).filter(k => capas[k]).flatMap(k => atlas[k].features.map(f => {
+                  if (f.geometry.type !== "Point") return null;
+                  const [lon, lat] = f.geometry.coordinates;
+                  return <Marker key={`${k}-${f.properties?.id}`} position={[lat, lon]} icon={iconoPunto(k === "aeropuertos" ? "aeropuerto" : k === "estaciones" ? "estacion" : k === "puertos" ? "puerto" : "otro", f.properties?.region_id)}>
+                    <Popup><div className="ap-popup"><strong>{f.properties?.nombre}</strong><p>{f.properties?.estado ?? "Sin clasificar"}</p></div></Popup>
+                  </Marker>;
+                }))}
+                <ZoomControl position="bottomright" />
+                <ScaleControl position="bottomleft" metric imperial={false} />
+              </MapContainer>
+              <div className="ap-map-legend"><span className="ap-indicator" /> {modo === "politico" ? "MAPA POLÍTICO" : modo === "geografico" ? "MAPA GEOGRÁFICO" : "MAPA ESTILO GTA V"}</div>
+              {!atlas && !error && <div className="ap-loading">Cargando cartografía georreferenciada…</div>}
+              {error && <div className="ap-loading ap-error">Error: {error}<p>Comprueba que public/atlas/ contiene los archivos y vuelve a cargar la página.</p></div>}
+            </div>
 
-              {capas.regiones && territorios.features.length > 0 && <GeoJSON
-                key={`region-${modo}-${regionId ?? "global"}`}
-                data={territorios}
-                style={estiloRegion}
-                onEachFeature={onEachRegion}
-              />}
-              {capas.carreteras && carreteras.features.length > 0 && <GeoJSON
-                key={`via-${modo}`}
-                data={carreteras}
-                style={() => ({ color: modo === "gta" ? "#f5d85e" : "#efbd51", weight: modo === "gta" ? 4 : 3, opacity: 0.95, dashArray: "7, 7" })}
-                onEachFeature={onEachVia}
-              />}
-              {capas.ferrocarriles && ferrocarriles.features.length > 0 && <GeoJSON
-                data={ferrocarriles}
-                style={{ color: "#f8fafc", weight: 3, dashArray: "2, 7" }}
-                onEachFeature={onEachVia}
-              />}
-              {capas.capitales && capitales.features.map((f) => (
-                <PiezaMarcador key={String(f.id ?? f.properties?.id)} f={f} alSeleccionar={setRegionId} etiqueta />
-              ))}
-              {puntosAdicionales.map((f) => <PiezaMarcador key={String(f.id ?? f.properties?.id)} f={f} alSeleccionar={setRegionId} />)}
-              {capas.especiales && especiales.features.map((f) => <PiezaMarcador key={String(f.id ?? f.properties?.id)} f={f} alSeleccionar={setRegionId} />)}
-            </MapContainer>
-            <div className="atlas-mapa-etiqueta">{modo === "politico" ? "MAPA POLÍTICO" : modo === "geografico" ? "MAPA GEOGRÁFICO" : "GTA V · MAPA TÁCTICO"}</div>
-          </div>
-        </div>
-
-        <section className="atlas-ficha" aria-live="polite">
-          {regionActual ? (
-            <>
-              <span className="atlas-ficha-color" style={{ background: regionActual.color }} />
-              <div className="atlas-ficha-texto">
-                <span className="atlas-ficha-super">FICHA TERRITORIAL · {regionActual.id.toUpperCase()}</span>
-                <h2>{regionActual.nombre}</h2>
-                <p>{regionActual.descripcion}. <b>Capital:</b> {regionActual.capital ?? "Por definir"}{regionActual.capitalLugar ? ` (${regionActual.capitalLugar})` : ""}.</p>
-                <small>{regionActual.situacion}</small>
+            <div className="ap-footpanels">
+              <div className="ap-detail">
+                <button className="ap-detail-title" onClick={() => setFichaAbierta(x => !x)} aria-expanded={fichaAbierta}>
+                  <span>{activo ? `FICHA TERRITORIAL · ${activo.nombre.toUpperCase()}` : "ESTADO PANIENSE · INFORMACIÓN TERRITORIAL"}</span><span>{fichaAbierta ? "−" : "+"}</span>
+                </button>
+                {fichaAbierta && <div className="ap-detail-body">
+                  {activo ? <>
+                    <h3>{activo.nombre}</h3>
+                    <p>{activo.descripcion}</p>
+                    <div className="ap-detail-meta"><div><small>CAPITAL PANIENSE</small><strong>{activo.capital ?? "Pendiente"}</strong></div><div><small>BASE GEOGRÁFICA</small><strong>{activo.situacion}</strong></div></div>
+                    <p className="ap-caveat">La base procede de geometrías administrativas reales donde están disponibles. La adscripción al Estado Paniense es ficción cartográfica; los límites políticos están en revisión.</p>
+                  </> : <><h3>El territorio, con precisión</h3><p>Selecciona una región para consultar su capital y delimitación. Las capitales se representan exclusivamente por sus nombres panienses.</p><p className="ap-caveat">Sin Glúten y Atlántida aún no tienen polígonos definitivos; el Sáhara Occidental se mantiene separado, en negociaciones.</p></>}
+                </div>}
               </div>
-              <img src={`/Maps/${regionActual.flagFile}.png`} alt={`Bandera de ${regionActual.nombre}`} onError={(e) => { e.currentTarget.style.display = "none"; }} />
-            </>
-          ) : regionId === "sahara" ? (
-            <div className="atlas-ficha-texto"><span className="atlas-ficha-super">ESTATUS ESPECIAL</span><h2>Sáhara Occidental</h2><p>Territorio en negociaciones. No se representa como región integrada ni se establece una frontera paniense.</p></div>
-          ) : (
-            <div className="atlas-ficha-texto"><span className="atlas-ficha-super">CAPITAL DEL ESTADO PANIENSE · PANTOPÍA</span><h2>Un Estado, varios territorios</h2><p>Selecciona una región o cambia de mapa. Las fronteras de la v1.0 son borradores cartográficos; las capitales sí siguen el acuerdo territorial.</p></div>
-          )}
+              <div className="ap-sources"><span><b>{atlas ? atlas.regiones.features.length : "—"}</b><small>unidades geográficas</small></span><span><b>{atlas ? atlas.capitales.features.length : "—"}</b><small>capitales panienses</small></span><span><b>{provinciasActivas.length}</b><small>piezas en selección</small></span></div>
+            </div>
+          </div>
         </section>
-        <footer className="atlas-legal">Cartografía ficticia · Los límites de las regiones son propuestas pendientes de ratificación · GeoJSON WGS84 (longitud, latitud) · Base © OpenStreetMap contributors</footer>
+        <footer className="ap-carto-footer">Fuentes de límites: geoBoundaries, IGN Admin Express · Fondo: OpenStreetMap / CARTO / Esri · Sistema WGS84 · Adscripciones políticas ficticias · v2.0</footer>
       </main>
       <Footer />
     </div>

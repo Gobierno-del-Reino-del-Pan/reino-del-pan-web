@@ -1,62 +1,14 @@
-.atlas-pagina{min-height:100vh;background:#0b1724;color:#edf5ff}
-.atlas-contenedor{max-width:1530px;margin:auto;padding:38px 24px 65px;font-family:Inter,system-ui,-apple-system,sans-serif;text-align:left}
-.atlas-cabecera{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:24px}
-.atlas-eyebrow{font-size:11px;letter-spacing:.24em;color:#77b6cf;font-weight:800;margin:0 0 10px}
-.atlas-cabecera h1{font-weight:850;font-size:clamp(28px,3.5vw,49px);letter-spacing:-.035em;line-height:1.1;margin:0 0 10px;color:white}
-.atlas-cabecera p:last-child{margin:0;color:#a6bacb;font-size:14px}
-.atlas-version{font-size:12px;letter-spacing:.04em;padding:5px 9px;border:1px solid #35546a;border-radius:8px;vertical-align:middle;color:#78d8e4}
-.atlas-descargar{font-size:13px;font-weight:750;color:#d0f6ff;border:1px solid #30758a;border-radius:10px;padding:12px 16px;text-decoration:none;white-space:nowrap;background:#123347}
-.atlas-descargar:hover{background:#14516a}
-.atlas-botones-modo{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
-.atlas-botones-modo button{cursor:pointer;color:#aec4d4;border:1px solid #2a4258;border-radius:10px;padding:10px 18px;background:#152737;font-size:13px;font-weight:800;transition:background .15s,color .15s}
-.atlas-botones-modo button:hover{color:white;border-color:#688da9}
-.atlas-botones-modo button.activo{color:#071b2b;background:#75d9e8;border-color:#75d9e8}
-.atlas-estado{margin-left:auto;font-size:12px;color:#91aabc}
-.atlas-error{padding:11px 15px;border:1px solid #a97732;color:#ffe4ba;border-radius:10px;background:#4f351c;margin:12px 0}
-.atlas-grid{display:grid;grid-template-columns:minmax(260px,315px) minmax(0,1fr);border:1px solid #2d4a5e;border-radius:15px;overflow:hidden;background:#101f30;min-height:680px}
-.atlas-sidebar{background:#102234;border-right:1px solid #2e4b61;padding:20px 16px;max-height:78vh;min-height:680px;overflow:auto}
-.atlas-panel-titulo{display:flex;justify-content:space-between;align-items:center;gap:8px;color:#92b7cc;letter-spacing:.10em;font-size:11px;font-weight:900;margin-bottom:12px}
-.atlas-panel-titulo small{letter-spacing:0;font-weight:500;color:#7794a6}
-.atlas-region-todo{width:100%;border:1px solid #3e667e;padding:10px 12px;text-align:left;border-radius:8px;color:#cbe1ed;background:#17334a;font-weight:800;cursor:pointer;margin-bottom:8px;font-size:12px}
-.atlas-region-todo.seleccionada{background:#225273;color:#fff}
-.atlas-region-lista{display:flex;flex-direction:column;gap:5px}
-.atlas-region-opcion{display:flex;gap:11px;align-items:center;min-height:54px;width:100%;text-align:left;background:transparent;border:1px solid transparent;border-radius:8px;padding:8px 9px;cursor:pointer;color:#e9f2fa}
-.atlas-region-opcion:hover{background:#18364c}
-.atlas-region-opcion.seleccionada{background:#1b3b51;border-color:#467891}
-.atlas-region-indicador{width:6px;min-width:6px;align-self:stretch;border-radius:9px}
-.atlas-region-nombre{min-width:0;display:flex;flex:1;flex-direction:column;gap:4px}
-.atlas-region-nombre b{font-size:13px;line-height:1.15}
-.atlas-region-nombre small{font-size:11px;color:#91aabc;line-height:1.24}
-.atlas-chevron{font-size:22px;color:#7292a8}
-.atlas-zona-especial{border-top:1px solid #375062;margin-top:4px}
-.atlas-capitulo{margin-top:23px;border-top:1px solid #2a4559;padding-top:23px}
-.atlas-capas{display:flex;flex-direction:column;gap:10px}
-.atlas-capa-toggle{display:flex;align-items:center;gap:10px;font-size:12px;color:#cbdde9;cursor:pointer}
-.atlas-capa-toggle input{accent-color:#73d4e5;width:16px;height:16px;cursor:pointer}
-.atlas-capa-toggle span{flex:1}
-.atlas-capa-toggle small{color:#7ca2bc}
-.atlas-sidebar-nota{line-height:1.5;font-size:11px;color:#84a0b4;margin:21px 0 0}
-.atlas-mapa-panel{height:78vh;min-height:680px;position:relative;background:#0c1825;isolation:isolate}
-.atlas-leaflet{height:100%;width:100%;background:#13273a}
-.atlas-mapa-panel .leaflet-container{font-family:inherit}
-.atlas-mapa-gta .leaflet-tile.atlas-tiles-gta{filter:grayscale(1) invert(.94) hue-rotate(156deg) contrast(1.07) brightness(.67) saturate(.72)}
-.atlas-mapa-politico .leaflet-tile.atlas-tiles-politico{filter:saturate(.72) contrast(.96)}
-.atlas-mapa-panel .leaflet-control-attribution{background:rgba(10,24,36,.86)!important;color:#c2d0da!important}
-.atlas-mapa-panel .leaflet-control-attribution a{color:#b8edff!important}
-.atlas-mapa-etiqueta{position:absolute;z-index:450;top:18px;right:18px;padding:8px 12px;letter-spacing:.16em;font-size:11px;background:rgba(8,28,44,.83);border:1px solid #476d82;border-radius:7px;color:#c9e5f4;font-weight:900;pointer-events:none}
-.atlas-capital-tooltip{background:rgba(10,27,43,.95);color:white;border:1px solid #50788e;border-radius:5px;box-shadow:0 4px 16px #0008;font-size:11px;font-weight:900;letter-spacing:.02em}
-.atlas-capital-tooltip::before{border-top-color:#50788e!important}
-.atlas-region-tooltip{background:#0b1e2f;color:white;border:1px solid #51758d;border-radius:5px;padding:4px 8px;font-size:12px;font-weight:800}
-.atlas-marker-wrapper{background:none;border:0}
-.atlas-marker{display:flex;align-items:center;justify-content:center;color:#101d2a;font-size:17px;font-weight:900;background:var(--marker-color);border:2px solid #fff;border-radius:50%;width:30px;height:30px;box-shadow:0 2px 12px #000b}
-.atlas-popup{min-width:190px;color:#213045;font-size:12px;line-height:1.4}
-.atlas-popup b{font-size:15px}.atlas-popup p{margin:6px 0!important}
-.atlas-ficha{display:flex;align-items:stretch;gap:19px;border:1px solid #2b4f66;border-radius:12px;background:#122638;margin-top:15px;padding:20px 22px;min-height:118px}
-.atlas-ficha-color{width:7px;border-radius:8px;flex-shrink:0}
-.atlas-ficha-texto{flex:1;min-width:0}.atlas-ficha-super{font-size:10px;font-weight:800;letter-spacing:.17em;color:#8cb8cd}
-.atlas-ficha h2{font-size:23px;color:white;font-weight:850;margin:5px 0}.atlas-ficha p{font-size:13px;color:#c4d9e6;margin:4px 0 7px}
-.atlas-ficha small{font-size:11px;color:#89afc4}
-.atlas-ficha img{max-width:100px;max-height:67px;align-self:center;object-fit:contain;border-radius:5px}
-.atlas-legal{margin-top:17px;text-align:center;color:#7899ac;font-size:11px}
-@media(max-width:900px){.atlas-grid{grid-template-columns:1fr}.atlas-sidebar{min-height:0;max-height:none;overflow:visible;border-right:0;border-bottom:1px solid #2e4b61}.atlas-region-lista{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.atlas-capas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.atlas-mapa-panel{height:65vh;min-height:520px}}
-@media(max-width:550px){.atlas-contenedor{padding:26px 12px 45px}.atlas-cabecera{align-items:start;flex-direction:column}.atlas-region-lista{grid-template-columns:1fr}.atlas-botones-modo button{flex:1;padding:11px 8px}.atlas-estado{width:100%;margin:0}.atlas-capas{grid-template-columns:1fr 1fr}.atlas-mapa-panel{height:64vh;min-height:420px}.atlas-ficha img{display:none}.atlas-mapa-etiqueta{font-size:9px}}
+/* Atlas Paniense v2: identidad editorial institucional y mapa sin nomenclátor real */
+.ap-page{background:#071521;color:#eef5fc;min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
+.ap-main{max-width:1740px;margin:0 auto;padding:36px clamp(16px,2.7vw,48px) 60px}
+.ap-kicker{font-size:11px;font-weight:800;letter-spacing:.25em;color:#7cd0e8}.ap-kicker span{color:#5d7485;padding:0 8px}
+.ap-header{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin:16px 0 23px}.ap-header h1{font-family:Inter,ui-sans-serif,system-ui,sans-serif!important;letter-spacing:-.065em;font-weight:850;font-size:clamp(36px,4.4vw,68px);line-height:1.04;text-transform:uppercase;margin:0;color:#f5f9fc}.ap-header p{color:#a9bccd;font-size:14px;margin:10px 0 0;line-height:1.5}.ap-header button,.ap-modes button{font:inherit;cursor:pointer}
+.ap-export{border-radius:10px;padding:13px 19px;border:1px solid #27617e;background:#103044;color:#b3e9f8;font-weight:700;font-size:12px;white-space:nowrap}.ap-export:hover{background:#174960}
+.ap-modes{display:flex;align-items:center;gap:10px;margin-bottom:18px}.ap-modes button{padding:12px 18px;border-radius:10px;border:1px solid #253b4c;background:#112738;color:#a7bac8;font-weight:750;font-size:13px;transition:.2s}.ap-modes button.activo{background:#6bd3e7;color:#07212b;border-color:#6bd3e7}.ap-modes button:hover:not(.activo){background:#1c3749;color:#fff}.ap-status{margin-left:auto;font-size:11px;color:#849bae;font-weight:650;letter-spacing:.025em}
+.ap-layout{display:grid;grid-template-columns:minmax(240px,300px) minmax(0,1fr);gap:16px;align-items:start}.ap-side{background:#0b1d2b;border:1px solid #244154;border-radius:15px;overflow:hidden;max-height: min(79vh,950px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:#38627a transparent}.ap-side-top{display:flex;justify-content:space-between;gap:8px;padding:20px 17px 10px;font-size:10px;font-weight:850;letter-spacing:.12em;color:#93aebf}.ap-side-top b{font-weight:550;color:#738b9e;white-space:nowrap}.ap-home{margin:4px 12px 10px;width:calc(100% - 24px)!important;min-height:42px!important;font-size:12px!important}.ap-home>span{margin-left:auto}.ap-lista-regiones{padding:0 11px 15px;border-bottom:1px solid #294052}.ap-region{width:100%;border:1px solid transparent;border-radius:10px;display:flex;align-items:center;text-align:left;gap:12px;background:none;color:#e5eef8;padding:11px 10px;min-height:58px;cursor:pointer;font:inherit;transition:background .2s,border .2s}.ap-region:hover{background:#162f40}.ap-region.selected{background:#183749;border-color:#3c6981}.ap-region-color{height:36px;width:6px;flex-shrink:0;border-radius:8px}.ap-region-text{display:flex;flex:1;flex-direction:column;gap:3px;min-width:0}.ap-region-text strong{font-size:13px;line-height:1.2;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}.ap-region-text small{color:#9cb2c4;font-size:11px;white-space:normal;line-height:1.25}.ap-chevron{font-size:26px;color:#6f92a6}.ap-filters{padding:19px 17px}.ap-filters h2{font-size:10px;letter-spacing:.13em;color:#a3c2d4;margin:0 0 13px}.ap-layer{display:flex;align-items:center;gap:10px;padding:9px 0;cursor:pointer;font-size:12px;color:#c4d4e1}.ap-layer input{accent-color:#7bdcef;width:16px;height:16px;cursor:pointer}.ap-layer-symbol{font-size:18px;color:#9acfe3;width:21px;text-align:center}.ap-layer small{margin-left:auto;background:#183547;border-radius:5px;padding:2px 6px;color:#91acbe}.ap-sidebar-note{font-size:10px;line-height:1.6;color:#8197a8;margin:12px 0 0;border-top:1px solid #294255;padding-top:12px}
+.ap-mapcol{min-width:0}.ap-map-shell{height:clamp(510px,68vh,825px);border-radius:15px;overflow:hidden;position:relative;border:1px solid #2d536b;background:#102333;box-shadow:0 14px 45px rgba(0,0,0,.18)}.ap-map{width:100%;height:100%;z-index:0}.ap-map-shell .leaflet-container{background:#122535;font:inherit}.ap-map-legend{position:absolute;z-index:500;right:17px;top:17px;background:#0a1b29ed;border:1px solid #365972;padding:10px 12px;border-radius:8px;font-size:10px;font-weight:900;color:#e8f5fc;letter-spacing:.16em;pointer-events:none}.ap-indicator{display:inline-block;width:7px;height:7px;background:#79dfed;border-radius:50%;margin-right:5px;box-shadow:0 0 13px #6ad4e5}.ap-gta .leaflet-tile-pane{filter:contrast(1.15) saturate(.8)}.ap-geografico .leaflet-tile-pane{filter:saturate(.85) contrast(1.04)}.ap-politico .leaflet-tile-pane{filter:contrast(.96)}.ap-loading{position:absolute;inset:0;z-index:700;background:#071623ed;display:flex;align-items:center;justify-content:center;font-size:14px;text-align:center;flex-direction:column;gap:14px}.ap-error{color:#ffc3bb;padding:18px}.ap-error p{font-size:12px;color:#c4d2df}
+.ap-icono-wrap{background:transparent;border:0}.ap-icono{display:grid;place-items:center;height:32px;width:32px;border-radius:50%;background:#081d2c;border:2px solid var(--ap-color);color:var(--ap-color);font-size:21px;box-shadow:0 2px 14px #0815207e}.ap-capital-tooltip{background:#0c1d2de8!important;color:white!important;font-weight:900!important;font-size:11px!important;letter-spacing:.08em!important;padding:8px 12px!important;border:1px solid #49677d!important;border-radius:6px!important;box-shadow:0 4px 20px #0007!important;text-transform:uppercase!important}.ap-capital-tooltip:before,.ap-poly-tooltip:before{display:none!important}.ap-poly-tooltip{background:#102b3ce8!important;color:#d9f0ff!important;border:1px solid #527589!important;border-radius:6px!important;font-weight:700!important;font-size:12px!important}.ap-popup{color:#112838;display:grid;gap:3px;max-width:220px}.ap-popup strong{font-size:15px}.ap-popup span{font-size:12px;color:#526b7c}.ap-popup p{margin:6px 0;font-size:12px}.ap-popup small{font-size:10px;color:#a35722}
+.ap-footpanels{display:grid;grid-template-columns:minmax(0,2fr) minmax(190px,1fr);gap:14px;margin-top:14px}.ap-detail,.ap-sources{border:1px solid #26475a;border-radius:12px;background:#0d2130}.ap-detail-title{width:100%;display:flex;justify-content:space-between;padding:15px 18px;color:#a4c6da;background:none;border:0;font:inherit;font-size:11px;font-weight:800;letter-spacing:.09em;text-align:left;cursor:pointer}.ap-detail-body{padding:0 18px 18px;color:#c8d6e2}.ap-detail-body h3{font-size:20px;color:#fff;margin:4px 0 5px}.ap-detail-body p{font-size:12px;line-height:1.6;margin:7px 0}.ap-detail-meta{display:grid;grid-template-columns:1fr 1.5fr;gap:15px;border-top:1px solid #274457;margin:14px 0 0;padding:13px 0}.ap-detail-meta div{display:grid;gap:5px}.ap-detail-meta small{font-weight:850;font-size:9px;letter-spacing:.09em;color:#85a5b8}.ap-detail-meta strong{font-weight:750;font-size:12px;line-height:1.3}.ap-detail-body .ap-caveat{font-size:10px;color:#84a6ba}.ap-sources{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:18px 15px;align-items:center;text-align:center}.ap-sources span{display:grid;gap:5px}.ap-sources b{font-size:24px;letter-spacing:-.04em}.ap-sources small{font-size:10px;color:#9bb8cc}.ap-carto-footer{font-size:10px;color:#657f92;line-height:1.5;margin-top:16px}
+@media(max-width:1000px){.ap-layout{grid-template-columns:minmax(210px,245px) minmax(0,1fr)}.ap-footpanels{grid-template-columns:1fr}.ap-map-shell{height:570px}}
+@media(max-width:730px){.ap-header{align-items:flex-start;flex-direction:column}.ap-main{padding:22px 12px 40px}.ap-modes{flex-wrap:wrap}.ap-modes button{padding:10px}.ap-status{width:100%;text-align:left;margin-left:0}.ap-layout{grid-template-columns:1fr}.ap-side{max-height:none}.ap-lista-regiones{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px}.ap-region-text strong{font-size:11px}.ap-region-text small{font-size:10px}.ap-region{min-height:56px}.ap-filters{display:grid;grid-template-columns:repeat(2,1fr);gap:2px 9px}.ap-filters h2,.ap-sidebar-note{grid-column:1/-1}.ap-map-shell{height:64vh;min-height:460px}.ap-sources{padding:15px}}
+@media(max-width:380px){.ap-lista-regiones{grid-template-columns:1fr}.ap-detail-meta{grid-template-columns:1fr}}

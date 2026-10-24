@@ -1,0 +1,40 @@
+{
+  "titulo": "Atlas del Estado Paniense: fuentes de geometría reales",
+  "fecha_generacion": "2026-10-24",
+  "crs": "EPSG:4326 - WGS84 (GeoJSON lon/lat)",
+  "advertencia": "Las adscripciones al Estado Paniense son ficticias. Los límites están basados en unidades administrativas reales históricas. No se validan aquí reclamaciones territoriales reales.",
+  "capas": {
+    "Andorra ADM1": {
+      "unidades": 7,
+      "anio": 2007,
+      "licencia": "Dominio público (según metadatos geoBoundaries)",
+      "url": "https://github.com/robit-man/tiny-atlas/blob/main/elevation_model/geojson/ADM1/AND.geojson",
+      "original": "geoBoundaries AND ADM1, cartografía de parroquias",
+      "asignacion_provisional": {
+        "Pimbo": ["Ordino", "La Massana", "Sant Julià de Lòria"],
+        "Baguette": ["Andorra la Vella", "Escaldes-Engordany"],
+        "Croissant": ["Canillo", "Encamp"]
+      }
+    },
+    "Francia": {
+      "unidades": 10,
+      "anio": 2018,
+      "licencia": "Licence Ouverte 2.0",
+      "url": "https://github.com/gregoiredavid/france-geojson/blob/master/departements/64-pyrenees-atlantiques/communes-64-pyrenees-atlantiques.geojson",
+      "original": "IGN Admin Express 2018 (communes Pyrénées-Atlantiques)"
+    },
+    "Tierra del Fuego": {
+      "unidades": 1,
+      "anio": 2006,
+      "licencia": "CC BY 2.5 (según metadatos geoBoundaries)",
+      "url": "https://github.com/robit-man/tiny-atlas/blob/main/elevation_model/geojson/ADM1/ARG.geojson",
+      "advertencia": "Contorno provincial histórico simplificado: la posición acordada de Ushuaia queda fuera del contorno. NO debe usarse para georreferenciación de precisión, pendiente de actualización."
+    },
+    "Sin Glúten": {
+      "estado": "Sin polígono ratificado; marcador real de la isla, necesita límites de costa e isla y selección del sector continental",
+      "fuente_candidata": "https://agportal.sig.gencat.cat/server/rest/services/Hosted/Municipis_1000000/FeatureServer/0"
+    },
+    "Atlántida": { "estado": "Punto de localización de referencia, perímetro y capital no fijados" },
+    "Sáhara Occidental": { "estado": "Territorio en negociaciones, sin adscripción territorial ni geometría paniense" }
+  }
+}
