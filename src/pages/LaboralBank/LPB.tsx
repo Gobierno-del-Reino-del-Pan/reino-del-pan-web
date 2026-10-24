@@ -1,506 +1,62 @@
-import React from 'react';
-import "tailwindcss";
-
-export default function LaboralPanianBank() {
-    return (
-        <div id="root">
-            {/* ESTILOS CSS ENCAPSULADOS PARA ESTA WEB */}
-            <style dangerouslySetInnerHTML={{
-                __html: `
-                @import "tw-animate-css";
-
-                @custom-variant dark (&:is(.dark *));
-
-                /* ==========================================================================
-                   TIPOGRAFÍAS (Optimización Bancaria)
-                   ========================================================================== */
-                @font-face {
-                    font-family: 'Plus Jakarta Sans';
-                    src: url('/fonts/PlusJakartaSans-Bold.woff2') format('woff2'),
-                        url('/fonts/PlusJakartaSans-Bold.woff') format('woff');
-                    font-weight: 700;
-                    font-style: normal;
-                    font-display: swap;
-                }
-
-                @font-face {
-                    font-family: 'Plus Jakarta Sans';
-                    src: url('/fonts/PlusJakartaSans-SemiBold.woff2') format('woff2'),
-                        url('/fonts/PlusJakartaSans-SemiBold.woff') format('woff');
-                    font-weight: 600;
-                    font-style: normal;
-                    font-display: swap;
-                }
-
-                @font-face {
-                    font-family: 'Inter';
-                    src: url('/fonts/Inter-Regular.woff2') format('woff2'),
-                        url('/fonts/Inter-Regular.woff') format('woff');
-                    font-weight: 400;
-                    font-style: normal;
-                    font-display: swap;
-                }
-
-                @font-face {
-                    font-family: 'Inter';
-                    src: url('/fonts/Inter-Medium.woff2') format('woff2'),
-                        url('/fonts/Inter-Medium.woff') format('woff');
-                    font-weight: 500;
-                    font-style: normal;
-                    font-display: swap;
-                }
-
-                /* ==========================================================================
-                   CONFIGURACIÓN DEL TEMA (Tailwind CSS v4.0 Inline Theme)
-                   ========================================================================== */
-                @theme inline {
-                    --radius-sm: calc(var(--radius) - 4px);
-                    --radius-md: calc(var(--radius) - 2px);
-                    --radius-lg: var(--radius);
-                    --radius-xl: calc(var(--radius) + 4px);
-
-                    --color-background: var(--background);
-                    --color-foreground: var(--foreground);
-                    --color-card: var(--card);
-                    --color-card-foreground: var(--card-foreground);
-
-                    --color-primary: var(--primary);
-                    --color-primary-foreground: var(--primary-foreground);
-                    --color-secondary: var(--secondary);
-                    --color-secondary-foreground: var(--secondary-foreground);
-
-                    --color-muted: var(--muted);
-                    --color-muted-foreground: var(--muted-foreground);
-
-                    --color-accent: var(--accent);
-                    --color-accent-foreground: var(--accent-foreground);
-
-                    --color-border: var(--border);
-                    --color-input: var(--input);
-                    --color-ring: var(--ring);
-
-                    --font-sans: var(--body-font);
-                    --font-display: var(--display-font);
-                }
-
-                :root {
-                    --primary: #550252;
-                    --primary-foreground: #ffffff;
-                    --foreground: #471D26;
-                    --muted-foreground: #61465D;
-                    --accent: #7cd697;
-                    --accent-foreground: #471D26;
-
-                    --background: #fdfcfd;
-                    --card: #ffffff;
-                    --card-foreground: #471D26;
-                    --secondary: #f6f0f4;
-                    --secondary-foreground: #550252;
-                    --muted: #f0e6ed;
-                    --border: #e4dae2;
-                    --input: #ffffff;
-                    --ring: #550252;
-                    --radius: 0.625rem;
-
-                    --display-font: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
-                    --body-font: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
-                }
-
-                .dark {
-                    --background: #1a0f14;
-                    --foreground: #f6f0f4;
-                    --card: #25161d;
-                    --card-foreground: #f6f0f4;
-                    --primary: #7d1279;
-                    --primary-foreground: #ffffff;
-                    --secondary: #331e28;
-                    --secondary-foreground: #7cd697;
-                    --muted: #3a2530;
-                    --muted-foreground: #a38fa0;
-                    --border: #442d39;
-                    --input: #1e1218;
-                    --ring: #7cd697;
-                }
-
-                /* ==========================================================================
-                   ESTILOS GENERALES Y RESET (Acotados a #root para no romper globales)
-                   ========================================================================== */
-                #root {
-                    display: flex;
-                    flex-direction: column;
-                    min-height: 100vh;
-                    font-family: var(--body-font);
-                    background-color: var(--background);
-                    color: var(--foreground);
-                    letter-spacing: -0.01em;
-                    -webkit-font-smoothing: antialiased;
-                    -moz-osx-smoothing: grayscale;
-                }
-
-                #root *, #root *::before, #root *::after {
-                    box-sizing: border-box;
-                }
-
-                /* ==========================================================================
-                   TIPOGRAFÍA Y JERARQUÍA
-                   ========================================================================== */
-                #root .display,
-                #root .display-font,
-                #root h1, #root h2, #root h3, #root h4, #root h5, #root h6 {
-                    font-family: var(--display-font);
-                    font-weight: 700;
-                    letter-spacing: -0.02em;
-                }
-
-                #root .financial-data,
-                #root .balance-amount,
-                #root .iban-display,
-                #root table {
-                    font-variant-numeric: tabular-nums lining-nums;
-                    letter-spacing: 0em;
-                }
-
-                /* ==========================================================================
-                   COMPONENTES DE LA SEDE ELECTRÓNICA
-                   ========================================================================== */
-                #root .logo-glow {
-                    box-shadow: 0 4px 12px rgba(85, 2, 82, 0.08);
-                    transition: transform 220ms cubic-bezier(.2, .9, .3, 1), box-shadow 220ms, filter 0.25s ease;
-                }
-
-                #root .logo-glow:hover {
-                    transform: translateY(-2px);
-                    filter: drop-shadow(0 0 12px rgba(124, 214, 151, 0.35));
-                }
-
-                #root .nav-link {
-                    position: relative;
-                    color: var(--muted-foreground);
-                    font-weight: 500;
-                    transition: color 200ms ease;
-                }
-
-                #root .nav-link:hover,
-                #root .nav-link.active {
-                    color: var(--primary);
-                }
-
-                .dark #root .nav-link:hover,
-                .dark #root .nav-link.active {
-                    color: var(--accent);
-                }
-
-                #root img {
-                    display: block;
-                    max-width: 100%;
-                    height: auto;
-                    user-select: none !important;
-                    -webkit-user-select: none !important;
-                    -moz-user-select: none !important;
-                    -webkit-user-drag: none !important;
-                }
-
-                #root a {
-                    color: inherit;
-                    text-decoration: none;
-                    cursor: pointer;
-                    -webkit-user-drag: none !important;
-                }
-
-                #root button, #root select {
-                    cursor: pointer;
-                    -webkit-user-drag: none !important;
-                }
-
-                #root button, #root input, #root textarea, #root select {
-                    font: inherit;
-                }
-
-                #root input, #root textarea {
-                    cursor: text;
-                }
-
-                #root input[type="text"],
-                #root input[type="password"],
-                #root input[type="number"] {
-                    background-color: var(--input);
-                    border: 1px solid var(--border);
-                    color: var(--foreground);
-                    border-radius: var(--radius-sm);
-                    transition: border-color 0.2s, box-shadow 0.2s;
-                }
-
-                #root input[type="text"]:focus,
-                #root input[type="password"]:focus,
-                #root input[type="number"]:focus {
-                    outline: none;
-                    border-color: var(--primary);
-                    box-shadow: 0 0 0 3px rgba(85, 2, 82, 0.15);
-                }
-
-                /* ==========================================================================
-                   LAYOUT Y CONTENEDORES
-                   ========================================================================== */
-                #root .container {
-                    width: 100%;
-                    max-width: 1280px;
-                    margin-left: auto;
-                    margin-right: auto;
-                    padding-left: 1.5rem;
-                    padding-right: 1.5rem;
-                }
-
-                @media (min-width: 768px) {
-                    #root .container {
-                        padding-left: 2.5rem;
-                        padding-right: 2.5rem;
-                    }
-                }
-
-                /* ==========================================================================
-                   CLASES DE UTILIDAD / ACCESIBILIDAD (Tailwind Apply alternativo)
-                   ========================================================================== */
-                #root .btn-minimal {
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    border-radius: 0.375rem;
-                    border: 2px solid var(--primary);
-                    background-color: transparent;
-                    padding: 0.625rem 1.5rem;
-                    font-size: 0.875rem;
-                    font-weight: 600;
-                    text-transform: uppercase;
-                    letter-spacing: 0.05em;
-                    color: var(--primary);
-                    transition: all 0.2s ease;
-                }
-
-                #root .btn-minimal:hover {
-                    background-color: var(--primary);
-                    color: #ffffff;
-                }
-
-                #root .btn-minimal:active {
-                    transform: scale(0.98);
-                }
-
-                #root .btn-minimal:focus {
-                    outline: none;
-                    box-shadow: 0 0 0 2px rgba(85, 2, 82, 0.5);
-                }
-
-                .dark #root .btn-minimal {
-                    border-color: var(--accent);
-                    color: var(--accent);
-                }
-
-                .dark #root .btn-minimal:hover {
-                    background-color: var(--accent);
-                    color: var(--background);
-                }
-
-                .dark #root .btn-minimal:focus {
-                    box-shadow: 0 0 0 2px rgba(124, 214, 151, 0.5);
-                }
-
-                #root .section-spacious {
-                    padding-top: 4rem;
-                    padding-bottom: 4rem;
-                }
-
-                @media (min-width: 1024px) {
-                    #root .section-spacious {
-                        padding-top: 6rem;
-                        padding-bottom: 6rem;
-                    }
-                }
-
-                #root .divider-brand {
-                    height: 1px;
-                    background-color: var(--border);
-                    margin-top: 3rem;
-                    margin-bottom: 3rem;
-                }
-
-                #root .bank-card {
-                    background-color: var(--card);
-                    border: 1px solid var(--border);
-                    border-radius: var(--radius-lg);
-                    padding: 1.5rem;
-                    box-shadow: 0 1px 3px rgba(71, 29, 38, 0.04);
-                    transition: box-shadow 0.2s ease, border-color 0.2s ease;
-                }
-
-                #root .bank-card:hover {
-                    box-shadow: 0 4px 12px rgba(71, 29, 38, 0.08);
-                    border-color: var(--border);
-                }
-
-                /* ==========================================================================
-                   SEGURIDAD VISUAL (Protección contra Data-Scraping)
-                   ========================================================================== */
-                #root *:not(.can-select) * {
-                    user-select: none;
-                    -webkit-user-select: none !important;
-                    -moz-user-select: none !important;
-                    -ms-user-select: none !important;
-                }
-
-                #root .can-select,
-                #root .can-select * {
-                    user-select: text !important;
-                    -webkit-user-select: text !important;
-                    -moz-user-select: text !important;
-                }
-            `}} />
-
-            {/* HEADER / NAVEGACIÓN */}
-            <header style={{ borderBottom: '1px solid var(--border)', backgroundColor: 'var(--card)', padding: '0 1.5rem' }}>
-                <div className="container" style={{ height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-
-                    {/* Bloque del Logo */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <img
-                            src="/LaboralBank/LPB.png"
-                            alt="Laboral Panian Bank"
-                            className="logo-glow"
-                            style={{ height: '40px', width: 'auto', display: 'block', objectFit: 'contain' }}
-                        />
-                        <span className="display-font" style={{ fontSize: '1.25rem', color: 'var(--primary)', textTransform: 'uppercase' }}>
-                            Laboral Panian Bank
-                        </span>
-                    </div>
-
-                    {/* Enlaces de Navegación */}
-                    <nav className="can-select" style={{ display: 'flex', gap: '2rem' }}>
-                        <a href="#alianza" className="nav-link active">La Alianza</a>
-                        <a href="#institucional" className="nav-link">Institucional</a>
-                        <a href="#proximamente" className="nav-link">Banca Online</a>
-                    </nav>
-
-                    {/* Botón de Acceso */}
-                    <div>
-                        <a href="#proximamente" className="btn-minimal">
-                            Acceso Clientes
-                        </a>
-                    </div>
-                </div>
-            </header>
-
-            {/* CUERPO PRINCIPAL */}
-            <main style={{ flexGrow: 1 }}>
-
-                {/* Sección Hero: Alianza Financiera */}
-                <section id="alianza" className="section-spacious" style={{ backgroundColor: 'var(--secondary)' }}>
-                    <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '3rem', alignItems: 'center' }}>
-
-                        {/* Bloque Informativo Institucional */}
-                        <div className="can-select" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--primary)' }}>
-                                Alianza Financiera
-                            </span>
-
-                            <h1 className="display-font" style={{ fontSize: '2.5rem', lineHeight: '1.2', margin: 0 }}>
-                                Laboral Panian Bank
-                            </h1>
-
-                            <p style={{ color: 'var(--muted-foreground)', fontSize: '1.125rem', lineHeight: '1.6', margin: 0 }}>
-                                El Gobierno del Estado Paniense y Laboral Kutxa han alcanzado un acuerdo para la creación de <strong>Laboral Panian Bank</strong>. Una nueva entidad financiera que impulsará el ahorro, la inversión y el crecimiento económico del país. El futuro de la banca paniense comienza hoy.
-                            </p>
-
-                            <div style={{ marginTop: '1rem' }}>
-                                <p style={{ fontSize: '0.875rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--foreground)', margin: '0 0 0.75rem 0' }}>
-                                    Se une a nosotros para crear la primera entidad financiera del Estado Paniense
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Bloque de Contingencia: Estado de la Sede Electrónica */}
-                        <div id="proximamente">
-                            <div className="bank-card">
-                                <h3 className="display-font" style={{ fontSize: '1.5rem', color: 'var(--primary)', margin: '0 0 1rem 0' }}>
-                                    Sede Electrónica
-                                </h3>
-
-                                <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', lineHeight: '1.5', margin: '0 0 1.5rem 0' }}>
-                                    Nuestros equipos técnicos y de regulación están terminando los sistemas para garantizar una operativa segura.
-                                </p>
-
-                                {/* Mensaje de Alerta */}
-                                <div style={{ backgroundColor: 'var(--muted)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', margin: '0 0 1.5rem 0' }}>
-                                    <h4 className="display-font" style={{ fontSize: '0.875rem', color: 'var(--foreground)', margin: '0 0 0.25rem 0' }}>
-                                        ⚠️ Banca Online No Operativa
-                                    </h4>
-                                    <p style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', margin: 0 }}>
-                                        Las consultas de saldo, transferencias y contratación de productos digitales se habilitarán próximamente.
-                                    </p>
-                                </div>
-
-                                {/* Formulario de Notificación */}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--muted-foreground)', marginBottom: '0.5rem', textTransform: 'uppercase' }}>
-                                            Registro de interés
-                                        </label>
-                                        <input
-                                            type="text"
-                                            placeholder="ejemplo@reinodelpan.gov"
-                                            style={{ width: '100%', padding: '0.75rem', fontSize: '0.875rem' }}
-                                        />
-                                    </div>
-                                    <button
-                                        type="button"
-                                        style={{ width: '100%', padding: '0.75rem', backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)', border: 'none', borderRadius: 'var(--radius-sm)', fontWeight: 600, cursor: 'pointer' }}
-                                    >
-                                        Notificarme en el lanzamiento
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </section>
-
-                {/* Separador */}
-                <div className="container">
-                    <div className="divider-brand" />
-                </div>
-
-                {/* Detalles institucionales */}
-                <section id="institucional" style={{ padding: '3rem 0', backgroundColor: 'var(--card)' }}>
-                    <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
-                        <div>
-                            <h4 className="display-font" style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', textTransform: 'uppercase', margin: '0 0 0.5rem 0' }}>Respaldo Institucional</h4>
-                            <p style={{ fontSize: '0.875rem', margin: 0 }}>Garantizado por el Gobierno del Estado Paniense.</p>
-                        </div>
-                        <div>
-                            <h4 className="display-font" style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', textTransform: 'uppercase', margin: '0 0 0.5rem 0' }}>Garantía y Solvencia</h4>
-                            <p style={{ fontSize: '0.875rem', margin: 0 }}>Desarrollado en alianza estratégica junto a Laboral Kutxa.</p>
-                        </div>
-                        <div>
-                            <h4 className="display-font" style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', textTransform: 'uppercase', margin: '0 0 0.5rem 0' }}>Infraestructura Segura</h4>
-                            <p style={{ fontSize: '0.875rem', margin: 0 }}>
-                                Cifrado financiero desplegado en el año <span className="financial-data">2026</span>.
-                            </p>
-                        </div>
-                    </div>
-                </section>
-            </main>
-
-            {/* FOOTER */}
-            <footer style={{ backgroundColor: 'var(--secondary)', borderTop: '1px solid var(--border)', padding: '2rem 1.5rem' }}>
-                <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <span className="display-font" style={{ fontWeight: 700, color: 'var(--foreground)' }}>LABORAL PANIAN BANK</span>
-                        <span>© <span className="financial-data">2026</span>. Todos los derechos reservados.</span>
-                    </div>
-                    <div className="can-select" style={{ display: 'flex', gap: '1.5rem' }}>
-                        <span className="financial-data">v0.1.0-alpha</span>
-                    </div>
-                </div>
-            </footer>
-
-        </div>
-    );
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import Header from '../../components/Header';
+import '/BetPan.css';
+
+type Game = 'blackjack' | 'roulette' | 'slots' | 'coin' | 'dice' | 'bingo' | 'krule';
+type Page = Game | 'sports' | 'history';
+type PlayResult = { id: string; game: string; wager: number; payout: number; status: string; result: Record<string, any> };
+type BlackjackRound = { id: string; version: number; wager: number; payout: number; status: string; state: { player: Card[]; dealer: Card[]; turn: string }; result: Record<string, any> };
+type Card = { rank: string; suit: string; value: number };
+type Event = { id: string; league: string; home_team: string; away_team: string; starts_at: string; status: string; odds_home: number; odds_draw: number; odds_away: number; home_score: number | null; away_score: number | null };
+type SportBet = { id: string; event_id: string; pick: string; stake: number; odds: number; possible_payout: number; payout: number; status: string; created_at: string };
+type Remote = { wallet: { cash: string; bank: string }; rounds: PlayResult[]; bets: SportBet[]; events: Event[]; blackjack: BlackjackRound | null; sportsEnabled: boolean };
+const CATALOG: Record<Game, { name: string, emoji: string, subtitle: string, explain: string }> = {
+    blackjack: { name: 'Blackjack', emoji: '♠', subtitle: 'La mesa del 21', explain: 'Consigue 21 sin pasarte. Blackjack natural: ×2,5; victoria: ×2; empate: devolución.' },
+    roulette: { name: 'Ruleta', emoji: '◉', subtitle: 'Treinta y siete números', explain: 'Ruleta europea: 0–36. Color/paridad ×2 y número exacto ×36.' },
+    slots: { name: 'Tragaperras', emoji: '🎰', subtitle: 'Tres símbolos, un giro', explain: 'Tres sietes ×25; tres símbolos iguales ×12; dos iguales ×2.' },
+    coin: { name: 'Cara o cruz', emoji: '🪙', subtitle: 'El clásico duelo', explain: 'Acierta cara o cruz y recibe el doble de tu apuesta.' },
+    dice: { name: 'Dados', emoji: '⚄', subtitle: 'Adivina el dado', explain: 'Acierta un número del 1 al 6 y recibe ×6.' },
+    bingo: { name: 'Bingo rápido', emoji: '🎟', subtitle: 'Cartón individual', explain: '5 números en el cartón; se extraen 25 de 75. Dos aciertos ×1, tres ×2, cuatro ×8, cinco ×30.' },
+    krule: { name: 'Modo Krule', emoji: '👑', subtitle: 'El desafío del trono', explain: 'Reglas propuestas: trío ×8, pareja ×2, suma ≥14 ×1,5; sin combinación, pierdes la jugada.' }
+};
+const ALL: Page[] = ['blackjack', 'roulette', 'slots', 'coin', 'dice', 'bingo', 'krule', 'sports', 'history'];
+const labels: Record<Page, string> = { ...Object.fromEntries(Object.entries(CATALOG).map(([k, v]) => [k, v.name])) as Record<Game, string>, sports: 'Deportes', history: 'Mi actividad' };
+const money = (value: number | string | undefined) => Number(value ?? 0).toLocaleString('es-ES');
+const date = (x: string) => new Date(x).toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+async function api<T = any>(url: string, body?: unknown): Promise<T> { const response = await fetch('/api/betpan' + url, { method: body ? 'POST' : 'GET', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' }); let json: any; try { json = await response.json() } catch { throw new Error('El servidor no ha devuelto JSON') } if (!response.ok) throw new Error(json?.error ?? `HTTP ${response.status}`); return json as T; }
+const newID = () => crypto.randomUUID();
+function formatResult(r: PlayResult) { const d = r.result ?? {}; switch (r.game) { case 'roulette': return `Número ${d.roll} · ${d.colour}`; case 'slots': return (d.reels ?? []).join(' '); case 'coin': return `Salió ${d.landed}`; case 'dice': return `Salió ${d.landed}`; case 'bingo': return `${d.matches?.length ?? 0} aciertos · Cartón ${d.ticket?.join(', ')}`; case 'krule': return `Dados ${d.dice?.join(' · ')} · Total ${d.sum}`; default: return d.message ?? 'Ronda finalizada'; } }
+function CardFace({ card }: { card: Card }) { return <div className={'bp-card-face ' + (card.suit === '♥' || card.suit === '♦' ? 'bp-card-red' : '')}><b>{card.rank}</b><strong>{card.suit || '✦'}</strong></div> }
+function BJ({ value, disabled, onAction }: { value: BlackjackRound | null; disabled: boolean; onAction: (s: 'hit' | 'stand') => void }) {
+    if (!value) return <div className="bp-empty">Pulsa «Comenzar» para repartir las cartas.</div>;
+    return <div className="bp-bjtable"><div className="bp-bjgroup"><span>BANCA</span><div className="bp-bjcards">{value.state.dealer.map((c, i) => <CardFace card={c} key={i} />)}</div></div><div className="bp-bjgroup"><span>TU MANO</span><div className="bp-bjcards">{value.state.player.map((c, i) => <CardFace card={c} key={i} />)}</div></div>{value.status === 'active' ? <div className="bp-row"><button className="bp-primary" onClick={() => onAction('hit')} disabled={disabled}>Pedir carta</button><button className="bp-outline" onClick={() => onAction('stand')} disabled={disabled}>Plantarse</button></div> : <div className="bp-result-note">{value.result?.message ?? 'Partida finalizada'} · Premio: {money(value.payout)} <span>◈</span></div>}</div>;
+}
+export default function BetPan() {
+    const [tab, setTab] = useState<Page>('blackjack'); const [data, setData] = useState<Remote | null>(null); const [loading, setLoading] = useState(true); const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [notice, setNotice] = useState(''); const [stake, setStake] = useState(100); const [choice, setChoice] = useState('rojo'); const [last, setLast] = useState<PlayResult | null>(null); const [blackjack, setBlackjack] = useState<BlackjackRound | null>(null); const [activeCategory, setActiveCategory] = useState<'all' | 'casino' | 'sports'>('all');
+    const refresh = useCallback(async () => { try { const x = await api<Remote>('/state'); setData(x); setBlackjack(previous => x.blackjack ?? (previous?.status === 'settled' ? previous : null)); setError(''); } catch (e: any) { setError(e.message) } finally { setLoading(false) } }, []);
+    useEffect(() => { refresh() }, [refresh]);
+    const select = useCallback((p: Page) => { setTab(p); setLast(null); setNotice(''); setError(''); setChoice(p === 'coin' ? 'cara' : p === 'dice' ? '1' : 'rojo') }, []);
+    const run = async (fn: () => Promise<void>) => { if (busy) return; setBusy(true); setError(''); setNotice(''); try { await fn(); await refresh() } catch (e: any) { setError(e.message) } finally { setBusy(false) } };
+    const validStake = Number.isSafeInteger(stake) && stake >= 10 && stake <= 10000;
+    const placeInstant = () => run(async () => { if (!validStake) throw new Error('Introduce entre 10 y 10.000 Panedas'); const x = await api<{ round: PlayResult }>('/play', { game: tab, wager: stake, choice, requestId: newID() }); setLast(x.round); setNotice(Number(x.round.payout) > 0 ? '¡La jugada tiene premio!' : 'Jugada finalizada') });
+    const startBJ = () => run(async () => { if (!validStake) throw new Error('Apuesta inválida'); const x = await api<{ blackjack: BlackjackRound }>('/blackjack/start', { wager: stake, requestId: newID() }); setBlackjack(x.blackjack) });
+    const onAction = (action: 'hit' | 'stand') => run(async () => { if (!blackjack) throw new Error('No hay partida'); const x = await api<{ blackjack: BlackjackRound }>('/blackjack/action', { roundId: blackjack.id, action }); setBlackjack(x.blackjack); if (x.blackjack.status === 'settled') setNotice(x.blackjack.result.message ?? 'Partida completada') });
+    const betSport = (eventId: string, pick: string) => run(async () => { if (!validStake) throw new Error('Apuesta inválida'); const x = await api<{ bet: SportBet }>('/sports/bet', { eventId, pick, stake, requestId: newID() }); setNotice(`Apuesta registrada: ${money(x.bet.stake)} Panedas · cuota ficticia ×${x.bet.odds}`) });
+    const game = tab in CATALOG ? CATALOG[tab as Game] : null;
+    const liveEvents = useMemo(() => [...(data?.events ?? [])].filter(e => e.status === 'scheduled' && new Date(e.starts_at).getTime() > Date.now() + 120000), [data]);
+    const pickOptions = tab === 'coin' ? [['cara', 'Cara'], ['cruz', 'Cruz']] : tab === 'dice' ? Array.from({ length: 6 }, (_, i) => [String(i + 1), String(i + 1)]) : tab === 'roulette' ? [['rojo', 'Rojo'], ['negro', 'Negro'], ['par', 'Par'], ['impar', 'Impar'], ...Array.from({ length: 37 }, (_, i) => [`n:${i}`, `N.º ${i}`])] : [];
+    return <><Header /><div className="bp"><div className="bp-container">
+        <div className="bp-legal"><span className="bp-dot" /> ENTRETENIMIENTO EXCLUSIVAMENTE FICTICIO <span className="bp-legal-right">SIN DINERO REAL · SIN DEPÓSITOS · SIN CANJE</span></div>
+        <header className="bp-hero"><div className="bp-hero-copy"><div className="bp-brow">ESTADO PANIENSE <span>/</span> PLATAFORMA DE JUEGOS</div><div className="bp-logo"><img src="/images/bet.png" alt="Logotipo de BetPan" /><div><h1>BET<span>PAN</span></h1><p>El casino de las Panedas.</p></div></div><p className="bp-hero-sub">Pon a prueba tu suerte en una experiencia de juego integrada en nuestra economía ficticia. Nada que comprar. Nada que retirar.</p><div className="bp-pill-row"><span>✧ Moneda: Panedas</span><span>♧ Blackjack y casino</span><span>⚽ Eventos deportivos</span></div></div><div className="bp-hero-art"><div className="bp-hero-halo">♠</div><div className="bp-hero-symbol">777</div><div className="bp-hero-bottom">THE PAN EXPERIENCE</div></div></header>
+        <div className="bp-wallet"><div className="bp-wallet-label"><span className="bp-coin">◈</span><span>SALDO DISPONIBLE <small>Cuenta en efectivo del Banco Paniense</small></span></div><strong>{loading ? '…' : data ? money(data.wallet.cash) : '—'} <em>PND</em></strong><div className="bp-wallet-balance">En banco: {data ? money(data.wallet.bank) : '—'} PND <small>El banco no se utiliza para apostar</small></div><button onClick={() => { setLoading(true); refresh() }} disabled={loading}>↻ Actualizar</button></div>
+        <div className="bp-layout"><aside className="bp-aside"><div className="bp-section-cap">EXPLORAR BETPAN</div><nav className="bp-nav"><button className="bp-nav-group" onClick={() => setActiveCategory(activeCategory === 'casino' ? 'all' : 'casino')}><span>✦</span> JUEGOS DE CASINO <b>↘</b></button>{ALL.filter(p => p !== 'sports' && p !== 'history').map(p => <button key={p} className={tab === p ? 'bp-nav-active' : ''} onClick={() => select(p)}><span>{CATALOG[p as Game].emoji}</span>{labels[p]}<small>›</small></button>)}<button className="bp-nav-group" onClick={() => select('sports')}><span>◉</span> APUESTAS DEPORTIVAS <b>↗</b></button><button className={tab === 'sports' ? 'bp-nav-active' : ''} onClick={() => select('sports')}><span>⚽</span>Partidos automáticos<small>›</small></button><button className={tab === 'history' ? 'bp-nav-active' : ''} onClick={() => select('history')}><span>▤</span>Mi actividad<small>›</small></button></nav><div className="bp-aside-message"><span>✦ JUEGO RESPONSABLE</span><p>Las Panedas no tienen valor real. No pueden comprarse, venderse ni canjearse por dinero.</p></div></aside>
+            <main className="bp-main">{error && <div className="bp-banner bp-error" role="alert">{error} {error.includes('Discord') && <a href="/auth/discord">Entrar con Discord ↗</a>}</div>}{notice && <div className="bp-banner bp-success" role="status">{notice}</div>}
+                {game ? <><div className="bp-section-heading"><div><div className="bp-eyebrow">SALÓN DE JUEGO / {tab.toUpperCase()}</div><h2>{game.emoji} {game.name}</h2><p>{game.subtitle}</p></div><span className="bp-virtual-tag">◈ 100 % VIRTUAL</span></div>
+                    <div className="bp-casino"><div className="bp-game-area">
+                        {tab === 'blackjack' ? <BJ value={blackjack} disabled={busy} onAction={onAction} /> : tab === 'roulette' ? <div className="bp-roulette-wheel"><div className="bp-wheel"><div className="bp-wheel-inner">{last?.game === 'roulette' ? last.result.roll : '0–36'}</div></div><div className="bp-game-caption">RULETA EUROPEA · UN CERO</div></div> : tab === 'slots' ? <div className="bp-reels">{(last?.game === 'slots' ? last.result.reels : ['🍒', '7️⃣', '🔔']).map((e: string, i: number) => <div className="bp-reel" key={i}>{e}</div>)}</div> : tab === 'coin' ? <div className="bp-large-icon">{last?.game === 'coin' ? (last.result.landed === 'cara' ? '🪙' : '◉') : '🪙'}</div> : tab === 'dice' ? <div className="bp-large-icon">{last?.game === 'dice' ? ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'][last.result.landed - 1] : '⚄'}</div> : tab === 'bingo' ? <div className="bp-bingo"><div className="bp-bingo-label">TU CARTÓN</div><div className="bp-bingo-numbers">{(last?.game === 'bingo' ? last.result.ticket : [6, 13, 27, 48, 65]).map((x: number, i: number) => <span className={last?.result?.matches?.includes(x) ? 'bp-hit' : ''} key={i}>{x}</span>)}</div><p>{last?.game === 'bingo' ? `${last.result.matches.length} aciertos de 5` : 'Cartón de demostración hasta el sorteo'}</p></div> : <div className="bp-krule"><div className="bp-krule-crown">♛</div><div className="bp-krule-dice">{last?.game === 'krule' ? last.result.dice.join(' — ') : '⚄ — ⚄ — ⚄'}</div><span>MODO KRULE</span></div>}
+                    </div><div className="bp-game-config"><h3>Configura tu jugada</h3><label htmlFor="bp-stake">Apuesta en Panedas (PND)</label><div className="bp-input-wrap"><span>◈</span><input id="bp-stake" type="number" min="10" max="10000" step="10" value={stake} onChange={e => setStake(Number(e.target.value))} /><b>PND</b></div><div className="bp-presets">{[50, 100, 500, 1000].map(n => <button type="button" key={n} onClick={() => setStake(n)}>{money(n)}</button>)}</div>{pickOptions.length > 0 && <><label htmlFor="bp-choice">Tu elección</label><select id="bp-choice" value={choice} onChange={e => setChoice(e.target.value)}>{pickOptions.map(([val, label]) => <option key={val} value={val}>{label}</option>)}</select></>}
+                            <button className="bp-play" disabled={busy || !validStake || (tab === 'blackjack' && blackjack?.status === 'active')} onClick={tab === 'blackjack' ? startBJ : placeInstant}>{busy ? 'Procesando…' : tab === 'blackjack' && blackjack?.status === 'active' ? 'Partida en curso' : tab === 'blackjack' ? '♠ Comenzar partida' : '✦ Jugar ahora'} <span>→</span></button><p className="bp-rule">{game.explain}</p></div></div>
+                    {last?.game === tab && <div className="bp-result"><div><small>ÚLTIMA JUGADA</small><h3>{formatResult(last)}</h3></div><div className={Number(last.payout) > 0 ? 'bp-win' : 'bp-loss'}>{Number(last.payout) > 0 ? '+' : ''}{money(last.payout)} PND <small>Premio bruto</small></div></div>}
+                </> : tab === 'sports' ? <><div className="bp-section-heading"><div><div className="bp-eyebrow">BETPAN SPORTS / AUTOMATIZADO</div><h2>⚽ Apuestas deportivas</h2><p>Partidos reales · resultados automáticos · cuotas ficticias</p></div></div><div className="bp-info">Las apuestas se cierran antes del comienzo. Los resultados provienen del proveedor deportivo y pueden publicarse con retraso. Las cuotas son ficticias y fijas en el momento de apostar.</div><div className="bp-sport-stake"><label>Importe: <input type="number" min="10" max="10000" value={stake} onChange={e => setStake(Number(e.target.value))} /> Panedas</label><span>1 = Local · X = Empate · 2 = Visitante</span></div>{!data?.sportsEnabled ? <div className="bp-empty">Para activar los partidos automáticos, configura FOOTBALL_DATA_TOKEN en el servidor y ejecuta la sincronización programada.</div> : liveEvents.length === 0 ? <div className="bp-empty">No hay encuentros próximos cargados. El proceso de sincronización añadirá los eventos del proveedor sin configuración manual.</div> : <div className="bp-fixtures">{liveEvents.map(e => <article key={e.id} className="bp-fixture"><div className="bp-fixture-head"><span>⚽ {e.league}</span><time>{date(e.starts_at)}</time></div><div className="bp-fixture-names"><b>{e.home_team}</b><span>VS</span><b>{e.away_team}</b></div><div className="bp-markets">{([['home', '1', e.odds_home], ['draw', 'X', e.odds_draw], ['away', '2', e.odds_away]] as const).map(([pick, label, odds]) => <button disabled={busy || !validStake} key={pick} onClick={() => betSport(e.id, pick)}><small>{label}</small><strong>×{odds}</strong></button>)}</div></article>)}</div>}</> : <><div className="bp-section-heading"><div><div className="bp-eyebrow">MI BETPAN / HISTORIAL</div><h2>Mis movimientos</h2><p>Resultados registrados, sin monedas reales.</p></div></div><h3 className="bp-history-heading">Juegos de casino</h3>{(data?.rounds ?? []).length === 0 ? <div className="bp-empty">Aún no hay partidas completadas.</div> : (data?.rounds ?? []).map(r => <div className="bp-history-row" key={r.id}><span>{labels[r.game as Game] ?? r.game}<small>{formatResult(r)}</small></span><strong>{money(r.payout)} PND</strong></div>)}<h3 className="bp-history-heading">Apuestas deportivas</h3>{(data?.bets ?? []).length === 0 ? <div className="bp-empty">Aún no hay apuestas deportivas.</div> : (data?.bets ?? []).map(b => <div className="bp-history-row" key={b.id}><span>{b.event_id} · {b.pick} <small>{b.status} · {date(b.created_at)}</small></span><strong>{money(b.payout)} PND</strong></div>)}</>}
+            </main></div><footer className="bp-footer"><span>© BETPAN · ESTADO PANIENSE</span><strong>NO ES UNA CASA DE APUESTAS CON DINERO REAL.</strong><span>Solo entretenimiento con Panedas ficticias.</span></footer></div></div></>;
 }
