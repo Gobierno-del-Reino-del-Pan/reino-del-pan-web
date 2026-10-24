@@ -8,7 +8,7 @@ import "leaflet/dist/leaflet.css";
 import "./TerritorialDivisions.css";
 
 /*
- * ESTADO PANIENSE — Atlas territorial v2.2
+ * ESTADO PANIENSE — Atlas territorial v2.1
  * Los polígonos de /public/atlas/ proceden de fuentes cartográficas REALES.
  * La agrupación de parroquias/municipios como regiones panienses es FICTICIA
  * y permanece provisional hasta su ratificación. No se interpolan fronteras.
@@ -18,7 +18,7 @@ type Modo = "politico" | "geografico" | "gta";
 type Identificador = "pimbo" | "baguette" | "croissant" | "pretzel" |
   "sin-gluten" | "pan-plano-arepa" | "atlantida" | "sahara";
 type DatosCapa = "regiones" | "capitales" | "especiales" | "carreteras" |
-  "ferrocarriles" | "aeropuertos" | "estaciones" | "puertos" | "otros" | "subdivisiones" | "contexto_fueguino";
+  "ferrocarriles" | "aeropuertos" | "estaciones" | "puertos" | "otros";
 type Propiedades = {
   id?: string;
   region_id?: string;
@@ -49,21 +49,19 @@ type Region = {
 };
 
 const REGIONES: Region[] = [
-  { id: "pimbo", nombre: "Pimbo", capital: "Pimbolandia", descripcion: "Sector noroccidental y suroccidental andorrano", color: "#A17DEB", bandera: "Pimbo", situacion: "Ordino, La Massana y Sant Julià de Lòria · límite administrativo continuo, propuesta paniense", centro: [42.55, 1.49], zoom: 11 },
-  { id: "baguette", nombre: "Baguette", capital: "Pantopía", descripcion: "Sede del Gobierno del Estado Paniense", color: "#4B9DDD", bandera: "Baguette", situacion: "Andorra la Vella y Escaldes-Engordany · límite administrativo continuo, propuesta paniense", centro: [42.51, 1.54], zoom: 12 },
-  { id: "croissant", nombre: "Croissant", capital: "Vila Croissant", descripcion: "Sector oriental andorrano", color: "#E09A20", bandera: "Croissant", situacion: "Encamp y Canillo · límite administrativo continuo, propuesta paniense", centro: [42.555, 1.64], zoom: 11 },
+  { id: "pimbo", nombre: "Pimbo", capital: "Pimbolandia", descripcion: "Sector noroccidental y suroccidental andorrano", color: "#A17DEB", bandera: "Pimbo", situacion: "Ordino, La Massana y Sant Julià de Lòria · agrupación provisional", centro: [42.55, 1.49], zoom: 11 },
+  { id: "baguette", nombre: "Baguette", capital: "Pantopía", descripcion: "Sede del Gobierno del Estado Paniense", color: "#4B9DDD", bandera: "Baguette", situacion: "Andorra la Vella y Escaldes-Engordany · agrupación provisional", centro: [42.51, 1.54], zoom: 12 },
+  { id: "croissant", nombre: "Croissant", capital: "Vila Croissant", descripcion: "Sector oriental andorrano", color: "#E09A20", bandera: "Croissant", situacion: "Encamp y Canillo · agrupación provisional", centro: [42.555, 1.64], zoom: 11 },
   { id: "pretzel", nombre: "Pretzel", capital: "Pretzelópolis", descripcion: "Franja litoral vascofrancesa", color: "#F47544", bandera: "Pretzel", situacion: "10 comunas costeras reales · selección provisional", centro: [43.36, -1.55], zoom: 10 },
-  { id: "sin-gluten", nombre: "Sin Glúten", capital: "ChinPan", descripcion: "Islas Medas y sector continental de Girona", color: "#67D58D", bandera: "Sin Glúten", situacion: "Sector continental propuesto: Torroella de Montgrí; islas pendientes de costa OSM", centro: [42.05, 3.225], zoom: 13 },
-  { id: "pan-plano-arepa", nombre: "Pan Plano / Arepa", capital: "Arepa", descripcion: "Sector argentino de Tierra del Fuego", color: "#F16F76", bandera: "Pan Plano-Arepa", situacion: "Capital Arepa en Ushuaia; polígono municipal pendiente de importar de IDE TDF", centro: [-54.8019, -68.303], zoom: 11 },
+  { id: "sin-gluten", nombre: "Sin Glúten", capital: "ChinPan", descripcion: "Islas Medas y sector continental de Girona", color: "#67D58D", bandera: "Sin Glúten", situacion: "Límites insulares y continentales pendientes de aprobación", centro: [42.05, 3.225], zoom: 13 },
+  { id: "pan-plano-arepa", nombre: "Pan Plano / Arepa", capital: "Arepa", descripcion: "Sector argentino de Tierra del Fuego", color: "#F16F76", bandera: "Pan Plano-Arepa", situacion: "Contorno real histórico; precisión local de Ushuaia pendiente", centro: [-54.4, -67.5], zoom: 7 },
   { id: "atlantida", nombre: "Atlántida", capital: null, descripcion: "Territorio de ultramar antártico", color: "#35CDE2", bandera: "Atlántida", situacion: "Perímetro y capital pendientes de definición", centro: [-77.87, -34.62], zoom: 5 },
   { id: "sahara", nombre: "Sáhara Occidental", capital: null, descripcion: "Territorio en negociaciones", color: "#B5BEC9", bandera: "", situacion: "No es una región ratificada del Estado Paniense", centro: [24.21, -13.21], zoom: 6 },
 ];
 const POR_ID = Object.fromEntries(REGIONES.map(r => [r.id, r])) as Record<Identificador, Region>;
-const CAPAS: DatosCapa[] = ["regiones", "capitales", "especiales", "carreteras", "ferrocarriles", "aeropuertos", "estaciones", "puertos", "otros", "subdivisiones", "contexto_fueguino"];
+const CAPAS: DatosCapa[] = ["regiones", "capitales", "especiales", "carreteras", "ferrocarriles", "aeropuertos", "estaciones", "puertos", "otros"];
 const CAPA_INFO: { id: DatosCapa; label: string; emoji: string }[] = [
-  { id: "regiones", label: "Tres regiones principales y enclaves", emoji: "◇" },
-  { id: "subdivisiones", label: "Mostrar límites parroquiales", emoji: "┆" },
-  { id: "contexto_fueguino", label: "Referencia geográfica fueguina", emoji: "⌁" },
+  { id: "regiones", label: "Límites territoriales", emoji: "◇" },
   { id: "capitales", label: "Capitales", emoji: "★" },
   { id: "carreteras", label: "Carreteras", emoji: "═" },
   { id: "ferrocarriles", label: "Ferrocarriles", emoji: "≋" },
@@ -137,10 +135,6 @@ function Desplazamiento({ id, atlas, reiniciar }: { id: Identificador | null; at
     if (!atlas) return;
     if (!id) { map.flyTo(PANE_ORIGEN, 10, { duration: 0.65 }); return; }
     const region = POR_ID[id];
-    if (id === "sin-gluten" || id === "pan-plano-arepa") {
-      map.flyTo(region.centro, region.zoom, { duration: 0.8 });
-      return;
-    }
     const fs = atlas.regiones.features.filter(f => f.properties?.region_id === id);
     if (fs.length) {
       const bounds = L.geoJSON({ type: "FeatureCollection", features: fs } as Coleccion).getBounds();
@@ -191,7 +185,6 @@ export default function TerritorialDivisions() {
   const [capas, setCapas] = useState<Record<DatosCapa, boolean>>({
     regiones: true, capitales: true, especiales: true, carreteras: true,
     ferrocarriles: false, aeropuertos: false, estaciones: false, puertos: false, otros: false,
-    subdivisiones: false, contexto_fueguino: false,
   });
   const [fichaAbierta, setFichaAbierta] = useState(true);
   const mapaBase = useMemo(() => fondoCartografico(modo), [modo]);
@@ -207,7 +200,7 @@ export default function TerritorialDivisions() {
     <div className="ap-page">
       <Header />
       <main className="ap-main">
-        <div className="ap-kicker">ESTADO PANIENSE <span>/</span> CARTOGRAFÍA NACIONAL <span>/</span> v2.2</div>
+        <div className="ap-kicker">ESTADO PANIENSE <span>/</span> CARTOGRAFÍA NACIONAL <span>/</span> v2.1</div>
         <header className="ap-header">
           <div className="ap-brand">
             <div className="ap-heading" role="heading" aria-level={1}>
@@ -250,7 +243,7 @@ export default function TerritorialDivisions() {
                   {atlas && c.id !== "regiones" && c.id !== "especiales" && c.id !== "capitales" && <small>{vacio(c.id).features.length || "—"}</small>}
                 </label>
               ))}
-              <p className="ap-sidebar-note">Las subdivisiones históricas son una capa opcional; no dividen las tres regiones. Las infraestructuras sin datos aparecen desactivadas. Se incorporarán trazados y ubicaciones reales o proyectos documentados, nunca líneas ficticias como si fueran carreteras construidas.</p>
+              <p className="ap-sidebar-note">Las infraestructuras sin datos aparecen desactivadas. Se incorporarán trazados y ubicaciones reales o proyectos documentados, nunca líneas ficticias como si fueran carreteras construidas.</p>
             </div>
           </aside>
 
@@ -273,15 +266,6 @@ export default function TerritorialDivisions() {
                     layer.on({ click: () => elegir(id), mouseover: (evt) => (evt.target as L.Path).setStyle({ weight: 3.5, fillOpacity: 0.64 }), mouseout: (evt) => (evt.target as L.Path).setStyle(geoEstilo(f, seleccion, modo, true)) });
                     layer.bindTooltip(POR_ID[id]?.nombre ?? "Región", { sticky: true, className: "ap-poly-tooltip" });
                   }}
-                />}
-                {atlas && capas.subdivisiones && <GeoJSON key="subdivisiones-adm1"
-                  data={atlas.subdivisiones}
-                  style={{ color: modo === "politico" ? "#D8E7F3" : "#E9ECEF", weight: 0.9, opacity: 0.6, dashArray: "3 5", fill: false, interactive: false }}
-                />}
-                {atlas && capas.contexto_fueguino && (!seleccion || seleccion === "pan-plano-arepa") && <GeoJSON key="referencia-fuego"
-                  data={atlas.contexto_fueguino}
-                  style={{ color: "#F16F76", weight: 1.8, opacity: 0.8, dashArray: "9 6", fill: false }}
-                  onEachFeature={(_f, layer) => layer.bindTooltip("Referencia provincial histórica · no es una frontera paniense", { sticky: true })}
                 />}
                 {atlas && capas.capitales && capitalesActivas.map(f => {
                   if (f.geometry.type !== "Point") return null;
@@ -345,15 +329,15 @@ export default function TerritorialDivisions() {
                     <h3>{activo.nombre}</h3>
                     <p>{activo.descripcion}</p>
                     <div className="ap-detail-meta"><div><small>CAPITAL PANIENSE</small><strong>{activo.capital ?? "Pendiente"}</strong></div><div><small>BASE GEOGRÁFICA</small><strong>{activo.situacion}</strong></div></div>
-                    <p className="ap-caveat">Las geometrías siguen límites administrativos publicados. Su agrupación y adscripción al Estado Paniense son una propuesta ficticia, no reconocida como frontera internacional.</p>
-                  </> : <><h3>El territorio, con precisión</h3><p>Selecciona una región para consultar su capital y delimitación. Las capitales se representan exclusivamente por sus nombres panienses.</p><p className="ap-caveat">Sin Glúten tiene una delimitación continental propuesta, no la insular. Pan Plano / Arepa conserva su capital sin polígono aprobado. Atlántida y el Sáhara Occidental continúan como casos especiales.</p></>}
+                    <p className="ap-caveat">La base procede de geometrías administrativas reales donde están disponibles. La adscripción al Estado Paniense es ficción cartográfica; los límites políticos están en revisión.</p>
+                  </> : <><h3>El territorio, con precisión</h3><p>Selecciona una región para consultar su capital y delimitación. Las capitales se representan exclusivamente por sus nombres panienses.</p><p className="ap-caveat">Sin Glúten y Atlántida aún no tienen polígonos definitivos; el Sáhara Occidental se mantiene separado, en negociaciones.</p></>}
                 </div>}
               </div>
               <div className="ap-sources"><span><b>{atlas ? atlas.regiones.features.length : "—"}</b><small>unidades geográficas</small></span><span><b>{atlas ? atlas.capitales.features.length : "—"}</b><small>capitales panienses</small></span><span><b>{provinciasActivas.length}</b><small>piezas en selección</small></span></div>
             </div>
           </div>
         </section>
-        <footer className="ap-carto-footer">Fuentes: geoBoundaries, IGN Admin Express, TopoJSON municipios Cataluña · Fondo: OpenStreetMap / CARTO / Esri · Sistema WGS84 · Adscripciones políticas ficticias · v2.2</footer>
+        <footer className="ap-carto-footer">Fuentes de límites: geoBoundaries, IGN Admin Express · Fondo: OpenStreetMap / CARTO / Esri · Sistema WGS84 · Adscripciones políticas ficticias · v2.1</footer>
       </main>
       <Footer />
     </div>

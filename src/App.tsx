@@ -22,7 +22,7 @@ import LPB from "./pages/LaboralBank/LPB";
 import Level from "./pages/level";
 import PanelDeControl from "./pages/TVP/PanelDeControl.tsx";
 import Consorcio from "./pages/Consorcio/consorcio";
-import Maps from "./pages/Maps";
+import Maps from "./pages/TerritorialDivisions.tsx";
 import BORP from "./pages/BORP";
 import PKMNpokedex from "./pages/PKMN/pokedex.tsx";
 import Policía from "./pages/Policía/PolicíaPanacional.tsx";
@@ -44,49 +44,49 @@ function App() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Router>
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/about" component={About} />
-        <Route path="/gobierno" component={Gobierno} />
-        <Route path="/Politics" component={Politics} />
-        <Route path="/donations" component={Donations} />
-        <Route path="/pkmn" component={PKMN} />
-        <Route path="/electa" component={Elecciones} />
+        <Switch>
+          <Route path="/" component={Home} />
+          <Route path="/about" component={About} />
+          <Route path="/gobierno" component={Gobierno} />
+          <Route path="/Politics" component={Politics} />
+          <Route path="/donations" component={Donations} />
+          <Route path="/pkmn" component={PKMN} />
+          <Route path="/electa" component={Elecciones} />
 
-        <Route path="/laliga" component={LaLiga} />
-        <Route path="/LALIGA/CSD" component={CSD} />
-        <Route path="/LALIGA/juego-limpio" component={JuegoLimpio} />
-        <Route path="/LALIGA/reglamento" component={Reglamento} />
-        <Route path="/seleccion" component={Selección} />
-        <Route path="/concursos/paneda" component={PanedaContest} />
-        <Route path="/concursos/lineapoke" component={PKMNCContest} />
-        <Route path="/concursos/imagentvp" component={tvpContest} />
-        <Route path="/lpb" component={LPB} />
-        <Route path="/level" component={Level} />
-        <Route path="/consorcio" component={Consorcio} />
-        <Route path="/maps" component={Maps} />
-        <Route path="/borp" component={BORP} />
-        <Route path="/pkmn/pokedex" component={PKMNpokedex} />
-        <Route path="/policia" component={Policía} />
-        <Route path="/turismo" component={Turismo} />
-        <Route path="/patrimonio-panacional" component={Patrimonio} />
-        <Route path="alertas" component={Alertas} />
-        <Route path="/elecciones" component={Elecciones} />
-        <Route path="/tvp" component={TVP} />
-        <Route path="/tvp/paneldecontrol" component={PanelDeControl} />
-        <Route path="/dpi" component={DPI} />
-        <Route path="/dpi/create" component={CreateDPI} />
-        <Route path="/dpi/restore" component={RestoreDPI} />
-        <Route path="/carpeta" component={Carpeta} />
-        <Route path="/privacy" component={Privacy} />
-        <Route path="/terms" component={Terms} />
-        <Route path="/404" component={NotFound} />
-        <Route path="/FTech" component={FuerzaTech} />
-        <Route path="/ePAN" component={ePAN} />
-        <Route path="/Pandora" component={Pandora} />
+          <Route path="/laliga" component={LaLiga} />
+          <Route path="/LALIGA/CSD" component={CSD} />
+          <Route path="/LALIGA/juego-limpio" component={JuegoLimpio} />
+          <Route path="/LALIGA/reglamento" component={Reglamento} />
+          <Route path="/seleccion" component={Selección} />
+          <Route path="/concursos/paneda" component={PanedaContest} />
+          <Route path="/concursos/lineapoke" component={PKMNCContest} />
+          <Route path="/concursos/imagentvp" component={tvpContest} />
+          <Route path="/lpb" component={LPB} />
+          <Route path="/level" component={Level} />
+          <Route path="/consorcio" component={Consorcio} />
+          <Route path="/maps" component={Maps} />
+          <Route path="/borp" component={BORP} />
+          <Route path="/pkmn/pokedex" component={PKMNpokedex} />
+          <Route path="/policia" component={Policía} />
+          <Route path="/turismo" component={Turismo} />
+          <Route path="/patrimonio-panacional" component={Patrimonio} />
+          <Route path="alertas" component={Alertas} />
+          <Route path="/elecciones" component={Elecciones} />
+          <Route path="/tvp" component={TVP} />
+          <Route path="/tvp/paneldecontrol" component={PanelDeControl} />
+          <Route path="/dpi" component={DPI} />
+          <Route path="/dpi/create" component={CreateDPI} />
+          <Route path="/dpi/restore" component={RestoreDPI} />
+          <Route path="/carpeta" component={Carpeta} />
+          <Route path="/privacy" component={Privacy} />
+          <Route path="/terms" component={Terms} />
+          <Route path="/404" component={NotFound} />
+          <Route path="/FTech" component={FuerzaTech} />
+          <Route path="/ePAN" component={ePAN} />
+          <Route path="/Pandora" component={Pandora} />
 
-        <Route component={NotFound} />
-      </Switch></Router>
+          <Route component={NotFound} />
+        </Switch></Router>
     </div>
   );
 }

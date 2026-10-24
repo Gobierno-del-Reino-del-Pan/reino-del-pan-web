@@ -218,6 +218,7 @@ export default function Header() {
     <>
       <Link href="/carpeta" className="ap-pop-item" onClick={() => setDrop(null)}><Icon name="folder" size={16} />Mi Carpeta</Link>
       <a href="/consorcio" className="ap-pop-item"><img src="/CONSORCIO/consorcio.png" alt="" width="16" height="16" />Tarjeta Transporte</a>
+      <a href="/lpb" className="ap-pop-item"><img src="/images/bet.png" alt="" width="16" height="16" />BetPan</a>
       <a href="/electa" className="ap-pop-item"><img src="/electa/electa.png" alt="" width="16" height="16" />Electa · Elecciones</a>
       <a href="https://mineco.duckdns.org/lpb/cuenta" className="ap-pop-item"><img src="/LaboralBank/LPB.png" alt="" width="16" height="16" />Cuenta Bancaria LPB</a>
       {isReporter && <Link href="/TVP/PanelDeControl" className="ap-pop-item" onClick={() => setDrop(null)}>🎥 Panel TVP</Link>}
