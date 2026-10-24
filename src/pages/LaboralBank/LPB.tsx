@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Header from '../../components/Header';
-import '/BetPan.css';
+import 'BetPan.css';
 
 type Game = 'blackjack' | 'roulette' | 'slots' | 'coin' | 'dice' | 'bingo' | 'krule';
 type Page = Game | 'sports' | 'history';
