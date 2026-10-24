@@ -52,7 +52,7 @@ const starters = [
   },
   {
     key: "planta", name: "Sprigatito", number: "#0906", caption: "Segundo inicial anunciado",
-    img: "/pkmn/sprigatito.png", typeImg: "/pkmn/tipos/planta.png", type: "Planta",
+    img: "/pkmn/sprigatito.png", typeImg: "/pkmn/tipos/planta.png", type: "",
     biome: "Bosque Paniense", color: "#24875A", tint: "#E7F8EE",
     description: "Su sedoso pelaje se asemeja en composición a las plantas. Se lava la cara con diligencia para que no se le seque. Su cuerpo desprende una dulce fragancia que embriaga a quien tiene a su alrededor.",
   },
