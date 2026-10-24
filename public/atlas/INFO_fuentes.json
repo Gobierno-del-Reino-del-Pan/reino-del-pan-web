@@ -11,9 +11,19 @@
       "url": "https://github.com/robit-man/tiny-atlas/blob/main/elevation_model/geojson/ADM1/AND.geojson",
       "original": "geoBoundaries AND ADM1, cartografía de parroquias",
       "asignacion_provisional": {
-        "Pimbo": ["Ordino", "La Massana", "Sant Julià de Lòria"],
-        "Baguette": ["Andorra la Vella", "Escaldes-Engordany"],
-        "Croissant": ["Canillo", "Encamp"]
+        "Pimbo": [
+          "Ordino",
+          "La Massana",
+          "Sant Julià de Lòria"
+        ],
+        "Baguette": [
+          "Andorra la Vella",
+          "Escaldes-Engordany"
+        ],
+        "Croissant": [
+          "Canillo",
+          "Encamp"
+        ]
       }
     },
     "Francia": {
@@ -28,13 +38,21 @@
       "anio": 2006,
       "licencia": "CC BY 2.5 (según metadatos geoBoundaries)",
       "url": "https://github.com/robit-man/tiny-atlas/blob/main/elevation_model/geojson/ADM1/ARG.geojson",
-      "advertencia": "Contorno provincial histórico simplificado: la posición acordada de Ushuaia queda fuera del contorno. NO debe usarse para georreferenciación de precisión, pendiente de actualización."
+      "advertencia": "Polígono histórico provincial movido a contexto_fueguino.geojson; NO es el perímetro paniense ni incluye Ushuaia. El ejido real debe importarse.",
+      "estado": "Provincia 2006 movida a contexto_fueguino.geojson; no representa el ejido Ushuaia. El perímetro Pan Plano / Arepa se mantiene ausente."
     },
     "Sin Glúten": {
-      "estado": "Sin polígono ratificado; marcador real de la isla, necesita límites de costa e isla y selección del sector continental",
+      "estado": "Torroella de Montgrí municipal real como propuesta continental. Islas Medas pendientes de importar con coastline OSM y validar ChinPan.",
       "fuente_candidata": "https://agportal.sig.gencat.cat/server/rest/services/Hosted/Municipis_1000000/FeatureServer/0"
     },
-    "Atlántida": { "estado": "Punto de localización de referencia, perímetro y capital no fijados" },
-    "Sáhara Occidental": { "estado": "Territorio en negociaciones, sin adscripción territorial ni geometría paniense" }
-  }
+    "Atlántida": {
+      "estado": "Punto de localización de referencia, perímetro y capital no fijados"
+    },
+    "Sáhara Occidental": {
+      "estado": "Territorio en negociaciones, sin adscripción territorial ni geometría paniense"
+    }
+  },
+  "version": "v2.2",
+  "estado_delimitacion_v22": "Revisar estado_delimitacion_v22.json",
+  "estado_delimitacion": "Ver estado_delimitacion_v22.json"
 }

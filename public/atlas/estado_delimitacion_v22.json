@@ -1,0 +1,37 @@
+{
+  "version": "2.2",
+  "crs": "EPSG:4326",
+  "real_geometry": {
+    "andorra": {
+      "parish_count": 7,
+      "regions": [
+        "pimbo",
+        "baguette",
+        "croissant"
+      ],
+      "source": "geoBoundaries AND ADM1 (2007)"
+    },
+    "pretzel": {
+      "municipal_units": 10,
+      "source": "IGN Admin Express 2018"
+    },
+    "sin_gluten_continental": {
+      "source": "TopoJSON Catalunya municipio Torroella de Montgrí 171997",
+      "status": "propuesta"
+    },
+    "medes_islands": {
+      "status": "sin_geometry",
+      "osm_way_id": 4791233,
+      "capital_verified_point": [
+        3.22281,
+        42.04744
+      ]
+    },
+    "arepa": {
+      "status": "sin_municipal_geometry",
+      "source_to_import": "https://ide.tierradelfuego.gob.ar/descargas/"
+    }
+  },
+  "fictional_assignment": true,
+  "note": "El grupo de parroquias es una propuesta paniense. No implica reivindicación territorial real."
+}

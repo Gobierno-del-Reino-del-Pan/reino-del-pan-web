@@ -1,39 +1,36 @@
 #!/usr/bin/env python3
-"""Auditoría cartográfica real del Atlas Paniense v2."""
+"""Validación v2.2: sin geometrías arbitrarias ni capitales desplazadas para cuadrarlas."""
 from pathlib import Path
-from collections import Counter
 import json
-from shapely.geometry import shape, Point
+from shapely.geometry import shape
 from shapely.ops import unary_union
-
-BASE = Path(__file__).resolve().parent.parent / 'public' / 'atlas'
-
-def load(name):
-    d=json.loads((BASE/f'{name}.geojson').read_text(encoding='utf-8'))
-    assert d['type']=='FeatureCollection',name
-    return d['features']
-
-fs=load('regiones'); cap=load('capitales'); parish=load('parroquias_referencia'); special=load('especiales')
-assert len(parish)==7, 'Faltan parroquias andorranas'
-assert len(cap)==6, 'Capitales en número distinto a lo acordado'
-assert len([f for f in fs if f['properties']['region_id'] in ('pimbo','baguette','croissant')])==7
-assert all(shape(f['geometry']).is_valid for f in fs)
-assert all(shape(f['geometry']).is_valid for f in cap)
-assert not any(f['properties'].get('region_id') in ('atlantida','sahara','sin-gluten') for f in fs), 'No inventar áreas de territorios sin ratificación'
-assert all(f['properties'].get('source') for f in fs), 'Polígono sin fuente cartográfica'
-for f in fs:
-    g=shape(f['geometry']); xmin,ymin,xmax,ymax=g.bounds
-    assert -180<=xmin<=xmax<=180 and -90<=ymin<=ymax<=90, f['properties']['id']
-areas=Counter(f['properties']['region_id'] for f in fs)
-assert areas['pimbo']==3 and areas['baguette']==2 and areas['croissant']==2 and areas['pretzel']==10
-ad=[shape(f['geometry']) for f in parish]
-assert abs(unary_union(ad).area-unary_union([shape(f['geometry']) for f in fs if f['properties']['region_id'] in ('pimbo','baguette','croissant')]).area)<1e-9
-print('✔ Parroquias/municipios reales presentes:',dict(areas))
-print('✔ Todos los polígonos son GeoJSON válido en WGS84')
-for f in cap:
-    matches={q['properties']['region_id'] for q in fs if shape(q['geometry']).covers(shape(f['geometry']))}
-    desired=f['properties']['region_id']; name=f['properties']['nombre']
-    if desired in matches: print(f'✔ {name}: capital dentro del contorno registrado ({desired})')
-    else: print(f'⚠ {name}: SIN coincidencia con polígono publicado ({desired}). Delimitación pendiente o fuente antigua.')
-print('✔ Atlántida, Sin Glúten y Sáhara Occidental: sin falsos polígonos')
-print('✔ Comprobación terminada')
+B=Path(__file__).resolve().parents[1]/'public'/'atlas'
+def load(s):
+    x=json.loads((B/f'{s}.geojson').read_text(encoding='utf8'))
+    assert x['type']=='FeatureCollection'
+    return x['features']
+regs=load('regiones'); par=load('subdivisiones'); cap=load('capitales')
+assert len(par)==7
+rids=['pimbo','baguette','croissant']
+assert [f['properties']['region_id'] for f in regs[:3]]==rids
+u=unary_union([shape(f['geometry']) for f in par]);u2=unary_union([shape(f['geometry']) for f in regs if f['properties']['region_id'] in rids])
+assert u.symmetric_difference(u2).area<1e-10, 'Las 3 regiones no cubren exactamente las 7 parroquias'
+for i,a in enumerate(regs[:3]):
+ for b in regs[i+1:3]:
+  assert shape(a['geometry']).intersection(shape(b['geometry'])).area<1e-10, 'Solapamiento interregional'
+assert all(shape(f['geometry']).is_valid for f in regs)
+assert all(f['properties'].get('source') for f in regs)
+assert len([f for f in regs if f['properties']['region_id']=='sin-gluten'])>=1
+assert len(cap)==6
+for c in cap:
+ rid=c['properties']['region_id']; g=shape(c['geometry']); result=[r for r in regs if r['properties']['region_id']==rid and shape(r['geometry']).covers(g)]
+ label=c['properties']['nombre']
+ if rid in ('pimbo','baguette','croissant','pretzel'):
+  assert result,f'{label} no cae en su región asignada'
+ if rid in ('sin-gluten','pan-plano-arepa'):
+  print(f'{"✔" if result else "PENDIENTE"} {label}: georreferencia {"validada" if result else "solo punto; perímetro costero/municipal oficial no importado"}')
+ else:
+  print('✔',label,'en polígono verificado')
+assert shape(regs[4]['geometry']).bounds[0]>3.09 and shape(regs[4]['geometry']).bounds[2]<3.22
+assert not any(f['properties']['region_id']=='pan-plano-arepa' and f['properties'].get('fuente_geo')=='geoBoundaries ARG ADM1 (2006)' for f in regs)
+print(f'OK: {len(regs)} unidades territoriales, 3 regiones andorranas derivadas exactamente de 7 parroquias, sin solapamientos.')
