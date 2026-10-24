@@ -188,7 +188,7 @@ export default function PanelDeControl() {
                             MESA DE REDACCIÓN
                         </h1>
                         <p className="text-xs sm:text-sm text-neutral-400 font-light mt-1">
-                            Sistema Centralizado de Entrada de Noticias para el Reino del Pan.
+                            Sistema Centralizado de Entrada de Noticias para el Estado Paniense.
                         </p>
                     </div>
                     <Link to="/">

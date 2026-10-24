@@ -26,11 +26,11 @@ export default function VisitPan() {
                     <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 md:gap-3 text-center">
                         <img
                             src="/flag.png"
-                            alt="Bandera del Reino del Pan"
+                            alt="Bandera del Estado Paniense"
                             className="h-3 w-4 opacity-90 object-contain shrink-0"
                         />
                         <span className="font-semibold tracking-wider uppercase leading-tight">
-                            Web oficial del Gobierno del Reino del Pan · Ministerio de Industria y Turismo
+                            Web oficial del Gobierno del Estado Paniense · Ministerio de Industria y Turismo
                         </span>
                     </div>
                 </div>
@@ -89,7 +89,7 @@ export default function VisitPan() {
 
                             {/* Añadido leading-loose de forma global para separar las líneas de texto */}
                             <p className="text-zinc-400 text-xs sm:text-sm md:text-base max-w-xl leading-loose font-normal mt-1">
-                                El Reino del Pan te espera con contrastes únicos. Desde costas tranquilas de aguas cristalinas hasta senderos imponentes que custodian valles históricos. Un viaje diseñado para perderse en la naturaleza, desconectar del mundo y conectar con paisajes inolvidables.
+                                El Estado Paniense te espera con contrastes únicos. Desde costas tranquilas de aguas cristalinas hasta senderos imponentes que custodian valles históricos. Un viaje diseñado para perderse en la naturaleza, desconectar del mundo y conectar con paisajes inolvidables.
                             </p>
                         </div>
 
@@ -118,7 +118,7 @@ export default function VisitPan() {
                     <section className="flex flex-col gap-10 md:gap-12">
                         <div className="border-b border-zinc-200 pb-4 md:pb-8 flex flex-col">
                             <h3 className="font-title text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-zinc-900 leading-snug md:leading-relaxed mb-2 md:mb-4">
-                                Lo Mejor del Reino: Selección de Excelencia
+                                Lo Mejor del Estado Paniense: Selección de Excelencia
                             </h3>
                             <p className="text-xs sm:text-sm md:text-base text-zinc-500 font-normal leading-loose mt-1">
                                 Los enclaves naturales y urbanos más valorados por los viajeros internacionales esta temporada.
@@ -170,7 +170,7 @@ export default function VisitPan() {
                                         Pico Alto del Horizonte
                                     </h4>
                                     <p className="text-xs md:text-sm text-zinc-600 leading-loose font-normal flex-1 mb-4">
-                                        Una imponente cumbre que ofrece las rutas de senderismo más hermosas y espectaculares del Reino, con miradores que abarcan todo el relieve y los valles del mapa.
+                                        Una imponente cumbre que ofrece las rutas de senderismo más hermosas y espectaculares del Estado Paniense, con miradores que abarcan todo el relieve y los valles del mapa.
                                     </p>
                                     <div className="text-[10px] md:text-[11px] font-bold text-emerald-800 bg-zinc-50 p-2.5 md:p-3 rounded-lg text-center mt-auto border border-zinc-100">
                                         Valoración: 4.8 / 5.0 · Rutas Balizadas Alta Montaña

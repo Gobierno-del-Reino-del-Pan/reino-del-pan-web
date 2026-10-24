@@ -7,7 +7,7 @@ export default function Hero() {
         <div>
           <p className="text-sm uppercase tracking-[0.4em] text-accent">Gobierno Oficial</p>
           <h1 className="mt-6 max-w-3xl text-5xl font-semibold leading-tight tracking-tight display-font">
-            Nuestra tierra. Nuestra gente. Reino del Pan
+            Nuestra tierra. Nuestra gente. Estado Paniense
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-foreground/75">
             Un estado digital y territorial dedicado a la paz, la reconciliación social, la ecología activa y la gobernanza del siglo XXI.
@@ -45,7 +45,7 @@ export default function Hero() {
               </div>
             </div>
             <div className="mt-4 flex items-center gap-4 rounded-3xl border border-border bg-background p-5">
-              <img src="/logo.png" alt="Escudo Reino del Pan" className="h-16 w-16 rounded-full" />
+              <img src="/logo.png" alt="Escudo Estado Paniense" className="h-16 w-16 rounded-full" />
               <div>
                 <p className="text-sm uppercase tracking-[0.3em] text-foreground/50">Escudo oficial</p>
                 <p className="mt-2 text-base font-semibold text-foreground">Gobierno soberano</p>

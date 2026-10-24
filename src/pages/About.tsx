@@ -29,7 +29,7 @@ const PILLARS = [
   {
     icon: "🏺",
     title: "Artesanía e identidad",
-    body: "El trabajo manual y el saber tradicional son parte del patrimonio vivo del Reino.",
+    body: "El trabajo manual y el saber tradicional son parte del patrimonio vivo del Estado Paniense.",
   },
 ];
 
@@ -68,10 +68,10 @@ export default function About() {
           {/* Hero */}
           <motion.div {...fadeUp(0)} className="text-center md:text-left">
             <span className="text-xs font-mono tracking-[0.4em] uppercase text-accent font-semibold mb-5 block">
-              Reino del Pan · Fundación
+              Estado Paniense · Fundación
             </span>
             <h1 className="display-font text-5xl sm:text-6xl md:text-7xl font-semibold leading-tight tracking-tight text-foreground">
-              Acerca del<br />Reino del Pan
+              Acerca del<br />Estado Paniense
             </h1>
             <p className="mt-8 max-w-3xl text-lg md:text-xl leading-relaxed text-foreground/80 font-medium mx-auto md:mx-0">
               Una nación soberana e independiente nacida con la visión de crear una sociedad
@@ -162,7 +162,7 @@ export default function About() {
             className="mt-20 md:mt-24 border-l-2 md:border-l-4 border-accent/50 pl-8 py-3 max-w-4xl mx-auto"
           >
             <p className="text-2xl md:text-3xl leading-relaxed text-foreground/80 italic display-font font-medium tracking-wide">
-              "Ubicado en el corazón de Europa, el Reino del Pan no es solo un territorio físico,
+              "Ubicado en el corazón de Europa, el Estado Paniense no es solo un territorio físico,
               sino una comunidad global de individuos que comparten los mismos valores de respeto,
               diversidad y progreso."
             </p>

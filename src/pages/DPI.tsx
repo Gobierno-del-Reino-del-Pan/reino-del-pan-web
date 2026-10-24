@@ -7,7 +7,7 @@ const features = [
   {
     title: "Identidad Digital Global",
     description:
-      "Acceso a servicios digitales exclusivos del Reino del Pan desde cualquier parte del mundo.",
+      "Acceso a servicios digitales exclusivos del Estado Paniense desde cualquier parte del mundo.",
     icon: (
       <svg className="w-5 h-5 transition-colors duration-300 text-accent group-hover:text-background" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -69,7 +69,7 @@ export default function DPI() {
             </h1>
             &nbsp;
             <p className="mt-6 text-base md:text-xl text-foreground/80 leading-relaxed max-w-2xl mx-auto font-medium">
-              Únete a la era digital del Reino del Pan. El Documento Personal de
+              Únete a la era digital del Estado Paniense. El Documento Personal de
               Identidad (DPI) es tu llave maestra de entrada a nuestra nación.
             </p>
           </div>

@@ -22,8 +22,8 @@ type Rol = {
   id: string; nombre: string; descripcion?: string; emoji?: string; imagen?: string | null;
   categoria?: string; discord_role_id: string;
 };
-type Matrimonio = { conyuge_id: string; conyuge_username: string; conyuge_avatar?: string; fecha_boda?: string };
-type Hijo = { hijo_id: string; hijo_username: string; hijo_avatar?: string; tipo: "adoptivo" | "creado" };
+type Matrimonio = { conyuge_id: string; conyuge_username: string; conyuge_avatar?: string; fecha_boda?: string; };
+type Hijo = { hijo_id: string; hijo_username: string; hijo_avatar?: string; tipo: "adoptivo" | "creado"; };
 type Profile = {
   cantante_favorito: string | null; cantante_imagen: string | null; animal_favorito: string | null;
   pokemon_favorito: string | null; equipo_futbol: string | null;
@@ -33,29 +33,29 @@ type Citizen = {
   id: string; username: string; avatar: string; inGuild: boolean; verificado: boolean;
   dpi: DPIData | null; roles: Rol[]; matrimonio: Matrimonio | null; hijos: Hijo[];
   level?: number; xp?: number; total_xp?: number; messages?: number;
-  economy?: { cash: number; bank: number } | null; puntos_elo?: string | number | null;
+  economy?: { cash: number; bank: number; } | null; puntos_elo?: string | number | null;
 };
-type Acta = { numero: string; tipo: string; created_at: string | null; fecha: string | null };
-type FamilyState = { matrimonio: Matrimonio | null; hijos: Hijo[]; actas: Acta[] };
+type Acta = { numero: string; tipo: string; created_at: string | null; fecha: string | null; };
+type FamilyState = { matrimonio: Matrimonio | null; hijos: Hijo[]; actas: Acta[]; };
 type PokemonCatch = {
   id: number | null; pokemon_id: number; pokemon_name: string; level: number;
   is_shiny: boolean; ball_used: string; created_at: string | null;
 };
 type Tab = "identidad" | "familia" | "rotomi" | "roles" | "carpetas";
-type SearchPerson = { id: string; username: string; avatar: string };
+type SearchPerson = { id: string; username: string; avatar: string; };
 type PublicCitizen = {
   username: string; avatar: string; level: number | null;
   cantante_favorito: string | null; cantante_imagen: string | null;
   animal_favorito: string | null; pokemon_favorito: string | null;
 };
-type LevelProgress = { level: number; xp: number; target: number; remaining: number; percent: number; estimated: boolean };
+type LevelProgress = { level: number; xp: number; target: number; remaining: number; percent: number; estimated: boolean; };
 const UNKNOWN_AVATAR = "https://cdn.discordapp.com/embed/avatars/0.png";
 const CATEGORY_TITLES: Record<string, string> = {
   profesiones: "💼 Profesiones", regiones: "🗺️ Regiones", estado_ciudadano: "🪪 Estado ciudadano",
   equipos: "🏟️ Equipos", especiales: "✨ Roles especiales", mafia: "🕶️ Registros de familia / mafia",
   servicios: "🛎️ Servicios", otros: "🏅 Otros roles",
 };
-const PETS: Array<{ words: string[]; emoji: string; label: string }> = [
+const PETS: Array<{ words: string[]; emoji: string; label: string; }> = [
   { words: ["perro", "dog", "can"], emoji: "🐕", label: "Perrito" },
   { words: ["gato", "cat", "felino"], emoji: "🐈", label: "Gatito" },
   { words: ["conejo"], emoji: "🐇", label: "Conejito" },
@@ -92,13 +92,13 @@ function safeImageUrl(input: string | null | undefined) {
     return url.protocol === "https:" ? url.toString() : null;
   } catch { return null; }
 }
-function AvatarImage({ src, alt, className = "" }: { src?: string | null; alt: string; className?: string }) {
+function AvatarImage({ src, alt, className = "" }: { src?: string | null; alt: string; className?: string; }) {
   const [failed, setFailed] = useState(false);
   useEffect(() => { setFailed(false); }, [src]);
   return <img className={className} src={!failed ? (safeImageUrl(src) || UNKNOWN_AVATAR) : UNKNOWN_AVATAR}
     alt={alt} onError={e => { if (!failed) setFailed(true); else e.currentTarget.style.opacity = "0.35"; }} />;
 }
-function SingerImage({ src, alt, className = "cp-singer" }: { src?: string | null; alt: string; className?: string }) {
+function SingerImage({ src, alt, className = "cp-singer" }: { src?: string | null; alt: string; className?: string; }) {
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [src]);
   const url = src?.startsWith("blob:") ? src : safeImageUrl(src);
@@ -119,7 +119,7 @@ async function api<T>(url: string, options?: RequestInit): Promise<T> {
   if (!response.ok) throw new Error(typeof json?.error === "string" ? json.error : `Error HTTP ${response.status}`);
   return json as T;
 }
-function RoleBadge({ role, compact = false }: { role: Rol; compact?: boolean }) {
+function RoleBadge({ role, compact = false }: { role: Rol; compact?: boolean; }) {
   const discordEmoji = role.emoji?.match(/^<a?:\w+:(\d+)>$/);
   const [imageFailed, setImageFailed] = useState(false);
   useEffect(() => setImageFailed(false), [role.emoji, role.imagen]);
@@ -134,7 +134,7 @@ function RoleBadge({ role, compact = false }: { role: Rol; compact?: boolean }) 
   );
 }
 const pokemonArtCache = new Map<string, string>();
-function PokemonArt({ id, shiny, label, size = "large" }: { id: number; shiny: boolean; label: string; size?: "large" | "small" }) {
+function PokemonArt({ id, shiny, label, size = "large" }: { id: number; shiny: boolean; label: string; size?: "large" | "small"; }) {
   const cacheKey = `${id}-${shiny}`;
   const [source, setSource] = useState<string | null>(() => pokemonArtCache.get(cacheKey) || null);
   useEffect(() => {
@@ -147,27 +147,27 @@ function PokemonArt({ id, shiny, label, size = "large" }: { id: number; shiny: b
         const s = data?.sprites;
         const image = (shiny ? s?.other?.["official-artwork"]?.front_shiny || s?.front_shiny : s?.other?.["official-artwork"]?.front_default || s?.other?.home?.front_default || s?.front_default) as string | undefined;
         if (image && !controller.signal.aborted) { pokemonArtCache.set(cacheKey, image); setSource(image); }
-      }).catch(() => {});
+      }).catch(() => { });
     return () => controller.abort();
   }, [id, shiny, cacheKey]);
   return <img loading="lazy" className={`cp-pokemon-art ${size === "small" ? "cp-pokemon-small" : ""}`}
     src={source || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${shiny ? "shiny/" : ""}${id}.png`}
     alt={label} onError={e => { e.currentTarget.style.opacity = "0.2"; }} />;
 }
-function FavoritePokemon({ name }: { name: string }) {
-  const [info, setInfo] = useState<{ id: number; shiny: boolean } | null>(null);
+function FavoritePokemon({ name }: { name: string; }) {
+  const [info, setInfo] = useState<{ id: number; shiny: boolean; } | null>(null);
   useEffect(() => {
     const controller = new AbortController();
     setInfo(null);
     const key = name.trim().toLowerCase().replace(/\s+/g, "-");
     fetch(`https://pokeapi.co/api/v2/pokemon/${encodeURIComponent(key)}`, { signal: controller.signal })
       .then(r => { if (!r.ok) throw new Error("Sin Pokémon"); return r.json(); })
-      .then(data => { if (!controller.signal.aborted) setInfo({ id: data.id, shiny: false }); }).catch(() => {});
+      .then(data => { if (!controller.signal.aborted) setInfo({ id: data.id, shiny: false }); }).catch(() => { });
     return () => controller.abort();
   }, [name]);
   return <span className="cp-favorite-poke">{info ? <PokemonArt id={info.id} shiny={false} label={name} size="small" /> : "⚡"}<span>{name}</span></span>;
 }
-function Panel({ title, eyebrow, children, action, className = "" }: { title: string; eyebrow?: string; children: ReactNode; action?: React.ReactNode; className?: string }) {
+function Panel({ title, eyebrow, children, action, className = "" }: { title: string; eyebrow?: string; children: ReactNode; action?: React.ReactNode; className?: string; }) {
   return <section className={`cp-glass cp-panel ${className}`}>
     <header className="cp-panel-header">
       <div className="cp-panel-heading">
@@ -209,7 +209,7 @@ export default function Carpeta() {
   const [publicLoading, setPublicLoading] = useState(false);
   const [publicError, setPublicError] = useState("");
   const [progress, setProgress] = useState<LevelProgress | null>(null);
-  const [recipientVerified, setRecipientVerified] = useState<{ id: string; username: string; avatar: string } | null>(null);
+  const [recipientVerified, setRecipientVerified] = useState<{ id: string; username: string; avatar: string; } | null>(null);
   const [recipientChecking, setRecipientChecking] = useState(false);
   const [transferBusy, setTransferBusy] = useState(false);
   const [transferMessage, setTransferMessage] = useState("");
@@ -222,24 +222,24 @@ export default function Carpeta() {
 
   useEffect(() => {
     let alive = true;
-    api<{ user: Citizen }>("/api/me").then(async data => {
+    api<{ user: Citizen; }>("/api/me").then(async data => {
       if (!alive) return;
       if (!data?.user?.id) throw new Error("No se ha encontrado tu sesión.");
       setCitizen(data.user);
       // Consulta económica mediante la sesión del propio servidor: sin problemas de RLS del navegador.
       try {
-        const result = await api<{ economy: { cash: number; bank: number } | null; puntos_elo: number | string | null }>("/api/citizen/economy");
+        const result = await api<{ economy: { cash: number; bank: number; } | null; puntos_elo: number | string | null; }>("/api/citizen/economy");
         if (alive) setCitizen(previous => previous?.id === data.user.id ? {
           ...previous, economy: result.economy, puntos_elo: result.puntos_elo,
         } : previous);
       } catch (err) { if (alive) console.warn("Economía:", err); }
       try {
-        const result = await api<{ progress: LevelProgress }>("/api/citizen/progress");
+        const result = await api<{ progress: LevelProgress; }>("/api/citizen/progress");
         if (alive) setProgress(result.progress);
       } catch (err) { if (alive) console.warn("Progreso:", err); }
       // El perfil adicional se recupera a través del mismo backend autenticado.
       try {
-        const d = await api<{ profile: Profile | null }>("/api/citizen/profile");
+        const d = await api<{ profile: Profile | null; }>("/api/citizen/profile");
         if (alive && d.profile) {
           setProfile(d.profile);
           setForm({ cantante_favorito: d.profile.cantante_favorito || "", animal_favorito: d.profile.animal_favorito || "" });
@@ -266,7 +266,7 @@ export default function Carpeta() {
       try {
         const response = await fetch(`/api/citizen/directory?q=${encodeURIComponent(directorySearch.trim())}`, { credentials: "same-origin", signal: controller.signal });
         if (!response.ok) throw new Error("No se pudo buscar a los ciudadanos.");
-        const result = await response.json() as { users: SearchPerson[] };
+        const result = await response.json() as { users: SearchPerson[]; };
         if (!controller.signal.aborted) setDirectoryResults(result.users || []);
       } catch { if (!controller.signal.aborted) setDirectoryResults([]); }
       finally { if (!controller.signal.aborted) setDirectoryLoading(false); }
@@ -284,7 +284,7 @@ export default function Carpeta() {
       try {
         const response = await fetch(`/api/citizen/directory?q=${encodeURIComponent(recipientQuery.trim())}`, { credentials: "same-origin", signal: controller.signal });
         if (!response.ok) throw new Error("Búsqueda no disponible");
-        const result = await response.json() as { users: SearchPerson[] };
+        const result = await response.json() as { users: SearchPerson[]; };
         if (!controller.signal.aborted) setRecipientMatches((result.users || []).filter(u => u.id !== citizen?.id));
       } catch { if (!controller.signal.aborted) setRecipientMatches([]); }
       finally { if (!controller.signal.aborted) setRecipientSearching(false); }
@@ -295,7 +295,7 @@ export default function Carpeta() {
   async function openPublicFolder(person: SearchPerson) {
     setPublicCitizen(null); setPublicError(""); setPublicLoading(true);
     try {
-      const result = await api<{ profile: PublicCitizen }>(`/api/citizen/public/${person.id}`);
+      const result = await api<{ profile: PublicCitizen; }>(`/api/citizen/public/${person.id}`);
       setPublicCitizen(result.profile);
     } catch (e) { setPublicError(e instanceof Error ? e.message : "No se pudo abrir la carpeta."); }
     finally { setPublicLoading(false); }
@@ -309,7 +309,7 @@ export default function Carpeta() {
   }
   async function refreshPc() {
     setPcLoading(true); setPcError("");
-    try { const result = await api<{ captures: PokemonCatch[] }>("/api/citizen/pokemon"); setCaptures(result.captures || []); }
+    try { const result = await api<{ captures: PokemonCatch[]; }>("/api/citizen/pokemon"); setCaptures(result.captures || []); }
     catch (e) { setPcError(e instanceof Error ? e.message : "Rotomi no está disponible."); }
     finally { setPcLoading(false); }
   }
@@ -327,7 +327,7 @@ export default function Carpeta() {
   const perPage = 12;
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const visible = filtered.slice(Math.min(page, totalPages - 1) * perPage, (Math.min(page, totalPages - 1) + 1) * perPage);
-  const tabList: Array<{ key: Tab; label: string; icon: typeof ShieldCheck }> = [
+  const tabList: Array<{ key: Tab; label: string; icon: typeof ShieldCheck; }> = [
     { key: "identidad", label: "Mi identidad", icon: BadgeCheck },
     { key: "familia", label: "Registro Civil", icon: Users },
     { key: "rotomi", label: "Rotomi PC", icon: Database },
@@ -356,7 +356,7 @@ export default function Carpeta() {
   async function saveProfile() {
     setSaveMessage(""); setSaving(true);
     try {
-      const result = await api<{ profile: Profile }>("/api/citizen/profile", {
+      const result = await api<{ profile: Profile; }>("/api/citizen/profile", {
         method: "PATCH", body: JSON.stringify(form),
       });
       setProfile(result.profile);
@@ -364,7 +364,7 @@ export default function Carpeta() {
         const response = await fetch("/api/citizen/profile/image", {
           method: "POST", body: imageFile, headers: { "Content-Type": imageFile.type }, credentials: "same-origin",
         });
-        const uploaded = await response.json().catch(() => ({})) as { profile?: Profile; error?: string };
+        const uploaded = await response.json().catch(() => ({})) as { profile?: Profile; error?: string; };
         if (!response.ok || !uploaded.profile) throw new Error(uploaded.error || `Error al subir la imagen (${response.status})`);
         setProfile(uploaded.profile);
       }
@@ -390,7 +390,7 @@ export default function Carpeta() {
     }
     setRecipientChecking(true);
     try {
-      const response = await api<{ recipient: SearchPerson }>(`/api/citizen/pokemon/recipient/${id}`);
+      const response = await api<{ recipient: SearchPerson; }>(`/api/citizen/pokemon/recipient/${id}`);
       if (response.recipient.id === id) {
         setRecipient(id); setRecipientVerified(response.recipient);
         setRecipientQuery(response.recipient.username);
@@ -601,176 +601,176 @@ export default function Carpeta() {
     <Header />
     <main className="cp-main">
       {loading ? <Panel title="Cargando tu carpeta..." eyebrow="Estado Paniense"><p className="cp-sub">Verificando la sesión y el Registro Civil.</p></Panel>
-      : error ? <Panel title="No se pudo abrir tu carpeta" eyebrow="Acceso"><p className="cp-notice cp-danger">{error}</p><a className="cp-btn" style={{ marginTop: 15 }} href="/auth/discord">Entrar con Discord</a></Panel>
-      : !citizen ? null
-      : !citizen.inGuild ? <Panel title="Únete al Estado Paniense" eyebrow="Acceso ciudadano"><p className="cp-sub">Para acceder necesitas pertenecer al servidor oficial de Discord.</p><a className="cp-btn" style={{ marginTop: 17 }} href="https://discord.gg/reino-del-pan-1381359904731693056" target="_blank" rel="noreferrer">Unirme al Estado</a></Panel>
-      : !citizen.dpi ? <Panel title="Todavía no tienes DPI" eyebrow="Registro de identidad"><p className="cp-sub">Crea tu documento, verifícalo en Discord y regresa a esta carpeta.</p><Link className="cp-btn" style={{ marginTop: 16 }} href="/dpi/create">Crear mi DPI</Link></Panel>
-      : <>
-        <motion.section className="cp-glass cp-hero" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="cp-hero-primary">
-            <div className="cp-hero-topline"><span className="cp-crest">🍞</span><span>ESTADO PANIENSE <span className="cp-hero-split">/</span> PORTAL CIUDADANO</span><span className="cp-edition">MI ESPACIO</span></div>
-            <div className="cp-hero-intro">
-              <p className="cp-eyebrow">Tu hogar digital en el Estado</p>
-              <div className="cp-title" role="heading" aria-level={1}>Tu rincón, <em>a tu manera.</em></div>
-              <p className="cp-hero-description">Tu identidad, tus recuerdos y tus Pokémon. Todo en un mismo lugar.</p>
-            </div>
-            <div className="cp-identity-layout">
-              <div className="cp-identity-main">
-                <div className="cp-person">
-                  <AvatarImage className="cp-avatar" src={citizen.avatar} alt="Avatar de Discord" />
-                  <div className="cp-person-copy"><p className="cp-eyebrow cp-verified"><BadgeCheck size={13} /> Ciudadano registrado {citizen.verificado ? "· Verificado" : ""}</p>
-                    <p className="cp-name">{citizen.dpi.nombre} {citizen.dpi.apellidos}</p>
-                    <p className="cp-handle">@{citizen.username}</p></div>
-                </div>
-                <div className="cp-role-list cp-featured-roles">
-                  {featuredRoles.length ? featuredRoles.map(r => <RoleBadge key={r.discord_role_id} role={r} compact />) : <span className="cp-role cp-role-small">🪪 Ciudadano del Estado</span>}
-                </div>
-              </div>
-              <div className="cp-hero-pokemon" aria-label="Pokémon favorito">
-                <span className="cp-pokemon-topline"><Zap size={13} /> MI COMPAÑERO POKÉMON</span>
-                {profile?.pokemon_favorito
-                  ? <FavoritePokemon name={profile.pokemon_favorito} />
-                  : <div className="cp-fav-placeholder"><img src="/rotomi.png" alt="Rotomi" /><span>Tu Pokémon favorito aparecerá aquí</span></div>}
-                <button type="button" className="cp-favorite-link" onClick={() => setTab("rotomi")}>Ver mi PC <ChevronRight size={14} /></button>
-              </div>
-            </div>
-          </div>
-          <aside className="cp-hero-side" aria-label="Resumen ciudadano">
-            <div className="cp-id-chip">
-              <div className="cp-chip-top"><span className="cp-chip-label"><FileBadge2 size={15} /> DOCUMENTO DE IDENTIDAD PANIENSE</span><span className="cp-chip-symbol">✦</span></div>
-              <p className="cp-chip-number">{dpiVisible ? citizen.dpi.dpi_number : maskDpi(citizen.dpi.dpi_number)}</p>
-              <div className="cp-chip-bottom"><span>REGIÓN <strong>{citizen.dpi.region || "—"}</strong></span><div className="cp-chip-actions">
-                <button type="button" className="cp-icon-btn" aria-label={dpiVisible ? "Ocultar DPI" : "Mostrar DPI"} title="Mostrar u ocultar DPI" onClick={() => setDpiVisible(v => !v)}>{dpiVisible ? <EyeOff size={16} /> : <Eye size={16} />}</button>
-                <button type="button" className="cp-icon-btn" aria-label="Copiar número DPI" title="Copiar DPI" onClick={() => { void navigator.clipboard?.writeText(citizen.dpi!.dpi_number).then(() => { setCopied(true); window.setTimeout(() => setCopied(false), 1800); }).catch(() => {}); }}>{copied ? <Check size={16} /> : <Copy size={16} />}</button>
-              </div></div>
-            </div>
-            <div className="cp-mini-stats">
-              <div className="cp-mini cp-mini-level"><div className="cp-mini-head"><Award size={16} /><span>NIVEL</span></div><strong>{fmtNum(progress?.level ?? citizen.level)}</strong>
-                <div className="cp-level-progress" aria-label="Progreso de experiencia al siguiente nivel">
-                  <div className="cp-progress-track" role="progressbar" aria-valuenow={progress?.percent ?? 0} aria-valuemin={0} aria-valuemax={100} aria-label="Progreso al siguiente nivel"><span style={{ width: `${progress?.percent ?? 0}%` }} /></div>
-                  <div className="cp-progress-label"><span>{progress ? `${fmtNum(progress.xp)} / ${fmtNum(progress.target)} XP` : "Cargando XP"}</span><span>{progress ? `${progress.percent}%` : "—"}</span></div>
-                  <small>{progress ? `${fmtNum(progress.remaining)} XP para nivel ${progress.level + 1}` : "Sincronizando nivel"}</small>
-                </div>
-                <div className="cp-money-below"><span><Wallet size={14} /> DINERO TOTAL</span><b>{citizen.economy ? `${fmtNum((citizen.economy.cash || 0) + (citizen.economy.bank || 0))} Ᵽ` : "—"}</b></div>
-              </div>
-              <div className="cp-mini cp-mini-points"><div className="cp-mini-head"><Star size={16} /><span>PUNTOS BASE</span></div><strong>{fmtNum(pbValue(citizen.puntos_elo))}</strong><small>Tu progreso en el Estado</small></div>
-            </div>
-          </aside>
-        </motion.section>
+        : error ? <Panel title="No se pudo abrir tu carpeta" eyebrow="Acceso"><p className="cp-notice cp-danger">{error}</p><a className="cp-btn" style={{ marginTop: 15 }} href="/auth/discord">Entrar con Discord</a></Panel>
+          : !citizen ? null
+            : !citizen.inGuild ? <Panel title="Únete al Estado Paniense" eyebrow="Acceso ciudadano"><p className="cp-sub">Para acceder necesitas pertenecer al servidor oficial de Discord.</p><a className="cp-btn" style={{ marginTop: 17 }} href="https://discord.gg/reino-del-pan-1381359904731693056" target="_blank" rel="noreferrer">Unirme al Estado</a></Panel>
+              : !citizen.dpi ? <Panel title="Todavía no tienes DPI" eyebrow="Registro de identidad"><p className="cp-sub">Crea tu documento, verifícalo en Discord y regresa a esta carpeta.</p><Link className="cp-btn" style={{ marginTop: 16 }} href="/dpi/create">Crear mi DPI</Link></Panel>
+                : <>
+                  <motion.section className="cp-glass cp-hero" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+                    <div className="cp-hero-primary">
+                      <div className="cp-hero-topline"><span className="cp-crest">🍞</span><span>ESTADO PANIENSE <span className="cp-hero-split">/</span> PORTAL CIUDADANO</span><span className="cp-edition">MI ESPACIO</span></div>
+                      <div className="cp-hero-intro">
+                        <p className="cp-eyebrow">Tu hogar digital en el Estado</p>
+                        <div className="cp-title" role="heading" aria-level={1}>Tu rincón, <em>a tu manera.</em></div>
+                        <p className="cp-hero-description">Tu identidad, tus recuerdos y tus Pokémon. Todo en un mismo lugar.</p>
+                      </div>
+                      <div className="cp-identity-layout">
+                        <div className="cp-identity-main">
+                          <div className="cp-person">
+                            <AvatarImage className="cp-avatar" src={citizen.avatar} alt="Avatar de Discord" />
+                            <div className="cp-person-copy"><p className="cp-eyebrow cp-verified"><BadgeCheck size={13} /> Ciudadano registrado {citizen.verificado ? "· Verificado" : ""}</p>
+                              <p className="cp-name">{citizen.dpi.nombre} {citizen.dpi.apellidos}</p>
+                              <p className="cp-handle">@{citizen.username}</p></div>
+                          </div>
+                          <div className="cp-role-list cp-featured-roles">
+                            {featuredRoles.length ? featuredRoles.map(r => <RoleBadge key={r.discord_role_id} role={r} compact />) : <span className="cp-role cp-role-small">🪪 Ciudadano del Estado</span>}
+                          </div>
+                        </div>
+                        <div className="cp-hero-pokemon" aria-label="Pokémon favorito">
+                          <span className="cp-pokemon-topline"><Zap size={13} /> MI COMPAÑERO POKÉMON</span>
+                          {profile?.pokemon_favorito
+                            ? <FavoritePokemon name={profile.pokemon_favorito} />
+                            : <div className="cp-fav-placeholder"><img src="/rotomi.png" alt="Rotomi" /><span>Tu Pokémon favorito aparecerá aquí</span></div>}
+                          <button type="button" className="cp-favorite-link" onClick={() => setTab("rotomi")}>Ver mi PC <ChevronRight size={14} /></button>
+                        </div>
+                      </div>
+                    </div>
+                    <aside className="cp-hero-side" aria-label="Resumen ciudadano">
+                      <div className="cp-id-chip">
+                        <div className="cp-chip-top"><span className="cp-chip-label"><FileBadge2 size={15} /> DOCUMENTO DE IDENTIDAD PANIENSE</span><span className="cp-chip-symbol">✦</span></div>
+                        <p className="cp-chip-number">{dpiVisible ? citizen.dpi.dpi_number : maskDpi(citizen.dpi.dpi_number)}</p>
+                        <div className="cp-chip-bottom"><span>REGIÓN <strong>{citizen.dpi.region || "—"}</strong></span><div className="cp-chip-actions">
+                          <button type="button" className="cp-icon-btn" aria-label={dpiVisible ? "Ocultar DPI" : "Mostrar DPI"} title="Mostrar u ocultar DPI" onClick={() => setDpiVisible(v => !v)}>{dpiVisible ? <EyeOff size={16} /> : <Eye size={16} />}</button>
+                          <button type="button" className="cp-icon-btn" aria-label="Copiar número DPI" title="Copiar DPI" onClick={() => { void navigator.clipboard?.writeText(citizen.dpi!.dpi_number).then(() => { setCopied(true); window.setTimeout(() => setCopied(false), 1800); }).catch(() => { }); }}>{copied ? <Check size={16} /> : <Copy size={16} />}</button>
+                        </div></div>
+                      </div>
+                      <div className="cp-mini-stats">
+                        <div className="cp-mini cp-mini-level"><div className="cp-mini-head"><Award size={16} /><span>NIVEL</span></div><strong>{fmtNum(progress?.level ?? citizen.level)}</strong>
+                          <div className="cp-level-progress" aria-label="Progreso de experiencia al siguiente nivel">
+                            <div className="cp-progress-track" role="progressbar" aria-valuenow={progress?.percent ?? 0} aria-valuemin={0} aria-valuemax={100} aria-label="Progreso al siguiente nivel"><span style={{ width: `${progress?.percent ?? 0}%` }} /></div>
+                            <div className="cp-progress-label"><span>{progress ? `${fmtNum(progress.xp)} / ${fmtNum(progress.target)} XP` : "Cargando XP"}</span><span>{progress ? `${progress.percent}%` : "—"}</span></div>
+                            <small>{progress ? `${fmtNum(progress.remaining)} XP para nivel ${progress.level + 1}` : "Sincronizando nivel"}</small>
+                          </div>
+                          <div className="cp-money-below"><span><Wallet size={14} /> DINERO TOTAL</span><b>{citizen.economy ? `${fmtNum((citizen.economy.cash || 0) + (citizen.economy.bank || 0))} Ᵽ` : "—"}</b></div>
+                        </div>
+                        <div className="cp-mini cp-mini-points"><div className="cp-mini-head"><Star size={16} /><span>PUNTOS BASE</span></div><strong>{fmtNum(pbValue(citizen.puntos_elo))}</strong><small>Tu progreso en el Estado</small></div>
+                      </div>
+                    </aside>
+                  </motion.section>
 
-        <div className="cp-nav-intro"><div><p className="cp-eyebrow">Tu espacio digital</p><p>Explora tus secciones y descubre a otros ciudadanos.</p></div><button className="cp-btn cp-btn-light" type="button" onClick={() => setTab("carpetas")}><FolderOpen size={16} /> Buscar carpetas</button></div>
-        <nav className="cp-tabs" aria-label="Secciones de carpeta ciudadana">
-          {tabList.map(t => <button key={t.key} className="cp-tab" data-active={tab === t.key} aria-current={tab === t.key ? "page" : undefined} onClick={() => { setTab(t.key); setTransferMessage(""); }}><t.icon size={16} />{t.label}</button>)}
-        </nav>
-        <div className="cp-content">
-          {tab === "identidad" && <>
-            <div className="cp-two">
-              <Panel title="Mi DPI" eyebrow="Identificación ciudadana" action={<BadgeCheck size={25} color="#9d6290" />}>
-                <div className="cp-two"><div className="cp-fact"><small>Nombre</small><strong>{citizen.dpi.nombre} {citizen.dpi.apellidos}</strong></div><div className="cp-fact"><small>Región</small><strong>{citizen.dpi.region || "—"}</strong></div><div className="cp-fact"><small>Fecha de nacimiento</small><strong>{fmtDate(citizen.dpi.fecha_nac)}</strong></div><div className="cp-fact"><small>Género</small><strong>{citizen.dpi.genero || "—"}</strong></div><div className="cp-fact"><small>Emisión</small><strong>{fmtDate(citizen.dpi.issued_at)}</strong></div><div className="cp-fact"><small>Validez</small><strong>{fmtDate(citizen.dpi.valid_until)}</strong></div></div>
-                <p className="cp-sub" style={{ marginTop: 15 }}><LockKeyhole size={13} style={{ display: "inline" }} /> El número de DPI está oculto inicialmente para proteger tu privacidad.</p>
-              </Panel>
-              <Panel title="Economía y trayectoria" eyebrow="Resumen del ciudadano" action={<Wallet size={25} color="#9d6290" />}>
-                <div className="cp-two"><div className="cp-fact"><small>Banco Paniense</small><strong>{fmtNum(citizen.economy?.bank)} Ᵽ</strong></div><div className="cp-fact"><small>Efectivo</small><strong>{fmtNum(citizen.economy?.cash)} Ᵽ</strong></div><div className="cp-fact"><small>Experiencia</small><strong>{fmtNum(citizen.total_xp ?? citizen.xp)} XP</strong></div><div className="cp-fact"><small>Roles</small><strong>{roles.length} asignados</strong></div></div>
-                <div style={{ marginTop: 16, display: "flex", gap: 9, flexWrap: "wrap" }}><img src="/LaboralBank/LPB.png" alt="Banco Paniense" style={{ width: 35, height: 35, objectFit: "contain" }} onError={e => { e.currentTarget.style.display = "none"; }} /></div>
-              </Panel>
-            </div>
-            <Panel title="Tu pequeño universo" eyebrow="Personalización de perfil" action={<button className="cp-btn cp-btn-light" onClick={() => { setEditing(e => !e); setSaveMessage(""); }}><ImagePlus size={15} />{editing ? "Cerrar editor" : "Personalizar"}</button>}>
-              {editing ? <div className="cp-form cp-editing">
-                <label><span className="cp-label">Cantante favorito</span><input className="cp-input" maxLength={90} value={form.cantante_favorito} onChange={e => setForm({ ...form, cantante_favorito: e.target.value })} placeholder="Ej. Aitana" /></label>
-                <label className="cp-upload-tile"><UploadCloud size={21} /><span><strong>Foto del cantante</strong><small>Selecciona una imagen de tu dispositivo · JPG, PNG o WebP · máximo 2 MB</small></span><input className="cp-file-input" type="file" accept="image/png,image/jpeg,image/webp" onChange={e => chooseSingerImage(e.currentTarget.files?.[0])} /></label>
-                {(imagePreview || profile?.cantante_imagen) && <div className="cp-upload-preview"><SingerImage src={imagePreview || profile?.cantante_imagen} alt="Vista previa del cantante" /><span>{imageFile ? `Nueva foto: ${imageFile.name}` : "Foto actual del perfil"}</span></div>}
-                <label><span className="cp-label">Animal favorito (se animará en el jardín)</span><input className="cp-input" list="cp-pets" maxLength={60} value={form.animal_favorito} onChange={e => setForm({ ...form, animal_favorito: e.target.value })} placeholder="Ej. Gato, perro, delfín..." /><datalist id="cp-pets">{PETS.map(p => <option key={p.label} value={p.words[0]} />)}</datalist></label>
-                <div><button className="cp-btn" onClick={() => void saveProfile()} disabled={saving}>{saving ? "Guardando..." : "Guardar cambios"}</button></div>
-              </div> : <div className="cp-two" style={{ alignItems: "center" }}>
-                <div className="cp-personal">
-                  <SingerImage src={profile?.cantante_imagen} alt={`Imagen de ${profile?.cantante_favorito || "cantante"}`} />
-                  <div><p className="cp-eyebrow">La banda sonora de tu vida</p><p style={{ fontSize: 21, fontWeight: 850, marginTop: 8 }}>{profile?.cantante_favorito || "Sin cantante favorito"}</p><p className="cp-sub">Tu música, tus favoritos y tu pequeño mundo.</p></div>
-                </div>
-                <div className="cp-pet-area"><span className="cp-pet-name">{profile?.animal_favorito ? `🐾 ${profile.animal_favorito}` : "Elige a tu mascota favorita"}</span><span className="cp-pet-walker" role="img" aria-label={`Animal favorito: ${profile?.animal_favorito || "sin elegir"}`}>{petEmoji(profile?.animal_favorito || "")}</span></div>
-              </div>}
-              {saveMessage && <p role="status" className={`cp-notice ${saveMessage.includes("actualizado") ? "" : "cp-danger"}`} style={{ marginTop: 13 }}>{saveMessage}</p>}
-            </Panel>
-            <Panel title="Tus próximos destinos" eyebrow="Acceso rápido"><div className="cp-three">
-              <button className="cp-btn cp-btn-light" onClick={() => setTab("familia")}><Users size={16} />Mi núcleo familiar</button>
-              <button className="cp-btn cp-btn-light" onClick={() => setTab("rotomi")}><Zap size={16} />Mi PC Pokémon</button>
-              <button className="cp-btn cp-btn-light" onClick={() => setTab("roles")}><Star size={16} />Mis distintivos</button>
-            </div></Panel>
-          </>}
+                  <div className="cp-nav-intro"><div><p className="cp-eyebrow">Tu espacio digital</p><p>Explora tus secciones y descubre a otros ciudadanos.</p></div><button className="cp-btn cp-btn-light" type="button" onClick={() => setTab("carpetas")}><FolderOpen size={16} /> Buscar carpetas</button></div>
+                  <nav className="cp-tabs" aria-label="Secciones de carpeta ciudadana">
+                    {tabList.map(t => <button key={t.key} className="cp-tab" data-active={tab === t.key} aria-current={tab === t.key ? "page" : undefined} onClick={() => { setTab(t.key); setTransferMessage(""); }}><t.icon size={16} />{t.label}</button>)}
+                  </nav>
+                  <div className="cp-content">
+                    {tab === "identidad" && <>
+                      <div className="cp-two">
+                        <Panel title="Mi DPI" eyebrow="Identificación ciudadana" action={<BadgeCheck size={25} color="#9d6290" />}>
+                          <div className="cp-two"><div className="cp-fact"><small>Nombre</small><strong>{citizen.dpi.nombre} {citizen.dpi.apellidos}</strong></div><div className="cp-fact"><small>Región</small><strong>{citizen.dpi.region || "—"}</strong></div><div className="cp-fact"><small>Fecha de nacimiento</small><strong>{fmtDate(citizen.dpi.fecha_nac)}</strong></div><div className="cp-fact"><small>Género</small><strong>{citizen.dpi.genero || "—"}</strong></div><div className="cp-fact"><small>Emisión</small><strong>{fmtDate(citizen.dpi.issued_at)}</strong></div><div className="cp-fact"><small>Validez</small><strong>{fmtDate(citizen.dpi.valid_until)}</strong></div></div>
+                          <p className="cp-sub" style={{ marginTop: 15 }}><LockKeyhole size={13} style={{ display: "inline" }} /> El número de DPI está oculto inicialmente para proteger tu privacidad.</p>
+                        </Panel>
+                        <Panel title="Economía y trayectoria" eyebrow="Resumen del ciudadano" action={<Wallet size={25} color="#9d6290" />}>
+                          <div className="cp-two"><div className="cp-fact"><small>Banco Paniense</small><strong>{fmtNum(citizen.economy?.bank)} Ᵽ</strong></div><div className="cp-fact"><small>Efectivo</small><strong>{fmtNum(citizen.economy?.cash)} Ᵽ</strong></div><div className="cp-fact"><small>Experiencia</small><strong>{fmtNum(citizen.total_xp ?? citizen.xp)} XP</strong></div><div className="cp-fact"><small>Roles</small><strong>{roles.length} asignados</strong></div></div>
+                          <div style={{ marginTop: 16, display: "flex", gap: 9, flexWrap: "wrap" }}><img src="/LaboralBank/LPB.png" alt="Banco Paniense" style={{ width: 35, height: 35, objectFit: "contain" }} onError={e => { e.currentTarget.style.display = "none"; }} /></div>
+                        </Panel>
+                      </div>
+                      <Panel title="Tu pequeño universo" eyebrow="Personalización de perfil" action={<button className="cp-btn cp-btn-light" onClick={() => { setEditing(e => !e); setSaveMessage(""); }}><ImagePlus size={15} />{editing ? "Cerrar editor" : "Personalizar"}</button>}>
+                        {editing ? <div className="cp-form cp-editing">
+                          <label><span className="cp-label">Cantante favorito</span><input className="cp-input" maxLength={90} value={form.cantante_favorito} onChange={e => setForm({ ...form, cantante_favorito: e.target.value })} placeholder="Ej. Aitana" /></label>
+                          <label className="cp-upload-tile"><UploadCloud size={21} /><span><strong>Foto del cantante</strong><small>Selecciona una imagen de tu dispositivo · JPG, PNG o WebP · máximo 2 MB</small></span><input className="cp-file-input" type="file" accept="image/png,image/jpeg,image/webp" onChange={e => chooseSingerImage(e.currentTarget.files?.[0])} /></label>
+                          {(imagePreview || profile?.cantante_imagen) && <div className="cp-upload-preview"><SingerImage src={imagePreview || profile?.cantante_imagen} alt="Vista previa del cantante" /><span>{imageFile ? `Nueva foto: ${imageFile.name}` : "Foto actual del perfil"}</span></div>}
+                          <label><span className="cp-label">Animal favorito (se animará en el jardín)</span><input className="cp-input" list="cp-pets" maxLength={60} value={form.animal_favorito} onChange={e => setForm({ ...form, animal_favorito: e.target.value })} placeholder="Ej. Gato, perro, delfín..." /><datalist id="cp-pets">{PETS.map(p => <option key={p.label} value={p.words[0]} />)}</datalist></label>
+                          <div><button className="cp-btn" onClick={() => void saveProfile()} disabled={saving}>{saving ? "Guardando..." : "Guardar cambios"}</button></div>
+                        </div> : <div className="cp-two" style={{ alignItems: "center" }}>
+                          <div className="cp-personal">
+                            <SingerImage src={profile?.cantante_imagen} alt={`Imagen de ${profile?.cantante_favorito || "cantante"}`} />
+                            <div><p className="cp-eyebrow">La banda sonora de tu vida</p><p style={{ fontSize: 21, fontWeight: 850, marginTop: 8 }}>{profile?.cantante_favorito || "Sin cantante favorito"}</p><p className="cp-sub">Tu música, tus favoritos y tu pequeño mundo.</p></div>
+                          </div>
+                          <div className="cp-pet-area"><span className="cp-pet-name">{profile?.animal_favorito ? `🐾 ${profile.animal_favorito}` : "Elige a tu mascota favorita"}</span><span className="cp-pet-walker" role="img" aria-label={`Animal favorito: ${profile?.animal_favorito || "sin elegir"}`}>{petEmoji(profile?.animal_favorito || "")}</span></div>
+                        </div>}
+                        {saveMessage && <p role="status" className={`cp-notice ${saveMessage.includes("actualizado") ? "" : "cp-danger"}`} style={{ marginTop: 13 }}>{saveMessage}</p>}
+                      </Panel>
+                      <Panel title="Tus próximos destinos" eyebrow="Acceso rápido"><div className="cp-three">
+                        <button className="cp-btn cp-btn-light" onClick={() => setTab("familia")}><Users size={16} />Mi núcleo familiar</button>
+                        <button className="cp-btn cp-btn-light" onClick={() => setTab("rotomi")}><Zap size={16} />Mi PC Pokémon</button>
+                        <button className="cp-btn cp-btn-light" onClick={() => setTab("roles")}><Star size={16} />Mis distintivos</button>
+                      </div></Panel>
+                    </>}
 
-          {tab === "familia" && <>
-            <Panel title="Registro Civil del Estado" eyebrow="Patrocinado por el Registro Civil" action={<button className="cp-btn cp-btn-light" onClick={() => void refreshFamily()} disabled={familyLoading}><RefreshCw size={15} />Actualizar</button>}>
-              <div className="cp-registry-top"><img src="/reg.png" className="cp-registry-logo" alt="Emblema del Registro Civil" />
-                <div><p style={{ fontSize: 17, fontWeight: 850 }}>Tu núcleo familiar oficial</p><p className="cp-sub">Matrimonios, hijos inscritos y actas emitidas desde el mismo registro que utiliza el bot.</p></div></div>
-              {familyError && <p className="cp-notice cp-danger" role="alert" style={{ marginTop: 17 }}>{familyError}</p>}
-              {familyLoading && <p className="cp-sub" style={{ marginTop: 15 }}>Consultando asientos del Registro...</p>}
-            </Panel>
-            <Panel title="Mi familia" eyebrow="Vínculos familiares">
-              {(family.matrimonio || citizen.matrimonio) && <div className="cp-person-row" style={{ marginBottom: 11 }}><span style={{ fontSize: 29 }}>💍</span><AvatarImage src={(family.matrimonio || citizen.matrimonio)?.conyuge_avatar} alt="Cónyuge" /><div><p>{(family.matrimonio || citizen.matrimonio)?.conyuge_username}</p><small>Mi pareja · Matrimonio desde {fmtDate((family.matrimonio || citizen.matrimonio)?.fecha_boda)}</small></div></div>}
-              <div className="cp-two">{(family.hijos.length ? family.hijos : citizen.hijos || []).map((h, i) => <div className="cp-person-row" key={`${h.hijo_id}-${i}`}><span style={{ fontSize: 25 }}>{h.tipo === "creado" ? "🍼" : "🧒"}</span><AvatarImage src={h.hijo_avatar} alt="" /><div><p>{h.hijo_username}</p><small>{h.tipo === "creado" ? "Hijo ficticio inscrito" : "Hijo adoptivo"}</small></div></div>)}</div>
-              {!family.matrimonio && !citizen.matrimonio && !family.hijos.length && !(citizen.hijos || []).length && !familyLoading && <p className="cp-notice">Todavía no constan vínculos familiares. Puedes iniciar trámites en el bot del Registro Civil de Discord.</p>}
-            </Panel>
-            <Panel title="Mis certificados" eyebrow="Documentos registrales" action={<ScrollText size={25} color="#9d6290" />}>
-              {family.actas.length ? <div style={{ display: "grid", gap: 11 }}>{family.actas.map(acta => <div className="cp-certificate" key={acta.numero}>
-                <div style={{ display: "flex", gap: 12, alignItems: "center" }}><FileBadge2 color="#8b6084" size={23} /><div><strong style={{ textTransform: "capitalize" }}>Certificado de {acta.tipo}</strong><small>N.º {acta.numero} · {fmtDate(acta.fecha || acta.created_at)}</small></div></div>
-                <button className="cp-btn" disabled={certBusy !== null} onClick={() => void downloadCertificate(acta)}><Download size={15} />{certBusy === acta.numero ? "Generando" : "PDF"}</button>
-              </div>)}</div> : <p className="cp-notice">{familyLoading ? "Buscando certificados..." : familyError ? "No se pudieron comprobar las actas." : "No hay actas emitidas a tu nombre en el registro consultado."}</p>}
-              <p className="cp-sub" style={{ marginTop: 12 }}>Los certificados solo se descargan para la cuenta autenticada y se generan con el mismo módulo Python del bot cuando está configurado en el servidor.</p>
-            </Panel>
-          </>}
+                    {tab === "familia" && <>
+                      <Panel title="Registro Civil del Estado" eyebrow="Patrocinado por el Registro Civil" action={<button className="cp-btn cp-btn-light" onClick={() => void refreshFamily()} disabled={familyLoading}><RefreshCw size={15} />Actualizar</button>}>
+                        <div className="cp-registry-top"><img src="/reg.png" className="cp-registry-logo" alt="Emblema del Registro Civil" />
+                          <div><p style={{ fontSize: 17, fontWeight: 850 }}>Tu núcleo familiar oficial</p><p className="cp-sub">Matrimonios, hijos inscritos y actas emitidas desde el mismo registro que utiliza el bot.</p></div></div>
+                        {familyError && <p className="cp-notice cp-danger" role="alert" style={{ marginTop: 17 }}>{familyError}</p>}
+                        {familyLoading && <p className="cp-sub" style={{ marginTop: 15 }}>Consultando asientos del Registro...</p>}
+                      </Panel>
+                      <Panel title="Mi familia" eyebrow="Vínculos familiares">
+                        {(family.matrimonio || citizen.matrimonio) && <div className="cp-person-row" style={{ marginBottom: 11 }}><span style={{ fontSize: 29 }}>💍</span><AvatarImage src={(family.matrimonio || citizen.matrimonio)?.conyuge_avatar} alt="Cónyuge" /><div><p>{(family.matrimonio || citizen.matrimonio)?.conyuge_username}</p><small>Mi pareja · Matrimonio desde {fmtDate((family.matrimonio || citizen.matrimonio)?.fecha_boda)}</small></div></div>}
+                        <div className="cp-two">{(family.hijos.length ? family.hijos : citizen.hijos || []).map((h, i) => <div className="cp-person-row" key={`${h.hijo_id}-${i}`}><span style={{ fontSize: 25 }}>{h.tipo === "creado" ? "🍼" : "🧒"}</span><AvatarImage src={h.hijo_avatar} alt="" /><div><p>{h.hijo_username}</p><small>{h.tipo === "creado" ? "Hijo ficticio inscrito" : "Hijo adoptivo"}</small></div></div>)}</div>
+                        {!family.matrimonio && !citizen.matrimonio && !family.hijos.length && !(citizen.hijos || []).length && !familyLoading && <p className="cp-notice">Todavía no constan vínculos familiares. Puedes iniciar trámites en el bot del Registro Civil de Discord.</p>}
+                      </Panel>
+                      <Panel title="Mis certificados" eyebrow="Documentos registrales" action={<ScrollText size={25} color="#9d6290" />}>
+                        {family.actas.length ? <div style={{ display: "grid", gap: 11 }}>{family.actas.map(acta => <div className="cp-certificate" key={acta.numero}>
+                          <div style={{ display: "flex", gap: 12, alignItems: "center" }}><FileBadge2 color="#8b6084" size={23} /><div><strong style={{ textTransform: "capitalize" }}>Certificado de {acta.tipo}</strong><small>N.º {acta.numero} · {fmtDate(acta.fecha || acta.created_at)}</small></div></div>
+                          <button className="cp-btn" disabled={certBusy !== null} onClick={() => void downloadCertificate(acta)}><Download size={15} />{certBusy === acta.numero ? "Generando" : "PDF"}</button>
+                        </div>)}</div> : <p className="cp-notice">{familyLoading ? "Buscando certificados..." : familyError ? "No se pudieron comprobar las actas." : "No hay actas emitidas a tu nombre en el registro consultado."}</p>}
+                        <p className="cp-sub" style={{ marginTop: 12 }}>Los certificados solo se descargan para la cuenta autenticada y se generan con el mismo módulo Python del bot cuando está configurado en el servidor.</p>
+                      </Panel>
+                    </>}
 
-          {tab === "rotomi" && <>
-            <Panel title="Rotomi · Mi PC Pokémon" eyebrow="Sistema de almacenamiento oficial" action={<button className="cp-btn cp-btn-light" onClick={() => void refreshPc()} disabled={pcLoading}><RefreshCw size={15} />Actualizar</button>}>
-              <div className="cp-rotomi-head"><img src="/rotomi.png" alt="Rotomi" className="cp-rotomi-logo" /><div><p className="cp-sub">Tus capturas reales, sincronizadas con la tabla <strong>capturas</strong> del bot.</p><div className="cp-role-list"><span className="cp-role cp-role-small">📦 {captures.length} Pokémon</span><span className="cp-role cp-role-small">✨ {captures.filter(c => c.is_shiny).length} shiny</span><span className="cp-role cp-role-small">🧬 {new Set(captures.map(c => c.pokemon_id)).size} especies</span></div></div></div>
-              <p className="cp-sub" style={{ marginTop: 12 }}>Arte de los Pokémon mediante PokéAPI. Se muestran hasta 300 capturas recientes por consulta.</p>
-            </Panel>
-            <Panel title="Mi colección" eyebrow="Cajas Rotomi" action={<Gem color="#ad8a40" size={25} />}>
-              <div className="cp-filter-row"><div className="cp-search cp-search-wrap"><Search size={16} /><input className="cp-input" placeholder="Buscar Pokémon por nombre o número" value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} /></div>
-                <button className={`cp-btn ${onlyShiny ? "" : "cp-btn-light"}`} onClick={() => { setOnlyShiny(v => !v); setPage(0); }}><Filter size={14} />{onlyShiny ? "✨ Solo shiny" : "Todos / shiny"}</button></div>
-              {pcError && <p className="cp-notice cp-danger" role="alert">{pcError}</p>}
-              {!pcLoading && captures.some(c => !c.id) && <p className="cp-notice" role="status" style={{ marginBottom: 14 }}>Tu colección se puede consultar, pero algunas capturas no tienen ID único. Para transferirlas, revisa el esquema de <code>public.capturas</code> en Supabase.</p>}
-              {pcLoading ? <p className="cp-notice">Rotomi está sincronizando tus cajas...</p> : <>
-                <div className="cp-poke-grid">{visible.map((c, i) => <article key={`${c.id ?? 'sin-id'}-${c.pokemon_id}-${i}`} className="cp-poke-card" data-shiny={c.is_shiny}>
-                  {c.is_shiny && <span className="cp-shiny-label">✨ SHINY</span>}
-                  <PokemonArt id={c.pokemon_id} shiny={c.is_shiny} label={c.pokemon_name} />
-                  <h3>{c.pokemon_name}</h3><p className="cp-poke-meta">#{c.pokemon_id} · Nv. {c.level} · {c.ball_used}</p>
-                  <button className="cp-btn cp-btn-light" style={{ width: "100%", padding: "9px 7px" }} disabled={typeof c.id !== "number" || !Number.isSafeInteger(c.id) || c.id <= 0} title={!c.id ? "Falta ID de captura en Supabase" : "Transferir Pokémon"} onClick={() => { setTransfer(c); setRecipient(""); setRecipientQuery(""); setRecipientVerified(null); setTransferMessage(""); }}><ArrowLeftRight size={13} /> Transferir</button>
-                </article>)}</div>
-                {!visible.length && <p className="cp-notice">{captures.length ? "No hay Pokémon que coincidan con los filtros." : "Tu PC está vacío. ¡Captura Pokémon con el bot para llenar las cajas!"}</p>}
-                {totalPages > 1 && <div className="cp-pagination"><button className="cp-btn cp-btn-light" disabled={page === 0} onClick={() => setPage(p => Math.max(0, p - 1))} aria-label="Página anterior"><ChevronLeft size={18} /></button><span className="cp-sub">Caja {page + 1} de {totalPages}</span><button className="cp-btn cp-btn-light" disabled={page >= totalPages - 1} onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} aria-label="Página siguiente"><ChevronRight size={18} /></button></div>}
-              </>}
-              {transferMessage && !transfer && <p className="cp-notice" role="status" style={{ marginTop: 13 }}>{transferMessage}</p>}
-            </Panel>
-          </>}
+                    {tab === "rotomi" && <>
+                      <Panel title="Rotomi · Mi PC Pokémon" eyebrow="Sistema de almacenamiento oficial" action={<button className="cp-btn cp-btn-light" onClick={() => void refreshPc()} disabled={pcLoading}><RefreshCw size={15} />Actualizar</button>}>
+                        <div className="cp-rotomi-head"><img src="/rotomi.png" alt="Rotomi" className="cp-rotomi-logo" /><div><p className="cp-sub">Tus capturas reales, sincronizadas con la tabla <strong>capturas</strong> del bot.</p><div className="cp-role-list"><span className="cp-role cp-role-small">📦 {captures.length} Pokémon</span><span className="cp-role cp-role-small">✨ {captures.filter(c => c.is_shiny).length} shiny</span><span className="cp-role cp-role-small">🧬 {new Set(captures.map(c => c.pokemon_id)).size} especies</span></div></div></div>
+                        <p className="cp-sub" style={{ marginTop: 12 }}>Arte de los Pokémon mediante PokéAPI. Se muestran hasta 300 capturas recientes por consulta.</p>
+                      </Panel>
+                      <Panel title="Mi colección" eyebrow="Cajas Rotomi" action={<Gem color="#ad8a40" size={25} />}>
+                        <div className="cp-filter-row"><div className="cp-search cp-search-wrap"><Search size={16} /><input className="cp-input" placeholder="Buscar Pokémon por nombre o número" value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} /></div>
+                          <button className={`cp-btn ${onlyShiny ? "" : "cp-btn-light"}`} onClick={() => { setOnlyShiny(v => !v); setPage(0); }}><Filter size={14} />{onlyShiny ? "✨ Solo shiny" : "Todos / shiny"}</button></div>
+                        {pcError && <p className="cp-notice cp-danger" role="alert">{pcError}</p>}
+                        {!pcLoading && captures.some(c => !c.id) && <p className="cp-notice" role="status" style={{ marginBottom: 14 }}>Tu colección se puede consultar, pero algunas capturas no tienen ID único. Para transferirlas, revisa el esquema de <code>public.capturas</code> en Supabase.</p>}
+                        {pcLoading ? <p className="cp-notice">Rotomi está sincronizando tus cajas...</p> : <>
+                          <div className="cp-poke-grid">{visible.map((c, i) => <article key={`${c.id ?? 'sin-id'}-${c.pokemon_id}-${i}`} className="cp-poke-card" data-shiny={c.is_shiny}>
+                            {c.is_shiny && <span className="cp-shiny-label">✨ SHINY</span>}
+                            <PokemonArt id={c.pokemon_id} shiny={c.is_shiny} label={c.pokemon_name} />
+                            <h3>{c.pokemon_name}</h3><p className="cp-poke-meta">#{c.pokemon_id} · Nv. {c.level} · {c.ball_used}</p>
+                            <button className="cp-btn cp-btn-light" style={{ width: "100%", padding: "9px 7px" }} disabled={typeof c.id !== "number" || !Number.isSafeInteger(c.id) || c.id <= 0} title={!c.id ? "Falta ID de captura en Supabase" : "Transferir Pokémon"} onClick={() => { setTransfer(c); setRecipient(""); setRecipientQuery(""); setRecipientVerified(null); setTransferMessage(""); }}><ArrowLeftRight size={13} /> Transferir</button>
+                          </article>)}</div>
+                          {!visible.length && <p className="cp-notice">{captures.length ? "No hay Pokémon que coincidan con los filtros." : "Tu PC está vacío. ¡Captura Pokémon con el bot para llenar las cajas!"}</p>}
+                          {totalPages > 1 && <div className="cp-pagination"><button className="cp-btn cp-btn-light" disabled={page === 0} onClick={() => setPage(p => Math.max(0, p - 1))} aria-label="Página anterior"><ChevronLeft size={18} /></button><span className="cp-sub">Caja {page + 1} de {totalPages}</span><button className="cp-btn cp-btn-light" disabled={page >= totalPages - 1} onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} aria-label="Página siguiente"><ChevronRight size={18} /></button></div>}
+                        </>}
+                        {transferMessage && !transfer && <p className="cp-notice" role="status" style={{ marginTop: 13 }}>{transferMessage}</p>}
+                      </Panel>
+                    </>}
 
-          {tab === "roles" && <Panel title="Mis distintivos y roles" eyebrow="Identidad dentro del Estado" action={<Award color="#9d6290" size={26} />}>
-            <p className="cp-sub" style={{ marginBottom: 18 }}>Los emblemas especiales y de equipos son los mismos que aparecen junto a tu nombre de ciudadano registrado.</p>
-            {roles.length ? Object.entries(groupedRoles).sort(([a], [b]) => (a === "equipos" ? -1 : b === "equipos" ? 1 : a === "especiales" ? -1 : b === "especiales" ? 1 : 0)).map(([category, group]) => <div key={category} style={{ marginBottom: 23 }}><p className="cp-eyebrow" style={{ marginBottom: 10 }}>{CATEGORY_TITLES[category] || category}</p><div className="cp-role-list">{group.map(r => <RoleBadge key={r.discord_role_id} role={r} />)}</div></div>) : <p className="cp-notice">Todavía no tienes roles registrados.</p>}
-          </Panel>}
-          {tab === "carpetas" && <>
-            <Panel title="Carpetas ciudadanas" eyebrow="Directorio del Estado Paniense" action={<FolderOpen size={26} color="#8b6696" />}>
-              <p className="cp-sub">Busca por nombre de usuario de Discord. Solo se muestran perfiles verificados con información pública limitada.</p>
-              <div className="cp-directory-search cp-search-wrap"><Search size={18} /><input className="cp-input" placeholder="Escribe un nombre de usuario..." maxLength={40} value={directorySearch} onChange={e => { setDirectorySearch(e.target.value); setPublicCitizen(null); setPublicError(""); }} autoComplete="off" aria-label="Buscar carpetas por nombre de usuario" /></div>
-              {directoryLoading && <p className="cp-sub">Buscando ciudadanos...</p>}
-              {directoryResults.length > 0 && <div className="cp-directory-grid">
-                {directoryResults.map(person => <button type="button" className="cp-public-result" key={person.id} onClick={() => void openPublicFolder(person)}><AvatarImage src={person.avatar} alt="" /><span><strong>@{person.username}</strong><small>Carpeta pública</small></span><ChevronRight size={16} /></button>)}
-              </div>}
-              {directorySearch.trim().length > 1 && !directoryLoading && directoryResults.length === 0 && <p className="cp-notice" style={{ marginTop: 15 }}>No hay ciudadanos verificados que coincidan con esa búsqueda.</p>}
-              {publicLoading && <p className="cp-notice">Abriendo carpeta pública...</p>}
-              {publicError && <p className="cp-notice cp-danger" role="alert">{publicError}</p>}
-            </Panel>
-            {publicCitizen && <Panel title={`La carpeta de @${publicCitizen.username}`} eyebrow="Vista pública · Privacidad protegida" action={<button type="button" className="cp-btn cp-btn-light" onClick={() => setPublicCitizen(null)}><X size={15} /> Cerrar</button>}>
-              <div className="cp-public-hero"><AvatarImage src={publicCitizen.avatar} alt={`Avatar de ${publicCitizen.username}`} /><div><p className="cp-eyebrow">Ciudadano del Estado Paniense</p><h3>@{publicCitizen.username}</h3><p className="cp-sub">{publicCitizen.level !== null ? `Nivel ${publicCitizen.level}` : "Ciudadano verificado"}</p></div></div>
-              <div className="cp-public-favorites">
-                <div><p className="cp-eyebrow">Su música</p><div className="cp-public-favorite"><SingerImage src={publicCitizen.cantante_imagen} alt="Cantante favorito" /><strong>{publicCitizen.cantante_favorito || "Sin definir"}</strong></div></div>
-                <div><p className="cp-eyebrow">Su compañero Pokémon</p><div className="cp-public-pokemon">{publicCitizen.pokemon_favorito ? <FavoritePokemon name={publicCitizen.pokemon_favorito} /> : <span>⚡ Sin elegir</span>}</div></div>
-                <div><p className="cp-eyebrow">Su animal favorito</p><div className="cp-public-animal"><span>{petEmoji(publicCitizen.animal_favorito || "")}</span><strong>{publicCitizen.animal_favorito || "Sin elegir"}</strong></div></div>
-              </div>
-              <p className="cp-public-privacy"><LockKeyhole size={15} /> Por privacidad, no se publican DPI, datos de nacimiento, domicilio, economía, relaciones familiares ni documentos del Registro Civil.</p>
-            </Panel>}
-          </>}
-          <div className="cp-footer-action"><a href="/auth/logout" className="cp-btn cp-btn-light"><LogOut size={15} /> Cerrar sesión de Discord</a></div>
-        </div>
-      </>}
+                    {tab === "roles" && <Panel title="Mis distintivos y roles" eyebrow="Identidad dentro del Estado" action={<Award color="#9d6290" size={26} />}>
+                      <p className="cp-sub" style={{ marginBottom: 18 }}>Los emblemas especiales y de equipos son los mismos que aparecen junto a tu nombre de ciudadano registrado.</p>
+                      {roles.length ? Object.entries(groupedRoles).sort(([a], [b]) => (a === "equipos" ? -1 : b === "equipos" ? 1 : a === "especiales" ? -1 : b === "especiales" ? 1 : 0)).map(([category, group]) => <div key={category} style={{ marginBottom: 23 }}><p className="cp-eyebrow" style={{ marginBottom: 10 }}>{CATEGORY_TITLES[category] || category}</p><div className="cp-role-list">{group.map(r => <RoleBadge key={r.discord_role_id} role={r} />)}</div></div>) : <p className="cp-notice">Todavía no tienes roles registrados.</p>}
+                    </Panel>}
+                    {tab === "carpetas" && <>
+                      <Panel title="Carpetas ciudadanas" eyebrow="Directorio del Estado Paniense" action={<FolderOpen size={26} color="#8b6696" />}>
+                        <p className="cp-sub">Busca por nombre de usuario de Discord. Solo se muestran perfiles verificados con información pública limitada.</p>
+                        <div className="cp-directory-search cp-search-wrap"><Search size={18} /><input className="cp-input" placeholder="Escribe un nombre de usuario..." maxLength={40} value={directorySearch} onChange={e => { setDirectorySearch(e.target.value); setPublicCitizen(null); setPublicError(""); }} autoComplete="off" aria-label="Buscar carpetas por nombre de usuario" /></div>
+                        {directoryLoading && <p className="cp-sub">Buscando ciudadanos...</p>}
+                        {directoryResults.length > 0 && <div className="cp-directory-grid">
+                          {directoryResults.map(person => <button type="button" className="cp-public-result" key={person.id} onClick={() => void openPublicFolder(person)}><AvatarImage src={person.avatar} alt="" /><span><strong>@{person.username}</strong><small>Carpeta pública</small></span><ChevronRight size={16} /></button>)}
+                        </div>}
+                        {directorySearch.trim().length > 1 && !directoryLoading && directoryResults.length === 0 && <p className="cp-notice" style={{ marginTop: 15 }}>No hay ciudadanos verificados que coincidan con esa búsqueda.</p>}
+                        {publicLoading && <p className="cp-notice">Abriendo carpeta pública...</p>}
+                        {publicError && <p className="cp-notice cp-danger" role="alert">{publicError}</p>}
+                      </Panel>
+                      {publicCitizen && <Panel title={`La carpeta de @${publicCitizen.username}`} eyebrow="Vista pública · Privacidad protegida" action={<button type="button" className="cp-btn cp-btn-light" onClick={() => setPublicCitizen(null)}><X size={15} /> Cerrar</button>}>
+                        <div className="cp-public-hero"><AvatarImage src={publicCitizen.avatar} alt={`Avatar de ${publicCitizen.username}`} /><div><p className="cp-eyebrow">Ciudadano del Estado Paniense</p><h3>@{publicCitizen.username}</h3><p className="cp-sub">{publicCitizen.level !== null ? `Nivel ${publicCitizen.level}` : "Ciudadano verificado"}</p></div></div>
+                        <div className="cp-public-favorites">
+                          <div><p className="cp-eyebrow">Su música</p><div className="cp-public-favorite"><SingerImage src={publicCitizen.cantante_imagen} alt="Cantante favorito" /><strong>{publicCitizen.cantante_favorito || "Sin definir"}</strong></div></div>
+                          <div><p className="cp-eyebrow">Su compañero Pokémon</p><div className="cp-public-pokemon">{publicCitizen.pokemon_favorito ? <FavoritePokemon name={publicCitizen.pokemon_favorito} /> : <span>⚡ Sin elegir</span>}</div></div>
+                          <div><p className="cp-eyebrow">Su animal favorito</p><div className="cp-public-animal"><span>{petEmoji(publicCitizen.animal_favorito || "")}</span><strong>{publicCitizen.animal_favorito || "Sin elegir"}</strong></div></div>
+                        </div>
+                        <p className="cp-public-privacy"><LockKeyhole size={15} /> Por privacidad, no se publican DPI, datos de nacimiento, domicilio, economía, relaciones familiares ni documentos del Registro Civil.</p>
+                      </Panel>}
+                    </>}
+                    <div className="cp-footer-action"><a href="/auth/logout" className="cp-btn cp-btn-light"><LogOut size={15} /> Cerrar sesión de Discord</a></div>
+                  </div>
+                </>}
     </main>
     <Footer />
     {transfer && <div className="cp-overlay" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget && !transferBusy) setTransfer(null); }}>

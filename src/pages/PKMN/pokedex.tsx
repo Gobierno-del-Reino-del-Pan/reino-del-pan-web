@@ -208,11 +208,11 @@ export default function Pokedex() {
                 <div className="max-w-7xl mx-auto flex items-center justify-center gap-2.5 text-center">
                     <img
                         src="/flag.png"
-                        alt="Bandera del Reino del Pan"
+                        alt="Bandera del Estado Paniense"
                         className="h-3 w-5 opacity-90 object-cover rounded-[1px]"
                     />
                     <span className="font-semibold tracking-wider uppercase">
-                        Web oficial del Gobierno del Reino del Pan · Ministerio de Desregulación y Pokémon
+                        Web oficial del Gobierno del Estado Paniense · Ministerio de Desregulación y Pokémon
                     </span>
                 </div>
             </div>

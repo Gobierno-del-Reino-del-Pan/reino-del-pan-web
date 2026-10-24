@@ -28,7 +28,7 @@ interface PlayCategory {
 
 }
 
-const PLAY_CONTENT: { hero: { title: string; category: string; description: string; duration: string; image: string }; categories: PlayCategory[] } = {
+const PLAY_CONTENT: { hero: { title: string; category: string; description: string; duration: string; image: string; }; categories: PlayCategory[]; } = {
 
   hero: {
 
@@ -36,7 +36,7 @@ const PLAY_CONTENT: { hero: { title: string; category: string; description: stri
 
     category: "SERIE DE ÉXITO",
 
-    description: "El gran drama de época que tiene en vilo a todo el Reino del Pan. Intriga, amor y traición en el palacio más custodiado del estado.",
+    description: "El gran drama de época que tiene en vilo a todo el Estado Paniense. Intriga, amor y traición en el palacio más custodiado del estado.",
 
     duration: "1h 45min",
 
@@ -158,16 +158,16 @@ const LOCAL_NEWS_FALLBACK = {
 
 
 type Tab = "play" | "directo" | "noticias";
-type NewsCard = { id: string; category: string; title: string; time: string; img: string; summary?: string };
+type NewsCard = { id: string; category: string; title: string; time: string; img: string; summary?: string; };
 
 
-const TABS: { id: Tab; label: string; icon: typeof Play }[] = [
+const TABS: { id: Tab; label: string; icon: typeof Play; }[] = [
   { id: "play", label: "TVP Play", icon: Play },
   { id: "directo", label: "En directo", icon: Radio },
   { id: "noticias", label: "TVP Noticias", icon: Newspaper },
 ];
 
-function IconButton({ children, onClick, label }: { children: ReactNode; onClick: () => void; label: string }) {
+function IconButton({ children, onClick, label }: { children: ReactNode; onClick: () => void; label: string; }) {
   return (
     <button type="button" onClick={onClick} aria-label={label}
       className="tvp-glass flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] text-white/80 transition hover:bg-white/15 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff7b43]">
@@ -352,7 +352,7 @@ export default function TVPPortal() {
               <img src="/TVP/TVP.png" alt="TVP" className="max-h-10 w-auto max-w-[88px] object-contain sm:max-h-11 sm:max-w-[115px]" />
               <div className="hidden min-w-0 flex-col border-l border-white/15 pl-3 sm:flex">
                 <span className="text-[10px] font-bold uppercase tracking-[.20em] text-white/65">Televisión Paniense</span>
-                <span className="text-[9px] font-semibold uppercase tracking-[.16em] text-[#f0a5d9]"><s className="decoration-[#fc844c] decoration-2">Reino del</s> Pan</span>
+                <span className="text-[9px] font-semibold uppercase tracking-[.16em] text-[#f0a5d9]">Estado Paniense</span>
               </div>
               <img src="/TVP/2Pan.png" alt="2Pan" className="ml-1 hidden max-h-6 max-w-[65px] object-contain opacity-75 xl:block" />
             </div>
@@ -494,7 +494,7 @@ export default function TVPPortal() {
               </div>
               <div className="tvp-glass rounded-[24px] p-5 sm:p-7">
                 <span className="text-[10px] font-black uppercase tracking-[.14em] text-[#ff9a6d]">Área Deportiva Paniense</span>
-                <h2 className="tvp-head mt-3 text-xl font-bold">Especial Copa del Reino 2026</h2>
+                <h2 className="tvp-head mt-3 text-xl font-bold">Especial Copa del Estado Paniense 2026</h2>
                 <p className="mt-3 text-sm leading-7 text-white/65">Estamos acondicionando la parrilla de retransmisión televisiva para los próximos encuentros oficiales del campeonato nacional paniense.</p>
               </div>
             </aside>

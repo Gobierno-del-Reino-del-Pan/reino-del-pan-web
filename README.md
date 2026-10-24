@@ -1,12 +1,12 @@
-﻿# Reino del Pan - Sitio Web Oficial
+﻿# Estado Paniense - Sitio Web Oficial
 
-Sitio web oficial del **Reino del Pan**, una nación digital dedicada a la paz, la ecología activa, la democracia directa y la participación ciudadana.
+Sitio web oficial del **Estado Paniense**, una nación digital dedicada a la paz, la ecología activa, la democracia directa y la participación ciudadana.
 
 ## Descripción del Proyecto
 
-**Reino del Pan** es una plataforma web moderna y responsiva que presenta los valores, servicios y oportunidades de una nación digital soberana. El sitio permite a los ciudadanos potenciales:
+**Estado Paniense** es una plataforma web moderna y responsiva que presenta los valores, servicios y oportunidades de una nación digital soberana. El sitio permite a los ciudadanos potenciales:
 
-- Conocer los fundamentos y visión del Reino del Pan
+- Conocer los fundamentos y visión del Estado Paniense
 - Solicitar el Documento Personal de Identidad (DPI)
 - Recuperar un DPI ya existente
 - Acceder a información sobre gobierno y políticas
@@ -89,7 +89,7 @@ reino-del-pan/
 | Ruta | Página | Descripción |
 |------|--------|-------------|
 | `/` | Home | Landing page |
-| `/about` | About | Información sobre el Reino del Pan |
+| `/about` | About | Información sobre el Estado Paniense |
 | `/dpi` | DPI | Hub del DPI |
 | `/dpi/crear` | CreateDPI | Crear nuevo DPI |
 | `/dpi/recuperar` | RestoreDPI | Recuperar DPI existente |

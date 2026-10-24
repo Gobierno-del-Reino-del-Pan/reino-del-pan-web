@@ -25,7 +25,7 @@ const LEGAL_LINKS = [
 const focusRing = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#630B57] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF6FA]";
 
 // <Link> para rutas internas y <a> para destinos externos.
-function FooterLink({ href, external = false, children }: { href: string; external?: boolean; children: ReactNode }) {
+function FooterLink({ href, external = false, children }: { href: string; external?: boolean; children: ReactNode; }) {
   const className = `pan-footer-link group relative inline-flex max-w-full items-center rounded-md py-1.5 text-[13px] leading-relaxed ${focusRing}`;
   if (external) {
     return <a href={href} target="_blank" rel="noopener noreferrer" className={className}>{children}<span className="ml-1 text-[10px] opacity-40" aria-hidden="true">↗</span></a>;
@@ -123,7 +123,7 @@ export default function Footer() {
                 <span className="flex min-w-0 flex-col gap-1">
                   <span className="text-[10px] font-semibold uppercase tracking-[.3em] text-[#8C6488]">ARTIS PANIS</span>
                   <span className="flex flex-wrap items-baseline gap-x-1.5 text-[17px] font-extrabold uppercase tracking-[.055em] text-[#630B57] sm:text-lg">
-                    <span className="pan-footer-strike">REINO DEL</span><span>PAN</span>
+                    ESTADO PANIENSE
                   </span>
                 </span>
               </Link>
@@ -179,7 +179,7 @@ export default function Footer() {
 
           <div className="pan-footer-bottom mt-12 flex flex-col items-start justify-between gap-4 pt-6 sm:flex-row sm:items-center">
             <p className="text-[11px] leading-relaxed text-[#816D7C]">
-              <span className="pan-footer-strike">REINO DEL</span>{" "}<span className="font-semibold text-[#630B57]">PAN</span>{" "}
+              <span className="font-semibold text-[#630B57]">ESTADO PANIENSE</span>{" "}
               © {new Date().getFullYear()} · Todos los derechos reservados.
             </p>
             <span className="rounded-full border border-[#630B57]/10 bg-white/45 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.18em] text-[#886580]">

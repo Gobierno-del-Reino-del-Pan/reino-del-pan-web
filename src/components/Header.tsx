@@ -32,7 +32,7 @@ const INFO_LINKS = [
   { href: "/about", label: "Acerca de" },
 ];
 
-type NavLink = { href: string; label: string; external?: boolean };
+type NavLink = { href: string; label: string; external?: boolean; };
 type Dropdown = "community" | "info" | "account" | null;
 
 interface DiscordUser {
@@ -41,11 +41,11 @@ interface DiscordUser {
   avatar: string;
   inGuild: boolean;
   verificado: boolean;
-  dpi: { nombre: string; apellidos: string; dpi_number: string } | null;
-  roles: Array<string | { id?: string; discord_role_id?: string; nombre?: string; name?: string }>;
+  dpi: { nombre: string; apellidos: string; dpi_number: string; } | null;
+  roles: Array<string | { id?: string; discord_role_id?: string; nombre?: string; name?: string; }>;
 }
 
-const Icon = ({ name, size = 18 }: { name: "chevron" | "menu" | "close" | "login" | "arrow" | "folder"; size?: number }) => {
+const Icon = ({ name, size = 18 }: { name: "chevron" | "menu" | "close" | "login" | "arrow" | "folder"; size?: number; }) => {
   const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true as const };
   const shapes = {
     chevron: <path d="m6 9 6 6 6-6" />,
@@ -64,7 +64,7 @@ function Brand() {
       <span className="ap-mark"><img src="/logo.png" alt="" width={40} height={40} /></span>
       <span className="ap-brand-wordmark">
         <span className="ap-brand-eyebrow">ARTIS PANIS</span>
-        <span className="ap-brand-name"><span className="ap-strike">REINO DEL</span><strong>PAN</strong></span>
+        <span className="ap-brand-name"><strong>ESTADO PANIENSE</strong></span>
       </span>
     </Link>
   );
@@ -81,7 +81,7 @@ const styles = `
   .ap-brand:hover .ap-mark {transform:translateY(-2px); box-shadow:0 7px 18px rgba(99,11,87,.18)}
   .ap-brand-wordmark {display:flex; flex-direction:column; gap:4px; white-space:nowrap; line-height:1.1; min-width:0}
   .ap-brand-eyebrow {color:#98618e; font-size:10px; font-weight:700; letter-spacing:.2em}
-  .ap-brand-name {display:flex; gap:5px; align-items:center; font-size:13px; font-weight:800; letter-spacing:.03em}
+  .ap-brand-name {display:flex; align-items:center; font-size:13px; font-weight:800; letter-spacing:.03em}
   .ap-brand-name strong {font-weight:850}
   .ap-strike {text-decoration:line-through; text-decoration-color:#A6659D; text-decoration-thickness:2px; text-decoration-skip-ink:none; opacity:.72}
   .ap-nav {display:none; align-items:center; justify-self:center; justify-content:center; gap:2px; min-width:0; padding:4px; border:1px solid rgba(99,11,87,.065); background:rgba(246,231,242,.52); border-radius:999px;}

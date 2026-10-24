@@ -400,7 +400,7 @@ export default function Level() {
       <motion.div {...fade} className="lvl-hero">
         <span className="lvl-eyebrow"><Sparkles size={14} aria-hidden="true" /> Ciudadanía digital · Artis Panis</span>
         <h1>Tabla de <span>clasificación.</span></h1>
-        <p>La actividad que mueve el Reino. Descubre el podio, consulta los niveles y conoce a los ciudadanos más participativos.</p>
+        <p>La actividad que mueve el Estado Paniense. Descubre el podio, consulta los niveles y conoce a los ciudadanos más participativos.</p>
       </motion.div>
       <AnimatePresence mode="wait">
         {loading && <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><LoadingSkeleton /></motion.div>}
@@ -416,7 +416,7 @@ export default function Level() {
             {data.destacados.menosMensajes && <HighlightCard user={data.destacados.menosMensajes} label="El más reservado" icon="quiet" onUser={openProfile} />}
           </div>}
           <section aria-labelledby="lvl-elite-title" className="lvl-featured lvl-glass">
-            <div className="lvl-card-head"><strong id="lvl-elite-title"><Trophy size={18} /> Élite del Reino · Top 5</strong><small>Clasificación oficial de XP</small></div>
+            <div className="lvl-card-head"><strong id="lvl-elite-title"><Trophy size={18} /> Élite del Estado Paniense · Top 5</strong><small>Clasificación oficial de XP</small></div>
             {top3.length > 0 && <Podium top3={top3} onUser={openProfile} />}
             {rest.map(user => <button className="lvl-rank-row" type="button" key={user.id} onClick={() => openProfile(user.id)}>
               <span className="lvl-rank-pos">{user.posicion.toString().padStart(2, "0")}</span>

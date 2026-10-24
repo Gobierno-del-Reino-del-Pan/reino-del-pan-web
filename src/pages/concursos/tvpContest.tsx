@@ -37,7 +37,7 @@ export default function TvRedesignContest() {
                     </Link>
 
                     <span className="text-xs uppercase tracking-[0.4em] text-white/50 font-bold block mb-3 font-tvp-head">
-                        Concurso Oficial del Reino del Pan
+                        Concurso Oficial del Estado Paniense
                     </span>
 
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight uppercase leading-tight font-tvp-head">
@@ -45,7 +45,7 @@ export default function TvRedesignContest() {
                     </h1>
 
                     <p className="text-sm sm:text-base text-white/60 mt-6 max-w-2xl mx-auto font-light leading-relaxed">
-                        Bases oficiales para el rediseño integral de la identidad visual y estratégica de los medios públicos del Reino del Pan.
+                        Bases oficiales para el rediseño integral de la identidad visual y estratégica de los medios públicos del Estado Paniense.
                     </p>
                 </div>
             </section>
@@ -60,7 +60,7 @@ export default function TvRedesignContest() {
                             <span className="text-[#FF4D00] font-mono text-lg">I.</span> Objeto
                         </h2>
                         <p className="text-sm sm:text-base leading-relaxed text-white/70">
-                            El Gobierno del Reino del Pan convoca el Concurso Nacional para el Rediseño Integral de la Corporación Televisión Paniense (TVP), con el objetivo de renovar la identidad visual y estratégica de los medios públicos del Reino del Pan.
+                            El Gobierno del Estado Paniense convoca el Concurso Nacional para el Rediseño Integral de la Corporación Televisión Paniense (TVP), con el objetivo de renovar la identidad visual y estratégica de los medios públicos del Estado Paniense.
                         </p>
                         <p className="text-sm font-semibold text-white/90">El concurso comprende el rediseño de:</p>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
@@ -79,7 +79,7 @@ export default function TvRedesignContest() {
                             <span className="text-[#FF4D00] font-mono text-lg">II.</span> Participantes
                         </h2>
                         <ul className="list-disc list-inside space-y-2 text-sm sm:text-base text-white/70">
-                            <li>Podrá participar cualquier ciudadano o residente del Reino del Pan que presente una propuesta original e inédita.</li>
+                            <li>Podrá participar cualquier ciudadano o residente del Estado Paniense que presente una propuesta original e inédita.</li>
                             <li>Cada participante podrá presentar una o varias propuestas.</li>
                         </ul>
                     </section>
@@ -90,7 +90,7 @@ export default function TvRedesignContest() {
                             <span className="text-[#FF4D00] font-mono text-lg">III.</span> Objetivos del rediseño
                         </h2>
                         <p className="text-sm sm:text-base leading-relaxed text-white/70">
-                            Las propuestas deberán transmitir una visión renovada de la radiotelevisión pública del Reino del Pan, representando los siguientes valores:
+                            Las propuestas deberán transmitir una visión renovada de la radiotelevisión pública del Estado Paniense, representando los siguientes valores:
                         </p>
                         <div className="flex flex-wrap gap-2 pt-2">
                             {[
@@ -180,7 +180,7 @@ export default function TvRedesignContest() {
                             <li>Adaptabilidad a múltiples plataformas.</li>
                             <li>Innovación.</li>
                             <li>Imagen de marca.</li>
-                            <li>Representación de los valores del Reino del Pan.</li>
+                            <li>Representación de los valores del Estado Paniense.</li>
                             <li>Viabilidad de implantación.</li>
                         </ul>
                     </section>
@@ -196,13 +196,13 @@ export default function TvRedesignContest() {
                             <div className="bg-black/30 border border-white/5 rounded-2xl p-5">
                                 <h3 className="font-bold text-white mb-2 text-sm uppercase tracking-wider text-[#FF4D00] font-tvp-head">Primera fase</h3>
                                 <p className="text-xs sm:text-sm text-white/60 leading-relaxed">
-                                    Todas las propuestas serán evaluadas por el Consejo de Estado del Reino del Pan, que realizará una criba técnica y artística y seleccionará las candidaturas finalistas.
+                                    Todas las propuestas serán evaluadas por el Consejo de Estado del Estado Paniense, que realizará una criba técnica y artística y seleccionará las candidaturas finalistas.
                                 </p>
                             </div>
                             <div className="bg-black/30 border border-white/5 rounded-2xl p-5">
                                 <h3 className="font-bold text-white mb-2 text-sm uppercase tracking-wider text-[#FF4D00] font-tvp-head">Segunda fase</h3>
                                 <p className="text-xs sm:text-sm text-white/60 leading-relaxed">
-                                    Las propuestas finalistas serán sometidas a votación popular entre toda la ciudadanía del Reino del Pan. La propuesta que obtenga mayor respaldo ciudadano será proclamada ganadora.
+                                    Las propuestas finalistas serán sometidas a votación popular entre toda la ciudadanía del Estado Paniense. La propuesta que obtenga mayor respaldo ciudadano será proclamada ganadora.
                                 </p>
                             </div>
                         </div>
@@ -214,7 +214,7 @@ export default function TvRedesignContest() {
                             <span className="text-[#FF4D00] font-mono text-lg">IX.</span> Proyecto ganador
                         </h2>
                         <p className="text-sm sm:text-base leading-relaxed text-white/70">
-                            La propuesta ganadora podrá convertirse en la nueva identidad oficial de la Corporación Televisión Paniense. El Gobierno del Reino del Pan podrá implantar total o parcialmente los elementos presentados.
+                            La propuesta ganadora podrá convertirse en la nueva identidad oficial de la Corporación Televisión Paniense. El Gobierno del Estado Paniense podrá implantar total o parcialmente los elementos presentados.
                         </p>
                     </section>
 
@@ -224,7 +224,7 @@ export default function TvRedesignContest() {
                             <span className="text-[#FF4D00] font-mono text-lg">X.</span> Derechos de las obras ganadoras
                         </h2>
                         <p className="text-sm sm:text-base leading-relaxed text-white/70">
-                            Las propuestas ganadoras pasarán a formar parte del patrimonio gráfico oficial del Reino del Pan. El Gobierno podrá reproducirlas, adaptarlas o desarrollarlas en futuras aplicaciones audiovisuales, citando al autor cuando proceda.
+                            Las propuestas ganadoras pasarán a formar parte del patrimonio gráfico oficial del Estado Paniense. El Gobierno podrá reproducirlas, adaptarlas o desarrollarlas en futuras aplicaciones audiovisuales, citando al autor cuando proceda.
                         </p>
                     </section>
 
@@ -257,7 +257,7 @@ export default function TvRedesignContest() {
                                     Publica tu propuesta utilizando el hashtag oficial: <span className="text-[#FF4D00] font-mono font-bold">#NuevaTVP</span>
                                 </p>
                                 <p className="text-xs text-white/50">
-                                    Se recomienda mencionar al perfil oficial del Gobierno del Reino del Pan para facilitar la localización de las propuestas.
+                                    Se recomienda mencionar al perfil oficial del Gobierno del Estado Paniense para facilitar la localización de las propuestas.
                                 </p>
                             </div>
                         </div>

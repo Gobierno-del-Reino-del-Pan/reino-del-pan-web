@@ -99,7 +99,7 @@ export default function NotFound() {
           <span className="flex min-w-0 flex-col gap-1 leading-none">
             <span className="text-[9px] font-bold uppercase tracking-[.25em] text-[#98638F]">Artis Panis</span>
             <span className="whitespace-nowrap text-[11px] font-extrabold uppercase tracking-[.08em] text-[#630B57] sm:text-[12px]">
-              <span className="ap-404-strike">Reino del</span> Pan
+              Estado Paniense
             </span>
           </span>
         </Link>
@@ -168,7 +168,7 @@ export default function NotFound() {
               <p className="mt-4 max-w-[46ch] text-[14px] leading-[1.8] text-[#705F6B] sm:mt-5 sm:text-[16px]">
                 El módulo de red no ha podido indexar la ruta solicitada. La dirección no figura en los registros centrales del{" "}
                 <strong className="font-semibold text-[#630B57]">
-                  <span className="ap-404-strike">Reino del</span> Pan
+                  Estado Paniense
                 </strong>.
               </p>
 

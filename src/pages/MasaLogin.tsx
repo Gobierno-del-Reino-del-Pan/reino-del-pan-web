@@ -40,7 +40,7 @@ export default function MasaLogin() {
             <div className="w-full max-w-md">
                 <div className="mb-8 text-center">
                     <span className="inline-block text-[10px] uppercase tracking-[0.35em] font-bold text-accent border border-white/10 bg-white/5 rounded-full px-4 py-2">
-                        Gobierno del Reino del Pan
+                        Gobierno del Estado Paniense
                     </span>
 
                     <h1 className="mt-5 text-4xl font-black tracking-tight">

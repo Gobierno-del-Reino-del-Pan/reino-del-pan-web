@@ -24,7 +24,7 @@ const DATA_ITEMS = [
 
 const USE_ITEMS = [
   "Emitir y validar el Documento Personal de Identidad (DPI).",
-  "Verificar la identidad de los ciudadanos en el servidor de Discord del Reino del Pan.",
+  "Verificar la identidad de los ciudadanos en el servidor de Discord del Estado Paniense.",
   "Prevenir el abuso del sistema (solicitudes masivas, duplicados, suplantación de identidad).",
   "Auditoría interna de seguridad.",
 ];
@@ -175,7 +175,7 @@ export default function Privacy() {
             <div className="privacy-articles">
               <SectionCard id="introduccion" number="01" title="Introducción">
                 <p>
-                  En el Reino del Pan, protegemos tu privacidad y tratamos tus datos personales con el mayor cuidado. Esta política explica qué datos recopilamos, cómo los utilizamos y qué medidas aplicamos para protegerlos.
+                  En el Estado Paniense, protegemos tu privacidad y tratamos tus datos personales con el mayor cuidado. Esta política explica qué datos recopilamos, cómo los utilizamos y qué medidas aplicamos para protegerlos.
                 </p>
               </SectionCard>
 

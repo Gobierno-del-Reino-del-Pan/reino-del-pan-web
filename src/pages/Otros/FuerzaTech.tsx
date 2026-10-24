@@ -44,7 +44,7 @@ export default function FuerzaTechPaniense() {
             id: 'm-hacienda',
             code: 'MIN-HAC-01',
             title: 'Ministerio de Hacienda y Finanzas Públicas',
-            summary: 'Administración de la infraestructura financiera crítica y sistemas fiscales del Reino.',
+            summary: 'Administración de la infraestructura financiera crítica y sistemas fiscales del Estado Paniense.',
             description: 'Los ingenieros destinados a Hacienda reconstruirán las pasarelas de tributación pública, optimizarán la detección de fraude mediante analítica predictiva de datos en tiempo real y desarrollarán APIs de conciliación bancaria estatal con cifrado cuántico.',
             roles: ['Senior Backend Engineer (Go / Rust)', 'Data Architect', 'Distributed Systems Specialist'],
             impact: 'Procesamiento de más de 4.000 millones de monedas panienses en transacciones anuales.'
@@ -74,7 +74,7 @@ export default function FuerzaTechPaniense() {
             summary: 'Sistemas cartográficos, sensores IoT urbanos y logística de movilidad.',
             description: 'Implementación de plataformas GeoJSON masivas para el trazado de obras públicas, gestión en tiempo real del transporte interurbano e integración de datos geoespaciales con satélites de monitoreo agrícola.',
             roles: ['GIS Software Engineer', 'IoT Stream Pipelines Specialist', 'Full-Stack Spatial Developer'],
-            impact: 'Cobertura del 100% del territorio del Reino del Pan en la malla digital.'
+            impact: 'Cobertura del 100% del territorio del Estado Paniense en la malla digital.'
         }
     ];
 
@@ -82,7 +82,7 @@ export default function FuerzaTechPaniense() {
     const faqs = [
         {
             q: '¿Qué es el programa Fuerza Tech Paniense?',
-            a: 'Es una unidad de élite civil patrocinada por la Corona y el Gobierno del Reino del Pan que recluta a los mejores ingenieros, diseñadores y analistas de datos para resolver los desafíos tecnológicos más complejos del sector público durante una estancia estratégica de 2 años.'
+            a: 'Es una unidad de élite civil patrocinada por la Corona y el Gobierno del Estado Paniense que recluta a los mejores ingenieros, diseñadores y analistas de datos para resolver los desafíos tecnológicos más complejos del sector público durante una estancia estratégica de 2 años.'
         },
         {
             q: '¿Cuál es la duración del compromiso y qué ocurre al finalizar?',
@@ -90,7 +90,7 @@ export default function FuerzaTechPaniense() {
         },
         {
             q: '¿Puedo trabajar de forma remota o híbrida?',
-            a: 'La mayoría de los proyectos permiten trabajo 100% remoto dentro del Reino del Pan o formato híbrido con estancias en la sede ministerial en la Capital Paniense o laboratorios regionales.'
+            a: 'La mayoría de los proyectos permiten trabajo 100% remoto dentro del Estado Paniense o formato híbrido con estancias en la sede ministerial en la Capital Paniense o laboratorios regionales.'
         },
         {
             q: '¿Cuáles son los requisitos mínimos de elegibilidad?',
@@ -112,11 +112,11 @@ export default function FuerzaTechPaniense() {
                     <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 md:gap-3 text-center">
                         <img
                             src="/flag.png"
-                            alt="Bandera del Reino del Pan"
+                            alt="Bandera del Estado Paniense"
                             className="h-3 w-4 opacity-90 object-contain shrink-0"
                         />
                         <span className="font-semibold tracking-wider uppercase leading-tight">
-                            Web oficial del Gobierno del Reino del Pan · Ministerio de Transformación Digital.
+                            Web oficial del Gobierno del Estado Paniense · Ministerio de Transformación Digital.
                         </span>
                     </div>
                 </div>
@@ -299,7 +299,7 @@ export default function FuerzaTechPaniense() {
                                 ÚNETE<br></br>
                             </h2>
                             <p className="text-xl sm:text-2xl font-medium text-black/90 max-w-xl leading-snug">
-                                <br></br>   Construye el futuro de la tecnología gubernamental del Reino del Pan en un programa de ingeniería respaldado por el Ministerio de Transformación Digital, trabajando en misiones reales desde el primer día.
+                                <br></br>   Construye el futuro de la tecnología gubernamental del Estado Paniense en un programa de ingeniería respaldado por el Ministerio de Transformación Digital, trabajando en misiones reales desde el primer día.
                             </p>
 
                             <div className="flex flex-wrap items-center gap-4 pt-4">
@@ -333,7 +333,7 @@ export default function FuerzaTechPaniense() {
                                     <p className="pl-2 border-l border-zinc-800">
                                         [1] Rediseño de la pasarela fiscal del Ministerio de Hacienda.<br />
                                         [2] Despliegue del firewall cibernético de la Red Paniense.<br />
-                                        [3] Lanzamiento de la App Oficial de Movilidad del Reino.<br />
+                                        [3] Lanzamiento de la App Oficial de Movilidad del Estado Paniense.<br />
                                         [4] API de Transparencia de Contratos del Estado.
                                     </p>
                                     <p className="text-[#FF4D00]">$ ftp --eligible-profiles</p>
@@ -347,7 +347,7 @@ export default function FuerzaTechPaniense() {
 
                                 <div className="mt-8 pt-4 border-t border-zinc-800 text-center">
                                     <span className="text-[10px] tf-mono text-zinc-500 uppercase">
-                                        Gobierno del Reino del Pan · Ministerio de Transformación Digital
+                                        Gobierno del Estado Paniense · Ministerio de Transformación Digital
                                     </span>
                                 </div>
                             </div>
@@ -475,12 +475,12 @@ export default function FuerzaTechPaniense() {
                                 />
                             </div>
                             <p className="text-zinc-500 leading-relaxed max-w-sm text-xs">
-                                Iniciativa gubernamental para el reclutamiento de talento informático de vanguardia al servicio del Reino del Pan. Adscrita al Ministerio de Transformación Digital.
+                                Iniciativa gubernamental para el reclutamiento de talento informático de vanguardia al servicio del Estado Paniense. Adscrita al Ministerio de Transformación Digital.
                             </p>
                         </div>
 
                         <div className="tf-mono text-[11px] text-zinc-600">
-                            GOBIERNO DEL REINO DEL PAN · MINISTERIO DE TRANSFORMACIÓN DIGITAL
+                            GOBIERNO DEL ESTADO PANIENSE · MINISTERIO DE TRANSFORMACIÓN DIGITAL
                         </div>
                     </div>
 
@@ -500,7 +500,7 @@ export default function FuerzaTechPaniense() {
                             Todo el código producido por los miembros de la Fuerza Tech Paniense es publicado bajo licencias abiertas compatibles con el Dominio Público Paniense.
                         </p>
                         <div className="pt-4 text-zinc-600 text-[11px]">
-                            © 2026 Gobierno del Reino del Pan. Todos los derechos reservados.
+                            © 2026 Gobierno del Estado Paniense. Todos los derechos reservados.
                         </div>
                     </div>
 

@@ -24,7 +24,7 @@ const COMUNICADOS: Comunicado[] = [
         fecha: '10 de Septiembre, 2026',
         categoria: 'Nota de Prensa',
         titulo: 'Declaración de la Asamblea Plenaria sobre la cohesión social y el servicio a los más vulnerables',
-        resumen: 'Los obispos del Reino del Pan reafirman su compromiso con las cáritas diocesanas y apelan a la concordia social en todo el territorio paniense.'
+        resumen: 'Los obispos del Estado Paniense reafirman su compromiso con las cáritas diocesanas y apelan a la concordia social en todo el territorio paniense.'
     },
     {
         id: 'c-02',
@@ -51,7 +51,7 @@ const COMISIONES: Comision[] = [
     {
         nombre: 'Pastoral Social y Cáritas Paniense',
         presidente: 'S.E.R. Mons. Gabriel Ruiz',
-        descripcion: 'Coordinación de la red nacional de ayuda asistencial, comedores sociales y atención al migrante en el Reino.'
+        descripcion: 'Coordinación de la red nacional de ayuda asistencial, comedores sociales y atención al migrante en el Estado Paniense.'
     },
     {
         nombre: 'Educación, Juventud y Cultura',
@@ -142,7 +142,7 @@ export default function ConferenciaPandora() {
                                     CONFERENCIA PANDORA
                                 </span>
                                 <span className="text-[10px] text-amber-800 uppercase tracking-widest font-semibold">
-                                    Iglesia Católica en el Reino del Pan
+                                    Iglesia Católica en el Estado Paniense
                                 </span>
                             </div>
                         </a>
@@ -212,7 +212,7 @@ export default function ConferenciaPandora() {
                     </div>
 
                     <h1 className="cp-cinzel text-4xl sm:text-6xl md:text-7xl font-bold tracking-normal leading-tight text-amber-100 max-w-4xl mx-auto">
-                        Iglesia Católica en el Reino del Pan
+                        Iglesia Católica en el Estado Paniense
                     </h1>
 
                     <p className="cp-serif text-lg sm:text-2xl text-stone-200 font-normal italic max-w-3xl mx-auto mt-6 leading-relaxed">
@@ -272,7 +272,7 @@ export default function ConferenciaPandora() {
                                 Servir a la comunión y anunciar el Evangelio en la sociedad paniense
                             </h2>
                             <p className="cp-serif text-stone-700 text-lg leading-relaxed">
-                                La <strong className="text-stone-900 font-semibold">Conferencia Pandora</strong> es la institución permanente integrada por los Obispos de las distintas archidiócesis y diócesis del Reino del Pan, en comunión con el Romano Pontífice.
+                                La <strong className="text-stone-900 font-semibold">Conferencia Pandora</strong> es la institución permanente integrada por los Obispos de las distintas archidiócesis y diócesis del Estado Paniense, en comunión con el Romano Pontífice.
                             </p>
                             <p className="text-stone-600 leading-relaxed text-sm sm:text-base">
                                 A través de nuestras comisiones, coordinamos la labor evangelizadora, la acción caritativa y social de Cáritas Paniense, la defensa de la familia y el diálogo respetuoso con las instituciones del Estado para el bien común de todos los ciudadanos.
@@ -364,7 +364,7 @@ export default function ConferenciaPandora() {
                             Comisiones Episcopales
                         </h2>
                         <p className="cp-serif text-stone-600 mt-4 text-base">
-                            Las comisiones estudian y coordinan las áreas pastorales específicas de la Iglesia en el Reino del Pan.
+                            Las comisiones estudian y coordinan las áreas pastorales específicas de la Iglesia en el Estado Paniense.
                         </p>
                     </div>
 
@@ -402,10 +402,10 @@ export default function ConferenciaPandora() {
                                 OBRA SOCIAL PATROCINADA
                             </span>
                             <h2 className="cp-cinzel text-3xl sm:text-5xl font-bold text-amber-100 leading-tight">
-                                Cáritas Paniense: El amor que transforma el Reino
+                                Cáritas Paniense: El amor que transforma el Estado Paniense
                             </h2>
                             <p className="cp-serif text-stone-300 text-lg leading-relaxed">
-                                Más de 140 centros parroquiales en todo el Reino del Pan ofrecen apoyo alimentario, acogida a familias vulnerables y programas de empleo sin distinción de credo u origen.
+                                Más de 140 centros parroquiales en todo el Estado Paniense ofrecen apoyo alimentario, acogida a familias vulnerables y programas de empleo sin distinción de credo u origen.
                             </p>
                         </div>
 
@@ -446,14 +446,14 @@ export default function ConferenciaPandora() {
                             </span>
                         </div>
                         <p className="text-stone-400 leading-relaxed text-xs max-w-sm">
-                            Órgano permanente de los Obispos de la Iglesia Católica en el Reino del Pan. Sede Secretaría General: Calle de la Catedral Nº 12, Pantopía.
+                            Órgano permanente de los Obispos de la Iglesia Católica en el Estado Paniense. Sede Secretaría General: Calle de la Catedral Nº 12, Pantopía.
                         </p>
                     </div>
 
                     <div className="md:col-span-3 space-y-3">
                         <span className="text-white font-bold uppercase tracking-wider block mb-2">Secciones</span>
                         <a href="#institucion" className="block hover:text-amber-300 transition-colors">Asamblea Plenaria</a>
-                        <a href="#obispos" className="block hover:text-amber-300 transition-colors">Diócesis del Reino</a>
+                        <a href="#obispos" className="block hover:text-amber-300 transition-colors">Diócesis del Estado Paniense</a>
                         <a href="#comisiones" className="block hover:text-amber-300 transition-colors">Comisiones Episcopales</a>
                         <a href="#actualidad" className="block hover:text-amber-300 transition-colors">Notas y Documentos</a>
                     </div>

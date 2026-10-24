@@ -19,15 +19,15 @@ export default function PokemonContest() {
                     </Link>
 
                     <span className="text-xs uppercase tracking-[0.4em] text-white/50 font-bold block mb-3">
-                        Concurso Oficial del Reino del Pan
+                        Concurso Oficial del Estado Paniense
                     </span>
 
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight drop-heading uppercase leading-tight ">
-                        Diseño de Líneas Evolutivas Pokémon del Reino del Pan
+                        Diseño de Líneas Evolutivas Pokémon del Estado Paniense
                     </h1>
 
                     <p className="text-sm sm:text-base text-white/60 mt-6 max-w-2xl mx-auto font-light leading-relaxed">
-                        Bases oficiales para la selección de las primeras líneas evolutivas Pokémon originales que pasarán a formar parte del universo oficial del Reino.
+                        Bases oficiales para la selección de las primeras líneas evolutivas Pokémon originales que pasarán a formar parte del universo oficial del Estado Paniense.
                     </p>
                 </div>
             </section>
@@ -42,7 +42,7 @@ export default function PokemonContest() {
                             <span className="text-amber-500 font-mono text-lg">I.</span> Objeto
                         </h2>
                         <p className="text-sm sm:text-base leading-relaxed text-white/70">
-                            El Gobierno del Reino del Pan convoca el Concurso Nacional para el Diseño de las Primeras Líneas Evolutivas Pokémon Oficiales del Reino del Pan, con el objetivo de seleccionar tres líneas evolutivas originales que pasarán a formar parte del universo Pokémon del Reino del Pan.
+                            El Gobierno del Estado Paniense convoca el Concurso Nacional para el Diseño de las Primeras Líneas Evolutivas Pokémon Oficiales del Estado Paniense, con el objetivo de seleccionar tres líneas evolutivas originales que pasarán a formar parte del universo Pokémon del Estado Paniense.
                         </p>
                         <p className="text-sm font-semibold text-white/90">Se seleccionarán tres líneas evolutivas ganadoras, cada una compuesta por:</p>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
@@ -65,7 +65,7 @@ export default function PokemonContest() {
                             <span className="text-amber-500 font-mono text-lg">II.</span> Participantes
                         </h2>
                         <ul className="list-disc list-inside space-y-2 text-sm sm:text-base text-white/70">
-                            <li>Podrá participar cualquier ciudadano o residente del Reino del Pan que presente un diseño original e inédito.</li>
+                            <li>Podrá participar cualquier ciudadano o residente del Estado Paniense que presente un diseño original e inédito.</li>
                             <li>Cada participante podrá presentar una o varias propuestas.</li>
                         </ul>
                     </section>
@@ -84,7 +84,7 @@ export default function PokemonContest() {
                             <li>No existen animales, plantas, objetos o conceptos obligatorios.</li>
                             <li>Se permite inspirarse en la naturaleza, la cultura, la gastronomía, la historia, la ciencia, la tecnología, la fantasía o cualquier otra temática.</li>
                             <li>Se permite diseñar Pokémon basados en criaturas reales, mitológicas o completamente originales.</li>
-                            <li>El objetivo es crear especies únicas que reflejen la identidad y creatividad del Reino del Pan.</li>
+                            <li>El objetivo es crear especies únicas que reflejen la identidad y creatividad del Estado Paniense.</li>
                         </ul>
                     </section>
 
@@ -142,7 +142,7 @@ export default function PokemonContest() {
                             <li>Coherencia entre las tres evoluciones.</li>
                             <li>Identidad propia.</li>
                             <li>Potencial para integrarse en el universo Pokémon.</li>
-                            <li>Representación de la identidad del Reino del Pan.</li>
+                            <li>Representación de la identidad del Estado Paniense.</li>
                         </ul>
                     </section>
 
@@ -157,13 +157,13 @@ export default function PokemonContest() {
                             <div className="bg-black/30 border border-white/5 rounded-2xl p-5">
                                 <h3 className="font-bold text-white mb-2 text-sm uppercase tracking-wider text-amber-500 ">Primera fase</h3>
                                 <p className="text-xs sm:text-sm text-white/60 leading-relaxed">
-                                    Todas las propuestas serán evaluadas por el Consejo de Estado del Reino del Pan, que realizará una criba técnica y artística y seleccionará las candidaturas finalistas.
+                                    Todas las propuestas serán evaluadas por el Consejo de Estado del Estado Paniense, que realizará una criba técnica y artística y seleccionará las candidaturas finalistas.
                                 </p>
                             </div>
                             <div className="bg-black/30 border border-white/5 rounded-2xl p-5">
                                 <h3 className="font-bold text-white mb-2 text-sm uppercase tracking-wider text-amber-500 ">Segunda fase</h3>
                                 <p className="text-xs sm:text-sm text-white/60 leading-relaxed">
-                                    Las propuestas finalistas serán sometidas a votación popular entre toda la ciudadanía del Reino del Pan. Las tres líneas evolutivas que obtengan mayor respaldo ciudadano serán proclamadas ganadoras y pasarán a formar parte de la primera colección oficial de Pokémon del Reino del Pan.
+                                    Las propuestas finalistas serán sometidas a votación popular entre toda la ciudadanía del Estado Paniense. Las tres líneas evolutivas que obtengan mayor respaldo ciudadano serán proclamadas ganadoras y pasarán a formar parte de la primera colección oficial de Pokémon del Estado Paniense.
                                 </p>
                             </div>
                         </div>
@@ -175,7 +175,7 @@ export default function PokemonContest() {
                             <span className="text-amber-500 font-mono text-lg">IX.</span> Líneas evolutivas oficiales
                         </h2>
                         <p className="text-sm sm:text-base leading-relaxed text-white/70">
-                            El concurso elegirá tres líneas evolutivas oficiales, compuestas por tres Pokémon cada una. Las líneas ganadoras podrán ser utilizadas en futuras publicaciones, videojuegos, eventos, material promocional o cualquier otro proyecto oficial relacionado con el Reino del Pan.
+                            El concurso elegirá tres líneas evolutivas oficiales, compuestas por tres Pokémon cada una. Las líneas ganadoras podrán ser utilizadas en futuras publicaciones, videojuegos, eventos, material promocional o cualquier otro proyecto oficial relacionado con el Estado Paniense.
                         </p>
                     </section>
 
@@ -185,7 +185,7 @@ export default function PokemonContest() {
                             <span className="text-amber-500 font-mono text-lg">X.</span> Derechos de las obras ganadoras
                         </h2>
                         <p className="text-sm sm:text-base leading-relaxed text-white/70">
-                            Las líneas evolutivas ganadoras pasarán a formar parte del patrimonio creativo oficial del Reino del Pan. El Gobierno del Reino del Pan podrá reproducirlas, adaptarlas o incorporarlas a futuras obras y proyectos oficiales, citando al autor cuando proceda.
+                            Las líneas evolutivas ganadoras pasarán a formar parte del patrimonio creativo oficial del Estado Paniense. El Gobierno del Estado Paniense podrá reproducirlas, adaptarlas o incorporarlas a futuras obras y proyectos oficiales, citando al autor cuando proceda.
                         </p>
                     </section>
 
@@ -218,7 +218,7 @@ export default function PokemonContest() {
                                     Publica tu propuesta en X utilizando el hashtag oficial: <span className="text-amber-400 font-mono font-bold">#LíneaPKMNPan</span>
                                 </p>
                                 <p className="text-xs text-white/50">
-                                    Se recomienda mencionar al perfil oficial del Gobierno del Reino del Pan para facilitar la localización de las propuestas.
+                                    Se recomienda mencionar al perfil oficial del Gobierno del Estado Paniense para facilitar la localización de las propuestas.
                                 </p>
                             </div>
                         </div>

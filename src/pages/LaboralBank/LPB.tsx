@@ -406,12 +406,12 @@ export default function LaboralPanianBank() {
                             </h1>
 
                             <p style={{ color: 'var(--muted-foreground)', fontSize: '1.125rem', lineHeight: '1.6', margin: 0 }}>
-                                El Gobierno del Reino del Pan y Laboral Kutxa han alcanzado un acuerdo para la creación de <strong>Laboral Panian Bank</strong>. Una nueva entidad financiera que impulsará el ahorro, la inversión y el crecimiento económico del país. El futuro de la banca paniense comienza hoy.
+                                El Gobierno del Estado Paniense y Laboral Kutxa han alcanzado un acuerdo para la creación de <strong>Laboral Panian Bank</strong>. Una nueva entidad financiera que impulsará el ahorro, la inversión y el crecimiento económico del país. El futuro de la banca paniense comienza hoy.
                             </p>
 
                             <div style={{ marginTop: '1rem' }}>
                                 <p style={{ fontSize: '0.875rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--foreground)', margin: '0 0 0.75rem 0' }}>
-                                    Se une a nosotros para crear la primera entidad financiera del Reino del Pan
+                                    Se une a nosotros para crear la primera entidad financiera del Estado Paniense
                                 </p>
                             </div>
                         </div>
@@ -472,7 +472,7 @@ export default function LaboralPanianBank() {
                     <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
                         <div>
                             <h4 className="display-font" style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', textTransform: 'uppercase', margin: '0 0 0.5rem 0' }}>Respaldo Institucional</h4>
-                            <p style={{ fontSize: '0.875rem', margin: 0 }}>Garantizado por el Gobierno del Reino del Pan.</p>
+                            <p style={{ fontSize: '0.875rem', margin: 0 }}>Garantizado por el Gobierno del Estado Paniense.</p>
                         </div>
                         <div>
                             <h4 className="display-font" style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', textTransform: 'uppercase', margin: '0 0 0.5rem 0' }}>Garantía y Solvencia</h4>
