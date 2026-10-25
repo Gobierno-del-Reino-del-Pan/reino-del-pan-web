@@ -65,42 +65,86 @@ export function advanceBlackjack(state,action,wager){if(!['hit','stand'].include
  return {state:s,payout,finish,result};
 }
 
-// ── Sincronización deportiva ─────────────────────────────────────────
-/** Football-data.org v4: partidos de LaLiga descubiertos automáticamente.
- * Las cuotas son valores internos de fantasía y NO datos de apuestas reales.
- * Si no hay token o falla proveedor, se conserva el último estado en DB; no se inventan resultados.
+// ── Calendario deportivo multi-competición ──────────────────────────
+/** Códigos del proveedor football-data.org v4. UCL=Conference League (NO Champions). */
+export const SPORT_COMPETITIONS=Object.freeze([
+ {code:'PD',name:'LaLiga'},
+ {code:'PL',name:'Premier League'},
+ {code:'FL1',name:'Ligue 1'},
+ {code:'CL',name:'UEFA Champions League'},
+ {code:'EL',name:'UEFA Europa League'},
+ {code:'UCL',name:'UEFA Conference League'}
+]);
+const validHttps=u=>typeof u==='string'&&/^https:\/\/[^\s]+$/i.test(u)?u:null;
+const crestUrl=(team)=> validHttps(team?.crest) || (Number.isSafeInteger(team?.id)&&team.id>0?`https://crests.football-data.org/${team.id}.svg`:null);
+export function normalizeSportMatch(m,competition,now=new Date()){
+ if(!m?.id||!m.utcDate||!m.homeTeam?.name||!m.awayTeam?.name)return null;
+ const statuses={SCHEDULED:'scheduled',TIMED:'scheduled',IN_PLAY:'live',PAUSED:'live',LIVE:'live',EXTRA_TIME:'live',PENALTY_SHOOTOUT:'live',FINISHED:'finished',POSTPONED:'postponed',SUSPENDED:'postponed',CANCELLED:'cancelled'};
+ const status=statuses[m.status];if(!status)return null;
+ const h=m.score?.fullTime?.home,a=m.score?.fullTime?.away;
+ if(status==='finished'&&(!Number.isInteger(h)||!Number.isInteger(a)))return null;
+ const code=competition.code;
+ const result={id:`FD:${code}:${m.id}`,league:competition.name,league_code:code,
+  league_emblem:validHttps(m.competition?.emblem)||`https://crests.football-data.org/${code}.png`,
+  home_team:m.homeTeam.name,away_team:m.awayTeam.name,
+  home_team_id:Number.isSafeInteger(m.homeTeam.id)?m.homeTeam.id:null,
+  away_team_id:Number.isSafeInteger(m.awayTeam.id)?m.awayTeam.id:null,
+  home_crest:crestUrl(m.homeTeam),away_crest:crestUrl(m.awayTeam),
+  starts_at:m.utcDate,status,winner:status==='finished'?(h>a?'home':h<a?'away':'draw'):null,
+  home_score:status==='finished'?h:null,away_score:status==='finished'?a:null,
+  matchday:Number.isInteger(m.matchday)?m.matchday:null,updated_at:now.toISOString()};
+ return result;
+}
+/** Six requests or fewer; run concurrently to stay under serverless timeouts.
+ * A 403/429 in a restricted competition does not block the others.
+ * All results are settled with the existing atomic, idempotent SQL RPC.
  */
-export async function syncSports(db,{token=process.env.FOOTBALL_DATA_TOKEN,now=new Date()}={}){
+export async function syncSports(db,{token=process.env.FOOTBALL_DATA_TOKEN,now=new Date(),fetcher=fetch}={}){
  if(!token)return {enabled:false,reason:'Configura FOOTBALL_DATA_TOKEN para activar el calendario deportivo'};
- const d=(offset)=>new Date(now.getTime()+offset*86400000).toISOString().slice(0,10);
- const url=`https://api.football-data.org/v4/competitions/PD/matches?dateFrom=${d(-5)}&dateTo=${d(16)}`;
- const response=await fetch(url,{headers:{'X-Auth-Token':token},signal:AbortSignal.timeout(15000)});
- if(!response.ok)throw new Error(`Proveedor deportivo HTTP ${response.status}`);
- const body=await response.json(); const matches=body.matches??[];
- let scheduled=0,finished=0,settled=0,ignored=0;
- for(const m of matches){
-  if(!m.id||!m.utcDate||!m.homeTeam?.name||!m.awayTeam?.name){ignored++;continue;}
-  const map={SCHEDULED:'scheduled',TIMED:'scheduled',IN_PLAY:'live',PAUSED:'live',LIVE:'live',FINISHED:'finished',POSTPONED:'postponed',SUSPENDED:'postponed',CANCELLED:'cancelled'};
-  const status=map[m.status];if(!status){ignored++;continue;}
-  const h=m.score?.fullTime?.home,a=m.score?.fullTime?.away;
-  if(status==='finished'&&(!Number.isInteger(h)||!Number.isInteger(a))){ignored++;continue;}
-  const id=`FD:PD:${m.id}`;
-  const payload={id,league:'LaLiga',home_team:m.homeTeam.name,away_team:m.awayTeam.name,starts_at:m.utcDate,status,
-    winner:status==='finished'?(h>a?'home':h<a?'away':'draw'):null,
-    home_score:status==='finished'?h:null,away_score:status==='finished'?a:null,
-    home_crest:/^https:\/\//.test(m.homeTeam.crest??'')?m.homeTeam.crest:null,
-    away_crest:/^https:\/\//.test(m.awayTeam.crest??'')?m.awayTeam.crest:null,
-    matchday:Number.isInteger(m.matchday)?m.matchday:null,updated_at:new Date().toISOString()};
-  // Por diseño NO se reescriben cuotas existentes (las guarda el SQL al colocar cada apuesta).
-  const {error}=await db.from('betpan_sports_events').upsert(payload,{onConflict:'id'});
-  if(error)throw error;
-  scheduled++;
-  if(status==='finished'||status==='cancelled'){
-   const {data,error:e}=await db.rpc('betpan_finalize_event',{p_event_id:id});if(e)throw e;
-   finished++;settled+=Number(data?.settled??0);
+ const d=offset=>new Date(now.getTime()+offset*86400000).toISOString().slice(0,10);
+ const query=`dateFrom=${d(-7)}&dateTo=${d(20)}`;
+ const results=await Promise.all(SPORT_COMPETITIONS.map(async competition=>{
+  const url=`https://api.football-data.org/v4/competitions/${competition.code}/matches?${query}`;
+  try{
+   const response=await fetcher(url,{headers:{'X-Auth-Token':token},signal:AbortSignal.timeout(12000)});
+   if(!response.ok){
+    return {competition:competition.code,status:response.status===403?'restricted':response.status===429?'rate_limited':'error',http:response.status,matches:[]};
+   }
+   const body=await response.json();
+   return {competition:competition.code,status:'ok',matches:Array.isArray(body.matches)?body.matches:[]};
+  }catch(e){return {competition:competition.code,status:'error',message:String(e?.message??e).slice(0,120),matches:[]};}
+ }));
+ const ok=results.filter(r=>r.status==='ok');
+ if(!ok.length) return {enabled:true,updated:0,received:0,finals:0,bets_settled:0,ignored:0,
+  competitions:results.map(({competition,status,http})=>({code:competition,status,http})),
+  warning:'El proveedor no devolvió ninguna competición. Comprueba la clave, los permisos o el límite de solicitudes.'};
+ let ignored=0,finals=0,settled=0,updated=0;
+ const payloads=[];
+ for(const c of ok){
+  const competition=SPORT_COMPETITIONS.find(x=>x.code===c.competition);
+  for(const match of c.matches){
+   const mapped=normalizeSportMatch(match,competition,now);
+   if(mapped)payloads.push(mapped);else ignored++;
   }
  }
- return {enabled:true,received:matches.length,updated:scheduled,finals:finished,bets_settled:settled,ignored};
+ // Paginar escrituras en Supabase: evita una petición por cada partido.
+ for(let index=0;index<payloads.length;index+=40){
+  const part=payloads.slice(index,index+40);
+  const {error}=await db.from('betpan_sports_events').upsert(part,{onConflict:'id'});
+  if(error)throw error;
+  updated+=part.length;
+ }
+ // La cuota de cada boleto se conserva: el upsert NO modifica odds_*.
+ // La función SQL sólo abona pendientes y protege la repetición del cron.
+ for(const m of payloads){
+  if(m.status==='finished'||m.status==='cancelled'){
+   const {data,error}=await db.rpc('betpan_finalize_event',{p_event_id:m.id});
+   if(error)throw error;
+   finals++;settled+=Number(data?.settled??0);
+  }
+ }
+ return {enabled:true,received:results.reduce((n,r)=>n+r.matches.length,0),updated,finals,bets_settled:settled,ignored,
+  competitions:results.map(({competition,status,http})=>({code:competition,status,http}))};
 }
 
 // ── Router autenticado ───────────────────────────────────────────────
@@ -287,7 +331,7 @@ export function createBetPanRouter({getUserId=defaultUserId,db:providedDb}={}){
    db.from('users_economy').select('cash,bank').eq('id',id).maybeSingle(),
    db.from('betpan_rounds').select('id,game,wager,payout,status,result,wallet_source,created_at').eq('user_id',id).eq('status','settled').order('created_at',{ascending:false}).limit(15),
    db.from('betpan_sports_bets').select('id,event_id,pick,stake,odds,possible_payout,payout,base_payout,pool_bonus,status,wallet_source,created_at,resolved_at').eq('user_id',id).order('created_at',{ascending:false}).limit(50),
-   db.from('betpan_sports_events').select('*').gte('starts_at',new Date(Date.now()-14*86400000).toISOString()).order('starts_at',{ascending:false}).limit(150),
+   db.from('betpan_sports_events').select('*').gte('starts_at',new Date(Date.now()-10*86400000).toISOString()).lte('starts_at',new Date(Date.now()+21*86400000).toISOString()).order('starts_at',{ascending:true}).limit(700),
    db.from('betpan_rounds').select('*').eq('user_id',id).eq('game','blackjack').eq('status','active').order('created_at',{ascending:false}).limit(1)
   ]);
   for(const q of [wallet,rounds,sports,markets,openBj])if(q.error)throw q.error;
@@ -301,11 +345,15 @@ export function createBetPanRouter({getUserId=defaultUserId,db:providedDb}={}){
   const enrichedBets=pendingSports.map(b=>({...b,event:indexed.get(b.event_id)??null}));
   const eventIds=(markets.data??[]).map(e=>e.id);
   const sportsStats={};
-  if(eventIds.length){const {data:allBets,error:se}=await db.from('betpan_sports_bets')
-    .select('event_id,pick,stake,status').in('event_id',eventIds).limit(10000);
-   if(se)throw se;
-   for(const b of allBets??[]){const z=sportsStats[b.event_id]??{participants:0,stakes:{home:0,draw:0,away:0},total:0};
-    z.participants++;z.total+=Number(b.stake);z.stakes[b.pick]+=Number(b.stake);sportsStats[b.event_id]=z;
+  if(eventIds.length){
+   // Fragmentar el IN para no generar URLs demasiado largas con seis ligas.
+   for(let i=0;i<eventIds.length;i+=80){
+    const {data:allBets,error:se}=await db.from('betpan_sports_bets')
+      .select('event_id,pick,stake,status').in('event_id',eventIds.slice(i,i+80)).limit(1000);
+    if(se)throw se;
+    for(const b of allBets??[]){const z=sportsStats[b.event_id]??{participants:0,stakes:{home:0,draw:0,away:0},total:0};
+     z.participants++;z.total+=Number(b.stake);z.stakes[b.pick]+=Number(b.stake);sportsStats[b.event_id]=z;
+    }
    }
   }
   return res.json({wallet:{cash:String(wallet.data?.cash??0),bank:String(wallet.data?.bank??0)},
@@ -402,7 +450,7 @@ export function createBetPanRouter({getUserId=defaultUserId,db:providedDb}={}){
  router.post('/sports/bet',guard,throttle,wrap(async(req,res)=>{
   const {eventId,pick,stake,requestId,walletSource='cash'}=req.body??{};
   if(!['cash','bank'].includes(walletSource))return res.status(400).json({error:'Elige efectivo o banco'});
-  if(typeof eventId!=='string'||!/^FD:PD:\d+$/.test(eventId)||!['home','draw','away'].includes(pick)||!validWager(stake)||!reqId(requestId))return res.status(400).json({error:'Apuesta deportiva inválida'});
+  if(typeof eventId!=='string'||!/^FD:(?:PD|PL|FL1|CL|EL|UCL):\d+$/.test(eventId)||!['home','draw','away'].includes(pick)||!validWager(stake)||!reqId(requestId))return res.status(400).json({error:'Apuesta deportiva inválida'});
   const {data,error}=await db.rpc('betpan_place_sport',{p_uid:req.betpanId,p_event:eventId,p_pick:pick,p_stake:stake,p_request_id:requestId,p_source:walletSource});
   if(error)throw error;res.json({bet:data});
  }));
