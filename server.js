@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { createCitizenRouter } from "./citizenRoutes.js";
+import { createBetPanRouter } from "./BetPan.mjs";
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -161,6 +162,20 @@ app.set('trust proxy', 1);
 
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
+
+// ── BETPAN · API de juegos con Panedas (se incorpora sin modificar rutas anteriores) ──
+// Usamos el Supabase ya configurado y la sesión Discord/JWT de este servidor.
+// La salud es pública; la tarea deportiva exige CRON_SECRET dentro de BetPan.mjs.
+// El resto de operaciones requieren sesión válida y un JWT_SECRET configurado.
+app.use("/api/betpan", (req, res, next) => {
+  if (req.method === "GET" && (req.path === "/health" || req.path === "/cron/sports")) return next();
+  if (!process.env.JWT_SECRET) return res.status(503).json({ error: "BetPan requiere JWT_SECRET en el servidor." });
+  return requireAuth(req, res, next);
+}, createBetPanRouter({
+  db: supabase,
+  getUserId: (req) => req.user?.id,
+}));
+// ── FIN BETPAN ──
 
 // ── CARPETA CIUDADANA · NUEVAS RUTAS (sin tocar las ya existentes) ──
 // Montar ANTES del primer app.get('*'): ese fallback ya existe en el original.
