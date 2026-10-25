@@ -87,7 +87,10 @@ export async function syncSports(db,{token=process.env.FOOTBALL_DATA_TOKEN,now=n
   const id=`FD:PD:${m.id}`;
   const payload={id,league:'LaLiga',home_team:m.homeTeam.name,away_team:m.awayTeam.name,starts_at:m.utcDate,status,
     winner:status==='finished'?(h>a?'home':h<a?'away':'draw'):null,
-    home_score:status==='finished'?h:null,away_score:status==='finished'?a:null,updated_at:new Date().toISOString()};
+    home_score:status==='finished'?h:null,away_score:status==='finished'?a:null,
+    home_crest:/^https:\/\//.test(m.homeTeam.crest??'')?m.homeTeam.crest:null,
+    away_crest:/^https:\/\//.test(m.awayTeam.crest??'')?m.awayTeam.crest:null,
+    matchday:Number.isInteger(m.matchday)?m.matchday:null,updated_at:new Date().toISOString()};
   // Por diseño NO se reescriben cuotas existentes (las guarda el SQL al colocar cada apuesta).
   const {error}=await db.from('betpan_sports_events').upsert(payload,{onConflict:'id'});
   if(error)throw error;
@@ -113,13 +116,157 @@ function defaultUserId(req){
 }
 const safeError=(e)=>{
  const s=String(e?.message??e??'Error');
- if(/Saldo insuficiente|Mercado cerrado|Idempotencia incompatible|Ronda caducada|Apuesta inválida|Parámetros inválidos|fuera de límites|Premio|Turno|Juego|Acción|Cartera|Jugada/i.test(s))return s;
+ if(/Saldo insuficiente|Mercado cerrado|Idempotencia incompatible|Ronda caducada|Apuesta inválida|Parámetros inválidos|fuera de límites|Premio|Turno|Juego|Acción|Cartera|Jugada|sala|jugadores|participas|insuficientes/i.test(s))return s;
  return 'No se ha podido completar la operación';
 };
 const validWager=n=>Number.isSafeInteger(n)&&n>=10&&n<=10000;
 const reqId=(x)=>typeof x==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x);
 const rejectStatus=e=>/Saldo insuficiente/.test(e.message)?409:/Ronda caducada|Mercado cerrado|Idempotencia/.test(e.message)?409:400;
 const isSecret=(a,b)=>{if(!a||!b)return false;const x=Buffer.from(a),y=Buffer.from(b);return x.length===y.length&&timingSafeEqual(x,y)};
+// ── BetPan Social · sorteo compartido, verificado por backend ─────────────
+const ROOM_GAMES=['roulette','slots','coin','dice','krule','bingo','blackjack'];
+const roomMinimum=g=>g==='bingo'?5:2;
+export function makeBingoTicket(){
+ const cards=[];
+ for(let col=0;col<5;col++){
+  const n=shuffled(Array.from({length:15},(_,i)=>i+1+15*col)).slice(0,5);
+  for(let row=0;row<5;row++)cards[row*5+col]=n[row];
+ }
+ cards[12]=0;return cards;
+}
+const bingoLines=[
+ ...Array.from({length:5},(_,r)=>Array.from({length:5},(_,c)=>r*5+c)),
+ ...Array.from({length:5},(_,c)=>Array.from({length:5},(_,r)=>r*5+c)),
+ [0,6,12,18,24],[4,8,12,16,20]
+];
+const bingoLine=(ticket,called)=>bingoLines.some(l=>l.every(idx=>ticket[idx]===0||called.has(ticket[idx])));
+const bingoFull=(ticket,called)=>ticket.every(n=>n===0||called.has(n));
+function dividePool(pool,players){
+ if(!players.length)return [];
+ const ordered=[...players].sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+ const weight=ordered.reduce((a,p)=>a+Number(p.wager),0);
+ let used=0;
+ const out=ordered.map(p=>{const amount=Math.floor(pool*Number(p.wager)/weight);used+=amount;return {id:p.id,amount};});
+ for(let i=0;i<pool-used;i++)out[i%out.length].amount++;
+ return out;
+}
+export function createRoomResult(game,participants){
+ if(!ROOM_GAMES.includes(game))throw new Error('Juego no válido');
+ const awards=participants.map(p=>({id:p.id,payout:0}));
+ const awardMap=new Map(awards.map(a=>[a.id,a]));
+ let outcome={};let duration=5200;
+ if(game==='bingo'){
+  const draw=shuffled(Array.from({length:75},(_,i)=>i+1));
+  const check=(fn)=>{
+   const s=new Set();
+   for(let i=0;i<draw.length;i++){
+    s.add(draw[i]);const winners=participants.filter(p=>fn(p.ticket,s));
+    if(winners.length)return {at:i+1,winners};
+   }
+   return {at:75,winners:participants};
+  };
+  const line=check(bingoLine),full=check(bingoFull);
+  const pool=participants.reduce((s,p)=>s+Number(p.wager),0);
+  const linePot=Math.floor(pool*.20);const fullPot=pool-linePot;
+  for(const share of dividePool(linePot,line.winners))awardMap.get(share.id).payout+=share.amount;
+  for(const share of dividePool(fullPot,full.winners))awardMap.get(share.id).payout+=share.amount;
+  outcome={drawn:draw.slice(0,full.at),lineAt:line.at,bingoAt:full.at,
+   lineWinners:line.winners.map(p=>p.id),bingoWinners:full.winners.map(p=>p.id),pot:pool};
+  duration=Math.min(119000,full.at*1400+2200);
+ } else if(game==='blackjack'){
+  const dealerDeck=deck();const dealer=[dealerDeck.pop(),dealerDeck.pop()];
+  while(score(dealer)<17)dealer.push(dealerDeck.pop());
+  const dScore=score(dealer);const playerHands={};
+  for(const p of participants){const cards=deck();const hand=[cards.pop(),cards.pop()];
+   const target=Math.min(20,Math.max(16,Number(p.choice)||17));
+   while(score(hand)<target&&score(hand)<=21)hand.push(cards.pop());
+   const total=score(hand);const natural=hand.length===2&&total===21;
+   const payout=total>21?0:dScore>21||total>dScore?Math.floor(p.wager*(natural?2.5:2)):total===dScore?p.wager:0;
+   awardMap.get(p.id).payout=payout;playerHands[p.id]={cards:hand,total,target};
+  }
+  outcome={dealer,dScore,playerHands};duration=7800;
+ }else{
+  if(game==='roulette')outcome={roll:randomInt(37)};
+  if(game==='coin')outcome={landed:randomInt(2)===0?'cara':'cruz'};
+  if(game==='dice')outcome={landed:randomInt(1,7)};
+  if(game==='slots')outcome={reels:Array.from({length:3},()=>pick(['🍒','🍋','🍇','🔔','7️⃣']))};
+  if(game==='krule')outcome={dice:Array.from({length:3},()=>randomInt(1,7))};
+  for(const p of participants){let mult=0;
+   if(game==='roulette'){
+    const n=outcome.roll,c=String(p.choice),colour=n===0?'verde':reds.has(n)?'rojo':'negro';
+    mult=c.startsWith('n:')?Number(c.slice(2))===n?36:0:c==='par'&&n!==0&&n%2===0||c==='impar'&&n%2===1||c===colour?2:0;
+   }
+   if(game==='coin')mult=p.choice===outcome.landed?2:0;
+   if(game==='dice')mult=Number(p.choice)===outcome.landed?6:0;
+   if(game==='slots'){const r=outcome.reels;mult=r.every(x=>x==='7️⃣')?25:r.every(x=>x===r[0])?12:new Set(r).size===2?2:0;}
+   if(game==='krule'){const r=outcome.dice;mult=new Set(r).size===1?8:new Set(r).size===2?2:r.reduce((a,b)=>a+b,0)>=14?1.5:0;}
+   awardMap.get(p.id).payout=Math.floor(Number(p.wager)*mult);
+  }
+ }
+ return {outcome,awards,duration};
+}
+async function advanceSocialRoom(db,roomId){
+ const {data:room,error}=await db.from('betpan_rooms').select('*').eq('id',roomId).maybeSingle();
+ if(error)throw error;
+ if(!room)return null;
+ let current=room;
+ if(room.status==='joining'&&Date.parse(room.starts_at)<=Date.now()){
+  const {data:players,error:pe}=await db.from('betpan_room_players').select('*').eq('room_id',room.id);
+  if(pe)throw pe;
+  // Resultado solo generado después de que se cierre la inscripción.
+  const result=players.length>=roomMinimum(room.game)?createRoomResult(room.game,players):{};
+  const {data:newRoom,error:e}=await db.rpc('betpan_room_begin',{
+   p_room:room.id,p_result:result,p_duration_ms:result.duration??5200
+  });
+  if(e)throw e;current=newRoom;
+ }
+ if((current.status==='drawing'&&Date.parse(current.draw_ends_at)<=Date.now())||current.status==='cancelled'){
+  const {data:newRoom,error:e}=await db.rpc('betpan_room_finalize',{p_room:current.id});
+  if(e)throw e;current=newRoom;
+ }
+ return current;
+}
+async function socialRoomView(db,roomId,myId){
+ const room=await advanceSocialRoom(db,roomId);if(!room)return null;
+ const {data:players,error}=await db.from('betpan_room_players')
+  .select('id,user_id,wager,choice,ticket,payout,status,wallet_source,joined_at')
+  .eq('room_id',room.id).order('joined_at',{ascending:true});if(error)throw error;
+ const my=players.find(p=>p.user_id===myId);
+ const ids=players.map(p=>p.user_id);
+ const {data:profiles,error:profileError}=ids.length?await db.from('usuarios')
+  .select('discord_id,username,avatar_url').in('discord_id',ids):{data:[],error:null};
+ if(profileError)throw profileError;
+ const publicProfiles=new Map((profiles??[]).map(p=>[p.discord_id,p]));
+ const visible=room.status==='settled';const ongoing=room.status==='drawing';
+ const result=room.result??{};
+ const startAt=Date.parse(room.draw_ends_at??'')-Number((result.outcome?.drawn?.length??0)*1400+2200);
+ const drawCount=visible?result.outcome?.drawn?.length??0:ongoing?
+  Math.max(0,Math.min(result.outcome?.drawn?.length??0,Math.floor((Date.now()-startAt)/1400))):0;
+ let safeOutcome=visible?result.outcome:ongoing&&room.game==='bingo'?{drawn:(result.outcome?.drawn??[]).slice(0,drawCount)}:null;
+ if(room.game==='bingo'&&safeOutcome){
+  const at=Number(result.outcome?.lineAt??0);
+  safeOutcome={...safeOutcome,
+   lineAt:visible||(ongoing&&drawCount>=at)?at:null,
+   lineWinnerSeats:visible||(ongoing&&drawCount>=at)?(result.outcome?.lineWinners??[]).map(pid=>players.findIndex(p=>p.id===pid)+1):[],
+   bingoWinnerSeats:visible?(result.outcome?.bingoWinners??[]).map(pid=>players.findIndex(p=>p.id===pid)+1):[]};
+  delete safeOutcome.lineWinners;delete safeOutcome.bingoWinners;
+ }
+ if(visible&&room.game==='blackjack'&&safeOutcome){
+  safeOutcome={dealer:safeOutcome.dealer,dScore:safeOutcome.dScore,
+   yourHand:safeOutcome.playerHands?.[my?.id]??null};
+ }
+ const safePlayers=players.map((p,i)=>({seat:i+1,isMe:p.user_id===myId,
+  label:p.user_id===myId?'Tú':String(publicProfiles.get(p.user_id)?.username??`Jugador ${i+1}`).slice(0,32),
+  avatar:/^https:\/\//.test(publicProfiles.get(p.user_id)?.avatar_url??'')?publicProfiles.get(p.user_id)?.avatar_url:null,
+  wager:p.wager,
+  choice:room.status==='joining'?null:p.choice,status:p.status,payout:visible||room.status==='cancelled'?p.payout:null}));
+ return {id:room.id,game:room.game,status:room.status,starts_at:room.starts_at,
+  draw_ends_at:room.draw_ends_at,finished_at:room.finished_at,minPlayers:roomMinimum(room.game),
+  players:safePlayers,my:my?{id:my.id,wager:my.wager,ticket:room.game==='bingo'?my.ticket:null,
+    choice:my.choice,wallet_source:my.wallet_source,status:my.status,payout:visible||room.status==='cancelled'?my.payout:null}:null,
+  outcome:safeOutcome,message:result.message??null,now:new Date().toISOString()};
+}
+
 export function createBetPanRouter({getUserId=defaultUserId,db:providedDb}={}){
  const db=providedDb??createClient(process.env.SUPABASE_URL??'',process.env.SUPABASE_SERVICE_ROLE_KEY??'',{auth:{persistSession:false,autoRefreshToken:false}});
  const router=Router();
@@ -139,17 +286,83 @@ export function createBetPanRouter({getUserId=defaultUserId,db:providedDb}={}){
   const [wallet,rounds,sports,markets,openBj]=await Promise.all([
    db.from('users_economy').select('cash,bank').eq('id',id).maybeSingle(),
    db.from('betpan_rounds').select('id,game,wager,payout,status,result,wallet_source,created_at').eq('user_id',id).eq('status','settled').order('created_at',{ascending:false}).limit(15),
-   db.from('betpan_sports_bets').select('id,event_id,pick,stake,odds,possible_payout,payout,status,wallet_source,created_at').eq('user_id',id).order('created_at',{ascending:false}).limit(15),
-   db.from('betpan_sports_events').select('*').gte('starts_at',new Date(Date.now()-86400000).toISOString()).order('starts_at',{ascending:true}).limit(80),
+   db.from('betpan_sports_bets').select('id,event_id,pick,stake,odds,possible_payout,payout,base_payout,pool_bonus,status,wallet_source,created_at,resolved_at').eq('user_id',id).order('created_at',{ascending:false}).limit(50),
+   db.from('betpan_sports_events').select('*').gte('starts_at',new Date(Date.now()-14*86400000).toISOString()).order('starts_at',{ascending:false}).limit(150),
    db.from('betpan_rounds').select('*').eq('user_id',id).eq('game','blackjack').eq('status','active').order('created_at',{ascending:false}).limit(1)
   ]);
   for(const q of [wallet,rounds,sports,markets,openBj])if(q.error)throw q.error;
   const pendingSports=sports.data??[];
+  // Completar datos de apuestas incluso si el partido es anterior a la ventana del panel.
+  const indexed=new Map((markets.data??[]).map(e=>[e.id,e]));
+  const missing=[...new Set(pendingSports.map(b=>b.event_id).filter(eid=>!indexed.has(eid)))];
+  if(missing.length){const {data:oldMatches,error:oe}=await db.from('betpan_sports_events').select('*').in('id',missing);if(oe)throw oe;
+    for(const e of oldMatches??[])indexed.set(e.id,e);
+  }
+  const enrichedBets=pendingSports.map(b=>({...b,event:indexed.get(b.event_id)??null}));
+  const eventIds=(markets.data??[]).map(e=>e.id);
+  const sportsStats={};
+  if(eventIds.length){const {data:allBets,error:se}=await db.from('betpan_sports_bets')
+    .select('event_id,pick,stake,status').in('event_id',eventIds).limit(10000);
+   if(se)throw se;
+   for(const b of allBets??[]){const z=sportsStats[b.event_id]??{participants:0,stakes:{home:0,draw:0,away:0},total:0};
+    z.participants++;z.total+=Number(b.stake);z.stakes[b.pick]+=Number(b.stake);sportsStats[b.event_id]=z;
+   }
+  }
   return res.json({wallet:{cash:String(wallet.data?.cash??0),bank:String(wallet.data?.bank??0)},
-   rounds:rounds.data??[],bets:pendingSports,
+   rounds:rounds.data??[],bets:enrichedBets,sportsStats,
    events:markets.data??[],blackjack:openBj.data?.[0]?publicBlackjack(openBj.data[0]):null,
    sportsEnabled:Boolean(process.env.FOOTBALL_DATA_TOKEN),disclaimer:'Solo Panedas ficticias. Sin euros, sin compras, sin cambio, sin retiradas.'});
  }));
+ // ── Salas sociales: cada ruta usa sesión Discord firmada y cliente service_role del servidor.
+ router.get('/rooms/live',guard,wrap(async(req,res)=>{
+  const {data:rooms,error}=await db.from('betpan_rooms').select('id,game,status,starts_at,draw_ends_at,created_at')
+   .in('status',['joining','drawing']).gte('created_at',new Date(Date.now()-3600000).toISOString())
+   .order('created_at',{ascending:false}).limit(35);
+  if(error)throw error;
+  const {data:members,error:pe}=(rooms??[]).length?await db.from('betpan_room_players')
+   .select('room_id,user_id').in('room_id',rooms.map(r=>r.id)):{data:[],error:null};
+  if(pe)throw pe;
+  res.json({rooms:(rooms??[]).map(r=>({...r,minPlayers:roomMinimum(r.game),
+   participants:(members??[]).filter(p=>p.room_id===r.id).length,
+   joined:(members??[]).some(p=>p.room_id===r.id&&p.user_id===req.betpanId)}))});
+ }));
+ router.get('/rooms/mine',guard,wrap(async(req,res)=>{
+  const {data:entries,error}=await db.from('betpan_room_players')
+   .select('room_id,wager,payout,status,choice,wallet_source,joined_at')
+   .eq('user_id',req.betpanId).order('joined_at',{ascending:false}).limit(40);
+  if(error)throw error;
+  const ids=[...new Set((entries??[]).map(p=>p.room_id))];
+  const {data:rooms,error:e}=ids.length?await db.from('betpan_rooms')
+   .select('id,game,status,starts_at,finished_at').in('id',ids):{data:[],error:null};
+  if(e)throw e;
+  const index=new Map((rooms??[]).map(r=>[r.id,r]));
+  res.json({entries:(entries??[]).map(p=>({...p,room:index.get(p.room_id)??null}))});
+ }));
+ router.post('/rooms/join',guard,throttle,wrap(async(req,res)=>{
+  const {game,wager,choice='',walletSource='cash',requestId}=req.body??{};
+  if(!ROOM_GAMES.includes(game)||!validWager(wager)||!reqId(requestId)||!['cash','bank'].includes(walletSource))
+   return res.status(400).json({error:'Sala, importe o cartera inválidos'});
+  const c=String(choice??'');
+  const validChoice=game==='coin'?['cara','cruz'].includes(c):
+   game==='dice'?/^[1-6]$/.test(c):
+   game==='roulette'?['rojo','negro','par','impar'].includes(c)||/^n:(?:[0-9]|[1-2][0-9]|3[0-6])$/.test(c):
+   game==='blackjack'?['16','17','18','19','20'].includes(c):true;
+  if(!validChoice)return res.status(400).json({error:'Elección de mesa no válida'});
+  const ticket=game==='bingo'?makeBingoTicket():[];
+  const {data:member,error}=await db.rpc('betpan_room_join',{
+   p_uid:req.betpanId,p_game:game,p_wager:wager,p_choice:c,p_source:walletSource,
+   p_request_id:requestId,p_ticket:ticket
+  });
+  if(error)throw error;
+  res.json({room:await socialRoomView(db,member.room_id,req.betpanId)});
+ }));
+ router.get('/rooms/:id',guard,wrap(async(req,res)=>{
+  if(!reqId(req.params.id))return res.status(400).json({error:'Identificador de sala inválido'});
+  const room=await socialRoomView(db,req.params.id,req.betpanId);
+  if(!room)return res.status(404).json({error:'Sala no encontrada'});
+  res.json({room});
+ }));
+
  router.post('/play',guard,throttle,wrap(async(req,res)=>{
   const {game,wager,choice,requestId,walletSource='cash'}=req.body??{};
   if(!['cash','bank'].includes(walletSource))return res.status(400).json({error:'Elige efectivo o banco'});
@@ -197,7 +410,12 @@ export function createBetPanRouter({getUserId=defaultUserId,db:providedDb}={}){
  router.get('/cron/sports',wrap(async(req,res)=>{
   const token=String(req.headers.authorization??'').replace(/^Bearer\s+/i,'');
   if(!isSecret(token,process.env.CRON_SECRET))return res.status(403).json({error:'Acceso denegado'});
-  const result=await syncSports(db);res.json(result);
+  const {data:oldRooms,error:re}=await db.from('betpan_rooms').select('id').in('status',['joining','drawing'])
+    .lt('starts_at',new Date().toISOString()).order('starts_at',{ascending:true}).limit(40);
+  if(re)throw re;
+  let roomsProcessed=0;
+  for(const r of oldRooms??[]){await advanceSocialRoom(db,r.id);roomsProcessed++;}
+  const result=await syncSports(db);res.json({...result,roomsProcessed});
  }));
  router.use((err,_req,res,_next)=>{console.error('[BetPan]',err?.message??err);res.status(rejectStatus(err)).json({error:safeError(err)})});
  return router;
