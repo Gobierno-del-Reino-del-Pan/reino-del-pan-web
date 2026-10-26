@@ -72,6 +72,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-cambia-esto";
 const JWT_EXPIRES_IN = "7d";
 const COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 días
 const COOKIE_NAME = "session";
+const IS_PROD = process.env.NODE_ENV === "production";
 
 if (!process.env.JWT_SECRET) {
   console.warn("⚠️ JWT_SECRET no está definido en las variables de entorno. Usando un valor por defecto INSEGURO.");
@@ -85,7 +86,7 @@ function setSessionCookie(res, user) {
   const token = signUserToken(user);
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: true,
+    secure: IS_PROD,
     sameSite: "lax",
     maxAge: COOKIE_MAX_AGE,
   });
@@ -163,40 +164,6 @@ app.set('trust proxy', 1);
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 
-// ── BETPAN · API de juegos con Panedas (se incorpora sin modificar rutas anteriores) ──
-// Usamos el Supabase ya configurado y la sesión Discord/JWT de este servidor.
-// La salud es pública; la tarea deportiva exige CRON_SECRET dentro de BetPan.mjs.
-// El resto de operaciones requieren sesión válida y un JWT_SECRET configurado.
-app.use("/api/betpan", (req, res, next) => {
-  if (req.method === "GET" && (req.path === "/health" || req.path === "/cron/sports")) return next();
-  if (!process.env.JWT_SECRET) return res.status(503).json({ error: "BetPan requiere JWT_SECRET en el servidor." });
-  return requireAuth(req, res, next);
-}, createBetPanRouter({
-  db: supabase,
-  getUserId: (req) => req.user?.id,
-}));
-// ── FIN BETPAN ──
-
-// ── CARPETA CIUDADANA · NUEVAS RUTAS (sin tocar las ya existentes) ──
-// Montar ANTES del primer app.get('*'): ese fallback ya existe en el original.
-app.use("/api/citizen", (req, res, next) => {
-  // No permitir operaciones sensibles con el JWT secreto de emergencia.
-  if (!process.env.JWT_SECRET) return res.status(503).json({ error: "Falta JWT_SECRET seguro en el servidor." });
-  next();
-}, requireAuth, createCitizenRouter({
-  supabaseAdmin: supabase,
-  getViewerId: req => req.user?.id,
-  guildId: GUILD_ID,
-}));
-// ── FIN RUTAS AÑADIDAS ──
-
-// Solo servir estáticos si NO estamos en Vercel (por ejemplo, en desarrollo local con node server.js)
-if (!process.env.VERCEL) {
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, "dist", "public", "index.html"));
-  });
-}
-
 function getIP(req) {
   return (
     req.headers["x-forwarded-for"]?.split(",")[0].trim() ||
@@ -216,6 +183,26 @@ function requireAuth(req, res, next) {
     return res.status(401).json({ error: "Sesión inválida o expirada." });
   }
 }
+
+// ── BETPAN · API de juegos con Panedas ────────────────────────────────────────
+app.use("/api/betpan", (req, res, next) => {
+  if (req.method === "GET" && (req.path === "/health" || req.path === "/cron/sports")) return next();
+  if (!process.env.JWT_SECRET) return res.status(503).json({ error: "BetPan requiere JWT_SECRET en el servidor." });
+  return requireAuth(req, res, next);
+}, createBetPanRouter({
+  db: supabase,
+  getUserId: (req) => req.user?.id,
+}));
+
+// ── CARPETA CIUDADANA · RUTAS ────────────────────────────────────────────────
+app.use("/api/citizen", (req, res, next) => {
+  if (!process.env.JWT_SECRET) return res.status(503).json({ error: "Falta JWT_SECRET seguro en el servidor." });
+  next();
+}, requireAuth, createCitizenRouter({
+  supabaseAdmin: supabase,
+  getViewerId: req => req.user?.id,
+  guildId: GUILD_ID,
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AUTH DISCORD
@@ -273,7 +260,7 @@ app.get("/auth/discord/callback", async (req, res) => {
     }
 
     const rolesDelUsuario = rolesData.roles.filter(r =>
-      r.discord_role_id && memberRoleIds.includes(r.discord_role_id)
+      r.discord_role_id && memberRoleIds.includes(String(r.discord_role_id))
     );
 
     const { data: verificado } = await supabase
@@ -296,7 +283,6 @@ app.get("/auth/discord/callback", async (req, res) => {
       ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png?size=128`
       : `https://cdn.discordapp.com/embed/avatars/${parseInt(profile.id) % 5}.png`;
 
-    // Sincronización automática de perfil en la tabla de usuarios de Supabase
     await supabase.from("usuarios").upsert({
       discord_id: profile.id,
       username: profile.username,
@@ -328,7 +314,7 @@ app.get("/auth/discord/callback", async (req, res) => {
 app.get("/auth/logout", (req, res) => {
   res.clearCookie(COOKIE_NAME, {
     httpOnly: true,
-    secure: true,
+    secure: IS_PROD,
     sameSite: "lax",
   });
   res.redirect("/");
@@ -361,15 +347,17 @@ app.get("/api/me", async (req, res) => {
 
     let matrimonio = null;
     if (matrimonioData) {
-      const esU1 = matrimonioData.u1.discord_id === discordId;
+      const esU1 = matrimonioData.u1?.discord_id === discordId;
       const conyuge = esU1 ? matrimonioData.u2 : matrimonioData.u1;
 
-      matrimonio = {
-        conyuge_id: conyuge.discord_id,
-        conyuge_username: conyuge.username,
-        conyuge_avatar: conyuge.avatar_url,
-        fecha_boda: matrimonioData.fecha_boda
-      };
+      if (conyuge) {
+        matrimonio = {
+          conyuge_id: conyuge.discord_id,
+          conyuge_username: conyuge.username,
+          conyuge_avatar: conyuge.avatar_url,
+          fecha_boda: matrimonioData.fecha_boda
+        };
+      }
     }
 
     const { data: hijosData } = await supabase
@@ -645,7 +633,7 @@ app.get("/api/dpi/verify/:code", async (req, res) => {
           const memberData = await memberRes.json();
           const memberRoleIds = memberData.roles ?? [];
           rolesDelUsuario = rolesData.roles.filter(r =>
-            r.discord_role_id && memberRoleIds.includes(r.discord_role_id)
+            r.discord_role_id && memberRoleIds.includes(String(r.discord_role_id))
           );
         }
       }
@@ -661,12 +649,10 @@ app.get("/api/dpi/verify/:code", async (req, res) => {
   res.send(verifyHtml(data, rolesDelUsuario, userAvatarUrl));
 });
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // ENDPOINTS: CONSORCIO DE TRANSPORTES (ESTADO PANIENSE)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Asegúrate de tener DISCORD_BOT_TOKEN y GUILD_ID en tu .env)
 const ROLE_CONSORCIO = "1515829072209510603";
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
@@ -738,7 +724,6 @@ app.post("/api/transporte/tarjeta/solicitar", requireAuth, async (req, res) => {
   try {
     const discordId = req.user.id;
 
-    // 1. Verificar si ya posee una tarjeta activa/registrada (La base de datos tiene una restricción UNIQUE)
     const { data: tarjetaExistente } = await supabase
       .from("consorcio_tarjetas")
       .select("id")
@@ -749,7 +734,6 @@ app.post("/api/transporte/tarjeta/solicitar", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "Ya tienes una tarjeta de transporte vinculada a tu cuenta." });
     }
 
-    // 2. Extraer los datos reales del DPI del usuario utilizando la tabla 'verificados' y 'dpis'
     const { data: verificado, error: vErr } = await supabase
       .from("verificados")
       .select("dpi")
@@ -770,7 +754,6 @@ app.post("/api/transporte/tarjeta/solicitar", requireAuth, async (req, res) => {
       return res.status(404).json({ error: "No se encontraron los datos de tu DPI oficial en el sistema." });
     }
 
-    // 3. Insertar la nueva tarjeta en la base de datos
     const { data: nuevaTarjeta, error: insertErr } = await supabase
       .from("consorcio_tarjetas")
       .insert({
@@ -791,7 +774,6 @@ app.post("/api/transporte/tarjeta/solicitar", requireAuth, async (req, res) => {
       return res.status(400).json({ error: `No se pudo emitir la tarjeta: ${insertErr.message}` });
     }
 
-    // 4. Asignación automática del Rol en el servidor de Discord
     const rolAsignado = await asignarRolDiscord(discordId);
 
     let mensajeExito = "¡Tarjeta de transporte emitida con éxito!";
@@ -819,7 +801,6 @@ app.post("/api/transporte/tarjeta/renovar", requireAuth, async (req, res) => {
   try {
     const discordId = req.user.id;
 
-    // Buscar la tarjeta actual
     const { data: tarjeta, error: findErr } = await supabase
       .from("consorcio_tarjetas")
       .select("id, renovaciones, caduca_at")
@@ -827,10 +808,9 @@ app.post("/api/transporte/tarjeta/renovar", requireAuth, async (req, res) => {
       .maybeSingle();
 
     if (findErr || !tarjeta) {
-      return res.status(444).json({ error: "No dispones de ninguna tarjeta que renovar." });
+      return res.status(404).json({ error: "No dispones de ninguna tarjeta que renovar." });
     }
 
-    // Calcular la nueva fecha de caducidad (1 año extra desde el momento actual)
     const nuevaCaducidad = new Date();
     nuevaCaducidad.setFullYear(nuevaCaducidad.getFullYear() + 1);
 
@@ -851,7 +831,6 @@ app.post("/api/transporte/tarjeta/renovar", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "Error al actualizar la vigencia de la tarjeta." });
     }
 
-    // Asegurar que conserva el rol activo tras la renovación
     await asignarRolDiscord(discordId);
 
     return res.json({ success: true, message: "Tarjeta renovada por 1 año adicional.", tarjeta: tarjetaRenovada });
@@ -976,7 +955,6 @@ app.post("/api/electoral/votar", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "Faltan parámetros de votación (proceso_id, opcion)." });
     }
 
-    // 1. Validar que el proceso esté abierto
     const { data: proceso, error: pErr } = await supabase
       .from("electa_procesos_electorales")
       .select("estado, tipo")
@@ -991,7 +969,6 @@ app.post("/api/electoral/votar", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "Este proceso electoral no está abierto a votación." });
     }
 
-    // 2. Insertar el voto en la tabla `electa_votos`
     const { error: insertErr } = await supabase.from("electa_votos").insert({
       proceso_id,
       voter_id: voterId,
@@ -1008,7 +985,6 @@ app.post("/api/electoral/votar", requireAuth, async (req, res) => {
       throw insertErr;
     }
 
-    // 3. Si es de tipo partido, actualizar los votos totales en la candidatura elegida
     if (proceso.tipo !== "referendum") {
       const { count, error: countErr } = await supabase
         .from("electa_votos")
@@ -1081,7 +1057,7 @@ app.get("/api/electoral/partidos/:siglas", async (req, res) => {
 
 /**
  * GET /api/electoral/procesos-abiertos
- * Alias para que Electa.tsx reciba un Array directo de procesos abiertos
+ * Retorna un Array directo de procesos abiertos
  */
 app.get("/api/electoral/procesos-abiertos", async (req, res) => {
   try {
@@ -1092,7 +1068,6 @@ app.get("/api/electoral/procesos-abiertos", async (req, res) => {
       .order("fecha_inicio", { ascending: false });
 
     if (error) throw error;
-    // Retornamos directamente el Array para que d.length y Array.isArray() funcionen en el cliente
     return res.json(procesos || []);
   } catch (err) {
     console.error("[GET /api/electoral/procesos-abiertos]", err);
@@ -1254,6 +1229,7 @@ app.get("/api/roles", async (req, res) => {
   }
 });
 
+// ── SERVIR ARCHIVOS ESTÁTICOS Y FALLBACK SPA (Al final de todas las rutas) ──────
 if (!process.env.VERCEL) {
   const staticFolder = path.resolve(__dirname, "dist", "public");
 
