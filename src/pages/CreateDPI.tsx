@@ -2,7 +2,6 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { motion } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
-import { Link } from "wouter";
 import QRCode from "qrcode";
 import jsPDF from "jspdf";
 
@@ -90,21 +89,17 @@ async function makeQRWithLogo(text: string, qrSize: number): Promise<string> {
   return canvas.toDataURL("image/png");
 }
 
-async function renderFront(data: {
+function renderFront(data: {
   nombre: string; apellidos: string; genero: string;
-  fecha: string; dpiNumber: string; photoSrc: string;
-  issuedAt: string; validUntil: string;
-}): Promise<string> {
+  fecha: string; dpiNumber: string;
+}, template: HTMLImageElement, photo: HTMLImageElement): string {
   const W = 1920, H = 1279;
   const canvas = document.createElement("canvas");
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext("2d")!;
   const f = CFG.front;
-  ctx.drawImage(await loadImg("/templates/delante.jpg"), 0, 0, W, H);
-  if (data.photoSrc) {
-    const photoImg = await loadImg(data.photoSrc);
-    drawCover(ctx, photoImg, f.photo.cx - f.photo.w / 2, f.photo.cy - f.photo.h / 2, f.photo.w, f.photo.h);
-  }
+  ctx.drawImage(template, 0, 0, W, H);
+  drawCover(ctx, photo, f.photo.cx - f.photo.w / 2, f.photo.cy - f.photo.h / 2, f.photo.w, f.photo.h);
   ctx.fillStyle = CFG.color;
   ctx.textBaseline = "middle";
   applyFont(ctx, f.apellidos);
@@ -121,15 +116,15 @@ async function renderFront(data: {
 }
 
 async function renderBack(data: {
-  region: string; dpiNumber: string; signatureDataUrl: string;
+  region: string; signatureDataUrl: string;
   issuedAt: string; validUntil: string; qrUrl: string;
-}): Promise<string> {
+}, template: HTMLImageElement): Promise<string> {
   const W = 1920, H = 1279;
   const canvas = document.createElement("canvas");
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext("2d")!;
   const b = CFG.back;
-  ctx.drawImage(await loadImg("/templates/detras.jpg"), 0, 0, W, H);
+  ctx.drawImage(template, 0, 0, W, H);
   ctx.fillStyle = CFG.color;
   ctx.textBaseline = "middle";
   applyFont(ctx, b.expFecha);
@@ -176,12 +171,16 @@ function textError(value: string, field: "nombre" | "apellidos"): string {
 
 function ageError(dateStr: string): string {
   if (!dateStr) return "";
-  const today = new Date(), birth = new Date(dateStr);
-  if (isNaN(birth.getTime())) return "Fecha inválida";
-  if (birth >= today) return "No puedes haber nacido en el futuro";
-  const age =
-    today.getFullYear() - birth.getFullYear() -
-    (today < new Date(today.getFullYear(), birth.getMonth(), birth.getDate()) ? 1 : 0);
+  const birth = new Date(dateStr + "T00:00:00.000Z");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr) || dateStr.startsWith("0000") ||
+      !Number.isFinite(birth.getTime()) || birth.toISOString().slice(0, 10) !== dateStr)
+    return "Fecha inválida";
+  const today = new Date();
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const beforeBirthday = today.getMonth() + 1 < month ||
+    (today.getMonth() + 1 === month && today.getDate() < day);
+  const age = today.getFullYear() - year - Number(beforeBirthday);
+  if (age < 0) return "No puedes haber nacido en el futuro";
   if (age > 100) return "Edad máxima: 100 años";
   return "";
 }
@@ -198,15 +197,33 @@ function CharCounter({ value, max }: { value: string; max: number }) {
   );
 }
 
+type IssuedDPI = {
+  dpiNumber: string; issuedAt: string; validUntil: string; qrUrl: string;
+};
+
+function isIssuedDPI(body: unknown): body is IssuedDPI {
+  if (!body || typeof body !== "object") return false;
+  const fields = body as Record<string, unknown>;
+  return ["dpiNumber", "issuedAt", "validUntil", "qrUrl"].every(
+    key => typeof fields[key] === "string" && fields[key].length > 0
+  );
+}
+
 export default function CreateDPI() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const previewRef = useRef<HTMLDivElement | null>(null);
+  const busyRef = useRef(false);
+  const completedRef = useRef(false);
+  const requestRef = useRef<{ key: string; payload: string } | null>(null);
+  const issuedRef = useRef<IssuedDPI | null>(null);
 
   const [drawing, setDrawing] = useState(false);
   const [photo, setPhoto] = useState("");
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState("");
+  const [issued, setIssued] = useState<IssuedDPI | null>(null);
+  const [duplicate, setDuplicate] = useState(false);
   const [preview, setPreview] = useState<{
     front: string; back: string; dpiNumber: string;
   } | null>(null);
@@ -216,6 +233,16 @@ export default function CreateDPI() {
   });
 
   const [submitErrors, setSubmitErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    return () => {
+      if (photo) URL.revokeObjectURL(photo);
+    };
+  }, [photo]);
+
+  useEffect(() => {
+    if (preview) previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [preview]);
 
   // ─── Helpers de posición ────────────────────────────────────────────────────
   const mousePos = (e: React.MouseEvent, c: HTMLCanvasElement) => {
@@ -237,7 +264,7 @@ export default function CreateDPI() {
 
   // ─── Mouse events ────────────────────────────────────────────────────────────
   const startDraw = (e: React.MouseEvent) => {
-    if (!canvasRef.current) return;
+    if (busyRef.current || completedRef.current || !canvasRef.current) return;
     setDrawing(true);
     const { x, y } = mousePos(e, canvasRef.current);
     const ctx = canvasRef.current.getContext("2d")!;
@@ -245,11 +272,12 @@ export default function CreateDPI() {
   };
 
   const draw = (e: React.MouseEvent) => {
-    if (!drawing || !canvasRef.current) return;
+    if (busyRef.current || completedRef.current || !drawing || !canvasRef.current) return;
     const { x, y } = mousePos(e, canvasRef.current);
     const ctx = canvasRef.current.getContext("2d")!;
     ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.strokeStyle = "#111";
     ctx.lineTo(x, y); ctx.stroke();
+    setSubmitErrors(errors => errors.signature ? { ...errors, signature: "" } : errors);
   };
 
   const stopDraw = () => {
@@ -266,6 +294,7 @@ export default function CreateDPI() {
     let isDrawing = false;
 
     const onTouchStart = (e: TouchEvent) => {
+      if (busyRef.current || completedRef.current) return;
       e.preventDefault();
       isDrawing = true;
       const r = canvas.getBoundingClientRect();
@@ -279,7 +308,7 @@ export default function CreateDPI() {
 
     const onTouchMove = (e: TouchEvent) => {
       e.preventDefault();
-      if (!isDrawing) return;
+      if (busyRef.current || completedRef.current || !isDrawing) return;
       const r = canvas.getBoundingClientRect();
       const t = e.touches[0];
       const x = (t.clientX - r.left) * (canvas.width / r.width);
@@ -299,22 +328,29 @@ export default function CreateDPI() {
     canvas.addEventListener("touchstart", onTouchStart, { passive: false });
     canvas.addEventListener("touchmove", onTouchMove, { passive: false });
     canvas.addEventListener("touchend", onTouchEnd, { passive: false });
+    canvas.addEventListener("touchcancel", onTouchEnd, { passive: false });
 
     return () => {
       canvas.removeEventListener("touchstart", onTouchStart);
       canvas.removeEventListener("touchmove", onTouchMove);
       canvas.removeEventListener("touchend", onTouchEnd);
+      canvas.removeEventListener("touchcancel", onTouchEnd);
     };
   }, []);
 
-  const clearSignature = () =>
-    canvasRef.current?.getContext("2d")?.clearRect(
-      0, 0, canvasRef.current.width, canvasRef.current.height
-    );
+  const clearSignature = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    stopDraw();
+    canvas.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
+  };
 
   const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setPhoto(URL.createObjectURL(file));
+    if (file && !busyRef.current && !completedRef.current) {
+      setPhoto(URL.createObjectURL(file));
+      setSubmitErrors(errors => ({ ...errors, photo: "" }));
+    }
   };
 
   const hasSignature = () => {
@@ -340,59 +376,75 @@ export default function CreateDPI() {
   };
 
   const submit = async () => {
-    if (!validate()) return;
+    if (busyRef.current || completedRef.current || duplicate || !validate()) return;
+    busyRef.current = true;
+    stopDraw();
     setGenerating(true);
     setGenError("");
-    setPreview(null);
 
+    let loadingResources = true;
     try {
-      const apiRes = await fetch("/api/dpi/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nombre: form.nombre,
-          apellidos: form.apellidos,
-          genero: form.genero,
-          fecha: form.fecha,
-          region: form.region,
-        }),
-      });
-
-      if (apiRes.status === 429) {
-        const body = await apiRes.json();
-        const h = body.retryAfterHours ?? "?";
-        setGenError(`Has creado demasiados DPIs. Espera ${h >= 24 ? `${Math.ceil(h / 24)} día(s)` : `${h} hora(s)`} para continuar.`);
-        return;
-      }
-
-      if (!apiRes.ok) {
-        const body = await apiRes.json().catch(() => ({}));
-        setGenError(body.error ?? "Error al crear el DPI. Intenta de nuevo.");
-        return;
-      }
-
-      const { dpiNumber, issuedAt, validUntil, qrUrl } = await apiRes.json();
       const signatureDataUrl = canvasRef.current!.toDataURL("image/png");
-
-      const [frontImg, backImg] = await Promise.all([
-        renderFront({
-          nombre: form.nombre, apellidos: form.apellidos,
-          genero: form.genero, fecha: form.fecha,
-          dpiNumber, photoSrc: photo, issuedAt, validUntil,
-        }),
-        renderBack({
-          region: form.region, dpiNumber, signatureDataUrl,
-          issuedAt, validUntil, qrUrl,
-        }),
+      const [frontTemplate, backTemplate, photoImage] = await Promise.all([
+        loadImg("/templates/delante.jpg"),
+        loadImg("/templates/detras.jpg"),
+        loadImg(photo).catch(() => { throw new Error("photo"); }),
       ]);
+      loadingResources = false;
 
-      setPreview({ front: frontImg, back: backImg, dpiNumber });
-      setTimeout(() => previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+      let dpi = issuedRef.current;
+      if (!dpi) {
+        const payload = JSON.stringify(form);
+        if (requestRef.current?.payload !== payload) {
+          requestRef.current = { key: crypto.randomUUID(), payload };
+        }
 
-    } catch (err: any) {
-      console.error(err);
-      setGenError("Error al generar el DPI. Asegúrate de que las plantillas estén en /templates/");
+        const apiRes = await fetch("/api/dpi/create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": requestRef.current.key,
+          },
+          body: payload,
+          signal: AbortSignal.timeout(30_000),
+        });
+
+        const body = await apiRes.json().catch(() => null);
+        if (!apiRes.ok) {
+          if (apiRes.status === 429 && typeof body?.retryAfterHours === "number") {
+            const h = body.retryAfterHours;
+            const wait = h >= 24 ? `${Math.ceil(h / 24)} día(s)` : `${h} hora(s)`;
+            setGenError(`Has alcanzado el límite de emisiones. Espera ${wait} para continuar.`);
+            return;
+          }
+          if (apiRes.status === 409 && body?.code === "DPI_DUPLICATE") setDuplicate(true);
+          setGenError(typeof body?.error === "string" ? body.error : "No hemos podido confirmar la emisión. Vuelve a intentarlo.");
+          return;
+        }
+
+        if (!isIssuedDPI(body)) throw new Error("Respuesta de emisión incompleta");
+        dpi = body;
+        issuedRef.current = dpi;
+        setIssued(dpi);
+      }
+
+      const frontImg = renderFront({ ...form, dpiNumber: dpi.dpiNumber }, frontTemplate, photoImage);
+      const backImg = await renderBack({ ...dpi, region: form.region, signatureDataUrl }, backTemplate);
+
+      completedRef.current = true;
+      setPreview({ front: frontImg, back: backImg, dpiNumber: dpi.dpiNumber });
+    } catch (error) {
+      if (loadingResources) {
+        setGenError(error instanceof Error && error.message === "photo"
+          ? "No hemos podido abrir la foto. Selecciona otra imagen."
+          : "No hemos podido cargar los recursos del DPI. Vuelve a intentarlo.");
+      } else {
+        setGenError(issuedRef.current
+          ? "Tu DPI ya está emitido. Puedes volver a generar la vista previa."
+          : "No hemos podido confirmar la emisión. Vuelve a intentarlo.");
+      }
     } finally {
+      busyRef.current = false;
       setGenerating(false);
     }
   };
@@ -416,6 +468,15 @@ export default function CreateDPI() {
       }`;
   };
 
+  const updateForm = (field: keyof typeof form, value: string) => {
+    setForm(current => ({ ...current, [field]: value }));
+    setSubmitErrors(errors => ({ ...errors, [field]: "" }));
+    if (duplicate) {
+      setDuplicate(false);
+      setGenError("");
+    }
+  };
+
   const nombreErr = form.nombre ? textError(form.nombre, "nombre") : "";
   const apellidosErr = form.apellidos ? textError(form.apellidos, "apellidos") : "";
 
@@ -430,136 +491,144 @@ export default function CreateDPI() {
             Crear <span className="text-accent">DPI</span>
           </h1>
 
-          {/* Nombre */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-foreground/50">Nombre</span>
-              <CharCounter value={form.nombre} max={LIMITS.nombre} />
-            </div>
-            <input
-              className={inputCls("nombre", nombreErr)}
-              placeholder="Nombre"
-              value={form.nombre}
-              maxLength={LIMITS.nombre + 5}
-              onChange={e => setForm({ ...form, nombre: e.target.value })}
-            />
-            {(nombreErr || submitErrors.nombre) && (
-              <p className="text-red-500 text-xs mt-1">{nombreErr || submitErrors.nombre}</p>
-            )}
-          </div>
-
-          {/* Apellidos */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-foreground/50">Apellidos</span>
-              <CharCounter value={form.apellidos} max={LIMITS.apellidos} />
-            </div>
-            <input
-              className={inputCls("apellidos", apellidosErr)}
-              placeholder="Apellidos"
-              value={form.apellidos}
-              maxLength={LIMITS.apellidos + 5}
-              onChange={e => setForm({ ...form, apellidos: e.target.value })}
-            />
-            {(apellidosErr || submitErrors.apellidos) && (
-              <p className="text-red-500 text-xs mt-1">{apellidosErr || submitErrors.apellidos}</p>
-            )}
-          </div>
-
-          {/* Género */}
-          <div>
-            <select className={inputCls("genero")} value={form.genero}
-              onChange={e => setForm({ ...form, genero: e.target.value })}>
-              <option value="">Género</option>
-              <option>Hombre</option>
-              <option>Mujer</option>
-            </select>
-            {submitErrors.genero && <p className="text-red-500 text-xs mt-1">{submitErrors.genero}</p>}
-          </div>
-
-          {/* Fecha nacimiento */}
-          <div>
-            <span className="text-xs text-foreground/50 block mb-1">Fecha de nacimiento</span>
-            <input type="date" className={inputCls("fecha")} value={form.fecha}
-              onChange={e => setForm({ ...form, fecha: e.target.value })} />
-            {submitErrors.fecha && <p className="text-red-500 text-xs mt-1">{submitErrors.fecha}</p>}
-          </div>
-
-          {/* Región */}
-          <div>
-            <select className={inputCls("region")} value={form.region}
-              onChange={e => setForm({ ...form, region: e.target.value })}>
-              <option value="">Región</option>
-              <option>Baguette</option>
-              <option>Pan Plano</option>
-              <option>Croissant</option>
-              <option>Pretzel</option>
-              <option>Pimbo</option>
-              <option>Sin Gluten</option>
-            </select>
-            {submitErrors.region && <p className="text-red-500 text-xs mt-1">{submitErrors.region}</p>}
-          </div>
-
-          {/* Foto */}
-          <div>
-            <span className="text-xs text-foreground/50 block mb-1">Foto de perfil</span>
-            <div
-              className={`border-2 border-dashed rounded-xl p-4 cursor-pointer flex items-center gap-4 transition ${submitErrors.photo ? "border-red-500" : "border-border hover:border-accent/50"
-                }`}
-              onClick={() => fileRef.current?.click()}
-            >
-              <input ref={fileRef} type="file" accept="image/*" hidden onChange={handlePhoto} />
-              {!photo
-                ? <p className="text-sm text-foreground/60">Toca para subir tu foto</p>
-                : <>
-                  <img src={photo} className="w-16 h-20 object-cover rounded-lg flex-shrink-0" alt="foto" />
-                  <span className="text-sm text-foreground/60">Cambiar foto</span>
-                </>
-              }
-            </div>
-            {submitErrors.photo && <p className="text-red-500 text-xs mt-1">{submitErrors.photo}</p>}
-          </div>
-
-          {/* Firma — con soporte touch */}
-          <div>
-            <span className="text-xs text-foreground/50 block mb-1">Firma</span>
-            <div className={`border rounded-xl overflow-hidden transition ${submitErrors.signature ? "border-red-500" : "border-border"
-              }`}>
-              <div className="flex items-center justify-between px-3 pt-2 pb-1">
-                <p className="text-xs text-foreground/50">Firma aquí con el dedo o el ratón</p>
-                <button
-                  type="button"
-                  onClick={clearSignature}
-                  className="text-xs text-foreground/40 hover:text-foreground/70 transition px-2 py-1"
-                >
-                  Borrar
-                </button>
+          <fieldset disabled={generating || !!preview} className="min-w-0 space-y-4">
+            <fieldset disabled={!!issued} className="min-w-0 space-y-4">
+              {/* Nombre */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-foreground/50">Nombre</span>
+                  <CharCounter value={form.nombre} max={LIMITS.nombre} />
+                </div>
+                <input
+                  className={inputCls("nombre", nombreErr)}
+                  placeholder="Nombre"
+                  value={form.nombre}
+                  maxLength={LIMITS.nombre + 5}
+                  onChange={e => updateForm("nombre", e.target.value)}
+                />
+                {(nombreErr || submitErrors.nombre) && (
+                  <p className="text-red-500 text-xs mt-1">{nombreErr || submitErrors.nombre}</p>
+                )}
               </div>
-              <canvas
-                ref={canvasRef}
-                width={600}
-                height={160}
-                className="w-full touch-none"
-                style={{ height: "160px", cursor: "crosshair", display: "block" }}
-                onMouseDown={startDraw}
-                onMouseMove={draw}
-                onMouseUp={stopDraw}
-                onMouseLeave={stopDraw}
-              />
+
+              {/* Apellidos */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-foreground/50">Apellidos</span>
+                  <CharCounter value={form.apellidos} max={LIMITS.apellidos} />
+                </div>
+                <input
+                  className={inputCls("apellidos", apellidosErr)}
+                  placeholder="Apellidos"
+                  value={form.apellidos}
+                  maxLength={LIMITS.apellidos + 5}
+                  onChange={e => updateForm("apellidos", e.target.value)}
+                />
+                {(apellidosErr || submitErrors.apellidos) && (
+                  <p className="text-red-500 text-xs mt-1">{apellidosErr || submitErrors.apellidos}</p>
+                )}
+              </div>
+
+              {/* Género */}
+              <div>
+                <select className={inputCls("genero")} value={form.genero}
+                  onChange={e => updateForm("genero", e.target.value)}>
+                  <option value="">Género</option>
+                  <option>Hombre</option>
+                  <option>Mujer</option>
+                </select>
+                {submitErrors.genero && <p className="text-red-500 text-xs mt-1">{submitErrors.genero}</p>}
+              </div>
+
+              {/* Fecha nacimiento */}
+              <div>
+                <span className="text-xs text-foreground/50 block mb-1">Fecha de nacimiento</span>
+                <input type="date" className={inputCls("fecha")} value={form.fecha}
+                  onChange={e => updateForm("fecha", e.target.value)} />
+                {submitErrors.fecha && <p className="text-red-500 text-xs mt-1">{submitErrors.fecha}</p>}
+              </div>
+
+              {/* Región */}
+              <div>
+                <select className={inputCls("region")} value={form.region}
+                  onChange={e => updateForm("region", e.target.value)}>
+                  <option value="">Región</option>
+                  <option>Baguette</option>
+                  <option>Pan Plano</option>
+                  <option>Croissant</option>
+                  <option>Pretzel</option>
+                  <option>Pimbo</option>
+                  <option>Sin Gluten</option>
+                </select>
+                {submitErrors.region && <p className="text-red-500 text-xs mt-1">{submitErrors.region}</p>}
+              </div>
+            </fieldset>
+
+            {/* Foto */}
+            <div>
+              <span className="text-xs text-foreground/50 block mb-1">Foto de perfil</span>
+              <div
+                className={`border-2 border-dashed rounded-xl p-4 cursor-pointer flex items-center gap-4 transition ${submitErrors.photo ? "border-red-500" : "border-border hover:border-accent/50"
+                  }`}
+                onClick={() => {
+                  if (!busyRef.current && !completedRef.current) fileRef.current?.click();
+                }}
+              >
+                <input ref={fileRef} type="file" accept="image/*" hidden onChange={handlePhoto} />
+                {!photo
+                  ? <p className="text-sm text-foreground/60">Toca para subir tu foto</p>
+                  : <>
+                    <img src={photo} className="w-16 h-20 object-cover rounded-lg flex-shrink-0" alt="foto" />
+                    <span className="text-sm text-foreground/60">Cambiar foto</span>
+                  </>
+                }
+              </div>
+              {submitErrors.photo && <p className="text-red-500 text-xs mt-1">{submitErrors.photo}</p>}
             </div>
-            {submitErrors.signature && <p className="text-red-500 text-xs mt-1">{submitErrors.signature}</p>}
-          </div>
+
+            {/* Firma — con soporte touch */}
+            <div>
+              <span className="text-xs text-foreground/50 block mb-1">Firma</span>
+              <div className={`border rounded-xl overflow-hidden transition ${submitErrors.signature ? "border-red-500" : "border-border"
+                }`}>
+                <div className="flex items-center justify-between px-3 pt-2 pb-1">
+                  <p className="text-xs text-foreground/50">Firma aquí con el dedo o el ratón</p>
+                  <button
+                    type="button"
+                    onClick={clearSignature}
+                    className="text-xs text-foreground/40 hover:text-foreground/70 transition px-2 py-1"
+                  >
+                    Borrar
+                  </button>
+                </div>
+                <canvas
+                  ref={canvasRef}
+                  width={600}
+                  height={160}
+                  className="w-full touch-none"
+                  style={{ height: "160px", cursor: "crosshair", display: "block" }}
+                  onMouseDown={startDraw}
+                  onMouseMove={draw}
+                  onMouseUp={stopDraw}
+                  onMouseLeave={stopDraw}
+                />
+              </div>
+              {submitErrors.signature && <p className="text-red-500 text-xs mt-1">{submitErrors.signature}</p>}
+            </div>
+          </fieldset>
 
           {/* Botón */}
           <button
+            type="button"
             onClick={submit}
-            disabled={generating}
+            disabled={generating || !!preview || duplicate}
+            aria-busy={generating}
             className="w-full py-4 rounded-xl bg-accent text-black font-bold cursor-pointer disabled:opacity-60 transition text-sm sm:text-base"
           >
-            {generating ? "Generando DPI…" : "Crear DPI"}
+            {generating ? "Generando DPI…" : preview || duplicate ? "DPI emitido" : issued ? "Reintentar vista previa" : "Crear DPI"}
           </button>
 
-          {genError && <p className="text-red-500 text-sm text-center">{genError}</p>}
+          {genError && <p role="alert" className="text-red-500 text-sm text-center">{genError}</p>}
 
           {/* Preview */}
           {preview && (
