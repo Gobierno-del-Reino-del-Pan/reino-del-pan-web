@@ -139,21 +139,6 @@ function formatDate(d) {
 function addMonths(base, months) {
   const d = new Date(base); d.setMonth(d.getMonth() + months); return formatDate(d);
 }
-function buildQrUrl(dpiNumber) {
-  const code = encodeURIComponent(dpiNumber.replace("DPI - ", ""));
-  return `${PUBLIC_URL}/api/dpi/verify/${code}`;
-}
-
-// ── Generador atómico de DPI ──────────────────────────────────────────────────
-const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-async function getNextDPINumber() {
-  const { data, error } = await supabase.rpc("increment_dpi_counter");
-  if (error) throw new Error("Error al obtener número DPI: " + error.message);
-  const seq = data;
-  const num = String(seq).padStart(6, "0");
-  const letter = LETTERS[seq % LETTERS.length];
-  return `DPI - ${num}${letter}`;
-}
 
 // ── Express ───────────────────────────────────────────────────────────────────
 const app = express();
@@ -163,14 +148,6 @@ app.set('trust proxy', 1);
 
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
-
-function getIP(req) {
-  return (
-    req.headers["x-forwarded-for"]?.split(",")[0].trim() ||
-    req.socket.remoteAddress ||
-    "unknown"
-  );
-}
 
 // ── Middleware: require auth (basado en JWT en cookie) ────────────────────────
 function requireAuth(req, res, next) {
@@ -534,34 +511,70 @@ app.get("/api/dpi/verify-discord/:discordId", async (req, res) => {
   }
 });
 
+const DPI_REQUEST_KEY = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 app.post("/api/dpi/create", async (req, res) => {
-  const ip = getIP(req);
-  const { allowed, retryAfterMs } = checkRateLimit(ip);
-  if (!allowed) {
-    const hours = Math.ceil(retryAfterMs / 3_600_000);
-    return res.status(429).json({ error: "Demasiados DPIs creados. Inténtalo más tarde.", retryAfterMs, retryAfterHours: hours });
-  }
   const { nombre, apellidos, genero, fecha, region } = req.body ?? {};
-  if (!nombre || !apellidos || !genero || !fecha || !region)
-    return res.status(400).json({ error: "Faltan campos obligatorios." });
+  if ([nombre, apellidos, genero, fecha, region].some(value => typeof value !== "string" || !value.trim()))
+    return res.status(400).json({ error: "Faltan campos obligatorios o tienen un formato incorrecto." });
+
+  const birth = new Date(fecha + "T00:00:00.000Z");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || fecha.startsWith("0000") ||
+      !Number.isFinite(birth.getTime()) || birth.toISOString().slice(0, 10) !== fecha)
+    return res.status(400).json({ error: "Fecha de nacimiento inválida." });
+
+  const requestKey = req.get("Idempotency-Key");
+  if (requestKey !== undefined && !DPI_REQUEST_KEY.test(requestKey))
+    return res.status(400).json({ error: "La clave de la solicitud no es válida." });
+
+  const ip = req.ip || req.socket.remoteAddress || "unknown";
+  const { allowed, retryAfterMs } = checkRateLimit(ip);
+  const today = new Date();
+
   try {
-    const dpiNumber = await getNextDPINumber();
-    const today = new Date();
-    const expDate = formatDate(today);
-    const valDate = addMonths(today, 14);
-    const qrUrl = buildQrUrl(dpiNumber);
-    const { error: dbErr } = await supabase.from("dpis").insert({
-      dpi_number: dpiNumber, nombre: nombre.trim().toUpperCase(),
-      apellidos: apellidos.trim().toUpperCase(), genero, fecha_nac: fecha,
-      region: region.trim().toUpperCase(), issued_at: expDate,
-      valid_until: valDate, ip_address: ip, qr_url: qrUrl,
+    const { data, error } = await supabase.rpc("emitir_dpi_web", {
+      p_clave: requestKey ?? null,
+      p_nombre: nombre.trim().toUpperCase(),
+      p_apellidos: apellidos.trim().toUpperCase(),
+      p_genero: genero.trim(),
+      p_fecha_nac: fecha,
+      p_region: region.trim().toUpperCase(),
+      p_ip: ip,
+      p_issued_at: formatDate(today),
+      p_valid_until: addMonths(today, 14),
+      p_public_url: PUBLIC_URL,
+      p_rate_limited: !allowed,
     });
-    if (dbErr) throw new Error(dbErr.message);
-    recordUsage(ip);
-    return res.json({ dpiNumber, issuedAt: expDate, validUntil: valDate, qrUrl });
+    if (error) throw error;
+
+    const { estado, dpiNumber, issuedAt, validUntil, qrUrl } = data;
+    switch (estado) {
+      case "duplicate":
+        return res.status(409).json({
+          code: "DPI_DUPLICATE",
+          error: "Estos datos ya se han enviado. Comprueba la pestaña desde la que solicitaste el DPI.",
+        });
+      case "key_conflict":
+        return res.status(409).json({ error: "La solicitud original se hizo con otros datos." });
+      case "rate_limited":
+        res.set("Retry-After", String(Math.ceil(retryAfterMs / 1000)));
+        return res.status(429).json({
+          error: "Demasiados DPIs creados. Inténtalo más tarde.",
+          retryAfterMs,
+          retryAfterHours: Math.ceil(retryAfterMs / 3_600_000),
+        });
+      case "issued":
+        recordUsage(ip);
+        break;
+      case "replayed":
+        break;
+      default:
+        throw new Error("Resultado de emisión desconocido.");
+    }
+    return res.json({ dpiNumber, issuedAt, validUntil, qrUrl });
   } catch (err) {
-    console.error("[/api/dpi/create]", err);
-    return res.status(500).json({ error: "Error interno. Intenta de nuevo." });
+    console.error("[/api/dpi/create]", err.code ?? err.name);
+    return res.status(500).json({ error: "No hemos podido confirmar la emisión. Vuelve a intentarlo." });
   }
 });
 
